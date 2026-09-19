@@ -24,6 +24,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://whenmodel.c
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
     <link rel="alternate" type="application/json" href="/api/dashboard.json" title="whenmodel dashboard JSON" />
+    <script is:inline defer src="https://app.skopia.dev/skopia.js" data-site="whenmodel" data-endpoint="https://app.skopia.dev/e"></script>
   </head>
   <body>
     <slot />

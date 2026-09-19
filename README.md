@@ -38,4 +38,8 @@ Secrets come from 1Password:
 op run --env-file .env.op -- pnpm deploy
 ```
 
-The `cloudflare-api` token can upload the Worker but not touch zone routes, so the custom domains were attached once through the account-level Workers Domains API and `wrangler deploy` now succeeds against them. `whenmodel.com` is not yet managed in the `jasonm4130-cf` Terraform repo.
+The `cloudflare-api` token can upload the Worker but not read zone routes for this zone, so the custom domains are attached at the account level (Workers Domains API) and deliberately not declared as `routes` in `wrangler.jsonc`. `whenmodel.com` is not yet managed in the `jasonm4130-cf` Terraform repo.
+
+## Analytics
+
+[Skopia](https://app.skopia.dev) via the snippet in `src/layouts/Layout.astro` (`data-site="whenmodel"`). The site row lives in Skopia's D1 with an origin allowlist of `https://whenmodel.com,https://www.whenmodel.com`.

@@ -5,9 +5,8 @@
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": "./dist", "binding": "ASSETS" },
-  "observability": { "enabled": true },
-  "routes": [
-    { "pattern": "whenmodel.com", "custom_domain": true },
-    { "pattern": "www.whenmodel.com", "custom_domain": true }
-  ]
+  "observability": { "enabled": true }
+  // Custom domains whenmodel.com and www.whenmodel.com are attached at the account level
+  // (PUT /accounts/<id>/workers/domains). The deploy token cannot read zone routes for this
+  // zone, so declaring them here as `routes` makes `wrangler deploy` fail after upload.
 }
