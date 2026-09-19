@@ -3,7 +3,14 @@ import { safe, memoJson } from './fetch';
 import { fetchMarkets, releaseOddsForLab, type Market } from './sources/polymarket';
 import { fetchDrops, monthlyHistogram, type Drop } from './sources/openrouter';
 import { fetchTrending, fetchPapers, type Trending, type Paper } from './sources/huggingface';
-import { fetchHackerNews, fetchOpenAI, fetchDeepMind, fetchAnthropic, fetchSdkReleases, type FeedItem } from './sources/feed';
+import {
+  fetchHackerNews,
+  fetchOpenAI,
+  fetchDeepMind,
+  fetchAnthropic,
+  fetchSdkReleases,
+  type FeedItem,
+} from './sources/feed';
 import { computeDropcon, type Dropcon } from './dropcon';
 
 export interface LabStatus {
@@ -71,12 +78,37 @@ export async function buildDashboard(): Promise<Dashboard> {
     const monthOdds = releaseOddsForLab(markets.data, lab.id, 31, now);
     const leaderboardOdds = bestModelMarket?.outcomes.find((o) => o.label === lab.pmCompany)?.yes;
     const recency = daysSince === undefined ? 0 : Math.max(0, 30 - Math.min(daysSince, 30)) / 30;
-    const heat = Math.round(Math.min(100, (weekOdds?.p ?? 0) * 55 + (monthOdds?.p ?? 0) * 20 + recency * 15 + Math.min(drops30d, 3) * 3.3));
-    const status: LabStatus['status'] = daysSince !== undefined && daysSince <= 2 ? 'SHIPPING' : heat >= 60 ? 'HOT' : heat >= 25 ? 'WARM' : 'QUIET';
+    const heat = Math.round(
+      Math.min(
+        100,
+        (weekOdds?.p ?? 0) * 55 + (monthOdds?.p ?? 0) * 20 + recency * 15 + Math.min(drops30d, 3) * 3.3,
+      ),
+    );
+    const status: LabStatus['status'] =
+      daysSince !== undefined && daysSince <= 2
+        ? 'SHIPPING'
+        : heat >= 60
+          ? 'HOT'
+          : heat >= 25
+            ? 'WARM'
+            : 'QUIET';
     return {
-      id: lab.id, name: lab.name, short: lab.short, color: lab.color, glyph: lab.glyph, x: lab.x, pmCompany: lab.pmCompany,
-      latest, daysSince, drops30d, histogram: monthlyHistogram(mine, 12, new Date(now)),
-      weekOdds, monthOdds, leaderboardOdds, heat, status,
+      id: lab.id,
+      name: lab.name,
+      short: lab.short,
+      color: lab.color,
+      glyph: lab.glyph,
+      x: lab.x,
+      pmCompany: lab.pmCompany,
+      latest,
+      daysSince,
+      drops30d,
+      histogram: monthlyHistogram(mine, 12, new Date(now)),
+      weekOdds,
+      monthOdds,
+      leaderboardOdds,
+      heat,
+      status,
     };
   }).sort((a, b) => b.heat - a.heat);
 
@@ -89,7 +121,9 @@ export async function buildDashboard(): Promise<Dashboard> {
   const dropcon = computeDropcon({
     maxWeekOdds: Math.max(0, ...labs.map((l) => l.weekOdds?.p ?? 0)),
     maxMonthOdds: Math.max(0, ...labs.map((l) => l.monthOdds?.p ?? 0)),
-    frontierDrops7d: drops.data.filter((d) => d.labId && frontierIds.has(d.labId) && now - Date.parse(d.createdAt) < 7 * 86400_000).length,
+    frontierDrops7d: drops.data.filter(
+      (d) => d.labId && frontierIds.has(d.labId) && now - Date.parse(d.createdAt) < 7 * 86400_000,
+    ).length,
     hotStories: hn.data.filter((h) => (h.score ?? 0) >= 150).length,
     releaseAlerts: feed.filter((f) => f.alert && now - Date.parse(f.publishedAt) < 48 * 3600_000).length,
   });
@@ -105,9 +139,15 @@ export async function buildDashboard(): Promise<Dashboard> {
     papers: papers.data,
     feed,
     sources: [
-      { name: 'Polymarket', ...markets }, { name: 'OpenRouter', ...drops }, { name: 'HF trending', ...trending },
-      { name: 'HF papers', ...papers }, { name: 'Hacker News', ...hn }, { name: 'OpenAI news', ...openai },
-      { name: 'DeepMind blog', ...deepmind }, { name: 'Anthropic news', ...anthropic }, { name: 'GitHub SDKs', ...sdk },
+      { name: 'Polymarket', ...markets },
+      { name: 'OpenRouter', ...drops },
+      { name: 'HF trending', ...trending },
+      { name: 'HF papers', ...papers },
+      { name: 'Hacker News', ...hn },
+      { name: 'OpenAI news', ...openai },
+      { name: 'DeepMind blog', ...deepmind },
+      { name: 'Anthropic news', ...anthropic },
+      { name: 'GitHub SDKs', ...sdk },
     ].map(({ name, ok, error }) => ({ name, ok, error })),
   };
 }

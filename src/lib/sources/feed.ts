@@ -10,10 +10,19 @@ export interface FeedItem {
   alert: boolean;
 }
 
-const MODEL_WORDS = /\b(gpt|openai|claude|anthropic|gemini|deepmind|gemma|grok|xai|deepseek|llama|meta ai|qwen|alibaba|mistral|kimi|moonshot|glm|z\.ai|minimax|llm|ai model|agi|frontier model|o\d|sora|veo|arena|benchmark|weights|open.?source model)\b/i;
-const RELEASE_WORDS = /\b(introducing|announcing|releas\w+|launch\w+|now available|new model|drops?|ships?|unveil\w*|preview|v?\d+(\.\d+)+)\b/i;
+const MODEL_WORDS =
+  /\b(gpt|openai|claude|anthropic|gemini|deepmind|gemma|grok|xai|deepseek|llama|meta ai|qwen|alibaba|mistral|kimi|moonshot|glm|z\.ai|minimax|llm|ai model|agi|frontier model|o\d|sora|veo|arena|benchmark|weights|open.?source model)\b/i;
+const RELEASE_WORDS =
+  /\b(introducing|announcing|releas\w+|launch\w+|now available|new model|drops?|ships?|unveil\w*|preview|v?\d+(\.\d+)+)\b/i;
 
-interface HnHit { title: string; url?: string; points: number; created_at: string; objectID: string; num_comments: number }
+interface HnHit {
+  title: string;
+  url?: string;
+  points: number;
+  created_at: string;
+  objectID: string;
+  num_comments: number;
+}
 
 export async function fetchHackerNews(hours = 48, minPoints = 60): Promise<FeedItem[]> {
   const since = Math.floor(Date.now() / 1000) - hours * 3600;
@@ -36,7 +45,8 @@ function parseRss(xml: string, source: FeedItem['source'], limit: number): FeedI
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, limit);
   return items.map((m) => {
     const block = m[1];
-    const pick = (tag: string) => decodeEntities(block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`))?.[1] ?? '');
+    const pick = (tag: string) =>
+      decodeEntities(block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`))?.[1] ?? '');
     const title = pick('title');
     const date = pick('pubDate') || pick('dc:date');
     return {
@@ -65,15 +75,25 @@ export async function fetchAnthropic(): Promise<FeedItem[]> {
   for (const m of html.matchAll(/<a[^>]+href="(\/news\/[a-z0-9-]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
     const [, href, inner] = m;
     if (seen.has(href)) continue;
-    const title = decodeEntities(inner.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ')).replace(/\s+/g, ' ').trim();
+    const title = decodeEntities(inner.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' '))
+      .replace(/\s+/g, ' ')
+      .trim();
     const dateM = inner.match(/\b(\w{3} \d{1,2}, \d{4})\b/);
     if (title.length < 8) continue;
     seen.add(href);
-    const CATS = /^(Announcements|Product|Policy|Research|Societal Impacts|Alignment|Interpretability|Education|Economic Research|Economic Index|Event|News|Case Study|Featured)\s*/i;
+    const CATS =
+      /^(Announcements|Product|Policy|Research|Societal Impacts|Alignment|Interpretability|Education|Economic Research|Economic Index|Event|News|Case Study|Featured)\s*/i;
     const DATE = /^\w{3} \d{1,2}, \d{4}\s*/;
     let clean = title;
     for (let i = 0; i < 3; i++) clean = clean.replace(DATE, '').replace(CATS, '').trim();
-    clean = clean.replace(/(?<=[a-z0-9)])(On|In|Today|We|The|As|Our) [A-Z][a-z]+ \d{1,2},.*$/, '').replace(/\s*(Announcements|Product|Policy|Research|Societal Impacts|Alignment|Interpretability|Education)\s*$/i, '').replace(/\b\w{3} \d{1,2}, \d{4}\b.*$/, '').trim();
+    clean = clean
+      .replace(/(?<=[a-z0-9)])(On|In|Today|We|The|As|Our) [A-Z][a-z]+ \d{1,2},.*$/, '')
+      .replace(
+        /\s*(Announcements|Product|Policy|Research|Societal Impacts|Alignment|Interpretability|Education)\s*$/i,
+        '',
+      )
+      .replace(/\b\w{3} \d{1,2}, \d{4}\b.*$/, '')
+      .trim();
     out.push({
       source: 'anthropic',
       title: clean || title,
@@ -86,7 +106,13 @@ export async function fetchAnthropic(): Promise<FeedItem[]> {
   return out;
 }
 
-interface GhRelease { tag_name: string; html_url: string; published_at: string; body?: string; name?: string }
+interface GhRelease {
+  tag_name: string;
+  html_url: string;
+  published_at: string;
+  body?: string;
+  name?: string;
+}
 const SDK_REPOS = [
   ['anthropics/anthropic-sdk-python', 'Anthropic SDK'],
   ['openai/openai-python', 'OpenAI SDK'],
@@ -98,7 +124,10 @@ const SDK_REPOS = [
 export async function fetchSdkReleases(): Promise<FeedItem[]> {
   const all = await Promise.allSettled(
     SDK_REPOS.map(async ([repo, label]) => {
-      const rel = await cachedJson<GhRelease[]>(`https://api.github.com/repos/${repo}/releases?per_page=2`, 1800);
+      const rel = await cachedJson<GhRelease[]>(
+        `https://api.github.com/repos/${repo}/releases?per_page=2`,
+        1800,
+      );
       return rel.map((r) => {
         const body = (r.body ?? '').replace(/\r/g, '');
         const modelHint = body.match(/\b(gpt|claude|gemini|grok)[-\w.]*\d[-\w.]*/i)?.[0];

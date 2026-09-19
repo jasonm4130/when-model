@@ -28,7 +28,7 @@ export interface Drop {
 export async function fetchDrops(): Promise<Drop[]> {
   const { data } = await cachedJson<{ data: OrModel[] }>('https://openrouter.ai/api/v1/models', 600);
   return data
-    .filter((m) => !m.id.startsWith('~') && !/:batch$/.test(m.id) && !/^openrouter\//.test(m.id))
+    .filter((m) => !m.id.startsWith('~') && !m.id.endsWith(':batch') && !m.id.startsWith('openrouter/'))
     .sort((a, b) => b.created - a.created)
     .map((m) => {
       const lab = labForOpenRouterId(m.id);
@@ -45,15 +45,16 @@ export async function fetchDrops(): Promise<Drop[]> {
         completionPerM: Number.isFinite(c) ? c : undefined,
         modality: m.architecture?.modality,
         url: `https://openrouter.ai/${m.id}`,
-        free: /:free$/.test(m.id) || p === 0,
+        free: m.id.endsWith(':free') || p === 0,
       };
     });
 }
 
 /** Drops per month for the last N months, oldest first. */
 export function monthlyHistogram(drops: Drop[], months = 12, now = new Date()): number[] {
-  const buckets = new Array<number>(months).fill(0);
-  const y0 = now.getUTCFullYear(), m0 = now.getUTCMonth();
+  const buckets = Array.from({ length: months }, () => 0);
+  const y0 = now.getUTCFullYear(),
+    m0 = now.getUTCMonth();
   for (const d of drops) {
     const t = new Date(d.createdAt);
     const idx = months - 1 - ((y0 - t.getUTCFullYear()) * 12 + (m0 - t.getUTCMonth()));

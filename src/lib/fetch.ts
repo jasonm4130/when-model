@@ -16,7 +16,11 @@ function edgeCache(): Cache | undefined {
 export async function cachedText(url: string, ttl = 600, init?: RequestInit): Promise<string> {
   const req = new Request(url, {
     ...init,
-    headers: { 'user-agent': UA, accept: 'application/json, application/xml, text/xml, text/html;q=0.9, */*;q=0.8', ...(init?.headers as Record<string, string> | undefined) },
+    headers: {
+      'user-agent': UA,
+      accept: 'application/json, application/xml, text/xml, text/html;q=0.9, */*;q=0.8',
+      ...(init?.headers as Record<string, string> | undefined),
+    },
   });
   const cache = edgeCache();
   if (cache) {
@@ -52,25 +56,41 @@ export async function memoJson<T>(key: string, ttl: number, build: () => Promise
   if (cache) {
     const hit = await cache.match(req);
     if (hit) {
-      try { return (await hit.json()) as T; } catch { /* rebuild below */ }
+      try {
+        return (await hit.json()) as T;
+      } catch {
+        /* rebuild below */
+      }
     }
   }
   const value = await build();
   if (cache) {
     await cache
-      .put(req, new Response(JSON.stringify(value), { headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` } }))
+      .put(
+        req,
+        new Response(JSON.stringify(value), {
+          headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` },
+        }),
+      )
       .catch(() => {});
   }
   return value;
 }
 
 /** Run a source with a timeout; a failing source never takes the page down. */
-export async function safe<T>(label: string, fn: () => Promise<T>, fallback: T, ms = 8000): Promise<{ data: T; ok: boolean; error?: string }> {
+export async function safe<T>(
+  label: string,
+  fn: () => Promise<T>,
+  fallback: T,
+  ms = 8000,
+): Promise<{ data: T; ok: boolean; error?: string }> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const data = await Promise.race([
       fn(),
-      new Promise<never>((_, rej) => { timer = setTimeout(() => rej(new Error('timeout')), ms); }),
+      new Promise<never>((_, rej) => {
+        timer = setTimeout(() => rej(new Error('timeout')), ms);
+      }),
     ]);
     return { data, ok: true };
   } catch (e) {
@@ -84,7 +104,12 @@ export async function safe<T>(label: string, fn: () => Promise<T>, fallback: T, 
 export function decodeEntities(s: string): string {
   return s
     .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/<[^>]+>/g, '').trim();
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/<[^>]+>/g, '')
+    .trim();
 }
