@@ -19,7 +19,7 @@ DROPCON weights: 7-day release odds (45), 30-day odds (20), frontier-lab drops t
 
 ## Stack
 
-Astro 7 (SSR) on Cloudflare Workers via `@astrojs/cloudflare`. Every upstream fetch goes through the Workers Cache API; the page itself is edge-cached for 5 minutes and reloads itself every 5 minutes in the browser. `/api/dashboard.json` exposes the assembled payload.
+Astro 7 (SSR) on Cloudflare Workers via `@astrojs/cloudflare`. Every upstream fetch is buffered and stored in the Workers Cache API (per colo) for 5–30 minutes, and the assembled dashboard is memoised there for 2 minutes, so a render is one cache read and upstreams are hit at most once per colo per window. The browser reloads the page every 5 minutes. `/api/dashboard.json` exposes the assembled payload.
 
 ## Develop
 

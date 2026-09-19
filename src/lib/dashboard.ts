@@ -1,5 +1,5 @@
 import { LABS } from './labs';
-import { safe } from './fetch';
+import { safe, memoJson } from './fetch';
 import { fetchMarkets, releaseOddsForLab, type Market } from './sources/polymarket';
 import { fetchDrops, monthlyHistogram, type Drop } from './sources/openrouter';
 import { fetchTrending, fetchPapers, type Trending, type Paper } from './sources/huggingface';
@@ -37,6 +37,11 @@ export interface Dashboard {
   papers: Paper[];
   feed: FeedItem[];
   sources: { name: string; ok: boolean; error?: string }[];
+}
+
+/** Assembled dashboard, memoised at the edge for 2 minutes so renders share one upstream pass. */
+export function getDashboard(): Promise<Dashboard> {
+  return memoJson('dashboard', 120, buildDashboard);
 }
 
 export async function buildDashboard(): Promise<Dashboard> {

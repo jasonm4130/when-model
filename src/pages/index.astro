@@ -8,9 +8,9 @@ import Drops from '../components/Drops.astro';
 import Feed from '../components/Feed.astro';
 import History from '../components/History.astro';
 import Footer from '../components/Footer.astro';
-import { buildDashboard } from '../lib/dashboard';
+import { getDashboard } from '../lib/dashboard';
 
-const d = await buildDashboard();
+const d = await getDashboard();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const title = `DROPCON ${d.dropcon.level} · ${d.dropcon.name} — whenmodel`;
 ---
