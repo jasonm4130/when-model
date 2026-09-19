@@ -1,66 +1,73 @@
 ---
-import type { Dashboard } from '../lib/dashboard';
-import { pct } from '../lib/format';
+import type { Dashboard } from '../domain/dashboard';
+import { daysLabel, pct } from '../ui/format';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const c = d.dropcon;
 const colors: Record<number, string> = { 1: 'var(--red)', 2: 'var(--orange)', 3: 'var(--yellow)', 4: 'var(--cyan)', 5: 'var(--green)' };
 const color = colors[c.level];
 const hottest = d.labs[0];
+const raceTitle = d.bestModelMarket?.title.replace(/which company has the best ai model /i, '') ?? '';
 ---
-<section class="section wrap">
-  <div class="grid grid-2 dropcon-grid">
+<section class="section wrap reveal">
+  <div class="grid grid-2">
     <div class="panel dropcon" style={`--lvl:${color}`}>
-      <div class="panel-head"><h2><span>▣</span>DROPCON LEVEL</h2>{c.degraded ? <span class="pill err">ODDS OFFLINE · FLOOR</span> : <span class="pill live">LIVE</span>}</div>
+      <div class="panel-head">
+        <h2><span>▣</span>DROPCON LEVEL</h2>
+        {c.degraded ? <span class="pill err">ODDS OFFLINE · FLOOR</span> : <span class="pill live">LIVE</span>}
+      </div>
       <div class="dc-body">
-        <div class="dc-num head" style={`color:${color}; text-shadow:0 0 14px ${color}, 0 0 40px ${color}`}>{c.level}</div>
+        <div class="dc-num head" style={`color:${color}`}>{c.level}</div>
         <div class="dc-text">
           <div class="dc-name head" style={`color:${color}`}>{c.name}</div>
           <p class="dc-blurb">{c.blurb}</p>
           <ul class="dc-drivers">
-            {c.drivers.map((x) => <li>▸ {x}</li>)}
+            {c.drivers.map((x, i) => <li style={`--i:${i + 2}`} class="reveal">▸ {x}</li>)}
           </ul>
         </div>
       </div>
-      <div class="dc-scale">
-        {[5, 4, 3, 2, 1].map((n) => (
-          <div class={`seg ${n === c.level ? 'on' : ''} ${n > c.level ? 'past' : ''}`} style={`--c:${colors[n]}`} title={`DROPCON ${n}`}><span class="tiny">{n}</span></div>
+      <div class="dc-scale" role="img" aria-label={`DROPCON ${c.level} of 5`}>
+        {[5, 4, 3, 2, 1].map((n, i) => (
+          <div class={`seg ${n === c.level ? 'on' : ''} ${n > c.level ? 'past' : ''}`} style={`--c:${colors[n]}; --i:${i}`} title={`DROPCON ${n}`}><span class="tiny">{n}</span></div>
         ))}
       </div>
-      <div class="tiny muted" style="margin-top:8px">TENSION INDEX {c.score}/100 · 5 = QUIET ORBIT · 1 = DROP IMMINENT</div>
+      <div class="tiny muted dc-foot">TENSION INDEX {c.score}/100 · 5 = QUIET ORBIT · 1 = DROP IMMINENT</div>
     </div>
 
     <div class="panel">
       <div class="panel-head"><h2><span>◎</span>HOTTEST LAB</h2><span class="pill">COMPOSITE HEAT</span></div>
       {hottest ? (
-        <div class="hot">
-          <div class="hot-name head" style={`color:${hottest.color}; text-shadow:0 0 12px ${hottest.color}`}>{hottest.glyph} {hottest.name}</div>
-          <div class="hot-grid">
-            <div><div class="tiny muted">DROP ≤7D</div><div class="big glow-y">{pct(hottest.weekOdds?.p)}</div><div class="muted small">{hottest.weekOdds ? `by ${hottest.weekOdds.label}` : 'no market'}</div></div>
-            <div><div class="tiny muted">DROP ≤30D</div><div class="big glow-c">{pct(hottest.monthOdds?.p)}</div><div class="muted small">{hottest.monthOdds ? `by ${hottest.monthOdds.label}` : 'no market'}</div></div>
-            <div><div class="tiny muted">LAST DROP</div><div class="big">{hottest.daysSince === undefined ? '—' : hottest.daysSince === 0 ? 'TODAY' : `${hottest.daysSince}d`}</div><div class="muted small">{hottest.latest?.name ?? ''}</div></div>
-            <div><div class="tiny muted">BEST MODEL ODDS</div><div class="big glow-m">{pct(hottest.leaderboardOdds)}</div><div class="muted small">{d.bestModelMarket ? d.bestModelMarket.title.replace(/which company has the best ai model /i, '') : ''}</div></div>
+        <div class="hot" style={`--lab:${hottest.color}`}>
+          <div class="hot-name head">{hottest.glyph} {hottest.name} <span class="tag pulse">{hottest.status}</span></div>
+          <div class="metrics">
+            <div><div class="metric-label">DROP ≤7D</div><div class="metric-value glow-y">{pct(hottest.weekOdds?.p)}</div><div class="metric-note">{hottest.weekOdds ? `by ${hottest.weekOdds.label}` : 'no market'}</div></div>
+            <div><div class="metric-label">DROP ≤30D</div><div class="metric-value glow-c">{pct(hottest.monthOdds?.p)}</div><div class="metric-note">{hottest.monthOdds ? `by ${hottest.monthOdds.label}` : 'no market'}</div></div>
+            <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(hottest.daysSince)}</div><div class="metric-note" title={hottest.latest?.name}>{hottest.latest?.name ?? 'nothing listed'}</div></div>
+            <div><div class="metric-label">BEST MODEL ODDS</div><div class="metric-value glow-m">{pct(hottest.leaderboardOdds)}</div><div class="metric-note" title={raceTitle}>{raceTitle || 'no market'}</div></div>
           </div>
-          <div class="bar" style="margin-top:12px"><i style={`width:${hottest.heat}%`}></i></div>
-          <div class="tiny muted" style="margin-top:6px">HEAT {hottest.heat}/100 · {hottest.status}</div>
+          <div class="bar heat"><i style={`width:${hottest.heat}%`}></i></div>
+          <div class="tiny muted dc-foot">HEAT {hottest.heat}/100 · {hottest.status}</div>
         </div>
-      ) : <p class="muted">No lab data.</p>}
+      ) : <p class="empty">No lab data.</p>}
     </div>
   </div>
 </section>
 <style>
   .dc-body { display: flex; gap: 20px; align-items: flex-start; }
-  .dc-num { font-size: clamp(64px, 12vw, 120px); line-height: 0.9; }
+  .dc-num { font-size: clamp(64px, 12vw, 120px); line-height: 0.9; text-shadow: 0 0 14px currentColor, 0 0 40px currentColor; animation: glow-pulse 2.4s var(--ease) infinite, rise 600ms var(--ease) both; }
   .dc-name { font-size: clamp(14px, 2.2vw, 22px); margin-bottom: 8px; }
-  .dc-blurb { margin: 0 0 8px; font-size: 22px; }
-  .dc-drivers { margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 19px; }
+  .dc-blurb { margin-bottom: 8px; font-size: var(--fs-lg); }
+  .dc-drivers { color: var(--muted); font-size: 19px; }
   .dc-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 14px; }
-  .seg { height: 26px; border: 1px solid var(--c); display: grid; place-items: center; color: var(--c); opacity: 0.45; }
+  .seg { height: 26px; border: 1px solid var(--c); display: grid; place-items: center; color: var(--c); opacity: 0.45; animation: rise 500ms var(--ease) both; animation-delay: calc(var(--i) * 60ms + 200ms); transition: opacity var(--fast) var(--ease); }
+  .seg:hover { opacity: 0.8; }
   .seg.past { opacity: 0.25; }
-  .seg.on { opacity: 1; background: var(--c); color: #000; box-shadow: 0 0 14px var(--c); }
-  .hot-name { font-size: 16px; margin-bottom: 12px; }
-  .hot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
-  .big { font-size: 34px; line-height: 1; margin: 4px 0; }
-  .small { font-size: 16px; }
+  .seg.on { opacity: 1; background: var(--c); color: #000; box-shadow: 0 0 14px var(--c); animation: rise 500ms var(--ease) both, seg-pulse 2.4s var(--ease) infinite; }
+  @keyframes seg-pulse { 50% { box-shadow: 0 0 26px var(--c); } }
+  .dc-foot { margin-top: 8px; }
+  .hot-name { font-size: 16px; margin-bottom: 12px; color: var(--lab); text-shadow: 0 0 12px var(--lab); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .hot-name .tag { color: var(--lab); }
+  .heat { margin-top: 12px; }
+  .heat > i { background: linear-gradient(90deg, var(--lab), var(--magenta)); }
   @media (max-width: 480px) { .dc-body { flex-direction: column; gap: 6px; } }
 </style>

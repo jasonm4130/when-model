@@ -1,22 +1,27 @@
 ---
-import type { Dashboard } from '../lib/dashboard';
-import { pct } from '../lib/format';
+import type { Dashboard } from '../domain/dashboard';
+import { pct } from '../ui/format';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const okCount = d.sources.filter((s) => s.ok).length;
+const status = okCount === d.sources.length ? 'OPERATIONAL' : okCount > d.sources.length / 2 ? 'DEGRADED' : 'IMPAIRED';
+const statusClass = status === 'OPERATIONAL' ? 'glow-g' : status === 'DEGRADED' ? 'glow-y' : 'err';
 const ticker = [
   ...d.labs.filter((l) => l.weekOdds).map((l) => `${l.name.toUpperCase()}: ${pct(l.weekOdds!.p)} ODDS OF A DROP BY ${l.weekOdds!.label.toUpperCase()}`),
-  ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${(x.lab ?? '').toUpperCase()})`),
+  ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${x.lab.toUpperCase()})`),
   ...d.feed.filter((f) => f.alert).slice(0, 6).map((f) => `${f.source.toUpperCase()}: ${f.title.toUpperCase()}`),
 ];
+/** The page reloads itself on this cadence; the statusbar counts it down. */
+const REFRESH_SECONDS = 300;
 ---
 <header class="hero">
   <div class="statusbar wrap">
     <div class="left">
-      <span class="tiny glow-g">◉ STATUS: {okCount === d.sources.length ? 'OPERATIONAL' : okCount > d.sources.length / 2 ? 'DEGRADED' : 'IMPAIRED'}</span>
-      <span class="tiny muted">{d.labs.length} LABS · {d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
+      <span class={`tiny ${statusClass}`}>◉ STATUS: {status}</span>
+      <span class="tiny muted">{d.labs.length} LABS · {okCount}/{d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
     </div>
     <div class="right">
+      <span class="tiny muted">SYNC <span data-synced={d.generatedAt}>{d.generatedAt.slice(11, 19)}Z</span> · NEXT <span class="glow-y" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
       <span class="tiny muted">UTC</span> <span class="clock glow-c" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
     </div>
   </div>
@@ -37,36 +42,64 @@ const ticker = [
       <a class="pill" href="/api/dashboard.json">◈ JSON API</a>
     </div>
   </div>
-  <div class="marquee mono glow-y">
+  <div class="marquee mono glow-y" aria-label="Ticker">
     <div>{ticker.map((t) => <span>▶ {t}</span>)}{ticker.map((t) => <span>▶ {t}</span>)}</div>
   </div>
 </header>
 <style>
   .hero {
     position: relative;
+    overflow: hidden;
     background:
       linear-gradient(180deg, rgba(7,6,15,0) 0%, rgba(7,6,15,0.2) 60%, var(--bg) 100%),
       repeating-linear-gradient(90deg, rgba(255,43,214,0.12) 0 1px, transparent 1px 80px),
       repeating-linear-gradient(0deg, rgba(0,229,255,0.10) 0 1px, transparent 1px 40px);
-    background-size: auto, auto, auto;
     border-bottom: 2px solid var(--line);
   }
-  .statusbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; border-bottom: 1px solid rgba(74,63,138,0.4); }
-  .statusbar .left { display: flex; gap: 18px; flex-wrap: wrap; }
+  /* the grid drifts toward the horizon */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: -40px 0 0 0;
+    background: repeating-linear-gradient(0deg, rgba(0,229,255,0.08) 0 1px, transparent 1px 40px);
+    animation: drift 6s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes drift { to { transform: translateY(40px); } }
+  .statusbar, .hero-inner, .marquee { position: relative; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--line-soft); }
+  .statusbar .left, .statusbar .right { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
   .clock { font-size: 22px; font-variant-numeric: tabular-nums; }
   .hero-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-block: 34px 26px; flex-wrap: wrap; }
-  .logo { font-size: clamp(30px, 6.5vw, 74px); line-height: 1; margin: 14px 0 12px; }
+  .logo { font-size: clamp(30px, 6.5vw, 74px); line-height: 1; margin: 14px 0 12px; animation: rise 700ms var(--ease) both; }
   .logo .w { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5), 4px 4px 0 var(--blue); }
   .logo .m { color: var(--magenta); text-shadow: 0 0 12px var(--magenta), 4px 4px 0 var(--cyan); }
   .logo .q { color: var(--yellow); text-shadow: 0 0 12px var(--yellow); animation: blink 1.4s steps(2) infinite; }
-  .tag-line { margin: 0; font-size: 24px; color: var(--cyan); letter-spacing: 0.04em; }
-  .hero-side { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-  .brands { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: 20px; }
+  .tag-line { font-size: var(--fs-lg); color: var(--cyan); letter-spacing: 0.04em; animation: rise 700ms var(--ease) 120ms both; }
+  .hero-side { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; animation: rise 700ms var(--ease) 200ms both; }
+  .brands { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: var(--fs-body); }
   .brands a { border-bottom: 1px dotted var(--line2); }
   @media (max-width: 700px) { .hero-side { align-items: flex-start; text-align: left; } .brands { justify-content: flex-start; } }
 </style>
 <script>
-  const el = document.querySelector('[data-clock]');
-  const tick = () => { if (el) el.textContent = new Date().toISOString().slice(11, 19) + 'Z'; };
-  tick(); setInterval(tick, 1000);
+  const clock = document.querySelector('[data-clock]');
+  const refresh = document.querySelector<HTMLElement>('[data-refresh]');
+  const total = Number(refresh?.dataset.refresh ?? 300);
+  const started = Date.now();
+  const tick = () => {
+    if (clock) clock.textContent = new Date().toISOString().slice(11, 19) + 'Z';
+    const left = Math.max(0, total - Math.floor((Date.now() - started) / 1000));
+    if (refresh) refresh.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    if (left === 0) reload();
+  };
+  // The page is edge-cached and cheap to reload; wait for a visible tab so a background tab doesn't churn.
+  let reloading = false;
+  const reload = () => {
+    if (reloading) return;
+    reloading = true;
+    if (document.visibilityState === 'visible') location.reload();
+    else document.addEventListener('visibilitychange', () => location.reload(), { once: true });
+  };
+  tick();
+  setInterval(tick, 1000);
 </script>

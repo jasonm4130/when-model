@@ -2,8 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 ---
 <Layout title="404 — whenmodel" description="Not found">
-  <main class="wrap" style="padding:80px 0;text-align:center">
-    <h1 class="glow-m" style="font-size:40px">404</h1>
-    <p style="font-size:24px">This model has not been released yet. <a href="/">Back to the dashboard</a>.</p>
+  <main class="wrap nf reveal">
+    <h1 class="glow-m">404</h1>
+    <p>This model has not been released yet. <a href="/">Back to the dashboard</a>.</p>
   </main>
 </Layout>
+<style>
+  .nf { padding: 80px 0; text-align: center; }
+  .nf h1 { font-size: 40px; animation: glow-pulse 2.4s var(--ease) infinite; }
+  .nf p { font-size: 24px; margin-top: 16px; }
+</style>

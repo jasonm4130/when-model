@@ -27,6 +27,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://whenmodel.c
     <script is:inline defer src="https://app.skopia.dev/skopia.js" data-site="whenmodel" data-endpoint="https://app.skopia.dev/e"></script>
   </head>
   <body>
+    <div class="crt-sweep" aria-hidden="true"></div>
     <slot />
   </body>
 </html>

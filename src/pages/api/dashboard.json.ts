@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
-import { getDashboard } from '../../lib/dashboard';
+import { loadDashboard } from '../../app/load-dashboard';
 
 export const GET: APIRoute = async () => {
-  const data = await getDashboard();
+  const data = await loadDashboard();
   return new Response(JSON.stringify(data), {
     headers: {
       'content-type': 'application/json; charset=utf-8',

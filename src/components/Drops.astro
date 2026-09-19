@@ -1,40 +1,44 @@
 ---
-import type { Dashboard } from '../lib/dashboard';
-import { ago, ctx, num, perMillion, shortDate } from '../lib/format';
+import type { Dashboard } from '../domain/dashboard';
+import type { Drop } from '../domain/drop';
+import { ago, ctx, num, perMillion, shortDate } from '../ui/format';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const now = Date.now();
 const drops = d.drops.slice(0, 22);
-function price(x: typeof drops[number]) {
+const FRESH_MS = 3 * 86_400_000;
+function price(x: Drop) {
   if (x.free) return 'FREE';
   if (x.promptPerM === undefined) return '—';
   return `${perMillion(x.promptPerM)} / ${perMillion(x.completionPerM ?? 0)}`;
 }
 ---
-<section class="section wrap">
+<section class="section wrap reveal">
   <div class="grid grid-2">
     <div class="panel">
       <div class="panel-head"><h2><span>▼</span>FRESH DROPS</h2><span class="pill live">OPENROUTER · NEWEST LISTINGS</span></div>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th>Landed</th><th>Model</th><th>Lab</th><th class="num">Ctx</th><th class="num">$/M in / out</th></tr></thead>
-          <tbody>
-            {drops.map((x) => {
-              const lab = d.labs.find((l) => l.id === x.labId);
-              const fresh = now - Date.parse(x.createdAt) < 3 * 86400_000;
-              return (
-                <tr class={fresh ? 'fresh' : ''}>
-                  <td class="muted" title={x.createdAt}>{fresh ? <span class="glow-m">{ago(x.createdAt, now)}</span> : shortDate(x.createdAt)}</td>
-                  <td><a href={x.url} target="_blank" rel="noopener">{x.name}</a>{x.modality?.includes('image') && <span class="tag" style="color:var(--cyan);margin-left:6px">VIS</span>}</td>
-                  <td style={`color:${lab?.color ?? 'var(--muted)'}`}>{lab ? lab.short : x.lab}</td>
-                  <td class="num muted">{ctx(x.context)}</td>
-                  <td class="num" style={x.free ? 'color:var(--green)' : ''}>{price(x)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {drops.length ? (
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Landed</th><th>Model</th><th>Lab</th><th class="num">Ctx</th><th class="num">$/M in / out</th></tr></thead>
+            <tbody>
+              {drops.map((x) => {
+                const lab = d.labs.find((l) => l.id === x.labId);
+                const fresh = now - Date.parse(x.createdAt) < FRESH_MS;
+                return (
+                  <tr class={fresh ? 'fresh' : ''}>
+                    <td class="muted" title={x.createdAt}>{fresh ? <span class="glow-m">{ago(x.createdAt, now)}</span> : shortDate(x.createdAt)}</td>
+                    <td><a href={x.url} target="_blank" rel="noopener">{x.name}</a>{x.modality?.includes('image') && <span class="tag vis">VIS</span>}</td>
+                    <td style={`color:${lab?.color ?? 'var(--muted)'}`}>{lab ? lab.short : x.lab}</td>
+                    <td class="num muted">{ctx(x.context)}</td>
+                    <td class={`num ${x.free ? 'glow-g' : ''}`}>{price(x)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : <p class="empty">OpenRouter unreachable.</p>}
     </div>
 
     <div class="panel">
@@ -56,11 +60,11 @@ function price(x: typeof drops[number]) {
             </tbody>
           </table>
         </div>
-      ) : <p class="muted">Hugging Face unreachable.</p>}
+      ) : <p class="empty">Hugging Face unreachable.</p>}
       {d.papers.length > 0 && (
         <>
-          <div class="panel-head" style="margin-top:16px"><h2><span>§</span>PAPERS OF THE DAY</h2></div>
-          <ul class="papers">
+          <div class="panel-head sub-head"><h2><span>§</span>PAPERS OF THE DAY</h2></div>
+          <ul class="list papers">
             {d.papers.slice(0, 6).map((p) => <li><span class="glow-y">▲{p.upvotes}</span> <a href={p.url} target="_blank" rel="noopener">{p.title}</a></li>)}
           </ul>
         </>
@@ -69,7 +73,6 @@ function price(x: typeof drops[number]) {
   </div>
 </section>
 <style>
-  tr.fresh td { background: rgba(255,43,214,0.06); }
-  .papers { list-style: none; margin: 0; padding: 0; font-size: 19px; }
-  .papers li { padding: 5px 0; border-bottom: 1px dotted rgba(74,63,138,0.4); }
+  .vis { color: var(--cyan); margin-left: 6px; }
+  .papers { font-size: 19px; }
 </style>

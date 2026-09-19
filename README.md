@@ -21,7 +21,7 @@ X/Twitter has no free read API and the mirrors are gone, so the page links a wat
 
 ### DROPCON
 
-Scored 0–100 in `src/lib/dropcon.ts` and bucketed into five levels:
+Scored 0–100 in `src/domain/dropcon.ts` and bucketed into five levels:
 
 | Signal                                             | Weight        |
 | -------------------------------------------------- | ------------- |
@@ -39,12 +39,25 @@ Each lab card also carries a **heat** score (7-day odds, 30-day odds, recency of
 
 Astro 7 rendering on demand on a Cloudflare Worker via `@astrojs/cloudflare`. There is no database and no cron:
 
-- every upstream call goes through `cachedText` / `cachedJson` in `src/lib/fetch.ts`, which buffers the body and stores it in the Workers Cache API for the TTL above;
+- every upstream call goes through `cachedText` / `cachedJson` in `src/infra/edge-cache.ts`, which buffers the body and stores it in the Workers Cache API for the TTL above;
 - the assembled dashboard is memoised in the same cache for 2 minutes, so a page view is one cache read and each upstream is hit at most once per colo per window;
 - a source that fails or times out (8 s) degrades to empty data and shows up in the **Source health** list rather than taking the page down;
 - the browser reloads the page every 5 minutes while visible.
 
 The Cache API is per Cloudflare colo, so the first visitor in a region pays one cold build (about a second). A KV-backed global snapshot would remove that; it hasn't been needed.
+
+### Code layout
+
+| Directory        | Holds                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `src/domain`     | Pure rules: labs, markets, drops, feed, DROPCON, lab heat, `assembleDashboard`. No I/O. |
+| `src/adapters`   | One module per upstream: a pure DTO→domain mapper plus a cached `fetch*()`.             |
+| `src/infra`      | Edge cache wrapper, `collect()` (timeout + degrade), text helpers.                      |
+| `src/app`        | `loadDashboard()`: fan out, collect, assemble, memoise.                                 |
+| `src/ui`         | Presentation formatting.                                                                |
+| `src/components` | Astro markup; shared styling in `src/styles/global.css`.                                |
+
+`test/` mirrors `src/`. Domain and infra are tested directly, adapters against fixtures with the cache mocked, components through Astro's container API. Coverage thresholds are enforced in `vitest.config.ts`.
 
 ## Develop
 
@@ -73,7 +86,7 @@ To run your own copy: change `name` in `wrangler.jsonc`, drop or replace the Sko
 
 ## Contributing
 
-Issues and pull requests are welcome. Good first contributions: a new free signal source (add a module under `src/lib/sources/`, wrap it in `safe()` in `src/lib/dashboard.ts`, add it to the `sources` health list), a new lab in `src/lib/labs.ts`, or a better DROPCON weighting with the reasoning in the pull request. Keep sources free and unauthenticated; the point is that anyone can deploy this.
+Issues and pull requests are welcome. Good first contributions: a new free signal source (add an adapter under `src/adapters/` with a pure `toX(dto)` mapper, wire it with `collect()` in `src/app/load-dashboard.ts`; the health list picks it up), a new lab in `src/domain/lab.ts`, or a better DROPCON weighting with the reasoning in the pull request. Keep sources free and unauthenticated; the point is that anyone can deploy this.
 
 ## License
 

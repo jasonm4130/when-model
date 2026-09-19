@@ -2,13 +2,13 @@
 interface Props { generatedAt: string }
 const { generatedAt } = Astro.props;
 ---
-<footer class="wrap foot">
+<footer class="wrap foot reveal">
   <div class="panel disclaimer">
     <div class="tiny glow-y">OPERATIONAL DISCLAIMER</div>
     <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly. ▼</p>
   </div>
   <div class="foot-row">
-    <span class="muted">GENERATED {generatedAt.replace('T', ' ').slice(0, 19)}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a></span>
+    <span class="muted">GENERATED {generatedAt.replace('T', ' ').slice(0, 19)}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a> · <a href="https://github.com/jasonm4130/when-model" target="_blank" rel="noopener">source</a></span>
     <span class="muted">whenmodel.com · built on Astro + Cloudflare Workers</span>
   </div>
 </footer>

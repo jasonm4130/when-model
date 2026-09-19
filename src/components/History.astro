@@ -16,13 +16,13 @@ const faq = [
   { q: 'Is this financial advice?', a: 'No. Odds are what traders think, not what labs have decided. Model release dates slip. Do not bet the GPU budget on a DROPCON reading.' },
 ];
 ---
-<section class="section wrap">
-  <div class="panel-head" style="border:0;margin-bottom:6px">
-    <h2 class="head" style="font-size:13px;color:#fff"><span style="color:var(--magenta)">▤</span> A BRIEF HISTORY OF VAGUE-POSTING</h2>
+<section class="section wrap reveal">
+  <div class="section-head">
+    <h2><span>▤</span>A BRIEF HISTORY OF VAGUE-POSTING</h2>
   </div>
   <div class="timeline">
-    {eras.map((e) => (
-      <article class="era panel">
+    {eras.map((e, i) => (
+      <article class="era panel" style={`--i:${i}`}>
         <div class="tiny glow-c">{e.when}</div>
         <h3 class="era-title">{e.title}</h3>
         <p>{e.body}</p>
@@ -32,8 +32,8 @@ const faq = [
 
   <hr class="neon" />
 
-  <div class="panel-head" style="border:0;margin-bottom:6px">
-    <h2 class="head" style="font-size:13px;color:#fff"><span style="color:var(--magenta)">?</span> FREQUENTLY ASKED QUESTIONS</h2>
+  <div class="section-head">
+    <h2><span>?</span>FREQUENTLY ASKED QUESTIONS</h2>
   </div>
   <div class="faq">
     {faq.map((f) => (
@@ -47,10 +47,11 @@ const faq = [
 <style>
   .timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
   .era-title { font-size: 11px; color: var(--yellow); margin: 8px 0; }
-  .era p { margin: 0; color: var(--text); font-size: 19px; }
+  .era p { color: var(--text); font-size: 19px; }
   .faq { display: grid; gap: 10px; }
   .faq .q { font-size: 10px; color: #fff; margin-left: 6px; }
   .faq p { margin: 10px 0 0; color: var(--text); font-size: 20px; }
-  summary::after { content: '+'; float: right; color: var(--magenta); font-family: var(--font-head); font-size: 12px; }
+  summary::after { content: '+'; float: right; color: var(--magenta); font-family: var(--font-head); font-size: 12px; transition: transform var(--fast) var(--ease); }
   details[open] summary::after { content: '−'; }
+  details p { animation: rise 300ms var(--ease) both; }
 </style>
