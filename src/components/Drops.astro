@@ -1,0 +1,76 @@
+---
+import type { Dashboard } from '../lib/dashboard';
+import { ago, ctx, num, shortDate } from '../lib/format';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const now = Date.now();
+const drops = d.drops.slice(0, 22);
+function price(x: typeof drops[number]) {
+  if (x.free) return 'FREE';
+  if (x.promptPerM === undefined) return '—';
+  const f = (n: number) => (n < 0.1 ? n.toFixed(3) : n < 10 ? n.toFixed(2) : n.toFixed(0)).replace(/\.?0+$/, '');
+  return `$${f(x.promptPerM)} / $${f(x.completionPerM ?? 0)}`;
+}
+---
+<section class="section wrap">
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-head"><h2><span>▼</span>FRESH DROPS</h2><span class="pill live">OPENROUTER · NEWEST LISTINGS</span></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Landed</th><th>Model</th><th>Lab</th><th class="num">Ctx</th><th class="num">$/M in / out</th></tr></thead>
+          <tbody>
+            {drops.map((x) => {
+              const lab = d.labs.find((l) => l.id === x.labId);
+              const fresh = now - Date.parse(x.createdAt) < 3 * 86400_000;
+              return (
+                <tr class={fresh ? 'fresh' : ''}>
+                  <td class="muted" title={x.createdAt}>{fresh ? <span class="glow-m">{ago(x.createdAt, now)}</span> : shortDate(x.createdAt)}</td>
+                  <td><a href={x.url} target="_blank" rel="noopener">{x.name}</a>{x.modality?.includes('image') && <span class="tag" style="color:var(--cyan);margin-left:6px">VIS</span>}</td>
+                  <td style={`color:${lab?.color ?? 'var(--muted)'}`}>{lab ? lab.short : x.lab}</td>
+                  <td class="num muted">{ctx(x.context)}</td>
+                  <td class="num" style={x.free ? 'color:var(--green)' : ''}>{price(x)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2><span>▲</span>OPEN WEIGHTS TRENDING</h2><span class="pill">HUGGING FACE · TEXT-GEN</span></div>
+      {d.trending.length ? (
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Repo</th><th class="num">♥</th><th class="num">DLs</th><th class="num">Age</th></tr></thead>
+            <tbody>
+              {d.trending.map((t, i) => (
+                <tr>
+                  <td class="muted">{i + 1}</td>
+                  <td><a href={t.url} target="_blank" rel="noopener">{t.id}</a></td>
+                  <td class="num glow-m">{num(t.likes)}</td>
+                  <td class="num muted">{num(t.downloads)}</td>
+                  <td class="num muted">{ago(t.createdAt, now).replace(' ago', '')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p class="muted">Hugging Face unreachable.</p>}
+      {d.papers.length > 0 && (
+        <>
+          <div class="panel-head" style="margin-top:16px"><h2><span>§</span>PAPERS OF THE DAY</h2></div>
+          <ul class="papers">
+            {d.papers.slice(0, 6).map((p) => <li><span class="glow-y">▲{p.upvotes}</span> <a href={p.url} target="_blank" rel="noopener">{p.title}</a></li>)}
+          </ul>
+        </>
+      )}
+    </div>
+  </div>
+</section>
+<style>
+  tr.fresh td { background: rgba(255,43,214,0.06); }
+  .papers { list-style: none; margin: 0; padding: 0; font-size: 19px; }
+  .papers li { padding: 5px 0; border-bottom: 1px dotted rgba(74,63,138,0.4); }
+</style>

@@ -1,0 +1,72 @@
+---
+import type { Dashboard } from '../lib/dashboard';
+import { pct } from '../lib/format';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const okCount = d.sources.filter((s) => s.ok).length;
+const ticker = [
+  ...d.labs.filter((l) => l.weekOdds).map((l) => `${l.name.toUpperCase()}: ${pct(l.weekOdds!.p)} ODDS OF A DROP BY ${l.weekOdds!.label.toUpperCase()}`),
+  ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${(x.lab ?? '').toUpperCase()})`),
+  ...d.feed.filter((f) => f.alert).slice(0, 6).map((f) => `${f.source.toUpperCase()}: ${f.title.toUpperCase()}`),
+];
+---
+<header class="hero">
+  <div class="statusbar wrap">
+    <div class="left">
+      <span class="tiny glow-g">◉ STATUS: {okCount === d.sources.length ? 'OPERATIONAL' : okCount > d.sources.length / 2 ? 'DEGRADED' : 'IMPAIRED'}</span>
+      <span class="tiny muted">{d.labs.length} LABS · {d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
+    </div>
+    <div class="right">
+      <span class="tiny muted">UTC</span> <span class="clock glow-c" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
+    </div>
+  </div>
+  <div class="wrap hero-inner">
+    <div class="title-block">
+      <div class="tiny glow-m flicker">▌▌ FRONTIER MODEL RELEASE INTELLIGENCE ▐▐</div>
+      <h1 class="logo"><span class="w">WHEN</span><span class="m">MODEL</span><span class="q">?</span></h1>
+      <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
+    </div>
+    <div class="hero-side">
+      <div class="tiny muted">POWERED BY</div>
+      <div class="brands">
+        <a href="https://polymarket.com?utm_source=whenmodel.com" rel="noopener" target="_blank">Polymarket</a>
+        <a href="https://openrouter.ai" rel="noopener" target="_blank">OpenRouter</a>
+        <a href="https://huggingface.co" rel="noopener" target="_blank">Hugging Face</a>
+        <a href="https://news.ycombinator.com" rel="noopener" target="_blank">Hacker News</a>
+      </div>
+      <a class="pill" href="/api/dashboard.json">◈ JSON API</a>
+    </div>
+  </div>
+  <div class="marquee mono glow-y">
+    <div>{ticker.map((t) => <span>▶ {t}</span>)}{ticker.map((t) => <span>▶ {t}</span>)}</div>
+  </div>
+</header>
+<style>
+  .hero {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(7,6,15,0) 0%, rgba(7,6,15,0.2) 60%, var(--bg) 100%),
+      repeating-linear-gradient(90deg, rgba(255,43,214,0.12) 0 1px, transparent 1px 80px),
+      repeating-linear-gradient(0deg, rgba(0,229,255,0.10) 0 1px, transparent 1px 40px);
+    background-size: auto, auto, auto;
+    border-bottom: 2px solid var(--line);
+  }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; border-bottom: 1px solid rgba(74,63,138,0.4); }
+  .statusbar .left { display: flex; gap: 18px; flex-wrap: wrap; }
+  .clock { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .hero-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-block: 34px 26px; flex-wrap: wrap; }
+  .logo { font-size: clamp(30px, 6.5vw, 74px); line-height: 1; margin: 14px 0 12px; }
+  .logo .w { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5), 4px 4px 0 var(--blue); }
+  .logo .m { color: var(--magenta); text-shadow: 0 0 12px var(--magenta), 4px 4px 0 var(--cyan); }
+  .logo .q { color: var(--yellow); text-shadow: 0 0 12px var(--yellow); animation: blink 1.4s steps(2) infinite; }
+  .tag-line { margin: 0; font-size: 24px; color: var(--cyan); letter-spacing: 0.04em; }
+  .hero-side { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .brands { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: 20px; }
+  .brands a { border-bottom: 1px dotted var(--line2); }
+  @media (max-width: 700px) { .hero-side { align-items: flex-start; text-align: left; } .brands { justify-content: flex-start; } }
+</style>
+<script>
+  const el = document.querySelector('[data-clock]');
+  const tick = () => { if (el) el.textContent = new Date().toISOString().slice(11, 19) + 'Z'; };
+  tick(); setInterval(tick, 1000);
+</script>

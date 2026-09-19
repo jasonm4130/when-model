@@ -1,0 +1,64 @@
+---
+import type { Dashboard } from '../lib/dashboard';
+import { pct, shortDate } from '../lib/format';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const statusColor: Record<string, string> = { SHIPPING: 'var(--magenta)', HOT: 'var(--orange)', WARM: 'var(--yellow)', QUIET: 'var(--muted)' };
+const months = (() => { const out: string[] = []; const n = new Date(); for (let i = 11; i >= 0; i--) { const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth() - i, 1)); out.push(t.toLocaleString('en', { month: 'short', timeZone: 'UTC' })[0]); } return out; })();
+---
+<section class="section wrap">
+  <div class="panel-head" style="border:0;margin-bottom:6px">
+    <h2 class="head" style="font-size:13px;color:#fff"><span style="color:var(--magenta)">▦</span> LAB WATCH <span class="muted" style="font-size:9px;margin-left:8px">RELEASE TEMPO · ODDS · LAST DROP</span></h2>
+    <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
+  </div>
+  <div class="grid grid-3">
+    {d.labs.map((l) => {
+      const max = Math.max(1, ...l.histogram);
+      return (
+        <article class="panel lab" style={`--lab:${l.color}`}>
+          <div class="lab-head">
+            <div class="lab-name head"><span class="glyph">{l.glyph}</span> {l.name}</div>
+            <span class="tag" style={`color:${statusColor[l.status]}`}>{l.status}</span>
+          </div>
+          <div class="lab-stats">
+            <div><div class="tiny muted">DROP ≤7D</div><div class="stat glow-y">{pct(l.weekOdds?.p)}</div></div>
+            <div><div class="tiny muted">DROP ≤30D</div><div class="stat glow-c">{pct(l.monthOdds?.p)}</div></div>
+            <div><div class="tiny muted">LAST DROP</div><div class="stat">{l.daysSince === undefined ? '—' : l.daysSince === 0 ? 'TODAY' : `${l.daysSince}d`}</div></div>
+            <div><div class="tiny muted">30D DROPS</div><div class="stat">{l.drops30d}</div></div>
+          </div>
+          <div class="tiny muted" style="margin:10px 0 4px">RELEASE TEMPO · 12 MONTHS</div>
+          <div class="hist" title="Models listed on OpenRouter per month">
+            {l.histogram.map((v, i) => <div class="col"><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
+          </div>
+          <div class="latest">
+            <div class="tiny muted">LATEST</div>
+            {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
+          </div>
+          <div class="bar" style="margin-top:10px"><i style={`width:${l.heat}%; background:linear-gradient(90deg, var(--lab), var(--magenta))`}></i></div>
+          <div class="lab-foot">
+            <span class="tiny muted">HEAT {l.heat}</span>
+            <span class="x">{l.x.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</span>
+          </div>
+          {l.weekOdds && <a class="mkt" href={l.weekOdds.url} target="_blank" rel="noopener">▸ {l.weekOdds.title}</a>}
+        </article>
+      );
+    })}
+  </div>
+</section>
+<style>
+  .lab::before, .lab::after { border-color: var(--lab); }
+  .lab-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .lab-name { font-size: 11px; color: var(--lab); text-shadow: 0 0 8px var(--lab); }
+  .glyph { font-family: var(--font-mono); font-size: 18px; }
+  .lab-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .stat { font-size: 26px; line-height: 1.1; }
+  .hist { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; height: 54px; align-items: end; }
+  .col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+  .col i { display: block; width: 100%; background: var(--lab); opacity: 0.8; box-shadow: 0 0 6px var(--lab); }
+  .col span { font-size: 12px; color: var(--muted); line-height: 1; margin-top: 3px; }
+  .latest { margin-top: 10px; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lab-foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 17px; }
+  .x a { margin-left: 8px; color: var(--muted); }
+  .mkt { display: block; margin-top: 8px; font-size: 17px; color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
+  @media (max-width: 380px) { .lab-stats { grid-template-columns: repeat(2, 1fr); } }
+</style>

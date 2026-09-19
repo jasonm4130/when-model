@@ -1,0 +1,56 @@
+---
+const eras = [
+  { when: 'MAY 2024', title: '"her"', body: 'One word from Sam Altman the night before GPT-4o. The vague-post became the genre. Ever since, a lowercase tweet with no punctuation has moved more evals than a press release.' },
+  { when: 'AUG 2024', title: 'STRAWBERRY SEASON', body: 'A photo of strawberries, a "Q*" rumour cycle, and weeks of 🍓 replies. o1 shipped in September. The lesson: fruit is a leading indicator with a lag of 3 to 6 weeks.' },
+  { when: '2025', title: 'THE ARENA STEALTH ERA', body: 'Anonymous checkpoints with codenames appeared on LMArena days before launches: "nano-banana", "gemini-test", assorted mystery models. If a model is fighting under a fake name, somebody is about to ship.' },
+  { when: '2025', title: 'THE CHANGELOG LEAK', body: 'Model IDs land in SDK release notes, config strings and API error messages before the blog post goes up. GitHub release feeds became the new pizza delivery van.' },
+  { when: '2025–26', title: 'MARKETS PRICE THE DROP', body: 'Polymarket started listing "released by" markets per lab. Traders now aggregate every rumour into one number. When the 7-day odds cross 50%, the drop is usually real.' },
+  { when: 'NOW', title: 'WHENMODEL', body: 'Release markets, OpenRouter listings, Hugging Face trending, Hacker News, lab blogs and SDK changelogs on one screen. DROPCON does the reading for you.' },
+];
+const faq = [
+  { q: 'What is whenmodel?', a: 'A dashboard that fuses free public signals about frontier AI model releases: prediction market odds, model registry listings, lab blogs, SDK changelogs and Hacker News chatter, condensed into one readiness level (DROPCON).' },
+  { q: 'How is DROPCON computed?', a: 'Mostly from Polymarket release odds: the best "ships within 7 days" probability across labs carries the most weight, then 30-day odds, then how many frontier-lab models landed on OpenRouter this week, then Hacker News heat and release-shaped headlines. 5 is quiet, 1 is imminent.' },
+  { q: 'Where does the data come from?', a: 'Polymarket (gamma API), OpenRouter (models API), Hugging Face (trending models and daily papers), Hacker News (Algolia search), the OpenAI and DeepMind RSS feeds, the Anthropic newsroom and GitHub SDK releases. All free, all public, all fetched at the edge.' },
+  { q: 'Why no X / Twitter feed?', a: 'There is no free read API any more, and every mirror worth using has been shut down. We link the accounts that leak first instead. If that changes, the feed slots straight in.' },
+  { q: 'How often does it refresh?', a: 'Each source is cached at the Cloudflare edge for 5 to 30 minutes depending on how fast it moves. The page reloads itself every 5 minutes while open.' },
+  { q: 'Is this financial advice?', a: 'No. Odds are what traders think, not what labs have decided. Model release dates slip. Do not bet the GPU budget on a DROPCON reading.' },
+];
+---
+<section class="section wrap">
+  <div class="panel-head" style="border:0;margin-bottom:6px">
+    <h2 class="head" style="font-size:13px;color:#fff"><span style="color:var(--magenta)">▤</span> A BRIEF HISTORY OF VAGUE-POSTING</h2>
+  </div>
+  <div class="timeline">
+    {eras.map((e) => (
+      <article class="era panel">
+        <div class="tiny glow-c">{e.when}</div>
+        <h3 class="era-title">{e.title}</h3>
+        <p>{e.body}</p>
+      </article>
+    ))}
+  </div>
+
+  <hr class="neon" />
+
+  <div class="panel-head" style="border:0;margin-bottom:6px">
+    <h2 class="head" style="font-size:13px;color:#fff"><span style="color:var(--magenta)">?</span> FREQUENTLY ASKED QUESTIONS</h2>
+  </div>
+  <div class="faq">
+    {faq.map((f) => (
+      <details class="panel">
+        <summary><span class="glow-y">Q</span> <span class="head q">{f.q}</span></summary>
+        <p>{f.a}</p>
+      </details>
+    ))}
+  </div>
+</section>
+<style>
+  .timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+  .era-title { font-size: 11px; color: var(--yellow); margin: 8px 0; }
+  .era p { margin: 0; color: var(--text); font-size: 19px; }
+  .faq { display: grid; gap: 10px; }
+  .faq .q { font-size: 10px; color: #fff; margin-left: 6px; }
+  .faq p { margin: 10px 0 0; color: var(--text); font-size: 20px; }
+  summary::after { content: '+'; float: right; color: var(--magenta); font-family: var(--font-head); font-size: 12px; }
+  details[open] summary::after { content: '−'; }
+</style>

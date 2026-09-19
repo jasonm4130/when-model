@@ -1,0 +1,94 @@
+---
+import type { Dashboard } from '../lib/dashboard';
+import { pct, usd } from '../lib/format';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const releases = d.markets.filter((m) => m.kind === 'release').slice(0, 14);
+const boards = d.markets.filter((m) => m.kind === 'leaderboard' && m.slug !== d.bestModelMarket?.slug).slice(0, 10);
+const other = d.markets.filter((m) => m.kind === 'other').slice(0, 10);
+const best = d.bestModelMarket;
+const bestRows = best ? [...best.outcomes].filter((o) => !o.closed && o.label !== 'Other').sort((a, b) => b.yes - a.yes).slice(0, 8) : [];
+function topOutcomes(m: typeof d.markets[number], n = 3) {
+  // Polymarket pads multi-outcome events with 50/50 placeholders; drop those.
+  const live = m.outcomes.filter((o) => !o.closed && !(o.yes === 0.5 && /^(Other|Company [A-Z])$/.test(o.label)));
+  if (m.kind === 'release') {
+    // nearest open dates first, so "by Sept 24: 67%" reads as a timeline
+    return live.filter((o) => o.endDate).sort((a, b) => Date.parse(a.endDate!) - Date.parse(b.endDate!)).slice(0, n);
+  }
+  return live.sort((a, b) => b.yes - a.yes).slice(0, n);
+}
+---
+<section class="section wrap">
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-head"><h2><span>◔</span>RELEASE MARKETS</h2><a class="pill live" href="https://polymarket.com?utm_source=whenmodel.com" target="_blank" rel="noopener">LIVE ODDS · POLYMARKET</a></div>
+      {releases.length ? (
+        <div class="mlist">
+          {releases.map((m) => {
+            const lab = d.labs.find((l) => l.id === m.labId);
+            return (
+              <a class="mrow" href={m.url} target="_blank" rel="noopener" style={`--lab:${lab?.color ?? 'var(--cyan)'}`}>
+                <div class="mtitle"><span class="mdot"></span>{m.title} <span class="muted vol">{usd(m.vol24)} 24h</span></div>
+                <div class="outs">
+                  {topOutcomes(m, 4).map((o) => <span class="out"><b style={`color:${o.yes >= 0.5 ? 'var(--green)' : o.yes >= 0.2 ? 'var(--yellow)' : 'var(--muted)'}`}>{pct(o.yes)}</b> {o.label}</span>)}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      ) : <p class="muted">Polymarket unreachable. Odds return when it does.</p>}
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="panel-head"><h2><span>◆</span>BEST MODEL RACE</h2>{best && <span class="pill">{usd(best.vol24)} 24H VOL</span>}</div>
+        {best ? (
+          <>
+            <a href={best.url} target="_blank" rel="noopener" class="best-title">{best.title}</a>
+            <div class="race">
+              {bestRows.map((o) => {
+                const lab = d.labs.find((l) => l.pmCompany === o.label);
+                return (
+                  <div class="race-row">
+                    <span class="race-name" style={`color:${lab?.color ?? 'var(--text)'}`}>{o.label}</span>
+                    <div class="bar"><i style={`width:${Math.max(1, o.yes * 100)}%; background:${lab?.color ?? 'var(--cyan)'}`}></i></div>
+                    <span class="race-pct num">{pct(o.yes)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        ) : <p class="muted">No "best model" market found.</p>}
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2><span>◈</span>BENCHMARK & OTHER MARKETS</h2></div>
+        <div class="mlist compact">
+          {[...boards, ...other].slice(0, 12).map((m) => (
+            <a class="mrow" href={m.url} target="_blank" rel="noopener">
+              <div class="mtitle">{m.title} <span class="muted vol">{usd(m.vol24)}</span></div>
+              <div class="outs">{topOutcomes(m, 3).map((o) => <span class="out"><b class="glow-c">{pct(o.yes)}</b> {o.label}</span>)}</div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .stack { display: grid; gap: 16px; align-content: start; }
+  .mlist { display: flex; flex-direction: column; }
+  .mrow { display: block; padding: 8px 4px; border-bottom: 1px dotted rgba(74,63,138,0.5); color: var(--text); }
+  .mrow:hover { background: rgba(255,43,214,0.06); text-shadow: none; }
+  .mtitle { font-size: 20px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .mdot { width: 8px; height: 8px; background: var(--lab); box-shadow: 0 0 8px var(--lab); display: inline-block; flex: none; align-self: center; }
+  .vol { font-size: 15px; margin-left: auto; }
+  .outs { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 3px; font-size: 17px; color: var(--muted); }
+  .out b { font-weight: 400; }
+  .compact .mtitle { font-size: 18px; }
+  .best-title { display: block; font-size: 20px; margin-bottom: 10px; color: var(--yellow); }
+  .race-row { display: grid; grid-template-columns: 130px 1fr 56px; gap: 10px; align-items: center; padding: 4px 0; }
+  .race-name { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .race-pct { font-size: 20px; }
+  @media (max-width: 480px) { .race-row { grid-template-columns: 90px 1fr 50px; } }
+</style>
