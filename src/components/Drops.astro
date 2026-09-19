@@ -1,6 +1,6 @@
 ---
 import type { Dashboard } from '../lib/dashboard';
-import { ago, ctx, num, shortDate } from '../lib/format';
+import { ago, ctx, num, perMillion, shortDate } from '../lib/format';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const now = Date.now();
@@ -8,8 +8,7 @@ const drops = d.drops.slice(0, 22);
 function price(x: typeof drops[number]) {
   if (x.free) return 'FREE';
   if (x.promptPerM === undefined) return '—';
-  const f = (n: number) => (n < 0.1 ? n.toFixed(3) : n < 10 ? n.toFixed(2) : n.toFixed(0)).replace(/\.?0+$/, '');
-  return `$${f(x.promptPerM)} / $${f(x.completionPerM ?? 0)}`;
+  return `${perMillion(x.promptPerM)} / ${perMillion(x.completionPerM ?? 0)}`;
 }
 ---
 <section class="section wrap">

@@ -27,3 +27,9 @@ export function shortDate(iso: string): string {
     .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' })
     .toUpperCase();
 }
+
+/** Price per million tokens: 3 decimals under $0.10, 2 under $10, whole dollars above. Never strips integer zeros. */
+export function perMillion(n: number): string {
+  const fixed = n < 0.1 ? n.toFixed(3) : n < 10 ? n.toFixed(2) : n.toFixed(0);
+  return `$${fixed.includes('.') ? fixed.replace(/0+$/, '').replace(/\.$/, '') : fixed}`;
+}

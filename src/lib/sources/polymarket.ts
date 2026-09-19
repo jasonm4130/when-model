@@ -46,7 +46,7 @@ const BASE = 'https://gamma-api.polymarket.com';
 const UTM = '?utm_source=whenmodel.com&utm_medium=dashboard';
 
 export function parseEvent(e: PmEvent): Market {
-  const outcomes: Outcome[] = e.markets
+  const outcomes: Outcome[] = (e.markets ?? [])
     .map((m) => {
       let yes = 0;
       try {
@@ -71,7 +71,7 @@ export function parseEvent(e: PmEvent): Market {
   return {
     slug: e.slug,
     title: e.title.replace(/\.\.\.\?$/, '…?'),
-    url: `https://polymarket.com/event/${e.slug}${UTM}`,
+    url: `https://polymarket.com/event/${encodeURIComponent(e.slug)}${UTM}`,
     vol24: e.volume24hr ?? 0,
     volume: e.volume ?? 0,
     kind: isRelease ? 'release' : isBoard ? 'leaderboard' : 'other',
@@ -91,8 +91,8 @@ export async function fetchMarkets(): Promise<Market[]> {
   const [releases, ai] = await Promise.all([tagEvents('ai-releases'), tagEvents('ai')]);
   const seen = new Set<string>();
   const out: Market[] = [];
-  for (const e of [...releases, ...ai]) {
-    if (seen.has(e.slug) || e.closed) continue;
+  for (const e of [...(releases ?? []), ...(ai ?? [])]) {
+    if (typeof e?.slug !== 'string' || typeof e.title !== 'string' || seen.has(e.slug) || e.closed) continue;
     seen.add(e.slug);
     const m = parseEvent(e);
     // Keep model-relevant markets only: releases, leaderboards, or anything naming a lab/model.

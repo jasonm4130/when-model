@@ -65,9 +65,14 @@ export async function buildDashboard(): Promise<Dashboard> {
     safe('github-sdks', fetchSdkReleases, [] as FeedItem[]),
   ]);
 
-  const bestModelMarket = markets.data
-    .filter((m) => /which company has the best ai model end of/i.test(m.title))
-    .sort((a, b) => b.vol24 - a.vol24)[0];
+  const boards = markets.data.filter((m) => m.kind === 'leaderboard');
+  const bestModelMarket =
+    boards
+      .filter((m) => /which company has the best ai model/i.test(m.title))
+      .sort((a, b) => b.vol24 - a.vol24)[0] ??
+    boards
+      .filter((m) => /best ai model/i.test(m.title) && !/arena|livebench|code|math/i.test(m.title))
+      .sort((a, b) => b.vol24 - a.vol24)[0];
 
   const labs: LabStatus[] = LABS.map((lab) => {
     const mine = drops.data.filter((d) => d.labId === lab.id);
@@ -126,13 +131,14 @@ export async function buildDashboard(): Promise<Dashboard> {
     ).length,
     hotStories: hn.data.filter((h) => (h.score ?? 0) >= 150).length,
     releaseAlerts: feed.filter((f) => f.alert && now - Date.parse(f.publishedAt) < 48 * 3600_000).length,
+    oddsAvailable: markets.ok,
   });
 
   return {
     generatedAt: new Date(now).toISOString(),
     dropcon,
     labs,
-    markets: markets.data.sort((a, b) => b.vol24 - a.vol24),
+    markets: markets.data.sort((a, b) => b.vol24 - a.vol24).slice(0, 60),
     bestModelMarket,
     drops: drops.data.slice(0, 40),
     trending: trending.data,

@@ -37,3 +37,11 @@ describe('computeDropcon', () => {
     ).toBe(100);
   });
 });
+
+describe('computeDropcon degraded', () => {
+  it('flags the reading as a floor when odds are unavailable', () => {
+    const d = computeDropcon({ ...quiet, hotStories: 3, oddsAvailable: false });
+    expect(d.degraded).toBe(true);
+    expect(d.drivers[0]).toMatch(/odds unavailable/i);
+  });
+});

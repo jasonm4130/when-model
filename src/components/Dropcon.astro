@@ -11,7 +11,7 @@ const hottest = d.labs[0];
 <section class="section wrap">
   <div class="grid grid-2 dropcon-grid">
     <div class="panel dropcon" style={`--lvl:${color}`}>
-      <div class="panel-head"><h2><span>▣</span>DROPCON LEVEL</h2><span class="pill live">LIVE</span></div>
+      <div class="panel-head"><h2><span>▣</span>DROPCON LEVEL</h2>{c.degraded ? <span class="pill err">ODDS OFFLINE · FLOOR</span> : <span class="pill live">LIVE</span>}</div>
       <div class="dc-body">
         <div class="dc-num head" style={`color:${color}; text-shadow:0 0 14px ${color}, 0 0 40px ${color}`}>{c.level}</div>
         <div class="dc-text">

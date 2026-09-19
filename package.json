@@ -1,19 +1,15 @@
 {
   "name": "when-model",
   "version": "0.0.1",
-  "description": "Frontier AI model release intelligence dashboard: DROPCON from Polymarket odds, OpenRouter listings, Hugging Face, Hacker News and lab feeds",
   "private": true,
-  "license": "MIT",
+  "description": "Frontier AI model release intelligence dashboard: DROPCON from Polymarket odds, OpenRouter listings, Hugging Face, Hacker News and lab feeds",
   "homepage": "https://whenmodel.com",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jasonm4130/when-model.git"
   },
   "type": "module",
-  "packageManager": "pnpm@11.22.0",
-  "engines": {
-    "node": ">=22.12.0"
-  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -37,7 +33,12 @@
     "vitest": "^5.0.1",
     "wrangler": "^4.134.0"
   },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@11.22.0",
   "allowScripts": {
-    "esbuild": true
+    "esbuild": true,
+    "workerd": true
   }
 }

@@ -7,4 +7,6 @@ export default defineConfig({
   output: 'server',
   session: false,
   adapter: cloudflare({ imageService: 'passthrough' }),
+  // Never inline component scripts: the CSP in src/middleware.ts allows 'self' only.
+  vite: { build: { assetsInlineLimit: 0 } },
 });

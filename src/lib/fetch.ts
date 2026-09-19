@@ -7,38 +7,53 @@
  */
 
 const UA = 'whenmodel.com/1.0 (+https://whenmodel.com; signal dashboard)';
+/** Upstream fetches abort after this long so a slow source cannot orphan a cache write. */
+const UPSTREAM_TIMEOUT_MS = 6500;
 
 function edgeCache(): Cache | undefined {
   return typeof caches !== 'undefined' ? (caches as unknown as { default?: Cache }).default : undefined;
 }
 
+/** Cache keys live under our own origin so we never depend on cross-origin key semantics. */
+function cacheKey(kind: string, id: string): Request {
+  return new Request(`https://whenmodel.com/__cache/${kind}/${encodeURIComponent(id)}`);
+}
+
+async function cachePut(key: Request, body: string, contentType: string, ttl: number): Promise<void> {
+  const cache = edgeCache();
+  if (!cache) return;
+  try {
+    await cache.put(
+      key,
+      new Response(body, {
+        headers: { 'content-type': contentType, 'cache-control': `public, max-age=${ttl}` },
+      }),
+    );
+  } catch (e) {
+    console.error('[cache:put]', key.url, e instanceof Error ? e.message : e);
+  }
+}
+
 /** Fetch a URL as text, serving from the edge cache for `ttl` seconds when possible. */
 export async function cachedText(url: string, ttl = 600, init?: RequestInit): Promise<string> {
-  const req = new Request(url, {
+  const key = cacheKey('src', url);
+  const cache = edgeCache();
+  if (cache) {
+    const hit = await cache.match(key);
+    if (hit) return hit.text();
+  }
+  const res = await fetch(url, {
     ...init,
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     headers: {
       'user-agent': UA,
       accept: 'application/json, application/xml, text/xml, text/html;q=0.9, */*;q=0.8',
       ...(init?.headers as Record<string, string> | undefined),
     },
   });
-  const cache = edgeCache();
-  if (cache) {
-    const hit = await cache.match(req);
-    if (hit) return hit.text();
-  }
-  const res = await fetch(req);
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   const text = await res.text();
-  if (cache) {
-    const copy = new Response(text, {
-      headers: {
-        'content-type': res.headers.get('content-type') ?? 'text/plain; charset=utf-8',
-        'cache-control': `public, max-age=${ttl}`,
-      },
-    });
-    await cache.put(req, copy).catch(() => {});
-  }
+  await cachePut(key, text, res.headers.get('content-type') ?? 'text/plain; charset=utf-8', ttl);
   return text;
 }
 
@@ -51,8 +66,8 @@ export async function cachedJson<T>(url: string, ttl = 300, init?: RequestInit):
  * dashboard so concurrent renders in a colo share one upstream pass.
  */
 export async function memoJson<T>(key: string, ttl: number, build: () => Promise<T>): Promise<T> {
+  const req = cacheKey('memo', key);
   const cache = edgeCache();
-  const req = new Request(`https://whenmodel.com/__memo/${key}`);
   if (cache) {
     const hit = await cache.match(req);
     if (hit) {
@@ -64,16 +79,7 @@ export async function memoJson<T>(key: string, ttl: number, build: () => Promise
     }
   }
   const value = await build();
-  if (cache) {
-    await cache
-      .put(
-        req,
-        new Response(JSON.stringify(value), {
-          headers: { 'content-type': 'application/json', 'cache-control': `public, max-age=${ttl}` },
-        }),
-      )
-      .catch(() => {});
-  }
+  await cachePut(req, JSON.stringify(value), 'application/json', ttl);
   return value;
 }
 
@@ -101,15 +107,33 @@ export async function safe<T>(
   }
 }
 
+/** ISO timestamp for a parseable date string, else undefined. Never throws. */
+export function toIso(s: string | number | undefined | null): string | undefined {
+  if (s === undefined || s === null || s === '') return undefined;
+  const t = typeof s === 'number' ? s : Date.parse(s);
+  return Number.isFinite(t) ? new Date(t).toISOString() : undefined;
+}
+
+/** Only http(s) URLs may become links; upstream data is untrusted. */
+export function isHttpUrl(u: unknown): u is string {
+  return typeof u === 'string' && /^https?:\/\/[^\s"'<>]+$/i.test(u);
+}
+
 export function decodeEntities(s: string): string {
   return s
     .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-    .replace(/&amp;/g, '&')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => cp(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, n) => cp(Number(n)))
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
     .trim();
+}
+
+function cp(n: number): string {
+  return Number.isInteger(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '';
 }

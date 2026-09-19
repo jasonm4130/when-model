@@ -10,6 +10,8 @@ export interface DropconInput {
   hotStories: number;
   /** Feed items flagged as release-shaped in the last 48h. */
   releaseAlerts: number;
+  /** False when the odds source failed: the reading is then a floor, not a measurement. */
+  oddsAvailable?: boolean;
 }
 
 export interface Dropcon {
@@ -18,6 +20,8 @@ export interface Dropcon {
   blurb: string;
   score: number;
   drivers: string[];
+  /** True when Polymarket was unreachable, so odds contributed nothing. */
+  degraded: boolean;
 }
 
 const LEVELS: Record<number, { name: string; blurb: string }> = {
@@ -57,6 +61,8 @@ export function computeDropcon(i: DropconInput): Dropcon {
   if (i.releaseAlerts >= 2) drivers.push(`${i.releaseAlerts} release-shaped headlines in the feed`);
   score = Math.min(100, Math.round(score));
   const level: Dropcon['level'] = score >= 75 ? 1 : score >= 55 ? 2 : score >= 35 ? 3 : score >= 15 ? 4 : 5;
-  if (!drivers.length) drivers.push('All quiet on the release front');
-  return { level, score, drivers, ...LEVELS[level] };
+  const degraded = i.oddsAvailable === false;
+  if (degraded) drivers.unshift('Prediction-market odds unavailable: reading is a floor');
+  else if (!drivers.length) drivers.push('All quiet on the release front');
+  return { level, score, drivers, degraded, ...LEVELS[level] };
 }

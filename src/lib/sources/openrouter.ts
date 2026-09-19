@@ -1,4 +1,4 @@
-import { cachedJson } from '../fetch';
+import { cachedJson, toIso } from '../fetch';
 import { labForOpenRouterId } from '../labs';
 
 interface OrModel {
@@ -27,8 +27,16 @@ export interface Drop {
 
 export async function fetchDrops(): Promise<Drop[]> {
   const { data } = await cachedJson<{ data: OrModel[] }>('https://openrouter.ai/api/v1/models', 600);
-  return data
-    .filter((m) => !m.id.startsWith('~') && !m.id.endsWith(':batch') && !m.id.startsWith('openrouter/'))
+  return (data ?? [])
+    .filter(
+      (m) =>
+        typeof m.id === 'string' &&
+        typeof m.name === 'string' &&
+        Number.isFinite(m.created) &&
+        !m.id.startsWith('~') &&
+        !m.id.endsWith(':batch') &&
+        !m.id.startsWith('openrouter/'),
+    )
     .sort((a, b) => b.created - a.created)
     .map((m) => {
       const lab = labForOpenRouterId(m.id);
@@ -39,12 +47,12 @@ export async function fetchDrops(): Promise<Drop[]> {
         name: m.name.replace(/^[^:]+:\s*/, ''),
         lab: lab?.name ?? m.name.split(':')[0],
         labId: lab?.id,
-        createdAt: new Date(m.created * 1000).toISOString(),
+        createdAt: toIso(m.created * 1000) ?? new Date(0).toISOString(),
         context: m.context_length,
         promptPerM: Number.isFinite(p) ? p : undefined,
         completionPerM: Number.isFinite(c) ? c : undefined,
         modality: m.architecture?.modality,
-        url: `https://openrouter.ai/${m.id}`,
+        url: `https://openrouter.ai/${m.id.split('/').map(encodeURIComponent).join('/')}`,
         free: m.id.endsWith(':free') || p === 0,
       };
     });
