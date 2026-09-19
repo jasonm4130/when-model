@@ -36,9 +36,5 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "packageManager": "pnpm@11.22.0",
-  "allowScripts": {
-    "esbuild": true,
-    "workerd": true
-  }
+  "packageManager": "pnpm@11.22.0"
 }

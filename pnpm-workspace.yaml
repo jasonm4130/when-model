@@ -1,3 +1,4 @@
+# pnpm 11 reads build-script approval from here (not package.json).
 allowBuilds:
-  esbuild: set this to true or false
-  workerd: set this to true or false
+  esbuild: true # Astro/Vite bundler
+  workerd: true # Cloudflare Workers runtime for wrangler dev and astro build
