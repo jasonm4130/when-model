@@ -7,6 +7,8 @@ afterEach(() => {
 
 describe('buildDashboard', () => {
   it('fans out to all nine sources, tolerates failures and memoises the result', async () => {
+    const now = Date.parse('2026-09-20T00:00:00Z');
+    vi.spyOn(Date, 'now').mockReturnValue(now);
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const memo = vi.fn(async (_id: string, _ttl: number, build: () => Promise<unknown>) => build());
     vi.doMock('../../src/infra/edge-cache', () => ({ memoJson: memo }));
@@ -18,7 +20,7 @@ describe('buildDashboard', () => {
           name: 'GPT-6',
           lab: 'OpenAI',
           labId: 'openai',
-          createdAt: new Date().toISOString(),
+          createdAt: new Date(now).toISOString(),
           url: 'u',
           free: false,
         },
