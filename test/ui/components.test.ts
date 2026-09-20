@@ -159,10 +159,18 @@ describe('components', async () => {
     expect((html.match(/class="col"/g) ?? []).length).toBe(d.labs.length * 12);
   });
 
-  it('Header reports status and builds the ticker', async () => {
+  it('Header reports status and exposes one accessible ticker with an explicit pause control', async () => {
     const html = await container.renderToString(Header, { props: { d } });
     expect(html).toContain('STATUS: DEGRADED');
     expect(html).toContain('NEW ON OPENROUTER: CLAUDE FABLE 5.1');
     expect(html).toContain('OPENAI: 66% ODDS OF A DROP BY SEPTEMBER 24');
+    expect(html).toContain('data-ticker-toggle');
+    expect(html).toContain('PAUSE TICKER');
+    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain('aria-controls="ticker-track"');
+    expect(html).toContain('class="sr-only"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html.match(/class="ticker-group/g) ?? []).toHaveLength(2);
+    expect(html).toContain('class="ticker-group ticker-copy"');
   });
 });

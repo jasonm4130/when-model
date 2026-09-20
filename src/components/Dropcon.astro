@@ -38,7 +38,7 @@ const raceTitle = d.bestModelMarket?.title.replace(/which company has the best a
       <div class="panel-head"><h2><span>◎</span>HOTTEST LAB</h2><span class="pill">COMPOSITE HEAT</span></div>
       {hottest ? (
         <div class="hot" style={`--lab:${hottest.color}`}>
-          <div class="hot-name head">{hottest.glyph} {hottest.name} <span class="tag pulse">{hottest.status}</span></div>
+          <div class="hot-name head">{hottest.glyph} {hottest.name} <span class="tag">{hottest.status}</span></div>
           <div class="metrics">
             <div><div class="metric-label">DROP ≤7D</div><div class="metric-value glow-y">{pct(hottest.weekOdds?.p)}</div><div class="metric-note">{hottest.weekOdds ? `by ${hottest.weekOdds.label}` : 'no market'}</div></div>
             <div><div class="metric-label">DROP ≤30D</div><div class="metric-value glow-c">{pct(hottest.monthOdds?.p)}</div><div class="metric-note">{hottest.monthOdds ? `by ${hottest.monthOdds.label}` : 'no market'}</div></div>
@@ -54,16 +54,15 @@ const raceTitle = d.bestModelMarket?.title.replace(/which company has the best a
 </section>
 <style>
   .dc-body { display: flex; gap: 20px; align-items: flex-start; }
-  .dc-num { font-size: clamp(64px, 12vw, 120px); line-height: 0.9; text-shadow: 0 0 14px currentColor, 0 0 40px currentColor; animation: glow-pulse 2.4s var(--ease) infinite, rise 600ms var(--ease) both; }
+  .dc-num { font-size: clamp(64px, 12vw, 120px); line-height: 0.9; text-shadow: 0 0 8px currentColor; }
   .dc-name { font-size: clamp(14px, 2.2vw, 22px); margin-bottom: 8px; }
   .dc-blurb { margin-bottom: 8px; font-size: var(--fs-lg); }
   .dc-drivers { color: var(--muted); font-size: 19px; }
   .dc-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 14px; }
-  .seg { height: 26px; border: 1px solid var(--c); display: grid; place-items: center; color: var(--c); opacity: 0.45; animation: rise 500ms var(--ease) both; animation-delay: calc(var(--i) * 60ms + 200ms); transition: opacity var(--fast) var(--ease); }
+  .seg { height: 26px; border: 1px solid var(--c); display: grid; place-items: center; color: var(--c); opacity: 0.45; transition: opacity var(--fast) var(--ease); }
   .seg:hover { opacity: 0.8; }
   .seg.past { opacity: 0.25; }
-  .seg.on { opacity: 1; background: var(--c); color: #000; box-shadow: 0 0 14px var(--c); animation: rise 500ms var(--ease) both, seg-pulse 2.4s var(--ease) infinite; }
-  @keyframes seg-pulse { 50% { box-shadow: 0 0 26px var(--c); } }
+  .seg.on { opacity: 1; background: var(--c); color: #000; box-shadow: 0 0 8px var(--c); }
   .dc-foot { margin-top: 8px; }
   .hot-name { font-size: 16px; margin-bottom: 12px; color: var(--lab); text-shadow: 0 0 12px var(--lab); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .hot-name .tag { color: var(--lab); }

@@ -17,7 +17,7 @@ const REFRESH_SECONDS = 300;
 <header class="hero">
   <div class="statusbar wrap">
     <div class="left">
-      <span class={`tiny ${statusClass}`}>◉ STATUS: {status}</span>
+      <span class={`tiny status-live ${statusClass}`}>STATUS: {status}</span>
       <span class="tiny muted">{d.labs.length} LABS · {okCount}/{d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
     </div>
     <div class="right">
@@ -27,7 +27,7 @@ const REFRESH_SECONDS = 300;
   </div>
   <div class="wrap hero-inner">
     <div class="title-block">
-      <div class="tiny glow-m flicker">▌▌ FRONTIER MODEL RELEASE INTELLIGENCE ▐▐</div>
+      <div class="tiny glow-m">▌▌ FRONTIER MODEL RELEASE INTELLIGENCE ▐▐</div>
       <h1 class="logo"><span class="w">WHEN</span><span class="m">MODEL</span><span class="q">?</span></h1>
       <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
     </div>
@@ -42,8 +42,14 @@ const REFRESH_SECONDS = 300;
       <a class="pill" href="/api/dashboard.json">◈ JSON API</a>
     </div>
   </div>
-  <div class="marquee mono glow-y" aria-label="Ticker">
-    <div>{ticker.map((t) => <span>▶ {t}</span>)}{ticker.map((t) => <span>▶ {t}</span>)}</div>
+  <div class="ticker-wrap">
+    <div class="ticker-controls">
+      <button class="ticker-toggle tiny" type="button" data-ticker-toggle aria-pressed="false" aria-controls="ticker-track">PAUSE TICKER</button>
+    </div>
+    <div class="marquee mono glow-y" data-ticker>
+      <p class="sr-only">Ticker: {ticker.join('. ')}</p>
+      <div id="ticker-track" aria-hidden="true"><span class="ticker-group">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span><span class="ticker-group ticker-copy">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span></div>
+    </div>
   </div>
 </header>
 <style>
@@ -56,17 +62,15 @@ const REFRESH_SECONDS = 300;
       repeating-linear-gradient(0deg, rgba(0,229,255,0.10) 0 1px, transparent 1px 40px);
     border-bottom: 2px solid var(--line);
   }
-  /* the grid drifts toward the horizon */
+  /* A fixed horizon grid keeps the CRT character without competing with the data. */
   .hero::before {
     content: '';
     position: absolute;
     inset: -40px 0 0 0;
     background: repeating-linear-gradient(0deg, rgba(0,229,255,0.08) 0 1px, transparent 1px 40px);
-    animation: drift 6s linear infinite;
     pointer-events: none;
   }
-  @keyframes drift { to { transform: translateY(40px); } }
-  .statusbar, .hero-inner, .marquee { position: relative; }
+  .statusbar, .hero-inner { position: relative; }
   .statusbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--line-soft); }
   .statusbar .left, .statusbar .right { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
   .clock { font-size: 22px; font-variant-numeric: tabular-nums; }
@@ -74,16 +78,31 @@ const REFRESH_SECONDS = 300;
   .logo { font-size: clamp(30px, 6.5vw, 74px); line-height: 1; margin: 14px 0 12px; animation: rise 700ms var(--ease) both; }
   .logo .w { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5), 4px 4px 0 var(--blue); }
   .logo .m { color: var(--magenta); text-shadow: 0 0 12px var(--magenta), 4px 4px 0 var(--cyan); }
-  .logo .q { color: var(--yellow); text-shadow: 0 0 12px var(--yellow); animation: blink 1.4s steps(2) infinite; }
+  .logo .q { color: var(--yellow); text-shadow: 0 0 7px rgba(255, 226, 28, 0.5); }
   .tag-line { font-size: var(--fs-lg); color: var(--cyan); letter-spacing: 0.04em; animation: rise 700ms var(--ease) 120ms both; }
   .hero-side { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; animation: rise 700ms var(--ease) 200ms both; }
   .brands { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: var(--fs-body); }
   .brands a { border-bottom: 1px dotted var(--line2); }
+  .status-live::before { content: '◉'; margin-right: 5px; }
+  .ticker-toggle { min-height: 44px; padding: 6px 8px; color: var(--yellow); background: var(--bg2); border: 1px solid var(--line2); cursor: pointer; }
+  .ticker-toggle[aria-pressed="true"] { color: var(--text); border-color: var(--cyan); }
   @media (max-width: 700px) { .hero-side { align-items: flex-start; text-align: left; } .brands { justify-content: flex-start; } }
+  @media (max-width: 480px) {
+    .statusbar { gap: 6px; padding-block: 7px; }
+    .statusbar .left, .statusbar .right { gap: 8px; }
+    .hero-inner { padding-block: 18px 16px; gap: 10px; }
+    .logo { margin: 8px 0; }
+    .tag-line { font-size: var(--fs-sm); }
+    .hero-side { width: 100%; flex-direction: row; align-items: center; }
+    .hero-side > .tiny { display: none; }
+    .brands { flex: 1; gap: 8px; font-size: var(--fs-xs); }
+  }
 </style>
 <script>
   const clock = document.querySelector('[data-clock]');
   const refresh = document.querySelector<HTMLElement>('[data-refresh]');
+  const ticker = document.querySelector<HTMLElement>('[data-ticker]');
+  const tickerToggle = document.querySelector<HTMLButtonElement>('[data-ticker-toggle]');
   const total = Number(refresh?.dataset.refresh ?? 300);
   const started = Date.now();
   const tick = () => {
@@ -102,4 +121,10 @@ const REFRESH_SECONDS = 300;
   };
   tick();
   setInterval(tick, 1000);
+  tickerToggle?.addEventListener('click', () => {
+    const paused = tickerToggle.getAttribute('aria-pressed') !== 'true';
+    tickerToggle.setAttribute('aria-pressed', String(paused));
+    tickerToggle.textContent = paused ? 'RESUME TICKER' : 'PAUSE TICKER';
+    ticker?.classList.toggle('is-paused', paused);
+  });
 </script>

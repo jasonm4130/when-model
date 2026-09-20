@@ -40,7 +40,7 @@ Each lab card also carries a **heat** score (7-day odds, 30-day odds, recency of
 Astro 7 rendering on demand on a Cloudflare Worker via `@astrojs/cloudflare`. There is no database and no cron:
 
 - every upstream call goes through `cachedText` / `cachedJson` in `src/infra/edge-cache.ts`, which buffers the body and stores it in the Workers Cache API for the TTL above;
-- the assembled dashboard is memoised in the same cache for 2 minutes, so a page view is one cache read and each upstream is hit at most once per colo per window;
+- the assembled dashboard is memoised in the same cache for 2 minutes. Concurrent requests within one Worker instance share an in-flight build; separate instances can still build independently;
 - a source that fails or times out (8 s) degrades to empty data and shows up in the **Source health** list rather than taking the page down;
 - the browser reloads the page every 5 minutes while visible.
 
@@ -57,7 +57,9 @@ The Cache API is per Cloudflare colo, so the first visitor in a region pays one 
 | `src/ui`         | Presentation formatting.                                                                |
 | `src/components` | Astro markup; shared styling in `src/styles/global.css`.                                |
 
-`test/` mirrors `src/`. Domain and infra are tested directly, adapters against fixtures with the cache mocked, components through Astro's container API. Coverage thresholds are enforced in `vitest.config.ts`.
+`test/` mirrors `src/`. Domain and infra are tested directly, adapters against fixtures with the cache mocked, and components through Astro's container API. Run `pnpm test --coverage` to enforce the thresholds in `vitest.config.ts`; plain `pnpm test` omits the coverage gate.
+
+Coverage measures TypeScript modules, not Astro markup, CSS or browser scripts. Component tests check rendered HTML. Playwright checks the built Worker in Chromium for desktop alignment, narrow-screen overflow, keyboard ticker controls and reduced motion.
 
 ## Develop
 
@@ -65,16 +67,21 @@ The Cache API is per Cloudflare colo, so the first visitor in a region pays one 
 pnpm install
 pnpm dev                              # Astro dev server (no Cache API)
 pnpm build && pnpm exec wrangler dev  # the real Worker, locally
-pnpm test                             # vitest: scoring, market parsing, histograms, formatting
+pnpm test --coverage                  # vitest plus the configured coverage thresholds
 pnpm lint                             # oxlint + oxfmt --check
 pnpm check                            # astro check (TypeScript 6 is pinned; 7 lacks the API astro check needs)
+pnpm validate                         # lint, types, coverage and production build
+pnpm exec playwright install chromium # once, for local browser tests
+pnpm build && pnpm test:e2e            # starts the real Worker and checks browser behavior
 ```
 
-CI runs lint, check, test and build on every push and pull request.
+GitHub CI runs on pull requests and pushes to `main`. The `check` job runs lint, types, coverage and build; the `browser` job runs the Chromium checks against the real Worker. Both checks must pass before merging to `main`.
 
 ## Deploy
 
-Secrets come from 1Password via [`op run`](https://developer.1password.com/docs/cli/reference/commands/run/); `.env.op` holds only `op://` references.
+Cloudflare Builds deploys `main` to the existing `whenmodel` Worker. Preview builds are disabled. Its build command is `pnpm validate`, followed by `pnpm exec wrangler deploy`; the build environment uses `NODE_VERSION=24` and `PNPM_VERSION=11.22.0`. GitHub's required checks protect merges, and Cloudflare repeats validation before uploading the Worker.
+
+For a manual deploy, secrets come from 1Password via [`op run`](https://developer.1password.com/docs/cli/reference/commands/run/); `.env.op` holds only `op://` references. Run `pnpm validate` first.
 
 ```sh
 op run --env-file .env.op -- pnpm deploy

@@ -78,23 +78,42 @@ export async function cachedJson<T>(url: string, options: FetchOptions = {}): Pr
   return JSON.parse(await cachedText(url, { ttl: 300, ...options })) as T;
 }
 
-/** Memoise an assembled value so concurrent renders in a colo share one upstream pass. */
+const pendingMemos = new WeakMap<EdgeCache, Map<string, Promise<unknown>>>();
+
+/** Share cached values per colo and in-flight work within this Worker instance. */
 export async function memoJson<T>(
   id: string,
   ttl: number,
   build: () => Promise<T>,
   cache: EdgeCache | undefined = defaultEdgeCache(),
 ): Promise<T> {
+  if (!cache) return build();
   const key = cacheKey('memo', id);
-  const hit = await cache?.match(key);
-  if (hit) {
-    try {
-      return (await hit.json()) as T;
-    } catch {
-      /* corrupt entry: rebuild below */
-    }
+  let pending = pendingMemos.get(cache);
+  if (!pending) {
+    pending = new Map();
+    pendingMemos.set(cache, pending);
   }
-  const value = await build();
-  await store(cache, key, JSON.stringify(value), 'application/json', ttl);
-  return value;
+  const existing = pending.get(key.url);
+  if (existing) return existing as Promise<T>;
+
+  const result = (async () => {
+    const hit = await cache.match(key);
+    if (hit) {
+      try {
+        return (await hit.json()) as T;
+      } catch {
+        /* corrupt entry: rebuild below */
+      }
+    }
+    const value = await build();
+    await store(cache, key, JSON.stringify(value), 'application/json', ttl);
+    return value;
+  })();
+  pending.set(key.url, result);
+  try {
+    return await result;
+  } finally {
+    pending.delete(key.url);
+  }
 }

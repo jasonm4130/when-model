@@ -24,6 +24,7 @@ export function monthlyHistogram(drops: readonly Drop[], months: number, now: Da
   const month = now.getUTCMonth();
   for (const drop of drops) {
     const t = new Date(drop.createdAt);
+    if (t.getTime() > now.getTime()) continue;
     const monthsAgo = (year - t.getUTCFullYear()) * 12 + (month - t.getUTCMonth());
     const index = months - 1 - monthsAgo;
     if (index >= 0 && index < months) buckets[index]++;
@@ -31,10 +32,13 @@ export function monthlyHistogram(drops: readonly Drop[], months: number, now: Da
   return buckets;
 }
 
-export function daysSince(iso: string, now: number): number {
-  return Math.floor((now - Date.parse(iso)) / 86_400_000);
+/** Future or invalid timestamps are not evidence of a completed release. */
+export function daysSince(iso: string, now: number): number | undefined {
+  const age = now - Date.parse(iso);
+  return Number.isFinite(age) && age >= 0 ? Math.floor(age / 86_400_000) : undefined;
 }
 
 export function withinDays(iso: string, days: number, now: number): boolean {
-  return now - Date.parse(iso) < days * 86_400_000;
+  const age = now - Date.parse(iso);
+  return age >= 0 && age < days * 86_400_000;
 }

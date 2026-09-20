@@ -1,3 +1,5 @@
+<!-- codex-baseline:1 -->
+
 # whenmodel
 
 Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
@@ -10,8 +12,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 - `src/infra` — `edge-cache.ts` (Workers Cache API wrapper), `source-result.ts` (`collect`:
   timeout + degrade-to-fallback), `text.ts` (safe parsing helpers).
 - `src/app/load-dashboard.ts` — fans out to every adapter and memoises the assembled dashboard.
-- `src/ui` + `src/components` — formatting and Astro markup. Nothing runs in the browser except
-  the clock, the refresh countdown, relative timestamps and the 5-minute reload.
+- `src/ui` + `src/components` — formatting and Astro markup. Browser code is limited to the clock,
+  refresh countdown, relative timestamps, ticker behavior and the 5-minute reload.
 
 Rules of the house:
 
@@ -24,10 +26,15 @@ Rules of the house:
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
   deploy by up to its TTL and a new render reading an old shape streams a blank page.
 - Shared CSS (tokens, panels, metrics, rows, motion) lives in `src/styles/global.css`;
-  component `<style>` blocks hold only layout specific to that component. Every animation
-  is gated by `prefers-reduced-motion`.
-- Deploy is `op run --env-file .env.op -- pnpm deploy`. Custom domains are attached at the
+  component `<style>` blocks hold presentation specific to that component. Every animation is
+  gated by `prefers-reduced-motion`.
+- Cloudflare Builds deploys `main` after `pnpm validate`; GitHub requires `check` and `browser`
+  before merging. Manual deploy is `op run --env-file .env.op -- pnpm deploy`. Custom domains are attached at the
   account level; do not add `routes` to `wrangler.jsonc` (see README).
-- Tests: `pnpm test` (vitest, `test/` mirrors `src/`; components render through
-  `experimental_AstroContainer`). Coverage thresholds live in `vitest.config.ts`.
+- Tests: `pnpm test --coverage` (vitest, `test/` mirrors `src/`; components render through
+  `experimental_AstroContainer`). Coverage thresholds live in `vitest.config.ts` and are enforced
+  by the coverage invocation.
   Lint and format: `pnpm lint` (oxlint + oxfmt --check), `pnpm format` (oxfmt).
+  Before delivery, run `pnpm validate` (lint, types, coverage and build).
+  For UI changes, run `pnpm test:e2e` against the built Worker for desktop, narrow mobile,
+  keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`.

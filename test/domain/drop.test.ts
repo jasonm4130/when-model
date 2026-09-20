@@ -19,10 +19,10 @@ describe('monthlyHistogram', () => {
       now,
     );
     expect(h).toHaveLength(12);
-    expect(h[11]).toBe(2);
+    expect(h[11]).toBe(1);
     expect(h[10]).toBe(1);
     expect(h[0]).toBe(1);
-    expect(h.reduce((a, b) => a + b, 0)).toBe(4);
+    expect(h.reduce((a, b) => a + b, 0)).toBe(3);
   });
 
   it('handles a January boundary', () => {
@@ -40,5 +40,13 @@ describe('time helpers', () => {
   it('withinDays is exclusive at the boundary', () => {
     expect(withinDays('2026-09-13T12:00:01Z', 6, now)).toBe(true);
     expect(withinDays('2026-09-13T12:00:00Z', 6, now)).toBe(false);
+  });
+  it('does not count future or invalid timestamps as past releases', () => {
+    for (const iso of ['2026-09-19T12:00:01Z', '2026-09-20T12:00:00Z', 'invalid']) {
+      expect(withinDays(iso, 7, now)).toBe(false);
+      expect(daysSince(iso, now)).toBeUndefined();
+    }
+    expect(withinDays(new Date(now).toISOString(), 7, now)).toBe(true);
+    expect(daysSince(new Date(now).toISOString(), now)).toBe(0);
   });
 });
