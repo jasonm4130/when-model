@@ -81,6 +81,46 @@ describe('cachedJson', () => {
 });
 
 describe('memoJson', () => {
+  it('coalesces concurrent cold requests, then rebuilds after expiry', async () => {
+    const cache = new FakeCache();
+    const build = vi.fn(async () => ({ at: 1 }));
+    const results = await Promise.all(Array.from({ length: 3 }, () => memoJson('shared', 60, build, cache)));
+    expect(results).toEqual([{ at: 1 }, { at: 1 }, { at: 1 }]);
+    expect(build).toHaveBeenCalledTimes(1);
+    expect(cache.puts).toBe(1);
+    cache.store.clear();
+    await memoJson('shared', 60, build, cache);
+    expect(build).toHaveBeenCalledTimes(2);
+  });
+
+  it('releases failed builds so a later request can retry', async () => {
+    const cache = new FakeCache();
+    const build = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ ok: true });
+    const results = await Promise.allSettled([
+      memoJson('retry', 60, build, cache),
+      memoJson('retry', 60, build, cache),
+    ]);
+    expect(results.map((result) => result.status)).toEqual(['rejected', 'rejected']);
+    expect(build).toHaveBeenCalledTimes(1);
+    expect(cache.puts).toBe(0);
+    expect(await memoJson('retry', 60, build, cache)).toEqual({ ok: true });
+    expect(build).toHaveBeenCalledTimes(2);
+  });
+
+  it('isolates distinct keys and cache instances', async () => {
+    const first = new FakeCache();
+    const second = new FakeCache();
+    expect(
+      await Promise.all([
+        memoJson('a', 60, async () => 1, first),
+        memoJson('b', 60, async () => 2, first),
+        memoJson('a', 60, async () => 3, second),
+      ]),
+    ).toEqual([1, 2, 3]);
+    expect(first.puts).toBe(2);
+    expect(second.puts).toBe(1);
+  });
+
   it('builds once per key and replays the stored value', async () => {
     const cache = new FakeCache();
     const build = vi.fn(async () => ({ at: 1 }));

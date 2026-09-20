@@ -51,7 +51,7 @@ const alerts = d.feed.filter((f) => f.alert).length;
 </section>
 <style>
   .feed-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-  @media (max-width: 900px) { .feed-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) { .feed-grid { grid-template-columns: minmax(0, 1fr); } }
   .feed { max-height: 640px; }
   .item { display: grid; grid-template-columns: 78px 1fr auto; gap: 4px 10px; align-items: baseline; animation: rise 500ms var(--ease) both; animation-delay: calc(var(--i) * 40ms); }
   .src { padding-top: 3px; }

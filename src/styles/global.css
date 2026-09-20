@@ -27,8 +27,8 @@
   --fs-metric: 30px;
   --fs-head: 12px;
   --fs-head-lg: 13px;
-  --fs-tiny: 9px;
-  --fs-pill: 8px;
+  --fs-tiny: 10px;
+  --fs-pill: 9px;
 
   --gap: 16px;
   --pad: 16px;
@@ -58,14 +58,14 @@ body {
   overflow-x: hidden;
 }
 
-/* CRT: scanlines, vignette, and one slow sweep down the tube */
+/* CRT: light scanlines and vignette preserve the texture without obscuring copy. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 4px);
   mix-blend-mode: multiply;
 }
 body::after {
@@ -74,7 +74,7 @@ body::after {
   inset: 0;
   z-index: 51;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.55) 100%);
+  background: radial-gradient(ellipse at center, transparent 66%, rgba(0, 0, 0, 0.32) 100%);
 }
 .crt-sweep {
   position: fixed;
@@ -84,15 +84,7 @@ body::after {
   background: linear-gradient(180deg, transparent 0%, rgba(0, 229, 255, 0.045) 50%, transparent 100%);
   background-size: 100% 220px;
   background-repeat: no-repeat;
-  animation: sweep 9s linear infinite;
-}
-@keyframes sweep {
-  from {
-    background-position: 0 -220px;
-  }
-  to {
-    background-position: 0 calc(100% + 220px);
-  }
+  background-position: 0 18vh;
 }
 
 a {
@@ -152,27 +144,19 @@ ul {
 }
 .glow-m {
   color: var(--magenta);
-  text-shadow:
-    0 0 6px var(--magenta),
-    0 0 18px rgba(255, 43, 214, 0.6);
+  text-shadow: 0 0 5px rgba(255, 43, 214, 0.45);
 }
 .glow-c {
   color: var(--cyan);
-  text-shadow:
-    0 0 6px var(--cyan),
-    0 0 18px rgba(0, 229, 255, 0.5);
+  text-shadow: 0 0 5px rgba(0, 229, 255, 0.4);
 }
 .glow-y {
   color: var(--yellow);
-  text-shadow:
-    0 0 6px var(--yellow),
-    0 0 16px rgba(255, 226, 28, 0.5);
+  text-shadow: 0 0 4px rgba(255, 226, 28, 0.38);
 }
 .glow-g {
   color: var(--green);
-  text-shadow:
-    0 0 6px var(--green),
-    0 0 16px rgba(57, 255, 20, 0.5);
+  text-shadow: 0 0 4px rgba(57, 255, 20, 0.38);
 }
 .err {
   color: var(--red);
@@ -180,7 +164,7 @@ ul {
 
 /* ───────────────────────────── layout ───────────────────────────── */
 .section {
-  margin: 28px 0;
+  margin-block: 28px;
 }
 .section-head {
   display: flex;
@@ -206,6 +190,9 @@ ul {
 .grid {
   display: grid;
   gap: var(--gap);
+}
+.grid > * {
+  min-width: 0;
 }
 .grid-2 {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
@@ -331,14 +318,6 @@ a.pill:hover {
   color: var(--green);
   border-color: rgba(57, 255, 20, 0.5);
 }
-.pill.live::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  animation: blink 1.2s steps(2) infinite;
-}
 .pill.warn {
   color: var(--yellow);
   border-color: rgba(255, 226, 28, 0.5);
@@ -347,40 +326,15 @@ a.pill:hover {
   color: var(--red);
   border-color: rgba(255, 51, 85, 0.5);
 }
-.pill.err::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: var(--red);
-  box-shadow: 0 0 8px var(--red);
-  animation: blink 0.6s steps(2) infinite;
-}
 .tag {
   display: inline-block;
   font-family: var(--font-head);
-  font-size: 7px;
+  font-size: 8px;
   padding: 3px 5px;
   border: 1px solid currentColor;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   vertical-align: middle;
-}
-.tag.pulse {
-  animation: tag-pulse 1.6s var(--ease) infinite;
-}
-@keyframes blink {
-  50% {
-    opacity: 0.25;
-  }
-}
-@keyframes tag-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  50% {
-    box-shadow: 0 0 10px 0 currentColor;
-  }
 }
 
 /* ───────────────────────────── metrics ───────────────────────────── */
@@ -433,25 +387,12 @@ a.pill:hover {
   transform-origin: left center;
   animation: grow-x var(--slow) var(--ease) both;
 }
-.bar > i::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-  transform: translateX(-100%);
-  animation: shimmer 2.8s var(--ease) 1.2s infinite;
-}
 @keyframes grow-x {
   from {
     transform: scaleX(0);
   }
   to {
     transform: scaleX(1);
-  }
-}
-@keyframes shimmer {
-  to {
-    transform: translateX(100%);
   }
 }
 .hist {
@@ -569,6 +510,7 @@ tr.fresh:hover td {
 
 /* ───────────────────────────── marquee ───────────────────────────── */
 .marquee {
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   border-top: 1px solid var(--line);
@@ -576,15 +518,30 @@ tr.fresh:hover td {
   background: rgba(0, 0, 0, 0.35);
   mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
 }
+.ticker-wrap {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.ticker-controls {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg2);
+}
 .marquee > div {
   display: inline-block;
   padding: 6px 0;
   animation: scroll 90s linear infinite;
 }
-.marquee:hover > div {
+.marquee.is-paused > div {
   animation-play-state: paused;
 }
-.marquee span {
+.ticker-group {
+  display: inline-block;
+}
+.marquee .ticker-item {
   margin: 0 28px;
 }
 @keyframes scroll {
@@ -629,30 +586,16 @@ main > .section:nth-child(6) {
     transform: none;
   }
 }
-.flicker {
-  animation: flicker 4s infinite;
-}
-@keyframes flicker {
-  0%,
-  97%,
-  100% {
-    opacity: 1;
-  }
-  98% {
-    opacity: 0.6;
-  }
-  99% {
-    opacity: 0.9;
-  }
-}
-@keyframes glow-pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 6px currentColor);
-  }
-  50% {
-    filter: drop-shadow(0 0 22px currentColor);
-  }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ───────────────────────────── misc ───────────────────────────── */
@@ -694,6 +637,10 @@ hr.neon {
   table {
     font-size: 17px;
   }
+  .pill {
+    max-width: 100%;
+    white-space: normal;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -701,10 +648,27 @@ hr.neon {
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
   .marquee > div {
+    display: block;
+    white-space: normal;
     animation: none !important;
+  }
+  .marquee {
+    overflow: visible;
+    white-space: normal;
+    mask-image: none;
+  }
+  .marquee .ticker-copy {
+    display: none;
+  }
+  .ticker-wrap {
+    display: block;
+  }
+  .ticker-controls {
+    display: none;
   }
 }

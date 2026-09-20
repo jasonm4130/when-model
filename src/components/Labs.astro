@@ -59,5 +59,9 @@ const months = monthInitials(new Date());
   .x a { margin-left: 8px; color: var(--muted); }
   .x a:hover { color: #fff; }
   .mkt { display: block; margin-top: 8px; font-size: 17px; color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
-  @media (max-width: 380px) { .metrics.tight { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 380px) {
+    .metrics.tight { grid-template-columns: repeat(2, 1fr); }
+    .lab-foot { align-items: flex-start; flex-wrap: wrap; gap: 6px; }
+    .x { display: flex; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; max-width: 100%; }
+  }
 </style>

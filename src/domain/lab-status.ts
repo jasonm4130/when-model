@@ -58,7 +58,7 @@ export function assessLab(
   context: { drops: readonly Drop[]; markets: readonly Market[]; bestModelMarket?: Market },
   now: number,
 ): LabStatus {
-  const mine = context.drops.filter((d) => d.labId === lab.id);
+  const mine = context.drops.filter((d) => d.labId === lab.id && Date.parse(d.createdAt) <= now);
   const latest = mine[0];
   const days = latest ? daysSince(latest.createdAt, now) : undefined;
   const drops30d = mine.filter((d) => withinDays(d.createdAt, 30, now)).length;

@@ -17,7 +17,9 @@
     "astro": "astro",
     "deploy": "astro build && wrangler deploy",
     "check": "astro check",
+    "validate": "pnpm lint && pnpm check && pnpm test --coverage && pnpm build",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "lint": "oxlint && oxfmt --check",
     "format": "oxfmt"
   },
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@playwright/test": "^1.63.0",
     "@vitest/coverage-v8": "^5.0.1",
     "oxfmt": "^0.68.0",
     "oxlint": "^1.83.0",

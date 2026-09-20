@@ -90,4 +90,19 @@ describe('assessLab', () => {
     expect(s.status).toBe('QUIET');
     expect(s.leaderboardOdds).toBeUndefined();
   });
+
+  it('ignores future listings when choosing the latest release and calculating heat', () => {
+    const future = drop('2026-09-20T00:00:00Z');
+    const past = drop('2026-08-01T00:00:00Z');
+    const s = assessLab(openai, { drops: [future, past], markets: [] }, NOW);
+    expect(s.latest).toBe(past);
+    expect(s.drops30d).toBe(0);
+    expect(s.histogram.at(-1)).toBe(0);
+    expect(s.heat).toBe(0);
+    expect(s.status).toBe('QUIET');
+    const onlyFuture = assessLab(openai, { drops: [future], markets: [] }, NOW);
+    expect(onlyFuture.latest).toBeUndefined();
+    expect(onlyFuture.daysSince).toBeUndefined();
+    expect(onlyFuture.status).toBe('QUIET');
+  });
 });
