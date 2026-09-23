@@ -1,11 +1,20 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "whenmodel",
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": "./dist", "binding": "ASSETS" },
   "observability": { "enabled": true },
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "HISTORY_DB",
+      "database_name": "whenmodel-history",
+      "database_id": "f72205b2-b3d6-4a43-bad2-0067359a258f",
+      "migrations_dir": "migrations",
+    },
+  ],
   // Custom domains whenmodel.com and www.whenmodel.com are attached at the account level
   // (PUT /accounts/<id>/workers/domains). The deploy token cannot read zone routes for this
   // zone, so declaring them here as `routes` makes `wrangler deploy` fail after upload.

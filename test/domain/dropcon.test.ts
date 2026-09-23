@@ -17,7 +17,7 @@ describe('computeDropcon', () => {
     expect(d.degraded).toBe(false);
   });
 
-  it('week odds dominate: a 90% week market alone reaches level 2', () => {
+  it('week odds dominate: a 90% week market alone reaches level 3', () => {
     const d = computeDropcon({ ...quiet, maxWeekOdds: 0.9 });
     expect(d.score).toBeGreaterThanOrEqual(35);
     expect(d.level).toBeLessThanOrEqual(3);
@@ -50,6 +50,17 @@ describe('computeDropcon', () => {
     expect(computeDropcon({ ...quiet, maxWeekOdds: 0.6 }).drivers[0]).toMatch(/60% odds .* 7 days/);
     expect(computeDropcon({ ...quiet, maxMonthOdds: 0.7 }).drivers[0]).toMatch(/70% odds .* 30 days/);
     expect(computeDropcon({ ...quiet, maxWeekOdds: 0.6, maxMonthOdds: 0.7 }).drivers).toHaveLength(1);
+  });
+
+  it('describes fresh listings as completed activity at any level without boosting the score', () => {
+    const before = computeDropcon({ ...quiet, frontierDrops7d: 1 });
+    const fresh = computeDropcon({ ...quiet, frontierDrops7d: 1, frontierDrops48h: 1 });
+    expect(fresh.score).toBe(before.score);
+    expect(fresh.level).toBe(5);
+    expect(fresh.name).toBe('MODELS JUST LANDED');
+    expect(fresh.blurb).toContain('not a prediction');
+    expect(before.blurb).toContain('seven days');
+    expect(computeDropcon({ ...quiet, oddsAvailable: false }).blurb).toContain('unavailable');
   });
 
   it('lists the drivers that contributed', () => {

@@ -93,9 +93,28 @@ describe('releaseOddsForLab', () => {
     expect(releaseOddsForLab([m], 'anthropic', 60, NOW)).toBeUndefined();
   });
 
+  it('never treats no-release or date-bucket outcomes as cumulative release odds', () => {
+    const negative = {
+      ...m,
+      outcomes: [
+        outcome({ label: 'No release by September 30', yes: 0.915, endDate: '2026-10-01T00:00:00Z' }),
+      ],
+    };
+    expect(releaseOddsForLab([negative], 'openai', 30, NOW)).toBeUndefined();
+    for (const title of ['Next GPT released on…?', 'When will GPT be released?']) {
+      expect(releaseOddsForLab([{ ...m, title }], 'openai', 30, NOW)).toBeUndefined();
+    }
+    const placeholder = {
+      ...m,
+      outcomes: [outcome({ label: 'September 24', yes: 0.5, endDate: '2026-09-25T00:00:00Z' })],
+    };
+    expect(releaseOddsForLab([placeholder], 'openai', 7, NOW)).toBeUndefined();
+  });
+
   it('ignores passed deadlines, bad dates and non-release markets', () => {
     const stale = market({
       labId: 'xai',
+      title: 'Grok released by…?',
       outcomes: [
         outcome({ label: 'old', yes: 0.9, endDate: '2026-09-01T00:00:00Z' }),
         outcome({ label: 'junk', yes: 0.9, endDate: 'not a date' }),

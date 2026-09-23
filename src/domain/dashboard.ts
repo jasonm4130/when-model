@@ -1,6 +1,6 @@
 import type { Paper, TrendingRepo } from './community';
 import { withinDays, type Drop } from './drop';
-import { computeDropcon, type Dropcon } from './dropcon';
+import { computeDropcon, DROPCON_ALGORITHM_VERSION, type Dropcon, type DropconInput } from './dropcon';
 import { HN_ALERT_POINTS, newestFirst, type FeedItem } from './feed';
 import { FRONTIER_LABS, LABS } from './lab';
 import { assessLab, type LabStatus } from './lab-status';
@@ -24,6 +24,7 @@ export interface DashboardInputs {
 
 export interface Dashboard {
   generatedAt: string;
+  measurement: { schema: number; algorithmVersion: number; inputs: DropconInput };
   dropcon: Dropcon;
   labs: LabStatus[];
   markets: Market[];
@@ -41,7 +42,7 @@ export const LIMITS = { markets: 60, drops: 40, feed: 60 } as const;
  * Bump when the Dashboard shape changes. The memoised dashboard outlives a deploy by up to its TTL,
  * and a new render reading an old shape streams a blank page.
  */
-export const DASHBOARD_SCHEMA = 2;
+export const DASHBOARD_SCHEMA = 3;
 
 /** Pure assembly: fetched inputs in, rendered model out. All I/O lives in the adapters. */
 export function assembleDashboard(inputs: DashboardInputs, now: number): Dashboard {
@@ -56,16 +57,22 @@ export function assembleDashboard(inputs: DashboardInputs, now: number): Dashboa
   const feed = newestFirst(inputs.feeds.flatMap((f) => f.data)).slice(0, LIMITS.feed);
   const hackerNews = inputs.feeds.find((f) => f.name === 'Hacker News')?.data ?? [];
 
-  const dropcon = computeDropcon({
+  const scoreInputs: DropconInput = {
     maxWeekOdds: Math.max(0, ...labs.map((l) => l.weekOdds?.p ?? 0)),
     maxMonthOdds: Math.max(0, ...labs.map((l) => l.monthOdds?.p ?? 0)),
     frontierDrops7d: drops.filter(
       (d) => d.labId && FRONTIER_LABS.has(d.labId) && withinDays(d.createdAt, 7, now),
     ).length,
-    hotStories: hackerNews.filter((h) => (h.score ?? 0) >= HN_ALERT_POINTS).length,
+    frontierDrops48h: drops.filter(
+      (d) => d.labId && FRONTIER_LABS.has(d.labId) && withinDays(d.createdAt, 2, now),
+    ).length,
+    hotStories: hackerNews.filter(
+      (h) => (h.score ?? 0) >= HN_ALERT_POINTS && withinDays(h.publishedAt, 2, now),
+    ).length,
     releaseAlerts: feed.filter((f) => f.alert && withinDays(f.publishedAt, 2, now)).length,
     oddsAvailable: inputs.markets.ok,
-  });
+  };
+  const dropcon = computeDropcon(scoreInputs);
 
   const sources = [inputs.markets, inputs.drops, inputs.trending, inputs.papers, ...inputs.feeds].map(
     ({ name, ok, error }) => ({ name, ok, error }),
@@ -73,6 +80,11 @@ export function assembleDashboard(inputs: DashboardInputs, now: number): Dashboa
 
   return {
     generatedAt: new Date(now).toISOString(),
+    measurement: {
+      schema: DASHBOARD_SCHEMA,
+      algorithmVersion: DROPCON_ALGORITHM_VERSION,
+      inputs: scoreInputs,
+    },
     dropcon,
     labs,
     markets: markets.slice(0, LIMITS.markets),

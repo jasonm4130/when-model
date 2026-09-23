@@ -109,6 +109,24 @@ describe('assembleDashboard', () => {
     expect(d.feed[0].publishedAt >= d.feed[1].publishedAt).toBe(true);
   });
 
+  it('records exact score inputs and excludes stale or future HN stories', () => {
+    const inputs = empty();
+    inputs.feeds = [
+      ok('Hacker News', [
+        item('old', '2026-09-16T00:00:00Z', { score: 900 }),
+        item('future', '2026-09-20T00:00:00Z', { score: 900 }),
+        item('fresh', '2026-09-19T00:00:00Z', { score: 900 }),
+      ]),
+    ];
+    const d = assembleDashboard(inputs, NOW);
+    expect(d.measurement).toMatchObject({
+      schema: 3,
+      algorithmVersion: 2,
+      inputs: { hotStories: 1, frontierDrops48h: 0 },
+    });
+    expect(d.dropcon.score).toBe(3);
+  });
+
   it('feeds DROPCON from frontier drops, hot HN stories and fresh alerts', () => {
     const inputs: DashboardInputs = {
       ...empty(),

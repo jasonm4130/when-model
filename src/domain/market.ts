@@ -82,9 +82,17 @@ export function releaseOddsForLab(
   const horizon = now + horizonDays * 86_400_000;
   let best: ReleaseOdds | undefined;
   for (const market of markets) {
-    if (market.labId !== labId || market.kind !== 'release') continue;
+    // Date buckets and negative outcomes are not cumulative release-by probabilities.
+    if (market.labId !== labId || market.kind !== 'release' || !/released by\b/i.test(market.title)) continue;
     for (const outcome of market.outcomes) {
-      if (outcome.closed || !outcome.endDate) continue;
+      if (
+        outcome.closed ||
+        !outcome.endDate ||
+        isPlaceholderOutcome(outcome) ||
+        /\b(no release|not released|after|never)\b/i.test(outcome.label)
+      )
+        continue;
+      if (!Number.isFinite(outcome.yes) || outcome.yes < 0 || outcome.yes > 1) continue;
       const end = Date.parse(outcome.endDate);
       if (Number.isNaN(end) || end < now || end > horizon) continue;
       if (!best || outcome.yes > best.p) {

@@ -63,7 +63,7 @@ export function assessLab(
   const days = latest ? daysSince(latest.createdAt, now) : undefined;
   const drops30d = mine.filter((d) => withinDays(d.createdAt, 30, now)).length;
   const weekOdds = releaseOddsForLab(context.markets, lab.id, 7, now);
-  const monthOdds = releaseOddsForLab(context.markets, lab.id, 31, now);
+  const monthOdds = releaseOddsForLab(context.markets, lab.id, 30, now);
   const leaderboardOdds = context.bestModelMarket?.outcomes.find(
     (o) => o.label === lab.polymarketCompany,
   )?.yes;
