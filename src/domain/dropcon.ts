@@ -1,4 +1,5 @@
-/** DROPCON: 5 = nothing cooking, 1 = a frontier model is about to land. Mirrors DEFCON/DOUGHCON. */
+/** Composite release activity, not a calibrated forecast probability. */
+export const DROPCON_ALGORITHM_VERSION = 2;
 export interface DropconInput {
   /** Best "ships within 7 days" probability across labs, 0..1. */
   maxWeekOdds: number;
@@ -6,6 +7,8 @@ export interface DropconInput {
   maxMonthOdds: number;
   /** Frontier-lab drops on OpenRouter in the last 7 days. */
   frontierDrops7d: number;
+  /** Listings in the last 48 hours: changes the copy, not the score. */
+  frontierDrops48h?: number;
   /** HN model stories over 150 points in the last 48h. */
   hotStories: number;
   /** Feed items flagged as release-shaped in the last 48h. */
@@ -25,19 +28,22 @@ export interface Dropcon {
 }
 
 const LEVELS: Record<number, { name: string; blurb: string }> = {
-  5: { name: 'QUIET ORBIT', blurb: 'No credible drop signal. Labs are training, not shipping.' },
+  5: {
+    name: 'QUIET ORBIT',
+    blurb: 'Little activity in the tracked signals. Unannounced releases remain possible.',
+  },
   4: { name: 'RUMOUR MILL', blurb: 'Chatter and long-dated odds. Something is cooking, nothing is plated.' },
   3: {
     name: 'GPU FANS SPINNING',
-    blurb: 'Markets lean toward a release this month. Watch the SDK changelogs.',
+    blurb: 'Release activity is elevated. Check the drivers for market odds and recent launches.',
   },
   2: {
     name: 'VAGUE-POSTING DETECTED',
-    blurb: 'Odds of a drop this week are high. Clear your evals calendar.',
+    blurb: 'Strong release activity across the tracked signals. Watch the named markets and announcements.',
   },
   1: {
-    name: 'DROP IMMINENT',
-    blurb: 'A frontier model is landing. Refresh the changelog. Refresh it again.',
+    name: 'RELEASE SURGE',
+    blurb: 'The release activity index is at its highest level. This is not a launch countdown.',
   },
 };
 
@@ -64,5 +70,15 @@ export function computeDropcon(i: DropconInput): Dropcon {
   const degraded = i.oddsAvailable === false;
   if (degraded) drivers.unshift('Prediction-market odds unavailable: reading is a floor');
   else if (!drivers.length) drivers.push('All quiet on the release front');
-  return { level, score, drivers, degraded, ...LEVELS[level] };
+  const copy = { ...LEVELS[level] };
+  if ((i.frontierDrops48h ?? 0) > 0) {
+    copy.name = 'MODELS JUST LANDED';
+    copy.blurb =
+      'Frontier-lab models appeared on OpenRouter in the last 48 hours. Recent launches contribute to this level; it is not a prediction of the next drop.';
+  } else if (i.frontierDrops7d > 0) {
+    copy.blurb =
+      'Recent OpenRouter listings still contribute to this level for seven days. Check the market drivers for evidence of another release.';
+  }
+  if (degraded) copy.blurb += ' Prediction-market odds are unavailable.';
+  return { level, score, drivers, degraded, ...copy };
 }

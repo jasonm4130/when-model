@@ -1,4 +1,4 @@
-export type FeedSource = 'hn' | 'openai' | 'deepmind' | 'anthropic' | 'github';
+export type FeedSource = 'hn' | 'openai' | 'deepmind' | 'anthropic' | 'github' | 'xai';
 
 /** One headline in the OSINT feed, from any source. */
 export interface FeedItem {

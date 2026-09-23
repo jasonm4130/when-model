@@ -1,6 +1,6 @@
 # whenmodel.com
 
-**Frontier AI model release intelligence.** One page, one number: **DROPCON**, from 5 (quiet orbit) to 1 (drop imminent), read off prediction markets, model registries, lab blogs, SDK changelogs and Hacker News. Built in the spirit of [pizzint.watch](https://www.pizzint.watch), with an 80s CRT skin.
+**Frontier AI model release intelligence.** One page, one number: **DROPCON**, from 5 (quiet orbit) to 1 (release surge), read off prediction markets, model registries, lab blogs, SDK changelogs and Hacker News. Built in the spirit of [pizzint.watch](https://www.pizzint.watch), with an 80s CRT skin.
 
 Live at **https://whenmodel.com** · JSON at `/api/dashboard.json`
 
@@ -14,7 +14,7 @@ Live at **https://whenmodel.com** · JSON at `/api/dashboard.json`
 | [OpenRouter](https://openrouter.ai) models API                            | newest listings, per-lab release tempo, days since last drop   | 10 min     |
 | [Hugging Face](https://huggingface.co)                                    | trending text-generation repos, daily papers                   | 15–30 min  |
 | Hacker News via Algolia                                                   | model stories over 60 points in the last 48 h                  | 5 min      |
-| OpenAI RSS, DeepMind RSS, Anthropic newsroom (scraped, no RSS exists)     | lab announcements                                              | 15 min     |
+| OpenAI RSS, DeepMind RSS, Anthropic newsroom, xAI developer release notes | lab announcements                                              | 15 min     |
 | GitHub releases for the Anthropic, OpenAI, Google and xAI SDKs            | changelog leaks of new model ids                               | 30 min     |
 
 X/Twitter has no free read API and the mirrors are gone, so the page links a watchlist of accounts instead of ingesting posts.
@@ -31,13 +31,46 @@ Scored 0–100 in `src/domain/dropcon.ts` and bucketed into five levels:
 | Hacker News model stories over 150 points in 48 h  | 3 each, max 4 |
 | release-shaped headlines in the feed               | 2 each, max 5 |
 
+Only cumulative “released by” markets contribute odds; negative outcomes and date-bucket markets do not. The score measures activity, not a calibrated release probability. Models listed in the last 48 hours get “MODELS JUST LANDED” copy, and listings keep contributing to the score for seven days.
+
 Levels: 5 below 15, 4 below 35, 3 below 55, 2 below 75, 1 at 75 and above. Odds dominate on purpose: a market is already an aggregate of every rumour, so the other signals only nudge.
 
 Each lab card also carries a **heat** score (7-day odds, 30-day odds, recency of last drop, drops in the last 30 days) used to rank the cards and pick the "hottest lab".
 
+### Point-in-time review
+
+The JSON response includes `measurement.schema`, `measurement.algorithmVersion`, and the exact score inputs. [The September 2026 review](docs/algorithm-review-2026-09-23.md) records the discovered odds bug, recent release coverage and historical-evidence limits.
+
+Capture a manual immutable observation and evaluate an exported archive:
+
+```sh
+node scripts/capture-dashboard.mjs --dir /tmp/whenmodel-archive
+node scripts/evaluate-dashboard.mjs --archive /tmp/whenmodel-archive --releases /tmp/releases.json
+```
+
+Release events are a JSON array of `{ "labId": "xai", "model": "grok-4.7", "releasedAt": "<verified UTC launch timestamp>", "sourceUrl": "<official announcement URL>" }`. Use a precise sourced time; a date-only announcement cannot establish an exact lead time. `model` exactly matches the listing ID, ID suffix, name or URL within that lab; variants are separate events.
+
+The report selects the latest observation collected strictly before release within each 24-hour, 72-hour and seven-day lead-up window. It reports collection time and actual lead time, and labels absent history `unobserved`. First post-release listing detection is separate from the listing's own timestamp. The collector revision identifies the collector checkout, not the deployed Worker revision. These commands do not schedule collection. The Worker cron records observations independently of visitors using `HISTORY_DB`. History retains up to 90 days, 8,640 records and 128 MiB of JSON payload. Each payload is capped at 32 KiB. Database overhead is additional. Expiration deletes at most 96 old records per run; capacity errors stop new writes without evicting recent evidence. Retries use the scheduled quarter-hour as an immutable key.
+
+The D1 migration must precede deployment:
+
+```sh
+pnpm exec wrangler d1 migrations apply whenmodel-history --local
+op run --env-file .env.op -- pnpm exec wrangler d1 migrations apply whenmodel-history --remote
+```
+
+To export the latest 96 observations for evaluation:
+
+```sh
+op run --env-file .env.op -- pnpm exec wrangler d1 execute whenmodel-history --remote --json --command 'SELECT scheduled_slot, observed_at, payload_json FROM dashboard_snapshots ORDER BY scheduled_slot DESC LIMIT 96' > /tmp/whenmodel-history.json
+node scripts/export-d1-history.mjs /tmp/whenmodel-history.json /tmp/whenmodel-archive
+```
+
+For older pages, add `WHERE scheduled_slot < '<last exported slot>'`. Export preserves the original observation time; it does not backdate a new fetch. The [review](docs/algorithm-review-2026-09-23.md) documents cost assumptions and the existing-history gap.
+
 ## How it runs
 
-Astro 7 rendering on demand on a Cloudflare Worker via `@astrojs/cloudflare`. There is no database and no cron:
+Astro 7 renders on demand on a Cloudflare Worker via `@astrojs/cloudflare`. A separate 15-minute scheduled handler records compact observations in D1; page requests do not write history:
 
 - every upstream call goes through `cachedText` / `cachedJson` in `src/infra/edge-cache.ts`, which buffers the body and stores it in the Workers Cache API for the TTL above;
 - the assembled dashboard is memoised in the same cache for 2 minutes. Concurrent requests within one Worker instance share an in-flight build; separate instances can still build independently;

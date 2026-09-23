@@ -1,3 +1,4 @@
+import { fetchXaiNews } from '../adapters/xai-news';
 import { fetchAnthropic } from '../adapters/anthropic-news';
 import { fetchSdkReleases } from '../adapters/github-releases';
 import { fetchHackerNews } from '../adapters/hacker-news';
@@ -28,6 +29,7 @@ export async function buildDashboard(now = Date.now()): Promise<Dashboard> {
     collect('OpenAI news', fetchOpenAI, []),
     collect('DeepMind blog', fetchDeepMind, []),
     collect('Anthropic news', fetchAnthropic, []),
+    collect('xAI news', fetchXaiNews, []),
     collect('GitHub SDKs', fetchSdkReleases, []),
   ]);
   const inputs: DashboardInputs = { markets, drops, trending, papers, feeds };

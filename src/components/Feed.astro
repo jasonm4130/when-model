@@ -6,8 +6,8 @@ import { ago } from '../ui/format';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const now = Date.now();
-const labels: Record<FeedSource, string> = { hn: 'HN', openai: 'OPENAI', deepmind: 'DEEPMIND', anthropic: 'ANTHROPIC', github: 'GITHUB' };
-const colors: Record<FeedSource, string> = { hn: 'var(--orange)', openai: 'var(--green)', deepmind: 'var(--blue)', anthropic: '#ff7a1a', github: 'var(--muted)' };
+const labels: Record<FeedSource, string> = { hn: 'HN', openai: 'OPENAI', deepmind: 'DEEPMIND', anthropic: 'ANTHROPIC', github: 'GITHUB', xai: 'XAI' };
+const colors: Record<FeedSource, string> = { hn: 'var(--orange)', openai: 'var(--green)', deepmind: 'var(--blue)', anthropic: '#ff7a1a', github: 'var(--muted)', xai: 'var(--fg)' };
 const alerts = d.feed.filter((f) => f.alert).length;
 ---
 <section class="section wrap reveal">
