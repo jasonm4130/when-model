@@ -85,9 +85,20 @@ const FAMILIES = [
   `mistral${D}(?:large|medium|small|ocr)${D}${V}`,
   `(?:magistral|devstral|codestral|ministral)${D}?(?:(?:small|medium)${D})?${V}`,
 ];
-const MODEL_ID = new RegExp(`\\b(?:${FAMILIES.join('|')})(?:${D}${SUFFIX}(?![\\w.]))*(?![\\w]|\\.\\d)`, 'gi');
+// The suffix is captured (not `?:`) so `findModelIds` can read the last one consumed: that is
+// the anchor for sibling expansion below. No other group in FAMILIES captures.
+const MODEL_ID = new RegExp(
+  `\\b(?:${FAMILIES.join('|')})(?:${D}(${SUFFIX})(?![\\w.]))*(?![\\w]|\\.\\d)`,
+  'gi',
+);
 /** OpenAI's o-series only counts in lower case: "O2" is a phone network. */
 const O_SERIES = /(?<![\w.-])o[1-9](?:-(?:mini|pro|preview))?(?![\w.-])/g;
+/**
+ * A sibling list after a suffixed id: "and Luna", ", Luna", "& Luna". One separator, then one
+ * more SUFFIX word; `siblingSuffixes` loops this for "X, Y and Z".
+ */
+const SIBLING_ID_SEP = /^\s*(?:,|\band\b|&|\+|\/)\s*/i;
+const SIBLING_ID_WORD = new RegExp(`^(${SUFFIX})(?![\\w.])`, 'i');
 
 /** Lower case, one ASCII hyphen per separator run, and Anthropic's `5-5` read as `5.5`. */
 function canonicalId(raw: string): string {
@@ -104,21 +115,56 @@ interface IdMatch {
   end: number;
 }
 
+/**
+ * Sibling suffixes sharing `id`'s family+version, read from `text` right after the match ends:
+ * "GPT-6 Sol and Luna" → `luna`; "Sol, Luna and Astra" → `luna`, `astra`. Only fires past a
+ * suffix already consumed by the base match (so "GPT-6 and beyond" never expands: no suffix,
+ * no scan), and only on words from the same curated SUFFIX vocabulary (so "GPT-6 Pro and
+ * Football" stops at "Pro": "Football" isn't a suffix word).
+ */
+function siblingSuffixes(text: string, from: number): { word: string; end: number }[] {
+  const out: { word: string; end: number }[] = [];
+  let i = from;
+  for (;;) {
+    const sep = SIBLING_ID_SEP.exec(text.slice(i));
+    if (!sep) break;
+    const after = i + sep[0].length;
+    const word = SIBLING_ID_WORD.exec(text.slice(after));
+    if (!word) break;
+    i = after + word[1].length;
+    out.push({ word: word[1].toLowerCase(), end: i });
+  }
+  return out;
+}
+
 function findModelIds(text: string): IdMatch[] {
   const found: IdMatch[] = [];
-  for (const re of [MODEL_ID, O_SERIES]) {
-    for (const m of text.matchAll(re)) {
-      const index = m.index ?? 0;
-      found.push({ id: canonicalId(m[0]), index, end: index + m[0].length });
+  for (const m of text.matchAll(MODEL_ID)) {
+    const index = m.index ?? 0;
+    const end = index + m[0].length;
+    const id = canonicalId(m[0]);
+    found.push({ id, index, end });
+    const suffix = m[1]?.toLowerCase();
+    if (suffix && id.endsWith(`-${suffix}`)) {
+      const prefix = id.slice(0, -(suffix.length + 1));
+      for (const sib of siblingSuffixes(text, end)) {
+        found.push({ id: `${prefix}-${sib.word}`, index, end: sib.end });
+      }
     }
+  }
+  for (const m of text.matchAll(O_SERIES)) {
+    const index = m.index ?? 0;
+    found.push({ id: canonicalId(m[0]), index, end: index + m[0].length });
   }
   return found.sort((a, b) => a.index - b.index);
 }
 
 /**
  * Versioned model ids named in free text, canonicalised and in order of appearance:
- * "GPT‑6 Sol and Luna" → `gpt-6-sol`, "claude-opus-5-5" → `claude-opus-5.5`, "Qwen3.8-27B" → `qwen3.8-27b`.
- * A bare family name ("Gemini", "Sora") is not an id: only a version pins a release.
+ * "GPT‑6 Sol and Luna" → `gpt-6-sol`, `gpt-6-luna`; "claude-opus-5-5" → `claude-opus-5.5`;
+ * "Qwen3.8-27B" → `qwen3.8-27b`. A bare family name ("Gemini", "Sora") is not an id: only a
+ * version pins a release. Siblings sharing a family prefix expand ("X and Y", "X & Y",
+ * "X, Y and Z"); see `siblingSuffixes`.
  */
 export function modelIds(text: string): string[] {
   return [...new Set(findModelIds(text).map((m) => m.id))];
@@ -333,4 +379,21 @@ export function isListed(modelId: string, listings: readonly Listing[]): boolean
  */
 export function unlistedLeaks(leaks: readonly LeakItem[], listings: readonly Listing[]): LeakItem[] {
   return leaks.filter((leak) => leak.modelIds.some((id) => !isListed(id, listings)));
+}
+
+// ─── Cross-source dedup ──────────────────────────────────────────────────────
+
+/**
+ * Distinct model ids named by alerting items, across every source: one launch that raises an
+ * RSS post, an HN story and an SDK confirmation (F8+F6+F10) counts once, not three times, when
+ * a caller sums this instead of counting alert rows. Reads `title`, where every alerting item
+ * (RSS post, HN headline, `sdkFeedItems`' "confirms …" line) already carries its model ids.
+ */
+export function distinctAlertModels(feed: readonly FeedItem[]): string[] {
+  const ids = new Set<string>();
+  for (const item of feed) {
+    if (!item.alert) continue;
+    for (const id of modelIds(item.title)) ids.add(id);
+  }
+  return [...ids];
 }

@@ -16,7 +16,13 @@ describe('parseTestingCatalog', () => {
     const out = parseTestingCatalog(FEED, NOW);
     expect(out.map((l) => [l.title, l.modelIds, l.cue, l.labId])).toEqual([
       ['Google tests new Gemini 4 Pro checkpoints, early outputs', ['gemini-4-pro'], 'tests', 'google'],
-      ['OpenAI prepares to launch GPT-6 Sol and Luna models today', ['gpt-6-sol'], 'prepares', 'openai'],
+      // Sibling expansion: "Sol and Luna" now yields both ids, not just gpt-6-sol.
+      [
+        'OpenAI prepares to launch GPT-6 Sol and Luna models today',
+        ['gpt-6-sol', 'gpt-6-luna'],
+        'prepares',
+        'openai',
+      ],
       [
         'Anthropic tests Fable 5.2 and Opus 5.5 ahead of the release',
         ['fable-5.2', 'opus-5.5'],

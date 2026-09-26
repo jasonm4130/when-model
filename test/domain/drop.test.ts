@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   daysSince,
+  listingAliases,
   monthlyHistogram,
   releaseEvents,
   RELEASE_EVENT_WINDOW_MS,
   withinDays,
   type Drop,
 } from '../../src/domain/drop';
+import { classifyLeak, isListed, unlistedLeaks, type LeakItem } from '../../src/domain/feed';
 
 const drop = (iso: string): Drop => ({ id: 'x', name: 'x', lab: 'x', createdAt: iso, url: 'u', free: false });
 
@@ -180,5 +182,57 @@ describe('releaseEvents', () => {
     );
     expect(events.flatMap((e) => e.models.map((m) => m.id))).toEqual(['openai/legacy']);
     expect(releaseEvents([], now)).toEqual([]);
+  });
+});
+
+describe('listingAliases', () => {
+  const base: Drop = {
+    id: 'a/b',
+    name: 'B',
+    lab: 'A',
+    createdAt: '2026-01-01T00:00:00Z',
+    url: 'u',
+    free: false,
+  };
+
+  it('carries every drop through, adding a second row only when it has a huggingFaceId', () => {
+    expect(listingAliases([base])).toEqual([{ id: 'a/b', name: 'B' }]);
+    expect(listingAliases([{ ...base, huggingFaceId: 'Org/B-Next' }])).toEqual([
+      { id: 'a/b', name: 'B' },
+      { id: 'Org/B-Next', name: 'B' },
+    ]);
+    expect(listingAliases([])).toEqual([]);
+  });
+
+  it('resolves the Qwen3.8-Flash-Next leak, found live only under its huggingFaceId', () => {
+    // Live 2026-09-26: OpenRouter lists it as qwen/qwen3.8-flash, with hugging_face_id
+    // "Qwen/Qwen3.8-Flash-Next" — the exact name the HN leak used.
+    const drops: Drop[] = [
+      {
+        id: 'qwen/qwen3.8-flash',
+        name: 'Qwen: Qwen3.8 Flash',
+        lab: 'Alibaba Qwen',
+        labId: 'qwen',
+        createdAt: '2026-08-26T19:37:40Z',
+        url: 'https://openrouter.ai/qwen/qwen3.8-flash',
+        free: false,
+        huggingFaceId: 'Qwen/Qwen3.8-Flash-Next',
+      },
+    ];
+    const leak = classifyLeak('Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)')!;
+    const [id] = leak.modelIds;
+    // Without the HF alias row, the OpenRouter id alone does not resolve it.
+    expect(isListed(id, listingAliases(drops.map((d) => ({ ...d, huggingFaceId: undefined }))))).toBe(false);
+    expect(isListed(id, listingAliases(drops))).toBe(true);
+
+    const item: LeakItem = {
+      source: 'hn',
+      title: 'Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)',
+      url: 'https://news.ycombinator.com/x',
+      publishedAt: '2026-08-25T11:49:43Z',
+      modelIds: leak.modelIds,
+      cue: leak.cue,
+    };
+    expect(unlistedLeaks([item], listingAliases(drops))).toEqual([]);
   });
 });

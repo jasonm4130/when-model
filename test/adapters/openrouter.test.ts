@@ -143,6 +143,20 @@ describe('toDrop', () => {
     const { toDrop } = await import('../../src/adapters/openrouter');
     expect(toDrop({ ...fable, id: 'x/weird id?' })?.url).toBe('https://openrouter.ai/x/weird%20id%3F');
   });
+
+  it('maps hugging_face_id, live 2026-09-26 on qwen/qwen3.8-flash', async () => {
+    const { toDrop } = await import('../../src/adapters/openrouter');
+    expect(
+      toDrop({
+        ...fable,
+        id: 'qwen/qwen3.8-flash',
+        name: 'Qwen: Qwen3.8 Flash',
+        hugging_face_id: 'Qwen/Qwen3.8-Flash-Next',
+      }),
+    ).toMatchObject({ huggingFaceId: 'Qwen/Qwen3.8-Flash-Next' });
+    expect(toDrop(fable)?.huggingFaceId).toBeUndefined();
+    expect(toDrop({ ...fable, hugging_face_id: 42 as unknown as string })?.huggingFaceId).toBeUndefined();
+  });
 });
 
 describe('fetchDrops', () => {

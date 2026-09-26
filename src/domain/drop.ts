@@ -25,6 +25,8 @@ export interface Drop {
   stealth?: boolean;
   /** Kept for stealth slots only, whose name says nothing about the model. */
   description?: string;
+  /** OpenRouter's `hugging_face_id`: the name a pre-release leak used before the listing did. */
+  huggingFaceId?: string;
 }
 
 /** A listing inside a release event. */
@@ -133,4 +135,19 @@ export function daysSince(iso: string, now: number): number | undefined {
 export function withinDays(iso: string, days: number, now: number): boolean {
   const age = now - Date.parse(iso);
   return age >= 0 && age < days * 86_400_000;
+}
+
+/**
+ * Every drop's OpenRouter id, plus a second row keyed by its Hugging Face id when it has one, so
+ * `unlistedLeaks` (feed.ts) matches a leak that only ever named the model that way. Live 2026-09-26:
+ * `qwen/qwen3.8-flash` carries `hugging_face_id: "Qwen/Qwen3.8-Flash-Next"`, the exact spelling
+ * HN's leak used ("Qwen 3.8-Flash-Next releasing tomorrow"); 177 of 458 live listings carry one.
+ */
+export function listingAliases(drops: readonly Drop[]): { id: string; name: string }[] {
+  const rows: { id: string; name: string }[] = [];
+  for (const drop of drops) {
+    rows.push({ id: drop.id, name: drop.name });
+    if (drop.huggingFaceId) rows.push({ id: drop.huggingFaceId, name: drop.name });
+  }
+  return rows;
 }

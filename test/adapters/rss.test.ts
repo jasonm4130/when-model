@@ -132,6 +132,70 @@ describe('OpenAI window', () => {
   });
 });
 
+describe('OPENAI_NOISE_TITLE_SHAPE', () => {
+  it('matches the uncategorised customer-story titles that fill the live feed', async () => {
+    const { OPENAI_NOISE_TITLE_SHAPE } = await import('../../src/adapters/rss');
+    for (const title of [
+      'Proaction boosts sales 60% and saves 75+ hours with Codex',
+      '1Password increases engineering productivity 21% with Codex',
+      'Asana completed a years-long code migration in 2 weeks with Codex',
+      'NTT DATA Group cuts incident analysis to 30 minutes with Codex',
+      'How invideo improves color grading 3x with GPT‑6 Astra',
+      'How Cooley is accelerating IPO work with ChatGPT',
+      'Ringg’s AI agents resolve up to 65% of customer calls with OpenAI',
+      'Stampli cuts launch hours by 68% using ChatGPT Work',
+    ]) {
+      expect(OPENAI_NOISE_TITLE_SHAPE.test(title), title).toBe(true);
+    }
+  });
+
+  it('does not match launch or non-story titles', async () => {
+    const { OPENAI_NOISE_TITLE_SHAPE } = await import('../../src/adapters/rss');
+    for (const title of [
+      'Introducing GPT-6 Sol and Luna',
+      'GPT-5.6: Frontier intelligence that scales with your ambition',
+      'Advancing voice intelligence with new models in the API',
+      'Introducing the OpenAI Partner Network',
+      'Building more with GPT-5.1-Codex-Max',
+    ]) {
+      expect(OPENAI_NOISE_TITLE_SHAPE.test(title), title).toBe(false);
+    }
+  });
+
+  it('removes 3 of the fixture week’s 12 items and keeps the launch, matching the live count of 70/121', async () => {
+    const { OPENAI_NOISE_CATEGORIES, OPENAI_NOISE_TITLE_SHAPE, parseFeed } =
+      await import('../../src/adapters/rss');
+    const window = { now: Date.parse('2026-09-26T00:00:00Z'), days: 7 };
+    const categoryOnly = parseFeed(OPENAI, 'openai', 40, {
+      ...window,
+      excludeCategories: OPENAI_NOISE_CATEGORIES,
+    });
+    const withNoiseTitle = parseFeed(OPENAI, 'openai', 40, {
+      ...window,
+      excludeCategories: OPENAI_NOISE_CATEGORIES,
+      noiseTitle: OPENAI_NOISE_TITLE_SHAPE,
+    });
+    expect(categoryOnly).toHaveLength(12);
+    expect(withNoiseTitle).toHaveLength(9);
+    expect(withNoiseTitle.map((f) => f.title)).not.toEqual(
+      expect.arrayContaining([
+        'Proaction boosts sales 60% and saves 75+ hours with Codex',
+        'How invideo improves color grading 3x with GPT‑6 Astra',
+        'Ringg’s AI agents resolve up to 65% of customer calls with OpenAI',
+      ]),
+    );
+    expect(withNoiseTitle.map((f) => f.title)).toContain('Introducing GPT-6 Sol and Luna');
+  });
+
+  it('drops no launch from the labelled fixture: every title it would remove is labelled false', async () => {
+    const { OPENAI_NOISE_TITLE_SHAPE } = await import('../../src/adapters/rss');
+    const { OPENAI_RSS_LABELLED } = await import('../fixtures/openai-rss-labelled');
+    for (const [title, launch] of OPENAI_RSS_LABELLED) {
+      if (OPENAI_NOISE_TITLE_SHAPE.test(title)) expect(launch, title).toBe(false);
+    }
+  });
+});
+
 describe('fetchers', () => {
   it('hit the right feeds with the right source labels', async () => {
     vi.useFakeTimers({ now: Date.parse('2026-09-26T00:00:00Z') });
@@ -141,7 +205,8 @@ describe('fetchers', () => {
     });
     const { fetchDeepMind, fetchOpenAI } = await import('../../src/adapters/rss');
     const openai = await fetchOpenAI();
-    expect(openai).toHaveLength(12);
+    // 12 pass the category filter; the noise-title rule then drops 3 uncategorised customer stories.
+    expect(openai).toHaveLength(9);
     expect(openai[0].source).toBe('openai');
     expect((await fetchDeepMind())[0].source).toBe('deepmind');
     expect(calls).toEqual(['https://openai.com/news/rss.xml', 'https://deepmind.google/blog/rss.xml']);
