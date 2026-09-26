@@ -187,6 +187,19 @@ describe('components', async () => {
     expect(html).toContain('GPT-6 released by...?');
     expect(html).toContain('66%');
     expect(html).toContain('$65k');
+    expect(html).not.toContain('class="thin"');
+  });
+
+  it('Markets shows a thin book as a muted bid-ask range, not odds', async () => {
+    const thin: Market = {
+      ...release,
+      outcomes: [{ ...release.outcomes[0], yes: 0.555, bestBid: 0.27, bestAsk: 0.84, thin: true }],
+    };
+    const html = await container.renderToString(Markets, {
+      props: { d: dashboard({ markets: { name: 'Polymarket', data: [thin, board], ok: true } }) },
+    });
+    expect(html).toMatch(/<b class="thin"[^>]*>27–84¢<\/b> September 24/);
+    expect(html).not.toContain('56%');
     expect(html).toContain('Google');
     expect(html).not.toMatch(/race-name[^>]*>Other</);
   });

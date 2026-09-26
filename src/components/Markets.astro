@@ -2,6 +2,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import { displayOutcomes, isPlaceholderOutcome } from '../domain/market';
 import { pct, usd } from '../ui/format';
+import { outcomeOdds } from '../ui/odds';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const releases = d.markets.filter((m) => m.kind === 'release').slice(0, 14);
@@ -23,7 +24,12 @@ const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--
               <a class="row" href={m.url} target="_blank" rel="noopener" style={`--lab:${lab?.color ?? 'var(--cyan)'}; --i:${i}`}>
                 <div class="mtitle"><span class="mdot"></span>{m.title} <span class="muted vol">{usd(m.vol24)} 24h</span></div>
                 <div class="outs">
-                  {displayOutcomes(m, 4).map((o) => <span class="out"><b style={`color:${oddsColor(o.yes)}`}>{pct(o.yes)}</b> {o.label}</span>)}
+                  {displayOutcomes(m, 4).map((o) => {
+                    const odds = outcomeOdds(o);
+                    return odds.thin
+                      ? <span class="out"><b class="thin" title="Thin book: bid–ask range, not odds">{odds.text}</b> {o.label}</span>
+                      : <span class="out"><b style={`color:${oddsColor(o.yes)}`}>{odds.text}</b> {o.label}</span>;
+                  })}
                 </div>
               </a>
             );
@@ -61,7 +67,10 @@ const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--
             {[...boards, ...other].slice(0, 12).map((m) => (
               <a class="row" href={m.url} target="_blank" rel="noopener">
                 <div class="mtitle">{m.title} <span class="muted vol">{usd(m.vol24)}</span></div>
-                <div class="outs">{displayOutcomes(m, 3).map((o) => <span class="out"><b class="glow-c">{pct(o.yes)}</b> {o.label}</span>)}</div>
+                <div class="outs">{displayOutcomes(m, 3).map((o) => {
+                  const odds = outcomeOdds(o);
+                  return <span class="out"><b class={odds.thin ? 'thin' : 'glow-c'} title={odds.thin ? 'Thin book: bid–ask range, not odds' : undefined}>{odds.text}</b> {o.label}</span>;
+                })}</div>
               </a>
             ))}
           </div>
@@ -79,6 +88,7 @@ const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--
   .vol { font-size: 15px; margin-left: auto; }
   .outs { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 3px; font-size: 17px; color: var(--muted); }
   .out b { font-weight: 400; }
+  .out b.thin { color: var(--muted); }
   .compact .mtitle { font-size: var(--fs-sm); }
   .best-title { display: block; font-size: var(--fs-body); margin-bottom: 10px; color: var(--yellow); }
   .race-row { display: grid; grid-template-columns: 130px 1fr 56px; gap: 10px; align-items: center; padding: 4px 0; }

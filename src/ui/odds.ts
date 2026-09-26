@@ -1,6 +1,7 @@
 /** Presentation of DROPCON states and lab odds reads. Pure; safe to unit test. */
 import { shortRung, type Dropcon } from '../domain/dropcon';
 import type { LabOddsRead } from '../domain/lab-status';
+import { oddsRange, type Outcome } from '../domain/market';
 import { pct } from './format';
 
 type DropconFace = Pick<Dropcon, 'level' | 'name' | 'state'>;
@@ -41,4 +42,15 @@ export function readNote(read: LabOddsRead | undefined): string {
   if (read.lowerBound) return `at least · held at ${from ?? 'the last rung'}`;
   if (read.interpolated) return from ? `${from} → ${to}` : `now → ${to}`;
   return `quoted ${to ?? from}`;
+}
+
+/**
+ * An outcome's price as the markets panel shows it. A thin book (spread over 10¢ or one-sided) is
+ * never a single number: it shows its bid–ask range in cents, e.g. "27–84¢", and is muted.
+ */
+export function outcomeOdds(outcome: Outcome): { text: string; thin: boolean } {
+  const range = oddsRange(outcome);
+  if (!range) return { text: pct(outcome.yes), thin: false };
+  const cents = (p: number) => Math.round(p * 100);
+  return { text: `${cents(range[0])}–${cents(range[1])}¢`, thin: true };
 }

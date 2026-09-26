@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { LabOddsRead } from '../../src/domain/lab-status';
-import { dropconNumber, dropconPill, dropconTitle, readNote, readValue } from '../../src/ui/odds';
+import {
+  dropconNumber,
+  dropconPill,
+  dropconTitle,
+  outcomeOdds,
+  readNote,
+  readValue,
+} from '../../src/ui/odds';
 
 const rung = (label: string) => ({ label, deadline: '2026-09-30T03:59:59Z', p: 0.5, quoted: 0.5, url: 'u' });
 const read = (over: Partial<LabOddsRead>): LabOddsRead => ({
@@ -54,5 +61,15 @@ describe('odds reads', () => {
     );
     expect(readNote(read({ interpolated: true, to: rung('October 31') }))).toBe('now → Oct 31');
     expect(readNote(read({ to: rung('September 30') }))).toBe('quoted Sep 30');
+  });
+});
+
+describe('outcomeOdds', () => {
+  it('shows a thin book as its bid-ask range, never one number', () => {
+    const o = { label: 'September 28', yes: 0.555, closed: false, vol24: 1, bestBid: 0.27, bestAsk: 0.84 };
+    // Live 2026-09-26: Sonnet's Sep 28 rung, 27¢ bid / 84¢ ask, had been shown as "56%" LIVE ODDS.
+    expect(outcomeOdds({ ...o, thin: true })).toEqual({ text: '27–84¢', thin: true });
+    expect(outcomeOdds({ ...o, thin: true, bestBid: undefined })).toEqual({ text: '0–84¢', thin: true });
+    expect(outcomeOdds({ ...o, thin: false })).toEqual({ text: '56%', thin: false });
   });
 });
