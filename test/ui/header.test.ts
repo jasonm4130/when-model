@@ -4,6 +4,7 @@ import Header from '../../src/components/Header.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
+import { dashboardFingerprint } from '../../src/ui/fingerprint';
 
 const NOW = Date.parse('2026-09-19T12:00:00Z');
 
@@ -60,14 +61,23 @@ describe('Header', async () => {
     expect(html).not.toContain('NEW DATA');
   });
 
+  it('stamps the fingerprint of the data it rendered, as the browser will compute it from the API (UI-11)', async () => {
+    const d = dashboard();
+    const html = await container.renderToString(Header, { props: { d } });
+    const stamped = html.match(/data-fingerprint="([0-9a-f]{8})"/)?.[1];
+    expect(stamped).toBe(dashboardFingerprint(JSON.parse(JSON.stringify(d)) as object));
+  });
+
   it('gives the statusbar the mobile-only hooks that hide everything but STATUS and the clock (UI-06)', async () => {
     const html = await container.renderToString(Header, { props: { d: dashboard() } });
     expect(html).toContain('class="tiny muted counts"');
     expect(html).toContain('class="tiny muted sync"');
-    expect(html).toContain('class="tiny muted utc-label"');
+    // The clock already ends in Z, so a separate UTC label only costs width.
+    expect(html).toMatch(/data-clock[^>]*>\d{2}:\d{2}:\d{2}Z</);
+    expect(html).not.toMatch(/>UTC</);
   });
 
-  it('still reports live status, labs and sources with an empty ticker', async () => {
+  it('reports a degraded source in the status and keeps a ticker that has items', async () => {
     const release: Market = {
       slug: 'gpt-6',
       title: 'GPT-6 released by...?',
@@ -84,5 +94,7 @@ describe('Header', async () => {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [release], ok: false, error: 'down' } }) },
     });
     expect(html).toContain('STATUS: DEGRADED');
+    // The release market's odds are a ticker item, so the ticker renders even with a source down.
+    expect(html).toContain('ODDS OF A DROP BY SEPTEMBER 24');
   });
 });
