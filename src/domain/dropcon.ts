@@ -1,4 +1,4 @@
-import type { ForecastSummary } from './forecast';
+import { leadInputSkillText, type ForecastSummary } from './forecast';
 import type { LabId } from './lab';
 
 /**
@@ -286,7 +286,7 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
     provenance,
     baseRate: forecast ? baseRateLine(forecast) : '',
     notes: [
-      `Hand-set weights (v${DROPCON_ALGORITHM_VERSION}): ${WEIGHTS.market7d} × P7 + ${WEIGHTS.market30dIncrement} × (P30 − P7) + ${WEIGHTS.repricing} × repricing. /backtest shows how they were tested.`,
+      `Hand-set weights (v${DROPCON_ALGORITHM_VERSION}): ${WEIGHTS.market7d} × P7 + ${WEIGHTS.market30dIncrement} × (P30 − P7) + ${WEIGHTS.repricing} × repricing. They were never fitted, and the level itself has not been tested; in the replay, P7's form (the best read across labs) scored a Brier skill of ${leadInputSkillText()} against the base rate at 7 days.`,
       'P7 is the single strongest frontier text family, so it is a lower bound on any frontier release.',
       'Early warnings and landed launches are listed with their track record; they do not move the level.',
     ],

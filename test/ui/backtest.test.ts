@@ -158,8 +158,13 @@ describe('backtest components', async () => {
     });
     expect(html).toContain("WHAT THIS CAN'T DO");
     expect(text(html)).toContain('12 minutes after its announcement');
-    expect(text(html)).toContain('scores worse than');
+    expect(text(html)).toContain('score worse than');
     expect(text(html)).toContain('Of 5 launches');
+    // v3: launches can only remove a family from P7, and the level was never tested.
+    expect(text(html)).not.toContain('Recent launches raise it');
+    expect(text(html)).toContain('A launch never raises it');
+    expect(text(html)).toContain('Brier skill of −1.48 (95% interval −3.36 to −0.28)');
+    expect(text(html)).toContain('The level itself has not been evaluated');
   });
 
   it('reproduce section has the command and copy-pasteable curls', async () => {
@@ -229,6 +234,10 @@ describe('site copy and links', async () => {
     expect(html).toContain("xAI's release notes");
     expect(html).toContain("What can't it do?");
     expect(html).toContain('Read the backtest');
+    expect(html).not.toContain('measures all of it');
+    expect(html).not.toContain('How it was tested');
+    expect(html).toContain('The weights are hand-set and the level itself has never been tested');
+    expect(html).toContain('(Brier skill −1.48 (95% interval −3.36 to −0.28))');
     // The auto-refresh answer belongs to WP-8 (polled refresh) and stays as that package wrote it.
     expect(html).toContain('The open page checks for new data every 5 minutes and offers a one-click reload');
     expect(html).not.toContain('The page reloads itself every 5 minutes while open.');

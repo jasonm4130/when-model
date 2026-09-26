@@ -1,4 +1,6 @@
 ---
+import { leadInputSkillText } from '../domain/forecast';
+
 interface Props {
   releases: number;
   dated: number;
@@ -16,7 +18,7 @@ const lag = medianAvailabilityLagH === null ? 'about the same time as' : `${Math
   <h2 id="limits-title" class="tiny glow-y">WHAT THIS CAN'T DO</h2>
   <ul>
     <li><strong>It mostly detects launches after they happen.</strong> The median model reached OpenRouter {lag} its announcement. Registry listings, feeds and HN confirm a launch; they rarely precede it.</li>
-    <li><strong>DROPCON is an activity index, not a probability.</strong> Recent launches raise it. Its market input, read on its own, {marketSkill72 < 0 ? 'scores worse than' : 'barely beats'} always guessing the base rate (<a href="#calibration">Brier table</a>). This page scores that input, not the DROPCON level itself.</li>
+    <li><strong>DROPCON is a lead score, not a probability, and this page does not test it.</strong> It reads market release odds alone, with hand-set weights. A launch never raises it: once a model lists, its family drops out for four days. The raw market odds, read on their own, {marketSkill72 < 0 ? 'score worse than' : 'barely beat'} always guessing the base rate at 72 hours (<a href="#calibration">Brier table</a>). In the v3 replay, the level's main input, the best 7-day read across labs, scored a Brier skill of {leadInputSkillText()} against the base rate at 7 days. The level itself has not been evaluated.</li>
     <li><strong>The markets aggregate leaks rather than foresee launches.</strong> Of {early90} launches whose market reached 0.9 before the announcement, {early90Prompted} followed a public leak, a press report or the lab's own notice (<a href="#splits">splits</a>).</li>
     <li><strong>n is small.</strong> {releases} launches, {dated} of them with a market that dates the day. One lab changing its habits moves every number here.</li>
     <li><strong>The dashboard's own history starts 2026-09-23.</strong> No launch before then can be replayed through the live score, and HN point counts cannot be replayed at all: Algolia only returns final totals.</li>

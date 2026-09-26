@@ -232,6 +232,9 @@ describe('computeDropcon', () => {
     );
     expect(d.baseRate).toContain('Brier skill −0.002');
     expect(d.notes[0]).toContain(`v${DROPCON_ALGORITHM_VERSION}`);
+    expect(d.notes[0]).not.toContain('/backtest shows');
+    expect(d.notes[0]).toContain('never fitted, and the level itself has not been tested');
+    expect(d.notes[0]).toContain('Brier skill of −1.48 (95% interval −3.36 to −0.28)');
     expect(computeDropcon(quiet).baseRate).toBe('');
   });
 });

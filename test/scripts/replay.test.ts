@@ -35,7 +35,12 @@ import {
   type ReplayRung,
   type Row,
 } from '../../scripts/backtest/replay';
-import { anyReleaseProbability, FORECAST_CONSTANTS, PROBABILITY_LEVELS } from '../../src/domain/forecast';
+import {
+  anyReleaseProbability,
+  FORECAST_CONSTANTS,
+  LEAD_INPUT_SKILL_7D,
+  PROBABILITY_LEVELS,
+} from '../../src/domain/forecast';
 
 const T0 = Date.parse('2026-09-01T00:00:00Z') / 1000;
 
@@ -373,6 +378,10 @@ describe('committed replay', () => {
   it('is what src/domain/forecast.ts ships', () => {
     expect(replay.constants).toEqual(JSON.parse(JSON.stringify(FORECAST_CONSTANTS)));
     expect(replay.levels.bands).toEqual(PROBABILITY_LEVELS);
+    const week = replay.horizons.find((h) => h.horizonH === 168)!;
+    const max = week.formulas.find((f) => f.id === 'max')!;
+    expect({ skill: max.skill, skillCi95: max.skillCi95 }).toEqual(LEAD_INPUT_SKILL_7D);
+    expect(week.sensitivity.every((v) => v.formulas.max.skillCi95[1] < 0)).toBe(true);
   });
 
   it('measures how long launched markets keep trading before they resolve', () => {

@@ -100,6 +100,25 @@ export const FORECAST_CONSTANTS: ForecastConstants = {
   ],
 };
 
+/**
+ * How the level's main input scored in the same replay. P7 is the best trusted read across labs,
+ * the shape of formula (b) "max over labs"; at 7 days it scored this Brier skill against the
+ * train base rate on the held-out window (v3-replay.json `horizons[168]`), underpredicting a 94%
+ * release rate. Every sensitivity variant was below zero too. The lead score's own levels were
+ * never evaluated. test/scripts/replay.test.ts fails if this drifts from the replay.
+ */
+export const LEAD_INPUT_SKILL_7D: { skill: number; skillCi95: [number, number] } = {
+  skill: -1.481,
+  skillCi95: [-3.364, -0.279],
+};
+
+const signed2 = (x: number) => `${x < 0 ? '−' : '+'}${Math.abs(x).toFixed(2)}`;
+
+/** "−1.48 (95% interval −3.36 to −0.28)": the replay figure the page and notes cite. */
+export function leadInputSkillText(s = LEAD_INPUT_SKILL_7D): string {
+  return `${signed2(s.skill)} (95% interval ${signed2(s.skillCi95[0])} to ${signed2(s.skillCi95[1])})`;
+}
+
 export interface ProbabilityLevel {
   level: 1 | 2 | 3 | 4 | 5;
   /** Lowest 72h probability at this level. */

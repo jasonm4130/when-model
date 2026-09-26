@@ -7,6 +7,7 @@ import {
   PROBABILITY_LEVELS,
   type ForecastConstants,
   type HorizonConstants,
+  leadInputSkillText,
 } from '../../src/domain/forecast';
 
 const test0: HorizonConstants['test'] = {
@@ -256,5 +257,14 @@ describe('forecastSummary', () => {
     expect(offline.p).toBeCloseTo(offline.unpriced, 10);
     const bare = forecastSummary([], true, 72, { ...C, horizons: [] });
     expect([bare.baseRate, bare.testRate, bare.skill, bare.skillCi95]).toEqual([0, 0, 0, [0, 0]]);
+  });
+});
+
+describe('leadInputSkillText', () => {
+  it('prints the replay figure with true minus signs and two decimals', () => {
+    expect(leadInputSkillText()).toBe('−1.48 (95% interval −3.36 to −0.28)');
+    expect(leadInputSkillText({ skill: 0.054, skillCi95: [-0.358, 0.665] })).toBe(
+      '+0.05 (95% interval −0.36 to +0.67)',
+    );
   });
 });
