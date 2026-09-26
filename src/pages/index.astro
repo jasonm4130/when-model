@@ -8,16 +8,20 @@ import Drops from '../components/Drops.astro';
 import Feed from '../components/Feed.astro';
 import History from '../components/History.astro';
 import Footer from '../components/Footer.astro';
-import { loadDashboard } from '../app/load-dashboard';
+import Signals from '../components/Signals.astro';
+import { loadDashboard, loadHistoryForPage } from '../app/load-dashboard';
+import { dropconTitle } from '../ui/odds';
 
-const d = await loadDashboard();
+// History shares /api/history.json's 15-minute memo and never throws; it only feeds the strip.
+const [d, history] = await Promise.all([loadDashboard(), loadHistoryForPage()]);
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
-const title = `DROPCON ${d.dropcon.level} · ${d.dropcon.name} — whenmodel`;
+const title = dropconTitle(d.dropcon);
 ---
-<Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket odds, OpenRouter listings, Hugging Face trending, lab blogs and Hacker News fused into one DROPCON level.">
+<Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket release odds read into one DROPCON level, with early warnings and fresh launches from OpenRouter, Hacker News, lab blogs, YouTube and the transformers registry.">
   <Header d={d} />
   <main id="main">
-    <Dropcon d={d} />
+    <Dropcon d={d} history={history} />
+    <Signals d={d} />
     <Labs d={d} />
     <Markets d={d} />
     <Drops d={d} />

@@ -1,0 +1,94 @@
+/* Self-hosted VT323 and Press Start 2P (SIL OFL 1.1, public/fonts/OFL.txt). Loaded after
+   global.css (see Layout.astro) so the metric-matched fallback faces below can re-point
+   --font-head/--font-mono without editing global.css, which owns those tokens' original values.
+
+   VT323 is subset to Google Fonts' "latin" range plus the non-ASCII glyphs the markup renders
+   that it contains (§ · – — … − ∞ ≤). Press Start 2P is the upstream file, only WOFF2-compressed:
+   it carries the Reserved Font Name "Press Start 2P", and the OFL FAQ (2.6-2.8, 5.3) counts a
+   subset as a Modified Version that may not use that name, CSS font-family included. Neither font
+   has the other icon glyphs (◈ ◆ ▸ ✕ ▌ ▐ ◉ ◔ ▣ ◎ ▦ ▤ ◍ ⚠ ◌ ● ○ ✱ ❖ ☾ ◭; VT323 also lacks ▲ ▼ ▶ ♥),
+   so those fall through to ui-monospace/monospace exactly as they did under Google Fonts. Each
+   unicode-range below is the file's real cmap; the fallback faces repeat it so they only ever
+   stand in for glyphs the webfont will draw, never for icons or text it cannot. */
+
+@font-face {
+  font-family: 'VT323';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/vt323.woff2') format('woff2');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+20AC, U+2122,
+    U+2212, U+2215, U+221E, U+2264-2265;
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/press-start-2p.woff2') format('woff2');
+  unicode-range:
+    U+0020-007F, U+00A0-0148, U+014A-0161, U+0164-017F, U+0192, U+021A-021B, U+02BC, U+02C6-02C7, U+02C9-02CB,
+    U+02D7-02DD, U+0300-0301, U+0326, U+0335, U+037A, U+037E, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03CE,
+    U+0400-045F, U+0462-0463, U+046A-046B, U+0472-0475, U+0490-049D, U+04A0-04A5, U+04AA-04B1, U+04B6-04BB,
+    U+04C0-04C2, U+04CB-04CC, U+04CF-04D9, U+04DC-04DF, U+04E2-04E9, U+04EE-04F9, U+051A-051D, U+0524-0525,
+    U+2013-2015, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+    U+20AE-20AF, U+20B4, U+20B8, U+20BD, U+2116, U+2122, U+2190-2193, U+2202, U+2206, U+220F, U+2211, U+2215,
+    U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25B2, U+25B6, U+25BC, U+25C0, U+25CA, U+2605-2606,
+    U+2660, U+2663, U+2665-2666, U+266A, U+F100-F101, U+F8FF, U+FB01-FB02;
+}
+
+/* Metric-matched local fallbacks. font-display:block hides text for up to 3s while the preloaded
+   webfont downloads, but that invisible text is still laid out in the next family in the stack;
+   these faces make that layout identical to the webfont's, so nothing reflows when it arrives.
+
+   Every candidate is a monospace face with a 0.60em advance (Menlo and DejaVu Sans Mono 1233/2048,
+   Courier New and Liberation Mono 1229/2048), so one size-adjust fits all of them: VT323 advances
+   are 0.4em and Press Start 2P's 1.0em, giving 0.4/0.6021 = 66.44% and 1/0.6021 = 166.10%.
+   size-adjust also scales the override descriptors (CSS Fonts 4, size-adjust), so each override is
+   the webfont's own metric divided by size-adjust: VT323 ascent 800/descent 200 per 1000 em
+   becomes 120.41%/30.10%, Press Start 2P's 1000/0 becomes 60.21%/0%. Consolas (0.55em) and SF Mono
+   (not addressable through local()) are deliberately absent. local() needs the full or PostScript
+   name: bare local('Menlo') does not resolve in Chrome, local('Menlo Regular') does. */
+@font-face {
+  font-family: 'VT323 Fallback';
+  src:
+    local('Menlo Regular'), local('Menlo-Regular'), local('Courier New'), local('CourierNewPSMT'),
+    local('DejaVu Sans Mono'), local('DejaVuSansMono'), local('Liberation Mono'), local('LiberationMono');
+  unicode-range:
+    U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+2013-2014, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+20AC, U+2122,
+    U+2212, U+2215, U+221E, U+2264-2265;
+  size-adjust: 66.44%;
+  ascent-override: 120.41%;
+  descent-override: 30.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Press Start 2P Fallback';
+  src:
+    local('Menlo Regular'), local('Menlo-Regular'), local('Courier New'), local('CourierNewPSMT'),
+    local('DejaVu Sans Mono'), local('DejaVuSansMono'), local('Liberation Mono'), local('LiberationMono');
+  unicode-range:
+    U+0020-007F, U+00A0-0148, U+014A-0161, U+0164-017F, U+0192, U+021A-021B, U+02BC, U+02C6-02C7, U+02C9-02CB,
+    U+02D7-02DD, U+0300-0301, U+0326, U+0335, U+037A, U+037E, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03CE,
+    U+0400-045F, U+0462-0463, U+046A-046B, U+0472-0475, U+0490-049D, U+04A0-04A5, U+04AA-04B1, U+04B6-04BB,
+    U+04C0-04C2, U+04CB-04CC, U+04CF-04D9, U+04DC-04DF, U+04E2-04E9, U+04EE-04F9, U+051A-051D, U+0524-0525,
+    U+2013-2015, U+2018-201A, U+201C-201E, U+2020-2022, U+2026, U+2030, U+2039-203A, U+2044, U+2074, U+20AC,
+    U+20AE-20AF, U+20B4, U+20B8, U+20BD, U+2116, U+2122, U+2190-2193, U+2202, U+2206, U+220F, U+2211, U+2215,
+    U+221A, U+221E, U+222B, U+2248, U+2260, U+2264-2265, U+25B2, U+25B6, U+25BC, U+25C0, U+25CA, U+2605-2606,
+    U+2660, U+2663, U+2665-2666, U+266A, U+F100-F101, U+F8FF, U+FB01-FB02;
+  size-adjust: 166.1%;
+  ascent-override: 60.21%;
+  descent-override: 0%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --font-head:
+    'Press Start 2P', 'Press Start 2P Fallback', 'VT323', 'VT323 Fallback', ui-monospace, monospace;
+  --font-mono: 'VT323', 'VT323 Fallback', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}

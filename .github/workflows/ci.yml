@@ -44,8 +44,9 @@ jobs:
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      # Not only on failure: a flake that passes on its retry still leaves the failed attempt's trace.
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: ${{ !cancelled() }}
         with:
           name: browser-failure-diagnostics
           path: test-results/

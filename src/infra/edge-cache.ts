@@ -20,7 +20,7 @@ export function defaultEdgeCache(): EdgeCache | undefined {
 }
 
 /** Keys live under our own origin so we never depend on cross-origin key semantics. */
-export function cacheKey(kind: 'src' | 'memo', id: string): Request {
+export function cacheKey(kind: 'src' | 'memo' | 'stale', id: string): Request {
   return new Request(`https://whenmodel.com/__cache/${kind}/${encodeURIComponent(id)}`);
 }
 
@@ -30,13 +30,14 @@ async function store(
   body: string,
   contentType: string,
   ttl: number,
+  extra: Record<string, string> = {},
 ) {
   if (!cache) return;
   try {
     await cache.put(
       key,
       new Response(body, {
-        headers: { 'content-type': contentType, 'cache-control': `public, max-age=${ttl}` },
+        headers: { 'content-type': contentType, 'cache-control': `public, max-age=${ttl}`, ...extra },
       }),
     );
   } catch (e) {
@@ -49,6 +50,13 @@ export interface FetchOptions {
   headers?: Record<string, string>;
   cache?: EdgeCache;
   fetch?: typeof fetch;
+  /**
+   * Runs on a freshly fetched body before it is cached. Returning `false` throws (the
+   * body is not stored); throwing from `validate` itself propagates unchanged, also
+   * without storing. Never runs again on a cache hit: a body was already valid when it
+   * was written.
+   */
+  validate?: (body: string) => boolean;
 }
 
 /** Fetch a URL as text, serving from the edge cache for `ttl` seconds when possible. */
@@ -70,8 +78,50 @@ export async function cachedText(url: string, options: FetchOptions = {}): Promi
   });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   const text = await res.text();
+  if (options.validate?.(text) === false) throw new Error(`${url} failed validation`);
   await store(cache, key, text, res.headers.get('content-type') ?? 'text/plain; charset=utf-8', ttl);
   return text;
+}
+
+const FETCHED_AT = 'x-whenmodel-fetched-at';
+
+/**
+ * `cachedText`, plus a last-good copy of every freshly fetched body kept for `staleTtl` seconds.
+ * When the upstream fails (a non-2xx, a network error, a timeout or failed validation) and a
+ * last-good copy exists, that copy is served with `stale.fetchedAt`, the time it was fetched, so
+ * the caller can read it as of then. Without one, the upstream error propagates.
+ */
+export async function cachedTextOrStale(
+  url: string,
+  options: FetchOptions & { staleTtl: number },
+): Promise<{ text: string; stale?: { fetchedAt: string } }> {
+  const cache = options.cache ?? defaultEdgeCache();
+  const staleKey = cacheKey('stale', url);
+  let fresh: string | undefined;
+  try {
+    const text = await cachedText(url, {
+      ...options,
+      cache,
+      // Runs only on a body that just came from upstream; its verdict still decides.
+      validate: (body) => {
+        const ok = options.validate ? options.validate(body) : true;
+        if (ok !== false) fresh = body;
+        return ok;
+      },
+    });
+    if (fresh !== undefined)
+      await store(cache, staleKey, fresh, 'text/plain; charset=utf-8', options.staleTtl, {
+        [FETCHED_AT]: new Date().toISOString(),
+      });
+    return { text };
+  } catch (e) {
+    const hit = await cache?.match(staleKey).catch(() => undefined);
+    const fetchedAt = hit?.headers.get(FETCHED_AT);
+    const age = fetchedAt ? Date.now() - Date.parse(fetchedAt) : Number.NaN;
+    if (!hit || !fetchedAt || !(age <= options.staleTtl * 1000)) throw e;
+    console.warn('[cache:stale]', url, 'served a copy from', fetchedAt, e instanceof Error ? e.message : e);
+    return { text: await hit.text(), stale: { fetchedAt } };
+  }
 }
 
 export async function cachedJson<T>(url: string, options: FetchOptions = {}): Promise<T> {

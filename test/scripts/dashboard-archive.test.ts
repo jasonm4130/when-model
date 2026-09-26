@@ -125,7 +125,7 @@ describe('dashboard archive', () => {
       outcome: 'observed',
       snapshotCount: 2,
       snapshotFetchedAt: '2026-09-20T10:00:00.000Z',
-      metrics: { heat: 78, globalScore: 62 },
+      metrics: { heat: 78, globalScore: 62, weekOdds: 0.7, monthOdds: 0.9 },
     });
     expect(report.leadUp['72h']).toMatchObject({ outcome: 'observed' });
     expect(report.firstDetectedListing).toMatchObject({
@@ -186,5 +186,36 @@ describe('dashboard archive', () => {
       ],
     );
     expect(report.leadUp['24h']).toEqual({ outcome: 'unobserved', snapshotCount: 0 });
+  });
+
+  it("reads a v4 dashboard's lab odds off its family curve, leaving an extrapolated read out", () => {
+    const v4 = {
+      ...dashboard('2026-09-20T00:00:00.000Z'),
+      labs: [
+        {
+          id: 'openai',
+          heat: 60,
+          status: 'HOT',
+          odds: {
+            family: 'GPT-6',
+            p72: { p: 0.3, trusted: true },
+            p7: { p: 0.66, trusted: true },
+            p30: { p: 0.8, trusted: false },
+          },
+        },
+      ],
+    };
+    const [report] = evaluateSnapshots(
+      [makeEnvelope({ response: v4, fetchedAt: '2026-09-20T10:00:00.000Z', collectorRevision: 'v4' })],
+      [
+        {
+          labId: 'openai',
+          model: 'gpt-6',
+          releasedAt: '2026-09-21T00:00:00.000Z',
+          sourceUrl: 'https://openai.example/release',
+        },
+      ],
+    );
+    expect(report.leadUp['24h'].metrics).toMatchObject({ weekOdds: 0.66, monthOdds: null });
   });
 });

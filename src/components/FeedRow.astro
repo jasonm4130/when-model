@@ -1,0 +1,33 @@
+---
+import type { FeedItem } from '../domain/feed';
+import { ago } from '../ui/format';
+import { FEED_LABELS, feedColour } from '../ui/panels';
+interface Props {
+  f: FeedItem;
+  /** Entrance stagger slot. */
+  i: number;
+  now: number;
+}
+const { f, i, now } = Astro.props;
+---
+<a class={`row item ${f.alert ? 'alert' : ''}`} href={f.url} target="_blank" rel="noopener" style={`--i:${i}`}>
+  <span class="src tiny" style={`color:${feedColour(f.source)}`}>{FEED_LABELS[f.source]}</span>
+  <span class="ttl">{f.alert && <><span class="glow-m" aria-hidden="true">⚠ </span><span class="sr-only">Alert: </span></>}{f.title}</span>
+  <span class="when muted" data-time={f.publishedAt}>{ago(f.publishedAt, now)}</span>
+  {f.meta && <span class="meta muted">{f.meta}</span>}
+</a>
+<style>
+  .item { display: grid; grid-template-columns: 78px minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; animation: rise 500ms var(--ease) both; animation-delay: calc(var(--i) * 40ms); }
+  .src { padding-top: 3px; }
+  .ttl { font-size: var(--fs-body); overflow-wrap: anywhere; }
+  .when { font-size: var(--fs-xs); white-space: nowrap; }
+  .meta { grid-column: 2 / -1; font-size: var(--fs-xs); }
+  /* Phones: the title and its age first, then the source beside the meta, a line shorter than a row of its own. */
+  @media (max-width: 480px) {
+    .item { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'ttl ttl when' 'src meta meta'; }
+    .ttl { grid-area: ttl; }
+    .when { grid-area: when; }
+    .src { grid-area: src; padding-top: 0; }
+    .meta { grid-area: meta; }
+  }
+</style>

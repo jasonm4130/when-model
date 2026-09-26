@@ -7,8 +7,8 @@ import { defineMiddleware } from 'astro:middleware';
 const CSP = [
   "default-src 'self'",
   "script-src 'self' https://app.skopia.dev https://static.cloudflareinsights.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  'font-src https://fonts.gstatic.com',
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data:",
   "connect-src 'self' https://app.skopia.dev https://cloudflareinsights.com",
   "base-uri 'self'",

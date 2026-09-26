@@ -1,0 +1,92 @@
+---
+import { isFrontierReveal, REVEAL_STATS, REVEALS, revealDays, type StealthReveal } from '../domain/stealth';
+
+interface Props {
+  reveals?: readonly StealthReveal[];
+  stats?: typeof REVEAL_STATS;
+}
+const { reveals = REVEALS, stats = REVEAL_STATS } = Astro.props;
+
+const ATTRIBUTION: Record<StealthReveal['attribution'], string> = {
+  'api-description': 'slot description',
+  'model-page': 'OpenRouter page',
+  'openrouter-blog': 'OpenRouter blog',
+  'third-party': 'third party',
+};
+const days1 = (d: number) => d.toFixed(1);
+const rows = [...reveals]
+  .sort((a, b) => Date.parse(b.stealthCreatedAt) - Date.parse(a.stealthCreatedAt))
+  .map((r) => ({ ...r, days: revealDays(r), frontier: isFrontierReveal(r) }));
+const maxDays = Math.max(...rows.filter((r) => r.verified).map((r) => r.days), 1);
+const excluded = rows.filter((r) => !r.verified);
+---
+<div class="metrics stealth-metrics">
+  <div>
+    <div class="metric-label">Revealed slots</div>
+    <div class="metric-value glow-c">{stats.all.n}</div>
+    <div class="metric-note">verified, both timestamps checked</div>
+  </div>
+  <div>
+    <div class="metric-label">Median days in stealth</div>
+    <div class="metric-value glow-c">{days1(stats.all.medianDays)}</div>
+    <div class="metric-note">stealth listing to official listing</div>
+  </div>
+  <div>
+    <div class="metric-label">Frontier-lab slots</div>
+    <div class="metric-value glow-y">{stats.frontier.n}</div>
+    <div class="metric-note">median {days1(stats.frontier.medianDays)} days</div>
+  </div>
+</div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Stealth reveals table">
+  <table>
+    <caption class="sr-only">Revealed OpenRouter stealth slots: when each appeared, what it turned out to be, and how many days passed before the official listing.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Slot</th>
+        <th scope="col" class="num">Days to official</th>
+        <th scope="col">Revealed as</th>
+        <th scope="col">Stealth listing</th>
+        <th scope="col">Named by</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr class={r.verified ? '' : 'unverified'}>
+          <th scope="row">{r.slot}</th>
+          <td class="num">
+            <span class="days">
+              {r.verified && <span class="track" aria-hidden="true"><i style={`width:${((r.days / maxDays) * 100).toFixed(1)}%`}></i></span>}
+              {days1(r.days)}
+            </span>
+          </td>
+          <td>
+            {r.revealedAs} <span class="muted">· {r.vendor}</span>
+            {r.frontier && <span class="tag frontier">frontier lab</span>}
+            {r.note && <span class="row-note">{r.note}</span>}
+          </td>
+          <td class="date">{r.stealthCreatedAt.slice(0, 10)}</td>
+          <td>
+            <a href={r.source} target="_blank" rel="noopener">{ATTRIBUTION[r.attribution]}</a>
+            {!r.verified && <span class="row-note">unverified, left out of the medians</span>}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  OpenRouter sometimes lists a lab's next model under a codename before launch. Days run from the slot's first OpenRouter <code>created</code> time to the official listing's, both re-read from the API; <code>created</code> can move after the fact, so treat single rows as approximate. Only verified rows feed the medians{excluded.length > 0 && `: ${excluded.map((r) => r.slot).join(', ')} ${excluded.length === 1 ? 'is' : 'are'} shown but left out`}. A slot that never revealed itself is not in the table, so the medians describe slots that were revealed, not every slot. The dashboard lists live slots as an early warning with this track record; they never move the level.
+</p>
+<style>
+  .stealth-metrics { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 14px; }
+  .stealth-metrics .metric-note { white-space: normal; }
+  .row-note { display: block; font-size: var(--fs-xs); color: var(--muted); }
+  .tag.frontier { margin-left: 6px; color: var(--yellow); }
+  .days { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .track { display: inline-block; width: 60px; height: 6px; background: #15122b; border: 1px solid var(--line); position: relative; }
+  .track i { position: absolute; inset: 0 auto 0 0; background: #1aa0b3; }
+  .date { white-space: nowrap; }
+  .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 95ch; }
+  @media (max-width: 560px) { .track { display: none; } }
+  code { font-family: var(--font-mono); color: var(--yellow); }
+</style>

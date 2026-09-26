@@ -1,0 +1,96 @@
+---
+import type { Replay } from '../../scripts/backtest/replay';
+import { pct } from '../../scripts/backtest/view';
+import { labById } from '../domain/lab';
+
+interface Props {
+  byLab: Replay['byLab'];
+  priced: Replay['pricedEvents'];
+  /** A launch is priced when its lab's read reached this beforehand. */
+  pricedMin: number;
+  /** "Hours with a read" counts reads above this. */
+  readMin: number;
+  levels: Replay['levels'];
+  split: string;
+  headlineH: number;
+}
+const { byLab, priced, pricedMin, readMin, levels, split, headlineH } = Astro.props;
+
+const signed = (n: number) => (n > 0 ? `+${n.toFixed(3)}` : n < 0 ? `−${Math.abs(n).toFixed(3)}` : '0');
+const heldOut = priced.events.filter((e) => e.at > split);
+const rows = [...byLab]
+  .sort((a, b) => b.skill - a.skill)
+  .map((l) => ({
+    ...l,
+    name: labById(l.labId)?.name ?? l.labId,
+    priced: heldOut.filter((e) => e.labId === l.labId && e.priced).length,
+  }));
+const events = rows.map((r) => r.testEvents);
+const test = levels.test;
+const observed = test.filter((l) => l.observed !== null).map((l) => l.observed!);
+const rises = observed.every((o, i) => i === 0 || o <= observed[i - 1]);
+const top = test[0];
+const peak = [...test].filter((l) => l.observed !== null).sort((a, b) => b.observed! - a.observed!)[0];
+---
+<div class="table-scroll" tabindex="0" role="region" aria-label="By-lab skill table">
+  <table>
+    <caption class="sr-only">Each frontier lab's own {headlineH}-hour market read scored against that lab's own launches on the held-out window.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Lab</th>
+        <th scope="col" class="num">Skill</th>
+        <th scope="col" class="num">Priced first</th>
+        <th scope="col" class="num">Rate, fit → held out</th>
+        <th scope="col" class="num">Hours with a read</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th scope="row">{r.name}</th>
+          <td class={`num ${r.skill > 0 ? 'good' : r.skill < 0 ? 'bad' : ''}`}>{signed(r.skill)}</td>
+          <td class="num">{r.priced} of {r.testEvents}</td>
+          <td class="num">{pct(r.trainRate)} → {pct(r.testRate)}</td>
+          <td class="num">{r.hoursWithRead}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  Each lab's own {headlineH}-hour read against its own launches, scored on the held-out hours against that lab's fit-window rate. "Priced first" counts held-out launches whose lab's read reached {pct(pricedMin)} in the {headlineH} hours before the listing ({priced.testPriced} of {priced.test} overall). "Hours with a read" counts held-out hours with a read above {pct(readMin)}. With {Math.min(...events)} to {Math.max(...events)} launches per lab, a single launch moves these numbers a lot, so read them as where the markets exist, not as a ranking.
+</p>
+
+<h3 class="tiny sub">Had the level been the {headlineH}-hour probability</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Probability bands table">
+  <table>
+    <caption class="sr-only">Held-out hours per probability band, their mean forecast, and how often a frontier launch followed within {headlineH} hours.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Level · band</th>
+        <th scope="col" class="num">Launch within {headlineH}h</th>
+        <th scope="col" class="num">Mean forecast</th>
+        <th scope="col" class="num">Held-out hours</th>
+      </tr>
+    </thead>
+    <tbody>
+      {test.map((l) => (
+        <tr>
+          <th scope="row">{l.level} · {levels.bands.find((b) => b.level === l.level)?.label}</th>
+          <td class="num">{pct(l.observed)}</td>
+          <td class="num">{pct(l.meanP)}</td>
+          <td class="num">{l.hours} ({pct(l.share)})</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  Bands sit at the fit window's {levels.edges.map((e) => pct(e)).join(', ')} edges. On held-out hours the launch rate {rises ? 'did rise with the level' : `did not rise with the level: level 1 hours were followed by a launch ${pct(top.observed)} of the time, level ${peak.level} hours ${pct(peak.observed)}`}. A level that doesn't rank outcomes can't be sold as a probability.
+</p>
+<style>
+  .good { color: var(--green); }
+  .bad { color: var(--red); }
+  .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 95ch; }
+  h3.sub { color: var(--muted); margin: 22px 0 8px; line-height: 1.6; }
+</style>

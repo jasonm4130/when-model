@@ -1,0 +1,54 @@
+---
+import { leadInputSkillText } from '../domain/forecast';
+import { LAUNCH_SETTLE_MS } from '../domain/lab-status';
+
+/** The first slot the Worker's D1 history holds (capture began 2026-09-23T01:00Z). */
+const HISTORY_FROM = '2026-09-23';
+
+interface Props {
+  releases: number;
+  dated: number;
+  medianAvailabilityLagH: number | null;
+  /** Launches whose market held 0.9 before the announcement, how many of those had a public precursor, and the rest by name. */
+  early90: number;
+  early90Prompted: number;
+  early90Unprompted: string[];
+  /** Launches by precursor (announced, leak, none), with how many a market crossed 0.5 ahead of. */
+  byPrecursor: { group: string; events: number; ahead50: number }[];
+  /** v3 replay: out-of-sample skill of (b), the best market read across labs, at 72h, and its interval. */
+  marketSkill72: number;
+  marketSkill72Ci: [number, number];
+  /** v3 replay: distinct launches in the held-out window. */
+  heldOut: number;
+  /** v3 replay: a rung is readable only this many days before its deadline. */
+  admitDays: number;
+}
+const { releases, dated, medianAvailabilityLagH, early90, early90Prompted, early90Unprompted, byPrecursor, marketSkill72, marketSkill72Ci, heldOut, admitDays } = Astro.props;
+const quiet = byPrecursor.find((g) => g.group === 'none');
+const leaked = byPrecursor.find((g) => g.group === 'leak');
+/** One rule both ways: an interval that spans zero is "not distinguishable", whichever side the estimate is on. */
+const verdict = (skill: number, [lo, hi]: [number, number]) =>
+  lo <= 0 && hi >= 0 ? 'not distinguishable from it' : skill < 0 ? 'worse than the guess' : 'better than the guess';
+const lag = medianAvailabilityLagH === null ? 'about the same time as' : `${Math.round(Math.abs(medianAvailabilityLagH) * 60)} minutes ${medianAvailabilityLagH < 0 ? 'before' : 'after'}`;
+const launchDays = Math.round(LAUNCH_SETTLE_MS / 86_400_000);
+const signed = (n: number, d = 2) => (n > 0 ? `+${n.toFixed(d)}` : n < 0 ? `−${Math.abs(n).toFixed(d)}` : '0');
+---
+<aside class="limits panel" aria-labelledby="limits-title">
+  <h2 id="limits-title" class="tiny glow-y">WHAT THIS CAN'T DO</h2>
+  <ul>
+    <li><strong>It mostly detects launches after they happen.</strong> The median model reached OpenRouter {lag} its announcement. Registry listings, feeds and HN confirm a launch; they rarely precede it.</li>
+    <li><strong>DROPCON is a lead score, not a probability, and nothing here tests the level.</strong> It reads market release odds alone, with hand-set weights. A launch never raises it: once a model lists, its family drops out for {launchDays} days. Read on their own, the best market odds across labs scored {signed(marketSkill72, 3)} (95% interval {signed(marketSkill72Ci[0])} to {signed(marketSkill72Ci[1])}) against always guessing the base rate at 72 hours, {verdict(marketSkill72, marketSkill72Ci)} (<a href="#results">results</a>). In the same replay, the level's main input, the best 7-day read across labs, scored a Brier skill of {leadInputSkillText()} against the base rate at 7 days. The level itself has not been evaluated.</li>
+    <li><strong>The replay can't rebuild the level itself.</strong> Its 30-day term reads rungs up to a month out, and the price history holds each rung only from {admitDays} days before its deadline. The chart shows the inputs it can rebuild.</li>
+    <li><strong>{early90Prompted * 2 > early90 ? 'At 90%, most early markets followed a public leak or notice' : 'At 90%, most early markets had no public leak or notice'}{quiet && quiet.ahead50 * 2 > quiet.events ? '; at 50%, they did not need one.' : '.'}</strong> Of {early90} launches whose market reached 0.9 before the announcement, {early90Prompted} followed a public leak, a press report or the lab's own notice{early90Unprompted.length ? `; ${early90Unprompted.join(', ')} had no such precursor on HN` : ''}.{quiet && leaked && ` At 0.5, markets crossed ahead of ${quiet.ahead50} of ${quiet.events} launches with no public precursor and ${leaked.ahead50} of ${leaked.events} leaked ones.`} (<a href="#splits">splits</a>)</li>
+    <li><strong>n is small.</strong> {heldOut} held-out launches in the replay, and {releases} hand-timed launches, {dated} of them with a market that dates the day. The effective sample is launches, not the thousands of hours scored. One lab changing its habits moves every number here.</li>
+    <li><strong>The dashboard's own history starts {HISTORY_FROM}.</strong> No launch before then can be replayed through the live score, and HN point counts cannot be replayed at all: Algolia only returns final totals.</li>
+  </ul>
+</aside>
+<style>
+  .limits { border-color: rgba(255, 226, 28, 0.45); }
+  .limits h2 { font-size: var(--fs-head); margin-bottom: 10px; }
+  .limits ul { display: grid; gap: 8px; }
+  .limits li { padding-left: 18px; position: relative; font-size: 19px; }
+  .limits li::before { content: '\25B8'; position: absolute; left: 0; color: var(--yellow); }
+  .limits strong { color: #fff; font-weight: 400; }
+</style>

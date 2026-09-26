@@ -1,80 +1,94 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
-import type { FeedSource } from '../domain/feed';
 import { X_WATCHLIST } from '../domain/lab';
-import { ago } from '../ui/format';
+import { FEED_SOURCE_NAME } from '../domain/sources';
+import { MOBILE_FEED, sourceErrorText, sourcePill } from '../ui/panels';
+import FeedRow from './FeedRow.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const now = Date.now();
-const labels: Record<FeedSource, string> = { hn: 'HN', openai: 'OPENAI', deepmind: 'DEEPMIND', anthropic: 'ANTHROPIC', github: 'GITHUB', xai: 'XAI' };
-const colors: Record<FeedSource, string> = { hn: 'var(--orange)', openai: 'var(--green)', deepmind: 'var(--blue)', anthropic: '#ff7a1a', github: 'var(--muted)', xai: 'var(--fg)' };
 const alerts = d.feed.filter((f) => f.alert).length;
+const feedSources = Object.values(FEED_SOURCE_NAME);
+const pill = sourcePill(d.sources, feedSources, d.generatedAt, now, 'FEEDS');
+const first = d.feed.slice(0, MOBILE_FEED);
+const rest = d.feed.slice(MOBILE_FEED);
 ---
 <section class="section wrap reveal">
   <div class="grid feed-grid">
-    <div class="panel">
+    <div class="panel feed-panel">
       <div class="panel-head">
-        <h2><span>◍</span>OSINT FEED</h2>
+        <h2><span aria-hidden="true">◍</span>OSINT FEED</h2>
         <div class="pills">
-          <span class="pill live">AUTO</span>
+          <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
           <span class="pill">{d.feed.length} REPORTS · <span class="glow-m">{alerts} ALERTS</span></span>
         </div>
       </div>
       {d.feed.length ? (
         <div class="feed scroll-y" data-feed>
-          {d.feed.map((f, i) => (
-            <a class={`row item ${f.alert ? 'alert' : ''}`} href={f.url} target="_blank" rel="noopener" style={`--i:${Math.min(i, 12)}`}>
-              <span class="src tiny" style={`color:${colors[f.source]}`}>{labels[f.source]}</span>
-              <span class="ttl">{f.alert && <span class="glow-m">⚠ </span>}{f.title}</span>
-              <span class="when muted" data-time={f.publishedAt}>{ago(f.publishedAt, now)}</span>
-              {f.meta && <span class="meta muted">{f.meta}</span>}
-            </a>
-          ))}
+          {first.map((f, i) => <FeedRow f={f} i={i} now={now} />)}
+          {rest.length > 0 && (
+            <details class="fold fold-900">
+              <summary class="fold-summary tiny">{rest.length} MORE REPORTS</summary>
+              {rest.map((f) => <FeedRow f={f} i={MOBILE_FEED} now={now} />)}
+            </details>
+          )}
         </div>
-      ) : <p class="empty">Every feed is down. That is itself a signal.</p>}
+      ) : <p class="empty">{pill.state === 'down' ? 'Every feed is down. That is itself a signal.' : 'No reports yet.'}</p>}
     </div>
 
     <div class="panel">
-      <div class="panel-head"><h2><span>✕</span>X WATCHLIST</h2><span class="pill warn">NO FREE API · CLICK THROUGH</span></div>
+      <div class="panel-head"><h2><span aria-hidden="true">✕</span>X WATCHLIST</h2><span class="pill warn">NO FREE API · CLICK THROUGH</span></div>
       <p class="muted intro">X killed free read access, so we can't ingest the vague-posts. These are the accounts that leak first.</p>
       <ul class="list">
         {X_WATCHLIST.map((a) => (
           <li><a href={`https://x.com/${a.handle}`} target="_blank" rel="noopener">@{a.handle}</a><span class="muted"> — {a.why}</span></li>
         ))}
       </ul>
-      <div class="panel-head sub-head"><h2><span>◌</span>SOURCE HEALTH</h2></div>
-      <ul class="list health">
-        {d.sources.map((s) => <li><span class={s.ok ? 'glow-g dot' : 'err dot'}>{s.ok ? '●' : '○'}</span> {s.name}{!s.ok && <span class="muted"> — {s.error}</span>}</li>)}
+      <div class="panel-head sub-head"><h2><span aria-hidden="true">◌</span>SOURCE HEALTH</h2></div>
+      <ul class="list">
+        {d.sources.map((s) => (
+          <li><span class={s.ok ? 'glow-g dot' : 'err dot'} aria-hidden="true">{s.ok ? '●' : '○'}</span><span class="sr-only">{s.ok ? 'Up: ' : 'Down: '}</span>{s.name}{!s.ok && <span class="muted"> — {sourceErrorText(s.error)}</span>}</li>
+        ))}
       </ul>
     </div>
   </div>
 </section>
 <style>
   .feed-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-  @media (max-width: 900px) { .feed-grid { grid-template-columns: minmax(0, 1fr); } }
-  .feed { max-height: 640px; }
-  .item { display: grid; grid-template-columns: 78px 1fr auto; gap: 4px 10px; align-items: baseline; animation: rise 500ms var(--ease) both; animation-delay: calc(var(--i) * 40ms); }
-  .src { padding-top: 3px; }
-  .ttl { font-size: var(--fs-body); }
-  .when { font-size: var(--fs-xs); white-space: nowrap; }
-  .meta { grid-column: 2 / -1; font-size: 15px; }
   .intro { margin-bottom: 10px; font-size: var(--fs-sm); }
-  .list { font-size: 19px; }
+  .list { font-size: var(--fs-md); }
+  /* A long error or handle breaks anywhere rather than running off a phone's screen. */
+  .list li { overflow-wrap: anywhere; }
   .dot { display: inline-block; width: 1em; }
-  @media (max-width: 480px) { .item { grid-template-columns: 1fr auto; } .src { grid-column: 1 / -1; } }
+  /* UI-17: the feed fills its panel, which the grid stretches to the watchlist beside it. */
+  @media (min-width: 901px) {
+    .feed-panel { display: flex; flex-direction: column; }
+    .feed { flex: 1 1 0px; min-height: 640px; }
+  }
+  /* UI-10: below 900px an inner scroller traps the page's scroll, so the feed shows MOBILE_FEED items and an expander. */
+  @media (max-width: 900px) {
+    .feed-grid { grid-template-columns: minmax(0, 1fr); }
+    .feed { overflow: visible; }
+  }
 </style>
 <script>
-  const rel = (iso: string) => {
-    const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
-    if (s < 60) return 'just now';
-    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-    const d = Math.floor(s / 86400);
-    return d === 1 ? '1d ago' : `${d}d ago`;
-  };
-  const refresh = () =>
+  import { ago } from '../ui/format';
+
+  // Relative times and source pills age while the page stays open, and an edge-cached page can be minutes
+  // old on arrival, so they are brought up to date at load and every 30 seconds after.
+  const refresh = () => {
+    const now = Date.now();
     document.querySelectorAll<HTMLElement>('[data-time]').forEach((el) => {
-      el.textContent = rel(el.dataset.time!);
+      el.textContent = ago(el.dataset.time!, now);
     });
+    document.querySelectorAll<HTMLElement>('[data-source-pill][data-stale-at]').forEach((el) => {
+      if (Date.parse(el.dataset.staleAt!) > now) return;
+      el.textContent = el.dataset.staleText ?? el.textContent;
+      el.classList.remove('live');
+      el.classList.add('warn');
+      el.removeAttribute('data-stale-at');
+    });
+  };
+  refresh();
   setInterval(refresh, 30_000);
 </script>

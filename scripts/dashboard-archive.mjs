@@ -141,14 +141,25 @@ export async function captureSnapshot({
   return { path, envelope };
 }
 
+/**
+ * A lab's 7- and 30-day odds in any schema: v4 dashboards read `odds.p7`/`odds.p30` off the lab's
+ * family curve (null when the read was extrapolated and so not trusted); v3 and earlier carried
+ * `weekOdds`/`monthOdds`.
+ */
+function labOdds(lab, horizon, legacy) {
+  const read = lab.odds?.[horizon];
+  if (read && typeof read === 'object') return read.trusted === false ? null : (read.p ?? null);
+  return lab[legacy]?.p ?? null;
+}
+
 function metricsFor(response, labId) {
   const lab = response.labs.find((candidate) => candidate?.id === labId);
   if (!lab) return null;
   return {
     heat: lab.heat ?? null,
     status: lab.status ?? null,
-    weekOdds: lab.weekOdds?.p ?? null,
-    monthOdds: lab.monthOdds?.p ?? null,
+    weekOdds: labOdds(lab, 'p7', 'weekOdds'),
+    monthOdds: labOdds(lab, 'p30', 'monthOdds'),
     globalScore: response.dropcon?.score ?? null,
     globalLevel: response.dropcon?.level ?? null,
   };

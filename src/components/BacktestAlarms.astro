@@ -1,0 +1,82 @@
+---
+import type { AlarmSummary, FalseAlarm } from '../../scripts/backtest/build';
+import { pct, utcMinute } from '../../scripts/backtest/view';
+
+interface Props {
+  summary: readonly AlarmSummary[];
+  worst: readonly FalseAlarm[];
+  /** How many of the worst false alarms to list. */
+  limit?: number;
+}
+const { summary, worst, limit = 12 } = Astro.props;
+const KIND: Record<string, string> = { by: '"Released by" rungs', day: '"Released on" day buckets' };
+const shown = worst.slice(0, limit);
+const inTime = shown.filter((w) => w.announcedInTime);
+---
+<div class="table-scroll" tabindex="0" role="region" aria-label="False alarms table">
+  <table>
+    <caption class="sr-only">False alarms: frontier-lab rungs that resolved No but traded at or above each threshold, and the share of crossings that resolved Yes.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Market type</th>
+        <th scope="col" class="num">Threshold</th>
+        <th scope="col" class="num">No rungs that crossed</th>
+        <th scope="col" class="num">Per market-day</th>
+        <th scope="col" class="num">Yes rungs that crossed before launch</th>
+        <th scope="col" class="num">Crossings that resolved Yes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {summary.map((s) => (
+        <tr>
+          <th scope="row">{KIND[s.kind]}</th>
+          <td class="num">{s.threshold}</td>
+          <td class="num">{s.noCrossed} / {s.noTotal}</td>
+          <td class="num">{s.perMarketDay.toFixed(4)}</td>
+          <td class="num">{s.yesCrossed} / {s.yesTotal}</td>
+          <td class="num">{pct(s.precision)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  Market-days count the traded life of every No rung ({summary[0]?.noMarketDays ?? 0} days for "by" rungs). A Yes rung counts only prices from before its model was announced, so a post-launch settlement at 0.99 is not a correct call. Every rung's price counts from the end of its first hour, and only once it has moved off the quote the book opened at (often exactly 0.5 before anyone trades).
+</p>
+
+<h3 class="tiny sub">Loudest false alarms (No rungs that peaked at 0.5 or more)</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Loudest false alarms table">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Market</th>
+        <th scope="col">Rung</th>
+        <th scope="col" class="num">Peak</th>
+        <th scope="col" class="num">Peak at</th>
+        <th scope="col" class="num">Launch came</th>
+      </tr>
+    </thead>
+    <tbody>
+      {shown.map((w) => (
+        <tr>
+          <th scope="row"><a href={w.url} rel="noopener" target="_blank">{w.event}</a></th>
+          <td>{w.kind === 'day' ? 'on' : 'by'} {w.label}</td>
+          <td class="num">{w.peak.toFixed(3)}</td>
+          <td class="num">{utcMinute(w.peakAt)}</td>
+          <td class="num">
+            {w.slipDays === null ? 'not yet' : w.slipDays < 0 ? `${-w.slipDays}d earlier` : w.slipDays === 0 ? 'same day' : `${w.slipDays}d later`}
+            {w.announcedInTime && <span class="muted" title="announced inside this rung; resolved No under the market's own release rule">†</span>}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  {worst.length} No rungs peaked at 0.5 or more; the {shown.length} highest are listed. "Launch came" is the gap to the ladder's first Yes deadline.
+  {inTime.length > 0 && ` † The launch was announced inside this rung, which still resolved No under the market's own release rule (${[...new Set(inTime.map((w) => w.event))].join(', ')}). Those are rule misses more than timing misses.`}
+</p>
+<style>
+  .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+  .sub { color: var(--muted); margin: 18px 0 8px; }
+</style>

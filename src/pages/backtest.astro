@@ -1,0 +1,375 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
+import BacktestLimits from '../components/BacktestLimits.astro';
+import BacktestReplay from '../components/BacktestReplay.astro';
+import BacktestFormulas from '../components/BacktestFormulas.astro';
+import BacktestReliability from '../components/BacktestReliability.astro';
+import BacktestByLab from '../components/BacktestByLab.astro';
+import BacktestStealth from '../components/BacktestStealth.astro';
+import BacktestWaterfall from '../components/BacktestWaterfall.astro';
+import BacktestReleases from '../components/BacktestReleases.astro';
+import BacktestSplits from '../components/BacktestSplits.astro';
+import BacktestAlarms from '../components/BacktestAlarms.astro';
+import BacktestScores from '../components/BacktestScores.astro';
+import BacktestBroadcasts from '../components/BacktestBroadcasts.astro';
+import BacktestArchitecture from '../components/BacktestArchitecture.astro';
+import BacktestNegatives from '../components/BacktestNegatives.astro';
+import BacktestTraps from '../components/BacktestTraps.astro';
+import BacktestReproduce from '../components/BacktestReproduce.astro';
+import { primaryLead, type Backtest } from '../../scripts/backtest/build';
+import { RELEASES } from '../../scripts/backtest/curated';
+import type { Replay } from '../../scripts/backtest/replay';
+import { pct } from '../../scripts/backtest/view';
+import { FORECAST_CONSTANTS, LEAD_INPUT_SKILL_7D } from '../domain/forecast';
+import { labById, type LabId } from '../domain/lab';
+import { RELEASE_EVENT_WINDOW_MS } from '../domain/drop';
+import { LAUNCH_SETTLE_MS } from '../domain/lab-status';
+import releaseJson from '../../data/backtest/release-events.json';
+import marketsJson from '../../data/backtest/markets.json';
+import broadcastsJson from '../../data/backtest/broadcasts.json';
+import architectureJson from '../../data/backtest/architecture.json';
+import negativesJson from '../../data/backtest/negative-results.json';
+import trapsJson from '../../data/backtest/timestamp-traps.json';
+import replayJson from '../../data/backtest/v3-replay.json';
+
+const events = releaseJson as unknown as Backtest['release-events'];
+const markets = marketsJson as unknown as Backtest['markets'];
+const broadcasts = broadcastsJson as unknown as Backtest['broadcasts'];
+const architecture = architectureJson as unknown as Backtest['architecture'];
+const negatives = negativesJson as unknown as Backtest['negative-results'];
+const traps = trapsJson as unknown as Backtest['timestamp-traps'];
+const archived = broadcasts.broadcasts.filter((b) => b.capture);
+const unarchived = broadcasts.broadcasts.filter((b) => !b.capture);
+const openAiMisses = broadcasts.misses.filter((m) => m.model.startsWith('GPT'));
+const replay = replayJson as unknown as Replay;
+
+// The data only changes when the committed JSON does, i.e. on deploy.
+Astro.response.headers.set('cache-control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
+
+const pulledAt = events.meta.pulledAt;
+const dated = markets.crossings.filter((c) => c.primary);
+const early90 = dated.filter((c) => (primaryLead(c, 0.9) ?? 0) > 0);
+const example = (() => {
+  const row = markets.crossings.find((c) => c.id === 'claude-opus-5.5');
+  const curated = RELEASES.find((r) => r.id === 'claude-opus-5.5');
+  const series = row?.day ?? row?.by;
+  return row && curated && series
+    ? { model: row.model, series, hn: curated.hn, openrouter: curated.openrouter[0] }
+    : null;
+})();
+
+// v3 replay: every number below comes from data/backtest/v3-replay.json or FORECAST_CONSTANTS.
+const signed = (n: number, d = 2) => (n > 0 ? `+${n.toFixed(d)}` : n < 0 ? `−${Math.abs(n).toFixed(d)}` : '0');
+/** "1 Apr 2026" in UTC. */
+const longDate = (iso: string) => {
+  const [, dd, mon, yyyy] = new Date(iso).toUTCString().split(' ');
+  return `${Number(dd)} ${mon} ${yyyy}`;
+};
+/** "24 hours", "72 hours", "7 days". */
+const spell = (h: number) => (h % 24 === 0 && h >= 168 ? `${h / 24} days` : `${h} hours`);
+const { meta, decision } = replay;
+const headH = meta.headlineH;
+const head = replay.horizons.find((h) => h.horizonH === headH)!;
+const bestFormula = head.formulas.find((f) => f.id === decision.bestFormula)!;
+const maxAt72 = head.formulas.find((f) => f.id === 'max')!;
+const labsBySkill = [...replay.byLab].sort((a, b) => b.skill - a.skill);
+const [lab1, lab2, ...otherLabs] = labsBySkill;
+const labName = (id: LabId) => labById(id)?.name ?? id;
+const otherRange = otherLabs.length
+  ? `${signed(Math.min(...otherLabs.map((l) => l.skill)))} to ${signed(Math.max(...otherLabs.map((l) => l.skill)))}`
+  : '';
+const frontierNames = [...new Set(replay.byLab.map((l) => labName(l.labId)))];
+const fewestLaunches = Math.min(...replay.byLab.map((l) => l.testEvents));
+const mostLaunches = Math.max(...replay.byLab.map((l) => l.testEvents));
+const survivorship = replay.survivorship;
+const uncensored = head.sensitivity.find((s) => s.variant === 'uncensored');
+const pricedMin = pct(meta.protocol.pricedMin);
+const unpriced = replay.pricedEvents.test - replay.pricedEvents.testPriced;
+const bins = bestFormula.reliability;
+const topBin = bins[bins.length - 1];
+const observedRange = [Math.min(...bins.map((b) => b.observed)), Math.max(...bins.map((b) => b.observed))];
+const rung72 = markets.rungCalibration.find((r) => r.horizonH === headH);
+const reliabilityPanels = [
+  {
+    title: `v3 · ${bestFormula.name.slice(0, 3)} next ${headH}h · held-out hours`,
+    bins: bestFormula.reliability,
+    unit: 'hours',
+    reference: { value: head.test.rate, label: `held-out rate ${pct(head.test.rate)}` },
+    description: `Reliability of formula ${bestFormula.name.slice(0, 3)}, the ${headH}-hour noisy-OR forecast, on the held-out window: forecast against how often a frontier launch followed.`,
+  },
+  ...markets.rungCalibration
+    .filter((r) => r.horizonH === headH)
+    .map((r) => ({
+      title: `Wave 1 · Polymarket rungs ${r.horizonH}h before deadline`,
+      bins: r.reliability,
+      unit: 'rungs',
+      reference: { value: r.yesRate, label: `resolved Yes ${pct(r.yesRate)}` },
+      description: `Reliability of Polymarket's own frontier release rungs, priced ${r.horizonH} hours before each deadline, against how each rung resolved.`,
+    })),
+];
+
+const toc = [
+  ['replay', 'Replay'],
+  ['results', 'Results'],
+  ['leads', 'Lead times'],
+  ['splits', 'Splits'],
+  ['false-alarms', 'False alarms'],
+  ['stealth', 'Stealth'],
+  ['broadcasts', 'Broadcasts'],
+  ['architecture', 'Architecture'],
+  ['negative-results', "Didn't lead"],
+  ['timestamp-traps', 'Timestamp traps'],
+  ['reproduce', 'Reproduce'],
+];
+---
+<Layout
+  title="Backtest · whenmodel"
+  description={`Can public signals see a frontier AI launch coming? An hourly replay of Polymarket release odds from ${longDate(meta.window.from)} to ${longDate(meta.window.until)}, scored out of sample on ${FORECAST_CONSTANTS.testedOn.events} launches, plus ${events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in its tables.`}
+>
+  <header class="bt-hero wrap">
+    <a class="tiny home" href="/">&#9664; WHENMODEL DASHBOARD</a>
+    <h1 class="glow-m">BACKTEST</h1>
+    <p class="bt-question">Can public signals see a frontier model launch coming?</p>
+    <p class="bt-method">
+      <span class="tiny glow-c">METHOD</span>
+      Polymarket's release odds, replayed hour by hour from {longDate(meta.window.from)} to {longDate(meta.window.until)} through the dashboard's own code: {meta.protocol.formulasTried} forecasts fitted on the first {FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next {FORECAST_CONSTANTS.testedOn.events}. Plus {events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in the tables below.
+    </p>
+    <div class="metrics headline">
+      <div>
+        <div class="metric-label">Best {headH}h skill</div>
+        <div class="metric-value glow-y">{signed(decision.skill, 3)}</div>
+        <div class="metric-note">needed {signed(meta.protocol.decisionMinSkill, 2)} · 95% {signed(decision.skillCi95[0])} to {signed(decision.skillCi95[1])}</div>
+      </div>
+      <div>
+        <div class="metric-label">Priced before listing</div>
+        <div class="metric-value glow-c">{replay.pricedEvents.testPriced} / {replay.pricedEvents.test}</div>
+        <div class="metric-note">held-out launches, own lab ≥{pricedMin}</div>
+      </div>
+      <div>
+        <div class="metric-label">Held-out launches</div>
+        <div class="metric-value glow-c">{FORECAST_CONSTANTS.testedOn.events}</div>
+        <div class="metric-note">the real sample size · fitted on {FORECAST_CONSTANTS.fittedOn.events}</div>
+      </div>
+      <div>
+        <div class="metric-label">Level's input, 7d</div>
+        <div class="metric-value glow-y">{signed(LEAD_INPUT_SKILL_7D.skill)}</div>
+        <div class="metric-note">95% {signed(LEAD_INPUT_SKILL_7D.skillCi95[0])} to {signed(LEAD_INPUT_SKILL_7D.skillCi95[1])}</div>
+      </div>
+    </div>
+    <p class="bt-verdict">
+      <span class="tiny glow-y">VERDICT</span>
+      {decision.recommendation === 'lead-score'
+        ? `No formula beat the base rate at ${headH} hours, so DROPCON stays a hand-weighted lead score, not a probability.`
+        : `A formula beat the base rate at ${headH} hours.`}
+      {' '}{labName(lab1.labId)} ({lab1.testEvents} launch{lab1.testEvents === 1 ? '' : 'es'}) and {labName(lab2.labId)} ({lab2.testEvents}) scored highest on their own launches, {signed(lab1.skill)} and {signed(lab2.skill)}, and the other {otherLabs.length} labs {otherRange}; with {fewestLaunches} to {mostLaunches} launches per lab these are anecdotes, not a ranking. {unpriced > replay.pricedEvents.test / 2 ? 'Most' : 'Some'} held-out launches, {unpriced} of {replay.pricedEvents.test}, had no market at {pricedMin} or more beforehand.
+    </p>
+    <nav class="toc" aria-label="Sections">
+      {toc.map(([id, label]) => <a class="pill" href={`#${id}`}>{label}</a>)}
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="section wrap">
+      <BacktestLimits
+        releases={events.releases.length}
+        dated={dated.length}
+        early90Unprompted={early90.filter((c) => c.precursor === 'none').map((c) => c.model)}
+        byPrecursor={markets.splits.byPrecursor}
+        medianAvailabilityLagH={events.summary.medianAvailabilityLagH}
+        early90={early90.length}
+        early90Prompted={early90.filter((c) => c.precursor !== 'none').length}
+        marketSkill72={maxAt72.skill}
+        marketSkill72Ci={maxAt72.skillCi95}
+        heldOut={FORECAST_CONSTANTS.testedOn.events}
+        admitDays={meta.protocol.admitDays}
+      />
+    </div>
+
+    <section id="replay" class="section wrap" aria-labelledby="replay-title">
+      <div class="section-head">
+        <h2 id="replay-title"><span>&#9656;</span>HOW V3 WOULD HAVE READ</h2>
+        <span class="tiny wave">V3 REPLAY · {longDate(meta.window.from)} – {longDate(meta.window.until)}</span>
+      </div>
+      <div class="panel">
+        <p class="intro">
+          Every {replay.series.stepH} hours from {longDate(meta.window.from)}: what the markets said about the next {spell(headH)} and the next {spell(168)}, read only from prices that existed at the time, against the {replay.releases.inWindow} frontier launches that followed.
+        </p>
+        <BacktestReplay replay={replay} />
+      </div>
+    </section>
+
+    <section id="results" class="section wrap" aria-labelledby="results-title">
+      <div class="section-head">
+        <h2 id="results-title"><span>&#9656;</span>RESULTS: FORECAST VS BASE RATE</h2>
+        <span class="tiny wave">V3 REPLAY · HELD OUT {longDate(meta.split.at)} – {longDate(meta.window.until)}</span>
+      </div>
+      <div class="panel">
+        <p class="intro">
+          One event throughout: some frontier lab ({frontierNames.join(', ')}) lists a new text model on OpenRouter within the next {meta.horizonsH.slice(0, -1).map(spell).join(', ')} or {spell(meta.horizonsH[meta.horizonsH.length - 1])}. Twin listings of one model, and one lab's listings within {RELEASE_EVENT_WINDOW_MS / 3_600_000} hours of each other, count once. Each formula was fitted on {longDate(FORECAST_CONSTANTS.fittedOn.from)} to {longDate(FORECAST_CONSTANTS.fittedOn.to)} and scored on the {head.test.hours.toLocaleString('en-US')} held-out hours after it. The rule was fixed before the scores were seen.
+        </p>
+        <BacktestFormulas horizons={replay.horizons} decision={decision} protocol={meta.protocol} headlineH={headH} />
+      </div>
+      <div class="panel stack-gap">
+        <h3 class="tiny sub-title">Reliability: when a forecast says X%, does X% happen?</h3>
+        <p class="intro">
+          Left, the v3 forecast on held-out hours. Across forecasts from {pct(bins[0]?.meanForecast)} to {pct(topBin?.meanForecast)}, a launch followed in {pct(observedRange[0])} to {pct(observedRange[1])} of hours: the rate hardly tracks the forecast, and the top bin came true {pct(topBin?.observed)} of the time. Right, Polymarket on its own questions, from wave 1 and still valid: each rung's price {headH} hours before its deadline against how that rung resolved{rung72 && ` (Brier skill ${signed(rung72.market.skill, 3)} over ${rung72.rungs} rungs)`}. The markets answer the question they ask, whether one named model ships by a date; that is not a forecast of the next frontier launch.
+        </p>
+        <BacktestReliability panels={reliabilityPanels} />
+        <h3 class="tiny sub-title">Wave 1 · Polymarket's own calibration</h3>
+        <BacktestScores rungCalibration={markets.rungCalibration} />
+      </div>
+      <div class="panel stack-gap">
+        <h3 class="tiny sub-title">By lab: where named markets exist</h3>
+        <BacktestByLab byLab={replay.byLab} priced={replay.pricedEvents} pricedMin={meta.protocol.pricedMin} readMin={meta.protocol.readMin} levels={replay.levels} split={meta.split.at} headlineH={headH} />
+      </div>
+      <div class="panel stack-gap">
+        <h3 class="tiny sub-title">Limits of the replay</h3>
+        <ul class="bullets">
+          <li><strong>The sample is launches, not hours.</strong> {head.test.hours.toLocaleString('en-US')} held-out hours hold only {head.test.events} launches, and one launch marks up to {headH} hours in a row as a hit. That is why every interval above is wide.</li>
+          <li><strong>The release rate moved.</strong> A launch followed within {headH} hours in {pct(head.train.rate)} of fit-window hours and {pct(head.test.rate)} of held-out hours, so every constant fitted on the first window is off on the second.</li>
+          <li><strong>No historical bid or ask.</strong> Every past quote is treated as a tight book, so the live thin-book gate can't be replayed, and day-bucket prices stand in for bids.</li>
+          <li><strong>Survivorship.</strong> The outcome counts only models OpenRouter still lists. All {survivorship.curatedStillListed} of {survivorship.curatedFrontierLaunches} hand-curated frontier launches in the window still are, and the delistings OpenRouter had scheduled on {survivorship.scheduledExpiry.probedAt} would erase {survivorship.scheduledExpiry.inWindowEventsErased} of its launches. {survivorship.note}</li>
+          <li><strong>Censoring.</strong> Rungs due after the pull weren't pulled, so market reads in the last {meta.protocol.admitDays} days are censored low.{uncensored && ` Ending the test ${meta.protocol.admitDays} days early gives ${bestFormula.name.slice(0, 3)} ${signed(uncensored.formulas[decision.bestFormula].skill, 3)}, ${uncensored.formulas[decision.bestFormula].sane ? 'with sane reliability' : 'still failing the sanity check'}; it did not feed the verdict.`}</li>
+          <li><strong>Launched markets are cut off.</strong> Each market is read only until its model launched. Live, a launched model's market kept trading near 1 for a median {replay.settlementLag.medianH} hours (up to {replay.settlementLag.maxH} hours, over {replay.settlementLag.events} markets); the dashboard drops a family for {LAUNCH_SETTLE_MS / 86_400_000} days after its model lists.</li>
+        </ul>
+        <details class="raw">
+          <summary class="tiny">Every limitation as the replay records it</summary>
+          <ul class="bullets">{meta.limitations.map((l) => <li>{l}</li>)}</ul>
+        </details>
+      </div>
+    </section>
+
+    <section id="leads" class="section wrap" aria-labelledby="leads-title">
+      <div class="section-head">
+        <h2 id="leads-title"><span>&#9656;</span>LEAD TIMES</h2>
+        <span class="tiny wave">WAVE 1 · {events.releases.length} LAUNCHES TIMED BY HAND</span>
+      </div>
+      <div class="panel">
+        <p class="intro">
+          The announcement is the first Hacker News story linking the lab's own site or official account and naming the model; teasers ("launching soon", "this Thursday") don't count, and neither do the few earlier first-party links the table marks "not the launch", each with its reason. Availability is OpenRouter's <code>created</code> time. Market crossings are measured against the announcement.
+        </p>
+        <BacktestWaterfall releases={events.releases} crossings={markets.crossings} />
+      </div>
+      <div class="panel table-panel">
+        <BacktestReleases releases={events.releases} crossings={markets.crossings} />
+      </div>
+    </section>
+
+    <section id="splits" class="section wrap" aria-labelledby="splits-title">
+      <div class="section-head">
+        <h2 id="splits-title"><span>&#9656;</span>PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR</h2>
+        <span class="tiny wave">WAVE 1</span>
+      </div>
+      <div class="panel">
+        <BacktestSplits splits={markets.splits} claim={markets.sevenDayClaim} crossings={markets.crossings} />
+      </div>
+    </section>
+
+    <section id="false-alarms" class="section wrap" aria-labelledby="alarms-title">
+      <div class="section-head">
+        <h2 id="alarms-title"><span>&#9656;</span>FALSE ALARMS</h2>
+        <span class="tiny wave">WAVE 1</span>
+      </div>
+      <div class="panel">
+        <BacktestAlarms summary={markets.falseAlarms.summary} worst={markets.falseAlarms.worst} />
+      </div>
+    </section>
+
+    <section id="stealth" class="section wrap" aria-labelledby="stealth-title">
+      <div class="section-head">
+        <h2 id="stealth-title"><span>&#9656;</span>STEALTH REVEALS</h2>
+        <span class="tiny wave">EARLY WARNING · NEVER SCORED</span>
+      </div>
+      <div class="panel">
+        <BacktestStealth />
+      </div>
+    </section>
+
+    <section id="broadcasts" class="section wrap" aria-labelledby="broadcasts-title">
+      <div class="section-head"><h2 id="broadcasts-title"><span>&#9656;</span>SCHEDULED BROADCASTS</h2></div>
+      <div class="panel">
+        <p class="intro">OpenAI sometimes publishes an upcoming-livestream page hours before a launch. {archived.length} of these {broadcasts.broadcasts.length} have an archived copy proving it was up before the stream{unarchived.length ? `; ${unarchived.map((b) => b.model).join(', ')} ${unarchived.length === 1 ? 'is' : 'are'} timed from YouTube's own publishedAt, with no archive` : ''}. {openAiMisses.length} other OpenAI launches had no scheduled stream at all.</p>
+        <BacktestBroadcasts broadcasts={broadcasts.broadcasts} misses={broadcasts.misses} />
+      </div>
+    </section>
+
+    <section id="architecture" class="section wrap" aria-labelledby="architecture-title">
+      <div class="section-head"><h2 id="architecture-title"><span>&#9656;</span>ARCHITECTURE MERGES</h2></div>
+      <div class="panel">
+        <p class="intro">Open-weight labs often add their model code to Hugging Face <code>transformers</code> before release. The merge time comes from the pull request; the announcement is the first first-party HN story.</p>
+        <BacktestArchitecture rows={architecture.architecture} summary={architecture.summary} misses={architecture.misses} />
+      </div>
+    </section>
+
+    <section id="negative-results" class="section wrap" aria-labelledby="negatives-title">
+      <div class="section-head"><h2 id="negatives-title"><span>&#9656;</span>TESTED AND DIDN'T LEAD</h2></div>
+      <div class="panel">
+        <BacktestNegatives results={negatives.results} provenance={negatives.provenance} />
+      </div>
+    </section>
+
+    <section id="timestamp-traps" class="section wrap" aria-labelledby="traps-title">
+      <div class="section-head"><h2 id="traps-title"><span>&#9656;</span>TIMESTAMP TRAPS</h2></div>
+      <div class="panel">
+        <p class="intro">Each of these timestamps looks like an early warning and isn't. Including one this site got wrong.</p>
+        <BacktestTraps traps={traps.traps} />
+      </div>
+    </section>
+
+    <section id="reproduce" class="section wrap" aria-labelledby="reproduce-title">
+      <div class="section-head"><h2 id="reproduce-title"><span>&#9656;</span>REPRODUCE IT</h2></div>
+      <div class="panel">
+        <BacktestReproduce pulledAt={pulledAt} example={example} />
+      </div>
+    </section>
+  </main>
+  <Footer generatedAt={pulledAt} variant="backtest" />
+</Layout>
+<style>
+  .bt-hero { padding-top: 28px; }
+  .home { display: inline-block; margin-bottom: 14px; }
+  .bt-hero h1 { font-size: clamp(26px, 6vw, 44px); margin-bottom: 14px; }
+  .bt-question { font-size: clamp(22px, 3.2vw, 30px); color: #fff; max-width: 40ch; margin-bottom: 8px; line-height: 1.15; }
+  .bt-method, .bt-verdict { max-width: 96ch; font-size: var(--fs-lg); }
+  .bt-method { color: var(--text); margin-bottom: 16px; }
+  .bt-method .tiny, .bt-verdict .tiny { margin-right: 8px; vertical-align: 2px; }
+  .bt-hero .metrics { margin-bottom: 14px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .bt-hero .metric-note { white-space: normal; }
+  .bt-verdict { margin-bottom: 16px; padding: 10px 12px; border-left: 3px solid var(--yellow); background: rgba(255, 226, 28, 0.05); }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wave { color: var(--muted); line-height: 1.6; }
+  .intro { max-width: 90ch; margin-bottom: 12px; }
+  .table-panel, .stack-gap { margin-top: var(--gap); }
+  .sub-title { color: var(--text); margin-bottom: 10px; line-height: 1.6; }
+  .stack-gap .sub-title:not(:first-child) { margin-top: 22px; }
+  .bullets { display: grid; gap: 8px; max-width: 95ch; }
+  .bullets li { padding-left: 18px; position: relative; }
+  .bullets li::before { content: '\25B8'; position: absolute; left: 0; color: var(--magenta); }
+  .bullets strong { color: #fff; font-weight: 400; }
+  .raw { margin-top: 12px; }
+  .raw summary { color: var(--muted); margin-bottom: 8px; }
+  .raw .bullets { font-size: var(--fs-xs); color: var(--muted); }
+  code { font-family: var(--font-mono); color: var(--yellow); }
+  /* Row headers read as data, not column labels. */
+  main :global(th[scope='row']) {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text);
+    font-weight: 400;
+    vertical-align: top;
+    border-bottom: 1px dotted var(--line-soft);
+  }
+  main :global(tr:hover th[scope='row']) { background: rgba(0, 229, 255, 0.05); }
+  /* Long column labels may wrap; on a phone the row labels keep a readable width and the table scrolls. */
+  main :global(thead th.num) { white-space: normal; }
+  @media (max-width: 720px) {
+    main :global(th[scope='row']) { min-width: 7.5em; }
+  }
+  @media (max-width: 480px) {
+    .bt-method, .bt-verdict { font-size: var(--fs-body); }
+    .bt-hero .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  }
+</style>

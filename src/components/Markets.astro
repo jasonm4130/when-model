@@ -1,40 +1,44 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
-import { displayOutcomes, isPlaceholderOutcome } from '../domain/market';
+import { SOURCE } from '../domain/sources';
 import { pct, usd } from '../ui/format';
+import { MOBILE_MARKETS, PANEL_ROWS, asOfMs, otherRows, raceRows, releaseRows, sourceOk, sourcePill } from '../ui/panels';
+import MarketRow from './MarketRow.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
-const releases = d.markets.filter((m) => m.kind === 'release').slice(0, 14);
-const boards = d.markets.filter((m) => m.kind === 'leaderboard' && m.slug !== d.bestModelMarket?.slug).slice(0, 10);
-const other = d.markets.filter((m) => m.kind === 'other').slice(0, 10);
+const asOf = asOfMs(d);
+const releases = releaseRows(d);
+const others = otherRows(d);
 const best = d.bestModelMarket;
-const bestRows = best ? [...best.outcomes].filter((o) => !o.closed && !isPlaceholderOutcome(o)).sort((a, b) => b.yes - a.yes).slice(0, 8) : [];
-const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--yellow)' : 'var(--muted)');
+const bestRows = raceRows(d);
+const up = sourceOk(d.sources, SOURCE.polymarket);
+const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, Date.now());
+const down = 'Polymarket unreachable. Odds return when it does.';
+const labColor = (id?: string) => d.labs.find((l) => l.id === id)?.color;
 ---
 <section class="section wrap reveal">
   <div class="grid grid-2">
     <div class="panel">
-      <div class="panel-head"><h2><span>◔</span>RELEASE MARKETS</h2><a class="pill live" href="https://polymarket.com?utm_source=whenmodel.com" target="_blank" rel="noopener">LIVE ODDS · POLYMARKET</a></div>
+      <div class="panel-head">
+        <h2><span aria-hidden="true">◔</span>RELEASE MARKETS</h2>
+        <a class={`pill ${pill.tone}`} href="https://polymarket.com?utm_source=whenmodel.com" target="_blank" rel="noopener" title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</a>
+      </div>
       {releases.length ? (
         <div class="mlist">
-          {releases.map((m, i) => {
-            const lab = d.labs.find((l) => l.id === m.labId);
-            return (
-              <a class="row" href={m.url} target="_blank" rel="noopener" style={`--lab:${lab?.color ?? 'var(--cyan)'}; --i:${i}`}>
-                <div class="mtitle"><span class="mdot"></span>{m.title} <span class="muted vol">{usd(m.vol24)} 24h</span></div>
-                <div class="outs">
-                  {displayOutcomes(m, 4).map((o) => <span class="out"><b style={`color:${oddsColor(o.yes)}`}>{pct(o.yes)}</b> {o.label}</span>)}
-                </div>
-              </a>
-            );
-          })}
+          {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} color={labColor(m.labId)} i={i} />)}
+          {releases.length > MOBILE_MARKETS && (
+            <details class="fold fold-480">
+              <summary class="fold-summary tiny">{releases.length - MOBILE_MARKETS} MORE RELEASE MARKETS</summary>
+              {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} color={labColor(m.labId)} i={i + MOBILE_MARKETS} />)}
+            </details>
+          )}
         </div>
-      ) : <p class="empty">Polymarket unreachable. Odds return when it does.</p>}
+      ) : <p class="empty">{up ? 'No open release market right now.' : down}</p>}
     </div>
 
     <div class="stack">
       <div class="panel">
-        <div class="panel-head"><h2><span>◆</span>BEST MODEL RACE</h2>{best && <span class="pill">{usd(best.vol24)} 24H VOL</span>}</div>
+        <div class="panel-head"><h2><span aria-hidden="true">◆</span>BEST MODEL RACE</h2>{best && <span class="pill">{usd(best.vol24)} 24H VOL</span>}</div>
         {best ? (
           <>
             <a href={best.url} target="_blank" rel="noopener" class="best-title">{best.title}</a>
@@ -51,35 +55,28 @@ const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--
               })}
             </div>
           </>
-        ) : <p class="empty">No "best model" market found.</p>}
+        ) : <p class="empty">{up ? 'No "best model" market found.' : down}</p>}
       </div>
 
       <div class="panel">
-        <div class="panel-head"><h2><span>◈</span>BENCHMARK & OTHER MARKETS</h2></div>
-        {boards.length + other.length ? (
-          <div class="mlist compact">
-            {[...boards, ...other].slice(0, 12).map((m) => (
-              <a class="row" href={m.url} target="_blank" rel="noopener">
-                <div class="mtitle">{m.title} <span class="muted vol">{usd(m.vol24)}</span></div>
-                <div class="outs">{displayOutcomes(m, 3).map((o) => <span class="out"><b class="glow-c">{pct(o.yes)}</b> {o.label}</span>)}</div>
-              </a>
-            ))}
+        <div class="panel-head"><h2><span aria-hidden="true">◈</span>BENCHMARK & OTHER MARKETS</h2></div>
+        {others.length ? (
+          <div class="mlist">
+            {others.slice(0, MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
+            {others.length > MOBILE_MARKETS && (
+              <details class="fold fold-480">
+                <summary class="fold-summary tiny">{others.length - MOBILE_MARKETS} MORE MARKETS</summary>
+                {others.slice(MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
+              </details>
+            )}
           </div>
-        ) : <p class="empty">Nothing else on the board.</p>}
+        ) : <p class="empty">{up ? 'Nothing else on the board.' : down}</p>}
       </div>
     </div>
   </div>
 </section>
 <style>
   .mlist { display: flex; flex-direction: column; }
-  .row { --accent: var(--lab, var(--cyan)); }
-  .row:hover { border-left-color: var(--accent); }
-  .mtitle { font-size: var(--fs-body); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-  .mdot { width: 8px; height: 8px; background: var(--lab); box-shadow: 0 0 8px var(--lab); display: inline-block; flex: none; align-self: center; }
-  .vol { font-size: 15px; margin-left: auto; }
-  .outs { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 3px; font-size: 17px; color: var(--muted); }
-  .out b { font-weight: 400; }
-  .compact .mtitle { font-size: var(--fs-sm); }
   .best-title { display: block; font-size: var(--fs-body); margin-bottom: 10px; color: var(--yellow); }
   .race-row { display: grid; grid-template-columns: 130px 1fr 56px; gap: 10px; align-items: center; padding: 4px 0; }
   .race-row .bar > i { background: var(--lab); box-shadow: 0 0 10px var(--lab); animation-delay: calc(var(--i) * 80ms); }

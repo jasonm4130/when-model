@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DASHBOARD_SCHEMA,
   LIMITS,
   assembleDashboard,
   type DashboardInputs,
@@ -7,7 +8,9 @@ import {
 } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { FeedItem } from '../../src/domain/feed';
-import type { Market } from '../../src/domain/market';
+import type { LabId } from '../../src/domain/lab';
+import { EMPTY_LEDGER } from '../../src/domain/ledger';
+import type { Market, Outcome } from '../../src/domain/market';
 
 const NOW = Date.parse('2026-09-19T12:00:00Z');
 const ok = <T>(name: string, data: T): SourceResult<T> => ({ name, data, ok: true });
@@ -29,6 +32,30 @@ const item = (title: string, iso: string, extra: Partial<FeedItem> = {}): FeedIt
   publishedAt: iso,
   alert: false,
   ...extra,
+});
+
+/** A "released by" rung with a tight two-sided book around `mid`. */
+const rung = (label: string, deadline: string, mid: number): Outcome => ({
+  label,
+  yes: mid,
+  closed: false,
+  vol24: 0,
+  deadline,
+  deadlineKind: 'by',
+  bestBid: mid - 0.005,
+  bestAsk: mid + 0.005,
+  thin: false,
+  liquidity: 1000,
+});
+const ladder = (labId: LabId, title: string, rungs: [string, string, number][]): Market => ({
+  slug: `${labId}-${title}`,
+  title,
+  url: `https://polymarket.com/event/${labId}`,
+  vol24: 0,
+  volume: 0,
+  kind: 'release',
+  labId,
+  outcomes: rungs.map(([label, deadline, mid]) => rung(label, deadline, mid)),
 });
 
 const empty = (): DashboardInputs => ({
@@ -65,12 +92,12 @@ describe('assembleDashboard', () => {
     const release: Market = {
       slug: 'a',
       title: 'Gemini 4 released by...?',
-      url: 'u',
+      url: 'https://polymarket.com/event/gemini-4',
       vol24: 5,
       volume: 0,
       kind: 'release',
       labId: 'google',
-      outcomes: [{ label: 'Sept 24', yes: 0.9, endDate: '2026-09-25T00:00:00Z', closed: false, vol24: 5 }],
+      outcomes: [rung('September 24', '2026-09-25T03:59:59Z', 0.9)],
     };
     const board: Market = {
       slug: 'b',
@@ -109,43 +136,165 @@ describe('assembleDashboard', () => {
     expect(d.feed[0].publishedAt >= d.feed[1].publishedAt).toBe(true);
   });
 
-  it('records exact score inputs and excludes stale or future HN stories', () => {
-    const inputs = empty();
-    inputs.feeds = [
-      ok('Hacker News', [
-        item('old', '2026-09-16T00:00:00Z', { score: 900 }),
-        item('future', '2026-09-20T00:00:00Z', { score: 900 }),
-        item('fresh', '2026-09-19T00:00:00Z', { score: 900 }),
+  it('scores the best trusted frontier family, records the inputs and builds the headline from it', () => {
+    const inputs: DashboardInputs = {
+      ...empty(),
+      markets: ok('Polymarket', [
+        ladder('openai', 'GPT-6 released by...?', [['September 24', '2026-09-25T03:59:59Z', 0.6]]),
+        ladder('anthropic', 'Next Claude Sonnet released by...?', [
+          ['September 22', '2026-09-23T03:59:59Z', 0.8],
+          ['October 31', '2026-11-01T03:59:59Z', 0.95],
+        ]),
+        // Mistral is not a frontier lab: it has a card but never drives the score.
+        ladder('mistral', 'Mistral Large 4 released by...?', [
+          ['September 20', '2026-09-21T03:59:59Z', 0.99],
+        ]),
       ]),
-    ];
+    };
     const d = assembleDashboard(inputs, NOW);
-    expect(d.measurement).toMatchObject({
-      schema: 3,
-      algorithmVersion: 2,
-      inputs: { hotStories: 1, frontierDrops48h: 0 },
+    expect(d.measurement).toMatchObject({ schema: DASHBOARD_SCHEMA, algorithmVersion: 3 });
+    expect(DASHBOARD_SCHEMA).toBe(4);
+    const { inputs: rec } = d.measurement;
+    // Oct 31 lies 35 days past the 7-day horizon, so the read holds the Sep 22 rung: a floor.
+    expect(rec.top7).toMatchObject({
+      labId: 'anthropic',
+      family: 'Next Claude Sonnet',
+      read: 'held',
+      p: 0.8,
+      url: 'https://polymarket.com/event/anthropic',
     });
-    expect(d.dropcon.score).toBe(3);
+    expect(rec.top7?.quote).toEqual({ label: 'September 22', p: 0.8 });
+    expect(rec.p7).toBe(d.labs.find((l) => l.id === 'anthropic')!.odds!.p7.p);
+    expect(rec.p30).toBeGreaterThanOrEqual(rec.p7);
+    expect(rec.p7DayAgo).toBeNull();
+    expect(d.dropcon.headline).toBe('Polymarket prices 80% that the next Claude Sonnet ships by Sep 22');
+    expect(d.dropcon.score).toBe(d.dropcon.provenance.reduce((sum, r) => sum + r.points, 0));
+    expect(d.dropcon.state).toBe('ok');
+    // The forecast reads every trusted frontier 72h read and is context only.
+    expect(d.forecast.labs.map((l) => l.labId).sort()).toEqual(['anthropic', 'openai']);
+    expect(d.dropcon.baseRate).toMatch(/^Context, not the level/);
   });
 
-  it('feeds DROPCON from frontier drops, hot HN stories and fresh alerts', () => {
+  it('shows the scored read beside the quoted rung when they differ, and links the quoted market', () => {
+    const early = ladder('anthropic', 'Next Claude Sonnet released by...?', [
+      ['September 22', '2026-09-23T03:59:59Z', 0.5],
+    ]);
+    const late = {
+      ...ladder('anthropic', 'Next Claude Sonnet released on...?', [
+        ['September 30', '2026-10-01T03:59:59Z', 0.9],
+      ]),
+      url: 'https://polymarket.com/event/sonnet-late',
+    };
+    const d = assembleDashboard({ ...empty(), markets: ok('Polymarket', [early, late]) }, NOW);
+    const top7 = d.measurement.inputs.top7!;
+    expect(top7).toMatchObject({ read: 'interpolated', from: 'September 22', to: 'September 30' });
+    // The level scores the interpolated read, so the headline states it next to the rung it quotes.
+    expect(top7.p).toBeGreaterThan(0.7);
+    expect(d.dropcon.headline).toBe(
+      `Polymarket prices 50% that the next Claude Sonnet ships by Sep 22 (${Math.round(top7.p * 100)}% within 7 days on its curve)`,
+    );
+    expect(top7.url).toBe('https://polymarket.com/event/anthropic');
+    expect(d.dropcon.provenance[0].url).toBe(top7.url);
+  });
+
+  it("prices repricing from the ledger's day-old P7", () => {
+    const inputs: DashboardInputs = {
+      ...empty(),
+      markets: ok('Polymarket', [
+        ladder('openai', 'GPT-6 released by...?', [['September 24', '2026-09-25T03:59:59Z', 0.6]]),
+      ]),
+      ledger: ok('First-seen ledger', {
+        ...EMPTY_LEDGER,
+        headlineDayAgo: { p: 0.1, observedAt: '2026-09-18T12:00:00.000Z' },
+      }),
+    };
+    const d = assembleDashboard(inputs, NOW);
+    expect(d.measurement.inputs.p7DayAgo).toBe(0.1);
+    expect(d.dropcon.provenance[2].points).toBeGreaterThan(0);
+    expect(d.sources.find((s) => s.name === 'First-seen ledger')).toEqual({
+      name: 'First-seen ledger',
+      ok: true,
+    });
+  });
+
+  it('scores nothing, and forecasts nothing, off a lone rung 73 days out', () => {
+    const far = ladder('anthropic', 'Next Claude Sonnet released by...?', [
+      ['November 30', '2026-12-01T04:59:59Z', 0.6],
+    ]);
+    const d = assembleDashboard({ ...empty(), markets: ok('Polymarket', [far]) }, NOW);
+    const sonnet = d.labs.find((l) => l.id === 'anthropic')!;
+    expect(sonnet.odds?.p30.p).toBeGreaterThan(0);
+    expect(d.measurement.inputs).toMatchObject({ p7: 0, p30: 0 });
+    expect(d.dropcon.score).toBe(0);
+    expect(d.forecast.p).toBe(assembleDashboard(empty(), NOW).forecast.p);
+  });
+
+  it('with the ledger down, neither confirms broadcasts nor prices repricing', () => {
+    const d = assembleDashboard(
+      {
+        ...empty(),
+        ledger: failed('First-seen ledger', {
+          ...EMPTY_LEDGER,
+          headlineDayAgo: { p: 0.1, observedAt: '2026-09-18T12:00:00.000Z' },
+        }),
+        broadcasts: ok('YouTube broadcasts', [
+          {
+            videoId: 'v1',
+            channel: 'OpenAI',
+            labId: 'openai',
+            title: 'Live',
+            url: 'u',
+            publishedAt: '2026-09-19T00:00:00.000Z',
+            views: 0,
+          },
+        ]),
+      },
+      NOW,
+    );
+    expect(d.earlyWarnings.broadcasts.items[0].confirmed).toBeUndefined();
+    expect(d.measurement.inputs.p7DayAgo).toBeNull();
+  });
+
+  it('never scores landed activity: frontier listings and hot HN stories leave the level alone', () => {
     const inputs: DashboardInputs = {
       ...empty(),
       drops: ok('OpenRouter', [
         drop('openai', '2026-09-18T00:00:00Z'),
         drop('mistral', '2026-09-18T00:00:00Z'),
-        drop('openai', '2026-09-01T00:00:00Z'),
       ]),
       feeds: [
-        ok('Hacker News', [
-          item('Introducing GPT-6', '2026-09-19T00:00:00Z', { score: 900, alert: true }),
-          item('meh', '2026-09-19T00:00:00Z', { score: 10 }),
-        ]),
-        ok('OpenAI news', [
-          item('Introducing something', '2026-09-10T00:00:00Z', { source: 'openai', alert: true }),
-        ]),
+        ok('Hacker News', [item('Introducing GPT-6', '2026-09-19T00:00:00Z', { score: 900, alert: true })]),
       ],
     };
     const d = assembleDashboard(inputs, NOW);
-    expect(d.dropcon.score).toBe(6 * 1 + 3 * 1 + 2 * 1);
+    expect(d.dropcon.score).toBe(0);
+    expect(d.dropcon.level).toBe(5);
+    expect(d.landed.releases.map((r) => r.labId)).toEqual(['openai']);
+    expect(d.landed.banner).toBe(true);
+    expect(d.landed.stories.map((s) => s.title)).toEqual(['Introducing GPT-6']);
+    expect(d.earlyWarnings.scored).toBe(false);
+  });
+
+  it('has no signal with Polymarket and OpenRouter both down, and lists every source it was given', () => {
+    const inputs: DashboardInputs = {
+      ...empty(),
+      markets: failed('Polymarket', [] as Market[]),
+      drops: failed('OpenRouter', [] as Drop[]),
+      leaks: [{ ...ok('HN leaks', []), source: 'hn' }],
+      broadcasts: failed('YouTube broadcasts', []),
+      architectures: ok('transformers registry', []),
+    };
+    const d = assembleDashboard(inputs, NOW);
+    expect(d.dropcon.state).toBe('no-signal');
+    expect(d.forecast.oddsAvailable).toBe(false);
+    expect(d.sources.map((s) => s.name)).toEqual([
+      'Polymarket',
+      'OpenRouter',
+      'HF trending',
+      'HF papers',
+      'HN leaks',
+      'YouTube broadcasts',
+      'transformers registry',
+    ]);
   });
 });

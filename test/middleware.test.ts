@@ -14,6 +14,10 @@ describe('security headers', () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain('https://app.skopia.dev');
     expect(csp).not.toContain("script-src 'self' 'unsafe-inline'");
+    // fonts are self-hosted (WP-7): no Google Fonts left in the CSP
+    expect(csp).toContain("font-src 'self'");
+    expect(csp).not.toContain('fonts.googleapis.com');
+    expect(csp).not.toContain('fonts.gstatic.com');
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
     expect(res.headers.get('permissions-policy')).toBeTruthy();

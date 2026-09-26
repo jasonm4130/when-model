@@ -1,0 +1,3087 @@
+{
+  "meta": {
+    "version": 1,
+    "pulledAt": "2026-09-26T00:46:05Z",
+    "window": {
+      "from": "2026-04-01T00:00:00Z",
+      "until": "2026-09-26T00:00:00Z"
+    },
+    "split": {
+      "at": "2026-07-16T19:00:00Z",
+      "trainFraction": 0.6,
+      "purged": true
+    },
+    "horizonsH": [24, 72, 168],
+    "headlineH": 72,
+    "event": "E(t,h): a frontier lab (FRONTIER_LABS) has a text-output OpenRouter release event (releaseEvents: canonical-slug and :free twins collapsed, same-lab listings within 2h grouped) whose first listing falls in (t, t+h].",
+    "marketRead": "Per lab, the best text family: familyCurves/readCurve at t+h over the Polymarket rungs an as-of reader could see at t. Labs combine by noisy-OR (the cross-lab clustering test found no dependence beyond a shuffled baseline).",
+    "protocol": {
+      "admitDays": 14,
+      "trustedBracketDays": 14,
+      "rollingOrigins": [0.4, 0.55, 0.7, 0.85],
+      "bootstrap": {
+        "resamples": 2000,
+        "blockH": 168,
+        "seed": 20260926
+      },
+      "sanity": {
+        "maxMeanGap": 0.05,
+        "minBinHours": 100,
+        "maxBinGap": 0.2
+      },
+      "decisionMinSkill": 0.02,
+      "levelQuantiles": [0.3, 0.6, 0.85, 0.95],
+      "pricedMin": 0.5,
+      "readMin": 0.05,
+      "formulasTried": 5,
+      "readVariants": ["curve (primary)", "no-buckets", "trusted", "no-settle", "uncensored"]
+    },
+    "limitations": [
+      "Hourly rows are heavily autocorrelated: one release event sets y=1 for h consecutive hours, so the effective sample size is the number of distinct release events (test: tens), not the number of hours (thousands).",
+      "The release rate is not stationary: the 72h rate was 0.39 in the train window and 0.631 in the test window, so every constant fitted on train is miscalibrated on test.",
+      "No historical bid/ask: every quote is treated as a tight book, so the live thin-book gate (spread > 10¢) cannot be replayed; date-bucket floors use the price in place of the best bid (an upper bound on the live floor; no-buckets is the lower bound). PAV weights are uniform (no historical liquidity).",
+      "The CLOB pull kept the last 15 days of each rung, so a rung is admitted only within 14 days of its deadline. The live trusted-read rule mainly guards reads extrapolated from rungs further out; those cannot be replayed without leaking outcomes, so the trusted variant here only drops lower-bound and bucket-floor reads.",
+      "Rungs due after the pull are missing (unresolved rungs were not pulled), so market reads in the last 14 days are censored low; the uncensored variant stops the test there.",
+      "OpenRouter survivorship: the outcome counts only models OpenRouter still lists (see survivorship).",
+      "Markets are read only until their model launched (announcement, else first YES resolution). Live markets keep trading near 1 until they resolve (median 2.6h after the announcement, up to 63.3h, over 39 markets); the no-settle variant scores an unguarded reader."
+    ]
+  },
+  "releases": {
+    "inWindow": 45,
+    "markers": [
+      {
+        "at": "2026-04-02T12:39:17Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.6-plus"]
+      },
+      {
+        "at": "2026-04-02T16:48:06Z",
+        "labId": "google",
+        "models": ["google/gemma-4-31b-it"]
+      },
+      {
+        "at": "2026-04-03T14:53:09Z",
+        "labId": "google",
+        "models": ["google/gemma-4-26b-a4b-it"]
+      },
+      {
+        "at": "2026-04-16T14:51:40Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-4.7"]
+      },
+      {
+        "at": "2026-04-24T03:17:46Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro"]
+      },
+      {
+        "at": "2026-04-24T17:31:33Z",
+        "labId": "openai",
+        "models": ["openai/gpt-5.5", "openai/gpt-5.5-pro"]
+      },
+      {
+        "at": "2026-04-27T01:57:44Z",
+        "labId": "qwen",
+        "models": [
+          "qwen/qwen3.6-27b",
+          "qwen/qwen3.6-max-preview",
+          "qwen/qwen3.6-35b-a3b",
+          "qwen/qwen3.6-flash",
+          "qwen/qwen3.5-plus-20260420"
+        ]
+      },
+      {
+        "at": "2026-04-30T23:30:21Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.3"]
+      },
+      {
+        "at": "2026-05-05T16:56:52Z",
+        "labId": "openai",
+        "models": ["openai/gpt-chat-latest"]
+      },
+      {
+        "at": "2026-05-07T15:47:08Z",
+        "labId": "google",
+        "models": ["google/gemini-3.1-flash-lite"]
+      },
+      {
+        "at": "2026-05-19T12:30:00Z",
+        "labId": "google",
+        "models": ["google/gemini-3.5-flash"]
+      },
+      {
+        "at": "2026-05-20T17:28:43Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-build-0.1"]
+      },
+      {
+        "at": "2026-05-21T15:21:01Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.7-max"]
+      },
+      {
+        "at": "2026-05-27T18:04:51Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-4.8"]
+      },
+      {
+        "at": "2026-06-03T13:03:03Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.7-plus"]
+      },
+      {
+        "at": "2026-06-09T12:18:35Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-fable-5"]
+      },
+      {
+        "at": "2026-06-30T18:11:23Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-sonnet-5"]
+      },
+      {
+        "at": "2026-07-08T15:05:54Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.5"]
+      },
+      {
+        "at": "2026-07-09T09:54:10Z",
+        "labId": "openai",
+        "models": [
+          "openai/gpt-5.6-sol",
+          "openai/gpt-5.6-sol-pro",
+          "openai/gpt-5.6-terra",
+          "openai/gpt-5.6-terra-pro",
+          "openai/gpt-5.6-luna",
+          "openai/gpt-5.6-luna-pro"
+        ]
+      },
+      {
+        "at": "2026-07-16T15:29:01Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.1"]
+      },
+      {
+        "at": "2026-07-21T15:12:06Z",
+        "labId": "google",
+        "models": ["google/gemini-3.5-flash-lite", "google/gemini-3.6-flash"]
+      },
+      {
+        "at": "2026-07-24T17:02:24Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-5"]
+      },
+      {
+        "at": "2026-07-27T22:16:01Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.7-flash"]
+      },
+      {
+        "at": "2026-07-31T06:21:48Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-flash-0731"]
+      },
+      {
+        "at": "2026-08-05T19:48:07Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.2"]
+      },
+      {
+        "at": "2026-08-09T19:06:34Z",
+        "labId": "meta",
+        "models": ["meta/muse-glimmer-30b"]
+      },
+      {
+        "at": "2026-08-12T15:35:57Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.6"]
+      },
+      {
+        "at": "2026-08-12T15:42:44Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-pro-0813"]
+      },
+      {
+        "at": "2026-08-12T16:21:42Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-2.4t-a95b"]
+      },
+      {
+        "at": "2026-08-13T17:03:01Z",
+        "labId": "google",
+        "models": ["google/gemini-3.7-flash"]
+      },
+      {
+        "at": "2026-08-14T15:55:10Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-27b"]
+      },
+      {
+        "at": "2026-08-21T11:26:03Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-flash-vision-exp"]
+      },
+      {
+        "at": "2026-08-21T18:21:16Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.2-contributor"]
+      },
+      {
+        "at": "2026-08-26T19:37:40Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-flash"]
+      },
+      {
+        "at": "2026-09-01T18:03:58Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-fable-5.1"]
+      },
+      {
+        "at": "2026-09-02T15:14:16Z",
+        "labId": "google",
+        "models": ["google/gemini-3.8-flash"]
+      },
+      {
+        "at": "2026-09-02T19:45:59Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.3", "meta/muse-spark-1.3-contributor"]
+      },
+      {
+        "at": "2026-09-03T21:08:24Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-max-0902"]
+      },
+      {
+        "at": "2026-09-04T20:13:55Z",
+        "labId": "openai",
+        "models": ["openai/gpt-6-astra-pro", "openai/gpt-6-astra"]
+      },
+      {
+        "at": "2026-09-10T06:21:25Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4.1-flash"]
+      },
+      {
+        "at": "2026-09-21T03:05:54Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-omni-flash"]
+      },
+      {
+        "at": "2026-09-21T16:19:01Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.7"]
+      },
+      {
+        "at": "2026-09-22T16:32:12Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-5.5"]
+      },
+      {
+        "at": "2026-09-22T18:12:55Z",
+        "labId": "openai",
+        "models": ["openai/gpt-6-sol", "openai/gpt-6-sol-pro", "openai/gpt-6-luna", "openai/gpt-6-luna-pro"]
+      },
+      {
+        "at": "2026-09-23T19:20:28Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-max-prime"]
+      }
+    ]
+  },
+  "survivorship": {
+    "monthly": [
+      {
+        "month": "2025-01",
+        "events": 3
+      },
+      {
+        "month": "2025-02",
+        "events": 2
+      },
+      {
+        "month": "2025-03",
+        "events": 4
+      },
+      {
+        "month": "2025-04",
+        "events": 5
+      },
+      {
+        "month": "2025-05",
+        "events": 2
+      },
+      {
+        "month": "2025-06",
+        "events": 3
+      },
+      {
+        "month": "2025-07",
+        "events": 6
+      },
+      {
+        "month": "2025-08",
+        "events": 5
+      },
+      {
+        "month": "2025-09",
+        "events": 7
+      },
+      {
+        "month": "2025-10",
+        "events": 6
+      },
+      {
+        "month": "2025-11",
+        "events": 2
+      },
+      {
+        "month": "2025-12",
+        "events": 4
+      },
+      {
+        "month": "2026-01",
+        "events": 1
+      },
+      {
+        "month": "2026-02",
+        "events": 9
+      },
+      {
+        "month": "2026-03",
+        "events": 5
+      },
+      {
+        "month": "2026-04",
+        "events": 8
+      },
+      {
+        "month": "2026-05",
+        "events": 6
+      },
+      {
+        "month": "2026-06",
+        "events": 3
+      },
+      {
+        "month": "2026-07",
+        "events": 7
+      },
+      {
+        "month": "2026-08",
+        "events": 10
+      },
+      {
+        "month": "2026-09",
+        "events": 11
+      }
+    ],
+    "perLab30d": [
+      {
+        "labId": "openai",
+        "before": 1.2,
+        "window": 0.84
+      },
+      {
+        "labId": "anthropic",
+        "before": 0.66,
+        "window": 1.18
+      },
+      {
+        "labId": "google",
+        "before": 0.55,
+        "window": 1.18
+      },
+      {
+        "labId": "xai",
+        "before": 0.11,
+        "window": 0.84
+      },
+      {
+        "labId": "deepseek",
+        "before": 0.44,
+        "window": 0.84
+      },
+      {
+        "labId": "qwen",
+        "before": 1.97,
+        "window": 1.85
+      },
+      {
+        "labId": "meta",
+        "before": 0,
+        "window": 0.84
+      }
+    ],
+    "curatedFrontierLaunches": 21,
+    "curatedStillListed": 21,
+    "delistedSincePull": ["anthropic/claude-3-haiku"],
+    "scheduledExpiry": {
+      "probedAt": "2026-09-26",
+      "frontierIds": 21,
+      "inWindowEventsErased": 0
+    },
+    "note": "Every xAI listing before 2026-03-31 is gone, so the window starts 2026-04-01. Inside it, a release event disappears only when all of its listings are delisted."
+  },
+  "horizons": [
+    {
+      "horizonH": 24,
+      "train": {
+        "from": "2026-04-01T00:00:00Z",
+        "to": "2026-07-16T19:00:00Z",
+        "hours": 2540,
+        "events": 20,
+        "rate": 0.165
+      },
+      "test": {
+        "from": "2026-07-16T19:00:00Z",
+        "to": "2026-09-26T00:00:00Z",
+        "hours": 1686,
+        "events": 25,
+        "rate": 0.283
+      },
+      "fit": {
+        "base": 0.1654,
+        "unpriced": 0.0891,
+        "a": -0.9179,
+        "b": 0.5264
+      },
+      "formulas": [
+        {
+          "id": "base",
+          "name": "(a) constant base rate",
+          "brier": 0.2167,
+          "logLoss": 0.6387,
+          "skill": 0,
+          "skillVsClimatology": -0.068,
+          "skillCi95": [0, 0],
+          "sanity": {
+            "meanForecast": 0.165,
+            "observed": 0.283,
+            "worstBinGap": 0.118,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 1686,
+              "meanForecast": 0.165,
+              "observed": 0.283
+            }
+          ]
+        },
+        {
+          "id": "max",
+          "name": "(b) max over labs",
+          "brier": 0.2225,
+          "logLoss": 0.7807,
+          "skill": -0.027,
+          "skillVsClimatology": -0.097,
+          "skillCi95": [-0.238, 0.155],
+          "sanity": {
+            "meanForecast": 0.193,
+            "observed": 0.283,
+            "worstBinGap": 0.231,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0,
+              "to": 0.1,
+              "n": 764,
+              "meanForecast": 0.041,
+              "observed": 0.272
+            },
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 277,
+              "meanForecast": 0.147,
+              "observed": 0.195
+            },
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 239,
+              "meanForecast": 0.249,
+              "observed": 0.268
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 233,
+              "meanForecast": 0.351,
+              "observed": 0.232
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 58,
+              "meanForecast": 0.436,
+              "observed": 0.448
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 17,
+              "meanForecast": 0.549,
+              "observed": 0.412
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 25,
+              "meanForecast": 0.644,
+              "observed": 0.44
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 25,
+              "meanForecast": 0.746,
+              "observed": 0.56
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 36,
+              "meanForecast": 0.85,
+              "observed": 0.778
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 12,
+              "meanForecast": 0.952,
+              "observed": 0.917
+            }
+          ]
+        },
+        {
+          "id": "max-base",
+          "name": "(c) max(market, base)",
+          "brier": 0.2001,
+          "logLoss": 0.5949,
+          "skill": 0.077,
+          "skillVsClimatology": 0.014,
+          "skillCi95": [-0.137, 0.243],
+          "sanity": {
+            "meanForecast": 0.253,
+            "observed": 0.283,
+            "worstBinGap": 0.119,
+            "sane": true
+          },
+          "reliability": [
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 1041,
+              "meanForecast": 0.167,
+              "observed": 0.252
+            },
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 239,
+              "meanForecast": 0.249,
+              "observed": 0.268
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 233,
+              "meanForecast": 0.351,
+              "observed": 0.232
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 58,
+              "meanForecast": 0.436,
+              "observed": 0.448
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 17,
+              "meanForecast": 0.549,
+              "observed": 0.412
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 25,
+              "meanForecast": 0.644,
+              "observed": 0.44
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 25,
+              "meanForecast": 0.746,
+              "observed": 0.56
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 36,
+              "meanForecast": 0.85,
+              "observed": 0.778
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 12,
+              "meanForecast": 0.952,
+              "observed": 0.917
+            }
+          ]
+        },
+        {
+          "id": "noisy-or",
+          "name": "(d) noisy-OR with unpriced rate u",
+          "brier": 0.2097,
+          "logLoss": 0.6245,
+          "skill": 0.032,
+          "skillVsClimatology": -0.034,
+          "skillCi95": [-0.246, 0.233],
+          "sanity": {
+            "meanForecast": 0.297,
+            "observed": 0.283,
+            "worstBinGap": 0.281,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0,
+              "to": 0.1,
+              "n": 81,
+              "meanForecast": 0.098,
+              "observed": 0.235
+            },
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 600,
+              "meanForecast": 0.15,
+              "observed": 0.303
+            },
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 355,
+              "meanForecast": 0.246,
+              "observed": 0.161
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 259,
+              "meanForecast": 0.35,
+              "observed": 0.293
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 198,
+              "meanForecast": 0.443,
+              "observed": 0.162
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 73,
+              "meanForecast": 0.542,
+              "observed": 0.384
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 27,
+              "meanForecast": 0.648,
+              "observed": 0.63
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 27,
+              "meanForecast": 0.741,
+              "observed": 0.481
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 39,
+              "meanForecast": 0.858,
+              "observed": 0.692
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 27,
+              "meanForecast": 0.954,
+              "observed": 0.963
+            }
+          ]
+        },
+        {
+          "id": "noisy-or-cal",
+          "name": "(e) (d) + logistic recalibration",
+          "brier": 0.2008,
+          "logLoss": 0.6045,
+          "skill": 0.073,
+          "skillVsClimatology": 0.01,
+          "skillCi95": [-0.045, 0.186],
+          "sanity": {
+            "meanForecast": 0.206,
+            "observed": 0.283,
+            "worstBinGap": 0.101,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 1021,
+              "meanForecast": 0.15,
+              "observed": 0.251
+            },
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 505,
+              "meanForecast": 0.242,
+              "observed": 0.23
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 79,
+              "meanForecast": 0.34,
+              "observed": 0.557
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 29,
+              "meanForecast": 0.448,
+              "observed": 0.621
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 29,
+              "meanForecast": 0.539,
+              "observed": 0.724
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 13,
+              "meanForecast": 0.649,
+              "observed": 0.923
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 9,
+              "meanForecast": 0.738,
+              "observed": 1
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 1,
+              "meanForecast": 0.915,
+              "observed": 1
+            }
+          ]
+        }
+      ],
+      "coverage": {
+        "hoursMarket10": 1151,
+        "listedHours": 477,
+        "listedMarketUnder10": 159,
+        "quietMarketOver50": 52
+      },
+      "rolling": [
+        {
+          "origin": "2026-06-11T05:00:00Z",
+          "testTo": "2026-07-07T22:00:00Z",
+          "trainHours": 1686,
+          "testHours": 641,
+          "testEvents": 2,
+          "testRate": 0.047,
+          "fit": {
+            "base": 0.2076,
+            "unpriced": 0.1414,
+            "a": -0.8203,
+            "b": 0.4638
+          },
+          "skill": {
+            "base": 0,
+            "max": 0.55,
+            "max-base": 0.104,
+            "noisy-or": 0.016,
+            "noisy-or-cal": 0.125
+          }
+        },
+        {
+          "origin": "2026-07-07T22:00:00Z",
+          "testTo": "2026-08-03T14:00:00Z",
+          "trainHours": 2327,
+          "testHours": 640,
+          "testEvents": 7,
+          "testRate": 0.244,
+          "fit": {
+            "base": 0.1607,
+            "unpriced": 0.0953,
+            "a": -0.9519,
+            "b": 0.5079
+          },
+          "skill": {
+            "base": 0,
+            "max": -0.006,
+            "max-base": 0.032,
+            "noisy-or": 0.057,
+            "noisy-or-cal": 0.087
+          }
+        },
+        {
+          "origin": "2026-08-03T14:00:00Z",
+          "testTo": "2026-08-30T07:00:00Z",
+          "trainHours": 2967,
+          "testHours": 641,
+          "testEvents": 10,
+          "testRate": 0.271,
+          "fit": {
+            "base": 0.1807,
+            "unpriced": 0.0958,
+            "a": -0.902,
+            "b": 0.4819
+          },
+          "skill": {
+            "base": 0,
+            "max": -0.149,
+            "max-base": 0.013,
+            "noisy-or": -0.05,
+            "noisy-or-cal": -0.011
+          }
+        },
+        {
+          "origin": "2026-08-30T07:00:00Z",
+          "testTo": "2026-09-26T00:00:00Z",
+          "trainHours": 3608,
+          "testHours": 618,
+          "testEvents": 11,
+          "testRate": 0.335,
+          "fit": {
+            "base": 0.1968,
+            "unpriced": 0.1087,
+            "a": -0.8647,
+            "b": 0.4556
+          },
+          "skill": {
+            "base": 0,
+            "max": 0.106,
+            "max-base": 0.195,
+            "noisy-or": 0.139,
+            "noisy-or-cal": 0.171
+          }
+        }
+      ],
+      "sensitivity": [
+        {
+          "variant": "no-buckets",
+          "testHours": 1686,
+          "fit": {
+            "base": 0.1654,
+            "unpriced": 0.0924,
+            "a": -0.8409,
+            "b": 0.5668
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": 0.024,
+              "skillCi95": [-0.138, 0.196],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.124,
+              "skillCi95": [-0.031, 0.275],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.102,
+              "skillCi95": [-0.08, 0.263],
+              "sane": true
+            },
+            "noisy-or-cal": {
+              "skill": 0.092,
+              "skillCi95": [-0.019, 0.208],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "trusted",
+          "testHours": 1686,
+          "fit": {
+            "base": 0.1654,
+            "unpriced": 0.094,
+            "a": -0.8501,
+            "b": 0.5619
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": 0.024,
+              "skillCi95": [-0.138, 0.198],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.126,
+              "skillCi95": [-0.03, 0.277],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.106,
+              "skillCi95": [-0.073, 0.27],
+              "sane": true
+            },
+            "noisy-or-cal": {
+              "skill": 0.093,
+              "skillCi95": [-0.016, 0.207],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "no-settle",
+          "testHours": 1686,
+          "fit": {
+            "base": 0.1654,
+            "unpriced": 0.0849,
+            "a": -1.0481,
+            "b": 0.4479
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": 0.02,
+              "skillCi95": [-0.219, 0.24],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.099,
+              "skillCi95": [-0.131, 0.283],
+              "sane": true
+            },
+            "noisy-or": {
+              "skill": 0.069,
+              "skillCi95": [-0.228, 0.299],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": 0.092,
+              "skillCi95": [-0.026, 0.205],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "uncensored",
+          "testHours": 1373,
+          "fit": {
+            "base": 0.1654,
+            "unpriced": 0.0891,
+            "a": -0.9179,
+            "b": 0.5264
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -0.004,
+              "skillCi95": [-0.172, 0.191],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.098,
+              "skillCi95": [-0.058, 0.272],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.069,
+              "skillCi95": [-0.11, 0.26],
+              "sane": true
+            },
+            "noisy-or-cal": {
+              "skill": 0.071,
+              "skillCi95": [-0.028, 0.199],
+              "sane": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "horizonH": 72,
+      "train": {
+        "from": "2026-04-01T00:00:00Z",
+        "to": "2026-07-16T19:00:00Z",
+        "hours": 2492,
+        "events": 20,
+        "rate": 0.39
+      },
+      "test": {
+        "from": "2026-07-16T19:00:00Z",
+        "to": "2026-09-26T00:00:00Z",
+        "hours": 1638,
+        "events": 25,
+        "rate": 0.631
+      },
+      "fit": {
+        "base": 0.3904,
+        "unpriced": 0.234,
+        "a": -0.4642,
+        "b": 0.3122
+      },
+      "formulas": [
+        {
+          "id": "base",
+          "name": "(a) constant base rate",
+          "brier": 0.2908,
+          "logLoss": 0.7763,
+          "skill": 0,
+          "skillVsClimatology": -0.249,
+          "skillCi95": [0, 0],
+          "sanity": {
+            "meanForecast": 0.39,
+            "observed": 0.631,
+            "worstBinGap": 0.241,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 1638,
+              "meanForecast": 0.39,
+              "observed": 0.631
+            }
+          ]
+        },
+        {
+          "id": "max",
+          "name": "(b) max over labs",
+          "brier": 0.3806,
+          "logLoss": 1.7421,
+          "skill": -0.309,
+          "skillVsClimatology": -0.635,
+          "skillCi95": [-0.827, 0.056],
+          "sanity": {
+            "meanForecast": 0.439,
+            "observed": 0.631,
+            "worstBinGap": 0.607,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0,
+              "to": 0.1,
+              "n": 247,
+              "meanForecast": 0.048,
+              "observed": 0.611
+            },
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 216,
+              "meanForecast": 0.128,
+              "observed": 0.505
+            },
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 128,
+              "meanForecast": 0.252,
+              "observed": 0.859
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 215,
+              "meanForecast": 0.349,
+              "observed": 0.637
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 215,
+              "meanForecast": 0.447,
+              "observed": 0.758
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 151,
+              "meanForecast": 0.552,
+              "observed": 0.669
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 121,
+              "meanForecast": 0.648,
+              "observed": 0.719
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 64,
+              "meanForecast": 0.744,
+              "observed": 0.625
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 65,
+              "meanForecast": 0.857,
+              "observed": 0.831
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 216,
+              "meanForecast": 0.976,
+              "observed": 0.38
+            }
+          ]
+        },
+        {
+          "id": "max-base",
+          "name": "(c) max(market, base)",
+          "brier": 0.3124,
+          "logLoss": 1.5048,
+          "skill": -0.074,
+          "skillVsClimatology": -0.342,
+          "skillCi95": [-0.612, 0.255],
+          "sanity": {
+            "meanForecast": 0.541,
+            "observed": 0.631,
+            "worstBinGap": 0.596,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 806,
+              "meanForecast": 0.391,
+              "observed": 0.629
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 215,
+              "meanForecast": 0.447,
+              "observed": 0.758
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 151,
+              "meanForecast": 0.552,
+              "observed": 0.669
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 121,
+              "meanForecast": 0.648,
+              "observed": 0.719
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 64,
+              "meanForecast": 0.744,
+              "observed": 0.625
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 65,
+              "meanForecast": 0.857,
+              "observed": 0.831
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 216,
+              "meanForecast": 0.976,
+              "observed": 0.38
+            }
+          ]
+        },
+        {
+          "id": "noisy-or",
+          "name": "(d) noisy-OR with unpriced rate u",
+          "brier": 0.2913,
+          "logLoss": 1.4684,
+          "skill": -0.002,
+          "skillVsClimatology": -0.252,
+          "skillCi95": [-0.566, 0.344],
+          "sanity": {
+            "meanForecast": 0.619,
+            "observed": 0.631,
+            "worstBinGap": 0.473,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 163,
+              "meanForecast": 0.265,
+              "observed": 0.485
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 154,
+              "meanForecast": 0.353,
+              "observed": 0.597
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 239,
+              "meanForecast": 0.455,
+              "observed": 0.636
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 248,
+              "meanForecast": 0.551,
+              "observed": 0.75
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 259,
+              "meanForecast": 0.648,
+              "observed": 0.78
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 197,
+              "meanForecast": 0.744,
+              "observed": 0.518
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 101,
+              "meanForecast": 0.853,
+              "observed": 0.812
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 277,
+              "meanForecast": 0.975,
+              "observed": 0.502
+            }
+          ]
+        },
+        {
+          "id": "noisy-or-cal",
+          "name": "(e) (d) + logistic recalibration",
+          "brier": 0.301,
+          "logLoss": 0.8092,
+          "skill": -0.035,
+          "skillVsClimatology": -0.293,
+          "skillCi95": [-0.333, 0.153],
+          "sanity": {
+            "meanForecast": 0.459,
+            "observed": 0.631,
+            "worstBinGap": 0.594,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 682,
+              "meanForecast": 0.355,
+              "observed": 0.623
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 585,
+              "meanForecast": 0.44,
+              "observed": 0.668
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 151,
+              "meanForecast": 0.545,
+              "observed": 0.854
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 61,
+              "meanForecast": 0.64,
+              "observed": 0.557
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 35,
+              "meanForecast": 0.744,
+              "observed": 0.686
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 124,
+              "meanForecast": 0.844,
+              "observed": 0.25
+            }
+          ]
+        }
+      ],
+      "coverage": {
+        "hoursMarket10": 1473,
+        "listedHours": 1034,
+        "listedMarketUnder10": 81,
+        "quietMarketOver50": 302
+      },
+      "rolling": [
+        {
+          "origin": "2026-06-11T05:00:00Z",
+          "testTo": "2026-07-07T22:00:00Z",
+          "trainHours": 1638,
+          "testHours": 641,
+          "testEvents": 3,
+          "testRate": 0.197,
+          "fit": {
+            "base": 0.4737,
+            "unpriced": 0.3545,
+            "a": -0.1859,
+            "b": 0.2217
+          },
+          "skill": {
+            "base": 0,
+            "max": 0.507,
+            "max-base": 0.048,
+            "noisy-or": -0.075,
+            "noisy-or-cal": 0.073
+          }
+        },
+        {
+          "origin": "2026-07-07T22:00:00Z",
+          "testTo": "2026-08-03T14:00:00Z",
+          "trainHours": 2279,
+          "testHours": 640,
+          "testEvents": 8,
+          "testRate": 0.647,
+          "fit": {
+            "base": 0.3857,
+            "unpriced": 0.2471,
+            "a": -0.4698,
+            "b": 0.2628
+          },
+          "skill": {
+            "base": 0,
+            "max": -0.12,
+            "max-base": 0.045,
+            "noisy-or": 0.187,
+            "noisy-or-cal": 0.06
+          }
+        },
+        {
+          "origin": "2026-08-03T14:00:00Z",
+          "testTo": "2026-08-30T07:00:00Z",
+          "trainHours": 2919,
+          "testHours": 641,
+          "testEvents": 11,
+          "testRate": 0.632,
+          "fit": {
+            "base": 0.4553,
+            "unpriced": 0.2776,
+            "a": -0.2374,
+            "b": 0.3416
+          },
+          "skill": {
+            "base": 0,
+            "max": -0.306,
+            "max-base": 0.141,
+            "noisy-or": 0.122,
+            "noisy-or-cal": 0.074
+          }
+        },
+        {
+          "origin": "2026-08-30T07:00:00Z",
+          "testTo": "2026-09-26T00:00:00Z",
+          "trainHours": 3560,
+          "testHours": 570,
+          "testEvents": 11,
+          "testRate": 0.567,
+          "fit": {
+            "base": 0.4888,
+            "unpriced": 0.2988,
+            "a": -0.1391,
+            "b": 0.3819
+          },
+          "skill": {
+            "base": 0,
+            "max": -0.645,
+            "max-base": -0.527,
+            "noisy-or": -0.426,
+            "noisy-or-cal": -0.311
+          }
+        }
+      ],
+      "sensitivity": [
+        {
+          "variant": "no-buckets",
+          "testHours": 1638,
+          "fit": {
+            "base": 0.3904,
+            "unpriced": 0.2427,
+            "a": -0.4073,
+            "b": 0.4379
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -0.139,
+              "skillCi95": [-0.347, 0.068],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.133,
+              "skillCi95": [-0.007, 0.272],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.19,
+              "skillCi95": [-0.037, 0.363],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": 0.103,
+              "skillCi95": [0.01, 0.198],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "trusted",
+          "testHours": 1638,
+          "fit": {
+            "base": 0.3904,
+            "unpriced": 0.2475,
+            "a": -0.4099,
+            "b": 0.4291
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -0.185,
+              "skillCi95": [-0.407, 0.051],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.141,
+              "skillCi95": [0.019, 0.272],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.187,
+              "skillCi95": [0.01, 0.349],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": 0.09,
+              "skillCi95": [0.006, 0.184],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "no-settle",
+          "testHours": 1638,
+          "fit": {
+            "base": 0.3904,
+            "unpriced": 0.2305,
+            "a": -0.4793,
+            "b": 0.2766
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -0.258,
+              "skillCi95": [-0.793, 0.136],
+              "sane": false
+            },
+            "max-base": {
+              "skill": -0.059,
+              "skillCi95": [-0.588, 0.284],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.021,
+              "skillCi95": [-0.545, 0.383],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": -0.018,
+              "skillCi95": [-0.288, 0.161],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "uncensored",
+          "testHours": 1373,
+          "fit": {
+            "base": 0.3904,
+            "unpriced": 0.234,
+            "a": -0.4642,
+            "b": 0.3122
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -0.125,
+              "skillCi95": [-0.369, 0.113],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.135,
+              "skillCi95": [-0.044, 0.296],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.197,
+              "skillCi95": [-0.022, 0.383],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": 0.079,
+              "skillCi95": [-0.007, 0.176],
+              "sane": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "horizonH": 168,
+      "train": {
+        "from": "2026-04-01T00:00:00Z",
+        "to": "2026-07-16T19:00:00Z",
+        "hours": 2396,
+        "events": 20,
+        "rate": 0.732
+      },
+      "test": {
+        "from": "2026-07-16T19:00:00Z",
+        "to": "2026-09-26T00:00:00Z",
+        "hours": 1542,
+        "events": 25,
+        "rate": 0.94
+      },
+      "fit": {
+        "base": 0.7316,
+        "unpriced": 0.5008,
+        "a": 0.5234,
+        "b": 0.274
+      },
+      "formulas": [
+        {
+          "id": "base",
+          "name": "(a) constant base rate",
+          "brier": 0.1,
+          "logLoss": 0.373,
+          "skill": 0,
+          "skillVsClimatology": -0.764,
+          "skillCi95": [0, 0],
+          "sanity": {
+            "meanForecast": 0.732,
+            "observed": 0.94,
+            "worstBinGap": 0.208,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 1542,
+              "meanForecast": 0.732,
+              "observed": 0.94
+            }
+          ]
+        },
+        {
+          "id": "max",
+          "name": "(b) max over labs",
+          "brier": 0.248,
+          "logLoss": 1.3874,
+          "skill": -1.481,
+          "skillVsClimatology": -3.376,
+          "skillCi95": [-3.364, -0.279],
+          "sanity": {
+            "meanForecast": 0.708,
+            "observed": 0.94,
+            "worstBinGap": 0.756,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0,
+              "to": 0.1,
+              "n": 98,
+              "meanForecast": 0.057,
+              "observed": 1
+            },
+            {
+              "from": 0.1,
+              "to": 0.2,
+              "n": 65,
+              "meanForecast": 0.168,
+              "observed": 1
+            },
+            {
+              "from": 0.2,
+              "to": 0.3,
+              "n": 119,
+              "meanForecast": 0.244,
+              "observed": 1
+            },
+            {
+              "from": 0.3,
+              "to": 0.4,
+              "n": 89,
+              "meanForecast": 0.372,
+              "observed": 1
+            },
+            {
+              "from": 0.4,
+              "to": 0.5,
+              "n": 77,
+              "meanForecast": 0.432,
+              "observed": 1
+            },
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 27,
+              "meanForecast": 0.557,
+              "observed": 1
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 52,
+              "meanForecast": 0.665,
+              "observed": 1
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 214,
+              "meanForecast": 0.751,
+              "observed": 1
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 165,
+              "meanForecast": 0.842,
+              "observed": 1
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 636,
+              "meanForecast": 0.991,
+              "observed": 0.854
+            }
+          ]
+        },
+        {
+          "id": "max-base",
+          "name": "(c) max(market, base)",
+          "brier": 0.0963,
+          "logLoss": 1.0012,
+          "skill": 0.037,
+          "skillVsClimatology": -0.699,
+          "skillCi95": [-0.323, 0.512],
+          "sanity": {
+            "meanForecast": 0.854,
+            "observed": 0.94,
+            "worstBinGap": 0.261,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 741,
+              "meanForecast": 0.739,
+              "observed": 1
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 165,
+              "meanForecast": 0.842,
+              "observed": 1
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 636,
+              "meanForecast": 0.991,
+              "observed": 0.854
+            }
+          ]
+        },
+        {
+          "id": "noisy-or",
+          "name": "(d) noisy-OR with unpriced rate u",
+          "brier": 0.0946,
+          "logLoss": 0.9753,
+          "skill": 0.054,
+          "skillVsClimatology": -0.669,
+          "skillCi95": [-0.358, 0.665],
+          "sanity": {
+            "meanForecast": 0.881,
+            "observed": 0.94,
+            "worstBinGap": 0.452,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.5,
+              "to": 0.6,
+              "n": 121,
+              "meanForecast": 0.548,
+              "observed": 1
+            },
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 69,
+              "meanForecast": 0.663,
+              "observed": 1
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 219,
+              "meanForecast": 0.745,
+              "observed": 1
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 194,
+              "meanForecast": 0.861,
+              "observed": 1
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 939,
+              "meanForecast": 0.976,
+              "observed": 0.901
+            }
+          ]
+        },
+        {
+          "id": "noisy-or-cal",
+          "name": "(e) (d) + logistic recalibration",
+          "brier": 0.1014,
+          "logLoss": 0.3798,
+          "skill": -0.015,
+          "skillVsClimatology": -0.79,
+          "skillCi95": [-0.243, 0.333],
+          "sanity": {
+            "meanForecast": 0.798,
+            "observed": 0.94,
+            "worstBinGap": 0.334,
+            "sane": false
+          },
+          "reliability": [
+            {
+              "from": 0.6,
+              "to": 0.7,
+              "n": 326,
+              "meanForecast": 0.666,
+              "observed": 1
+            },
+            {
+              "from": 0.7,
+              "to": 0.8,
+              "n": 548,
+              "meanForecast": 0.75,
+              "observed": 1
+            },
+            {
+              "from": 0.8,
+              "to": 0.9,
+              "n": 129,
+              "meanForecast": 0.831,
+              "observed": 1
+            },
+            {
+              "from": 0.9,
+              "to": 1,
+              "n": 539,
+              "meanForecast": 0.918,
+              "observed": 0.827
+            }
+          ]
+        }
+      ],
+      "coverage": {
+        "hoursMarket10": 1456,
+        "listedHours": 1449,
+        "listedMarketUnder10": 86,
+        "quietMarketOver50": 93
+      },
+      "rolling": [
+        {
+          "origin": "2026-06-11T05:00:00Z",
+          "testTo": "2026-07-07T22:00:00Z",
+          "trainHours": 1542,
+          "testHours": 641,
+          "testEvents": 3,
+          "testRate": 0.496,
+          "fit": {
+            "base": 0.8223,
+            "unpriced": 0.6846,
+            "a": 0.7862,
+            "b": 0.3589
+          },
+          "skill": {
+            "base": 0,
+            "max": 0.464,
+            "max-base": 0.005,
+            "noisy-or": -0.09,
+            "noisy-or-cal": 0.018
+          }
+        },
+        {
+          "origin": "2026-07-07T22:00:00Z",
+          "testTo": "2026-08-03T14:00:00Z",
+          "trainHours": 2183,
+          "testHours": 640,
+          "testEvents": 9,
+          "testRate": 0.991,
+          "fit": {
+            "base": 0.716,
+            "unpriced": 0.5059,
+            "a": 0.5382,
+            "b": 0.235
+          },
+          "skill": {
+            "base": 0,
+            "max": -2.023,
+            "max-base": 0.309,
+            "noisy-or": 0.214,
+            "noisy-or-cal": 0.101
+          }
+        },
+        {
+          "origin": "2026-08-03T14:00:00Z",
+          "testTo": "2026-08-30T07:00:00Z",
+          "trainHours": 2823,
+          "testHours": 641,
+          "testEvents": 15,
+          "testRate": 1,
+          "fit": {
+            "base": 0.7722,
+            "unpriced": 0.5597,
+            "a": 0.6876,
+            "b": 0.282
+          },
+          "skill": {
+            "base": 0,
+            "max": -5.406,
+            "max-base": 0.274,
+            "noisy-or": 0.148,
+            "noisy-or-cal": 0.033
+          }
+        },
+        {
+          "origin": "2026-08-30T07:00:00Z",
+          "testTo": "2026-09-26T00:00:00Z",
+          "trainHours": 3464,
+          "testHours": 474,
+          "testEvents": 11,
+          "testRate": 0.804,
+          "fit": {
+            "base": 0.8144,
+            "unpriced": 0.6218,
+            "a": 0.8497,
+            "b": 0.3018
+          },
+          "skill": {
+            "base": 0,
+            "max": -0.43,
+            "max-base": -0.284,
+            "noisy-or": -0.264,
+            "noisy-or-cal": -0.176
+          }
+        }
+      ],
+      "sensitivity": [
+        {
+          "variant": "no-buckets",
+          "testHours": 1542,
+          "fit": {
+            "base": 0.7316,
+            "unpriced": 0.5258,
+            "a": 0.6675,
+            "b": 0.2145
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -2.347,
+              "skillCi95": [-4.813, -0.814],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.066,
+              "skillCi95": [-0.006, 0.19],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.044,
+              "skillCi95": [-0.235, 0.444],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": -0.011,
+              "skillCi95": [-0.108, 0.081],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "trusted",
+          "testHours": 1542,
+          "fit": {
+            "base": 0.7316,
+            "unpriced": 0.5728,
+            "a": 0.7944,
+            "b": 0.1317
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -3.582,
+              "skillCi95": [-6.704, -1.568],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.053,
+              "skillCi95": [-0.008, 0.16],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": -0.03,
+              "skillCi95": [-0.288, 0.23],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": -0.018,
+              "skillCi95": [-0.085, 0.032],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "no-settle",
+          "testHours": 1542,
+          "fit": {
+            "base": 0.7316,
+            "unpriced": 0.4978,
+            "a": 0.548,
+            "b": 0.2511
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -1.375,
+              "skillCi95": [-3.201, -0.139],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.054,
+              "skillCi95": [-0.317, 0.547],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.073,
+              "skillCi95": [-0.351, 0.698],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": 0.005,
+              "skillCi95": [-0.22, 0.346],
+              "sane": false
+            }
+          }
+        },
+        {
+          "variant": "uncensored",
+          "testHours": 1373,
+          "fit": {
+            "base": 0.7316,
+            "unpriced": 0.5008,
+            "a": 0.5234,
+            "b": 0.274
+          },
+          "formulas": {
+            "base": {
+              "skill": 0,
+              "skillCi95": [0, 0],
+              "sane": false
+            },
+            "max": {
+              "skill": -1.803,
+              "skillCi95": [-4.169, -0.329],
+              "sane": false
+            },
+            "max-base": {
+              "skill": 0.182,
+              "skillCi95": [-0.114, 0.501],
+              "sane": false
+            },
+            "noisy-or": {
+              "skill": 0.204,
+              "skillCi95": [-0.185, 0.668],
+              "sane": false
+            },
+            "noisy-or-cal": {
+              "skill": 0.052,
+              "skillCi95": [-0.161, 0.318],
+              "sane": false
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "pricedEvents": {
+    "test": 25,
+    "testPriced": 9,
+    "events": [
+      {
+        "at": "2026-04-02T12:39:17Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.6-plus"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-04-02T16:48:06Z",
+        "labId": "google",
+        "models": ["google/gemma-4-31b-it"],
+        "maxLabP72": 0.005,
+        "priced": false
+      },
+      {
+        "at": "2026-04-03T14:53:09Z",
+        "labId": "google",
+        "models": ["google/gemma-4-26b-a4b-it"],
+        "maxLabP72": 0.005,
+        "priced": false
+      },
+      {
+        "at": "2026-04-16T14:51:40Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-4.7"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-04-24T03:17:46Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro"],
+        "maxLabP72": 0.99,
+        "priced": true
+      },
+      {
+        "at": "2026-04-24T17:31:33Z",
+        "labId": "openai",
+        "models": ["openai/gpt-5.5", "openai/gpt-5.5-pro"],
+        "maxLabP72": 0.979,
+        "priced": true
+      },
+      {
+        "at": "2026-04-27T01:57:44Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.6-27b", "qwen/qwen3.6-max-preview", "qwen/qwen3.6-35b-a3b"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-04-30T23:30:21Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.3"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-05-05T16:56:52Z",
+        "labId": "openai",
+        "models": ["openai/gpt-chat-latest"],
+        "maxLabP72": 0.017,
+        "priced": false
+      },
+      {
+        "at": "2026-05-07T15:47:08Z",
+        "labId": "google",
+        "models": ["google/gemini-3.1-flash-lite"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-05-19T12:30:00Z",
+        "labId": "google",
+        "models": ["google/gemini-3.5-flash"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-05-20T17:28:43Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-build-0.1"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-05-21T15:21:01Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.7-max"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-05-27T18:04:51Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-4.8"],
+        "maxLabP72": 0.458,
+        "priced": false
+      },
+      {
+        "at": "2026-06-03T13:03:03Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.7-plus"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-06-09T12:18:35Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-fable-5"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-06-30T18:11:23Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-sonnet-5"],
+        "maxLabP72": 0.939,
+        "priced": true
+      },
+      {
+        "at": "2026-07-08T15:05:54Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.5"],
+        "maxLabP72": 0.974,
+        "priced": true
+      },
+      {
+        "at": "2026-07-09T09:54:10Z",
+        "labId": "openai",
+        "models": ["openai/gpt-5.6-sol", "openai/gpt-5.6-sol-pro", "openai/gpt-5.6-terra"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-07-16T15:29:01Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.1"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-07-21T15:12:06Z",
+        "labId": "google",
+        "models": ["google/gemini-3.5-flash-lite", "google/gemini-3.6-flash"],
+        "maxLabP72": 0.163,
+        "priced": false
+      },
+      {
+        "at": "2026-07-24T17:02:24Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-5"],
+        "maxLabP72": 0.932,
+        "priced": true
+      },
+      {
+        "at": "2026-07-27T22:16:01Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.7-flash"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-07-31T06:21:48Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-flash-0731"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-05T19:48:07Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.2"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-09T19:06:34Z",
+        "labId": "meta",
+        "models": ["meta/muse-glimmer-30b"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-12T15:35:57Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.6"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-08-12T15:42:44Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-pro-0813"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-12T16:21:42Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-2.4t-a95b"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-13T17:03:01Z",
+        "labId": "google",
+        "models": ["google/gemini-3.7-flash"],
+        "maxLabP72": 0.905,
+        "priced": true
+      },
+      {
+        "at": "2026-08-14T15:55:10Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-27b"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-21T11:26:03Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4-flash-vision-exp"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-08-21T18:21:16Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.2-contributor"],
+        "maxLabP72": 0.131,
+        "priced": false
+      },
+      {
+        "at": "2026-08-26T19:37:40Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-flash"],
+        "maxLabP72": 0.308,
+        "priced": false
+      },
+      {
+        "at": "2026-09-01T18:03:58Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-fable-5.1"],
+        "maxLabP72": 0.915,
+        "priced": true
+      },
+      {
+        "at": "2026-09-02T15:14:16Z",
+        "labId": "google",
+        "models": ["google/gemini-3.8-flash"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-09-02T19:45:59Z",
+        "labId": "meta",
+        "models": ["meta/muse-spark-1.3", "meta/muse-spark-1.3-contributor"],
+        "maxLabP72": 0.156,
+        "priced": false
+      },
+      {
+        "at": "2026-09-03T21:08:24Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-max-0902"],
+        "maxLabP72": 0.093,
+        "priced": false
+      },
+      {
+        "at": "2026-09-04T20:13:55Z",
+        "labId": "openai",
+        "models": ["openai/gpt-6-astra-pro", "openai/gpt-6-astra"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-09-10T06:21:25Z",
+        "labId": "deepseek",
+        "models": ["deepseek/deepseek-v4.1-flash"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-09-21T03:05:54Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-omni-flash"],
+        "maxLabP72": 0,
+        "priced": false
+      },
+      {
+        "at": "2026-09-21T16:19:01Z",
+        "labId": "xai",
+        "models": ["x-ai/grok-4.7"],
+        "maxLabP72": 0.765,
+        "priced": true
+      },
+      {
+        "at": "2026-09-22T16:32:12Z",
+        "labId": "anthropic",
+        "models": ["anthropic/claude-opus-5.5"],
+        "maxLabP72": 0.971,
+        "priced": true
+      },
+      {
+        "at": "2026-09-22T18:12:55Z",
+        "labId": "openai",
+        "models": ["openai/gpt-6-sol", "openai/gpt-6-sol-pro", "openai/gpt-6-luna"],
+        "maxLabP72": 1,
+        "priced": true
+      },
+      {
+        "at": "2026-09-23T19:20:28Z",
+        "labId": "qwen",
+        "models": ["qwen/qwen3.8-max-prime"],
+        "maxLabP72": 0,
+        "priced": false
+      }
+    ]
+  },
+  "byLab": [
+    {
+      "labId": "openai",
+      "trainRate": 0.087,
+      "testRate": 0.088,
+      "testEvents": 2,
+      "hoursWithRead": 372,
+      "brier": 0.0557,
+      "skill": 0.305
+    },
+    {
+      "labId": "anthropic",
+      "trainRate": 0.116,
+      "testRate": 0.132,
+      "testEvents": 3,
+      "hoursWithRead": 637,
+      "brier": 0.0592,
+      "skill": 0.484
+    },
+    {
+      "labId": "google",
+      "trainRate": 0.083,
+      "testRate": 0.132,
+      "testEvents": 3,
+      "hoursWithRead": 729,
+      "brier": 0.1125,
+      "skill": 0.037
+    },
+    {
+      "labId": "xai",
+      "trainRate": 0.087,
+      "testRate": 0.088,
+      "testEvents": 2,
+      "hoursWithRead": 585,
+      "brier": 0.1369,
+      "skill": -0.708
+    },
+    {
+      "labId": "deepseek",
+      "trainRate": 0.029,
+      "testRate": 0.176,
+      "testEvents": 4,
+      "hoursWithRead": 0,
+      "brier": 0.1758,
+      "skill": -0.056
+    },
+    {
+      "labId": "qwen",
+      "trainRate": 0.102,
+      "testRate": 0.276,
+      "testEvents": 7,
+      "hoursWithRead": 342,
+      "brier": 0.2554,
+      "skill": -0.109
+    },
+    {
+      "labId": "meta",
+      "trainRate": 0.002,
+      "testRate": 0.176,
+      "testEvents": 4,
+      "hoursWithRead": 93,
+      "brier": 0.1687,
+      "skill": 0.038
+    }
+  ],
+  "settlementLag": {
+    "events": 39,
+    "medianH": 2.6,
+    "maxH": 63.3
+  },
+  "decision": {
+    "rule": "PROBABILITY design when the best market formula's out-of-sample Brier skill at 72h vs the train base rate exceeds 0.02 with sane reliability; otherwise keep the lead score.",
+    "bestFormula": "noisy-or",
+    "skill": -0.002,
+    "skillCi95": [-0.566, 0.344],
+    "sane": false,
+    "worstBinGap": 0.473,
+    "rollingSkill": [-0.075, 0.187, 0.122, -0.426],
+    "recommendation": "lead-score"
+  },
+  "constants": {
+    "version": 1,
+    "formula": "noisy-or",
+    "recommendation": "lead-score",
+    "fittedOn": {
+      "from": "2026-04-01T00:00:00Z",
+      "to": "2026-07-16T19:00:00Z",
+      "events": 20
+    },
+    "testedOn": {
+      "from": "2026-07-16T19:00:00Z",
+      "to": "2026-09-26T00:00:00Z",
+      "events": 25
+    },
+    "horizons": [
+      {
+        "horizonHours": 24,
+        "unpriced": 0.0891,
+        "calibration": {
+          "a": 0,
+          "b": 1
+        },
+        "baseRate": 0.1654,
+        "test": {
+          "hours": 1686,
+          "rate": 0.283,
+          "brier": 0.2097,
+          "skill": 0.032,
+          "skillCi95": [-0.246, 0.233],
+          "sane": false
+        }
+      },
+      {
+        "horizonHours": 72,
+        "unpriced": 0.234,
+        "calibration": {
+          "a": 0,
+          "b": 1
+        },
+        "baseRate": 0.3904,
+        "test": {
+          "hours": 1638,
+          "rate": 0.631,
+          "brier": 0.2913,
+          "skill": -0.002,
+          "skillCi95": [-0.566, 0.344],
+          "sane": false
+        }
+      },
+      {
+        "horizonHours": 168,
+        "unpriced": 0.5008,
+        "calibration": {
+          "a": 0,
+          "b": 1
+        },
+        "baseRate": 0.7316,
+        "test": {
+          "hours": 1542,
+          "rate": 0.94,
+          "brier": 0.0946,
+          "skill": 0.054,
+          "skillCi95": [-0.358, 0.665],
+          "sane": false
+        }
+      }
+    ]
+  },
+  "levels": {
+    "edges": [0.3, 0.45, 0.7, 0.95],
+    "bands": [
+      {
+        "level": 1,
+        "min": 0.95,
+        "label": "≥95%"
+      },
+      {
+        "level": 2,
+        "min": 0.7,
+        "label": "70–95%"
+      },
+      {
+        "level": 3,
+        "min": 0.45,
+        "label": "45–70%"
+      },
+      {
+        "level": 4,
+        "min": 0.3,
+        "label": "30–45%"
+      },
+      {
+        "level": 5,
+        "min": 0,
+        "label": "<30%"
+      }
+    ],
+    "train": [
+      {
+        "level": 1,
+        "hours": 184,
+        "share": 0.074,
+        "meanP": 0.985,
+        "observed": 0.859,
+        "events": 13
+      },
+      {
+        "level": 2,
+        "hours": 190,
+        "share": 0.076,
+        "meanP": 0.832,
+        "observed": 0.647,
+        "events": 10
+      },
+      {
+        "level": 3,
+        "hours": 567,
+        "share": 0.228,
+        "meanP": 0.544,
+        "observed": 0.226,
+        "events": 11
+      },
+      {
+        "level": 4,
+        "hours": 820,
+        "share": 0.329,
+        "meanP": 0.359,
+        "observed": 0.261,
+        "events": 15
+      },
+      {
+        "level": 5,
+        "hours": 731,
+        "share": 0.293,
+        "meanP": 0.269,
+        "observed": 0.479,
+        "events": 14
+      }
+    ],
+    "test": [
+      {
+        "level": 1,
+        "hours": 210,
+        "share": 0.128,
+        "meanP": 0.99,
+        "observed": 0.395,
+        "events": 16
+      },
+      {
+        "level": 2,
+        "hours": 365,
+        "share": 0.223,
+        "meanP": 0.808,
+        "observed": 0.658,
+        "events": 20
+      },
+      {
+        "level": 3,
+        "hours": 655,
+        "share": 0.4,
+        "meanP": 0.572,
+        "observed": 0.724,
+        "events": 21
+      },
+      {
+        "level": 4,
+        "hours": 245,
+        "share": 0.15,
+        "meanP": 0.38,
+        "observed": 0.645,
+        "events": 11
+      },
+      {
+        "level": 5,
+        "hours": 163,
+        "share": 0.1,
+        "meanP": 0.265,
+        "observed": 0.485,
+        "events": 5
+      }
+    ],
+    "all": [
+      {
+        "level": 1,
+        "hours": 394,
+        "share": 0.094,
+        "meanP": 0.988,
+        "observed": 0.612,
+        "events": 29
+      },
+      {
+        "level": 2,
+        "hours": 569,
+        "share": 0.135,
+        "meanP": 0.815,
+        "observed": 0.663,
+        "events": 31
+      },
+      {
+        "level": 3,
+        "hours": 1251,
+        "share": 0.298,
+        "meanP": 0.559,
+        "observed": 0.502,
+        "events": 33
+      },
+      {
+        "level": 4,
+        "hours": 1073,
+        "share": 0.255,
+        "meanP": 0.364,
+        "observed": 0.354,
+        "events": 26
+      },
+      {
+        "level": 5,
+        "hours": 914,
+        "share": 0.218,
+        "meanP": 0.268,
+        "observed": 0.491,
+        "events": 20
+      }
+    ]
+  },
+  "series": {
+    "from": "2026-04-01T00:00:00Z",
+    "stepH": 3,
+    "p": [
+      0.343, 0.328, 0.31, 0.308, 0.286, 0.276, 0.267, 0.268, 0.251, 0.255, 0.312, 0.315, 0.334, 0.321, 0.319,
+      0.318, 0.342, 0.332, 0.333, 0.333, 0.329, 0.298, 0.315, 0.304, 0.319, 0.322, 0.321, 0.33, 0.331, 0.333,
+      0.318, 0.31, 0.311, 0.329, 0.328, 0.334, 0.34, 0.342, 0.344, 0.356, 0.367, 0.371, 0.376, 0.382, 0.369,
+      0.377, 0.375, 0.383, 0.386, 0.39, 0.419, 0.439, 0.443, 0.471, 0.483, 0.49, 0.496, 0.612, 0.614, 0.619,
+      0.575, 0.498, 0.483, 0.487, 0.398, 0.418, 0.416, 0.587, 0.456, 0.46, 0.45, 0.453, 0.976, 1, 1, 1, 1, 1,
+      0.69, 0.435, 0.41, 0.407, 0.483, 0.41, 0.674, 0.734, 0.558, 0.554, 0.556, 0.408, 0.486, 0.513, 0.517,
+      0.518, 0.512, 0.52, 0.498, 0.436, 0.445, 0.504, 0.351, 0.37, 0.513, 0.298, 0.305, 0.308, 0.344, 0.324,
+      0.5, 0.339, 0.332, 0.291, 0.342, 0.691, 0.694, 0.834, 0.771, 0.814, 0.844, 0.913, 0.911, 0.941, 0.978,
+      0.961, 0.937, 0.259, 0.259, 0.257, 0.257, 0.24, 0.491, 0.475, 0.512, 0.463, 0.451, 0.457, 0.452, 0.463,
+      0.47, 0.484, 0.475, 0.475, 0.492, 0.491, 0.491, 0.494, 0.472, 0.481, 0.482, 0.525, 0.516, 0.508, 0.488,
+      0.497, 0.572, 0.66, 0.728, 0.782, 0.828, 0.828, 0.855, 0.855, 0.919, 0.948, 0.977, 0.945, 0.954, 0.971,
+      0.982, 0.963, 0.985, 0.982, 0.986, 0.964, 0.955, 0.951, 0.97, 0.979, 0.967, 0.977, 0.965, 0.96, 0.985,
+      0.738, 0.517, 0.241, 0.241, 0.241, 0.243, 0.242, 0.243, 0.245, 0.242, 0.251, 0.254, 0.252, 0.252, 0.247,
+      0.251, 0.251, 0.251, 0.251, 0.246, 0.246, 0.245, 0.242, 0.242, 0.243, 0.243, 0.243, 0.246, 0.245, 0.246,
+      0.244, 0.246, 0.247, 0.247, 0.246, 0.246, 0.246, 0.262, 0.265, 0.25, 0.247, 0.251, 0.249, 0.249, 0.248,
+      0.251, 0.251, 0.25, 0.255, 0.252, 0.253, 0.25, 0.248, 0.24, 0.246, 0.336, 0.272, 0.273, 0.266, 0.272,
+      0.271, 0.271, 0.261, 0.258, 0.255, 0.255, 0.254, 0.272, 0.264, 0.264, 0.264, 0.266, 0.266, 0.266, 0.267,
+      0.267, 0.268, 0.269, 0.269, 0.268, 0.268, 0.26, 0.261, 0.259, 0.26, 0.26, 0.261, 0.261, 0.262, 0.261,
+      0.261, 0.263, 0.276, 0.274, 0.299, 0.283, 0.275, 0.265, 0.767, 1, 0.638, 0.39, 0.767, 0.657, 0.486,
+      0.475, 0.359, 0.355, 0.442, 0.343, 0.344, 0.324, 0.307, 0.296, 0.278, 0.324, 0.281, 0.278, 0.274, 0.275,
+      0.278, 0.279, 0.32, 0.321, 0.283, 0.276, 0.279, 0.279, 0.277, 0.279, 0.28, 0.281, 0.281, 0.282, 0.283,
+      0.284, 0.31, 0.279, 0.3, 0.293, 0.299, 0.28, 0.282, 0.275, 0.274, 0.275, 0.26, 0.255, 0.389, 0.387,
+      0.363, 0.316, 0.34, 0.357, 0.351, 0.309, 0.348, 0.385, 0.428, 0.454, 0.475, 0.497, 0.533, 0.542, 0.578,
+      0.603, 0.626, 0.638, 0.661, 0.685, 0.607, 0.737, 0.752, 0.748, 0.757, 0.587, 0.566, 0.576, 0.588, 0.582,
+      0.58, 0.626, 0.703, 0.836, 0.836, 0.893, 0.928, 0.946, 0.946, 0.932, 0.959, 0.963, 0.964, 0.961, 0.974,
+      0.994, 0.993, 0.987, 0.998, 0.996, 0.986, 0.982, 0.988, 0.996, 0.999, 1, 0.999, 0.36, 0.292, 0.273,
+      0.257, 0.257, 0.264, 0.266, 0.263, 0.289, 0.286, 0.352, 0.31, 0.296, 0.279, 0.277, 0.3, 0.292, 0.272,
+      0.266, 0.266, 0.257, 0.27, 0.274, 0.268, 0.303, 0.435, 0.42, 0.424, 0.41, 0.406, 0.358, 0.327, 0.325,
+      0.324, 0.324, 0.32, 0.316, 0.318, 0.314, 0.316, 0.317, 0.316, 0.288, 0.289, 0.288, 0.289, 0.289, 0.291,
+      0.283, 0.286, 0.285, 0.285, 0.286, 0.287, 0.297, 0.31, 0.295, 0.475, 0.355, 0.498, 0.591, 0.459, 0.418,
+      0.421, 0.402, 0.654, 0.697, 0.85, 0.741, 0.836, 0.79, 0.735, 0.347, 0.35, 0.348, 0.33, 0.338, 0.472,
+      0.373, 0.396, 0.411, 0.339, 0.301, 0.284, 0.272, 0.266, 0.267, 0.261, 0.278, 0.279, 0.29, 0.286, 0.284,
+      0.287, 0.274, 0.273, 0.273, 0.277, 0.313, 0.312, 0.274, 0.28, 0.287, 0.296, 0.287, 0.28, 0.279, 0.633,
+      0.603, 0.367, 0.343, 0.343, 0.36, 0.356, 0.351, 0.335, 0.33, 0.321, 0.323, 0.317, 0.326, 0.344, 0.354,
+      0.339, 0.339, 0.34, 0.323, 0.321, 0.327, 0.33, 0.348, 0.343, 0.344, 0.343, 0.358, 0.366, 0.368, 0.378,
+      0.39, 0.389, 0.391, 0.392, 0.392, 0.394, 0.394, 0.41, 0.41, 0.416, 0.411, 0.427, 0.439, 0.431, 0.419,
+      0.405, 0.403, 0.385, 0.424, 0.403, 0.413, 0.427, 0.447, 0.451, 0.549, 0.729, 1, 0.997, 0.919, 0.914,
+      0.327, 0.4, 0.378, 0.375, 0.378, 0.376, 0.352, 0.364, 0.348, 0.352, 0.34, 0.325, 0.348, 0.364, 0.357,
+      0.339, 0.325, 0.326, 0.321, 0.314, 0.315, 0.313, 0.325, 0.327, 0.335, 0.347, 0.347, 0.337, 0.336, 0.34,
+      0.332, 0.338, 0.345, 0.343, 0.344, 0.35, 0.35, 0.356, 0.369, 0.366, 0.344, 0.344, 0.346, 0.35, 0.355,
+      0.344, 0.358, 0.353, 0.336, 0.314, 0.306, 0.305, 0.315, 0.309, 0.314, 0.323, 0.356, 0.354, 0.358, 0.356,
+      0.39, 0.402, 0.408, 0.421, 0.412, 0.429, 0.438, 0.443, 0.454, 0.447, 0.464, 0.473, 0.476, 0.497, 0.512,
+      0.49, 0.502, 0.513, 0.509, 0.525, 0.528, 0.525, 0.543, 0.547, 0.543, 0.545, 0.528, 0.538, 0.532, 0.538,
+      0.547, 0.556, 0.553, 0.549, 0.562, 0.57, 0.581, 0.586, 0.597, 0.652, 0.653, 0.658, 0.63, 0.643, 0.643,
+      0.641, 0.629, 0.575, 0.496, 0.548, 0.426, 0.449, 0.424, 0.41, 0.402, 0.402, 0.446, 0.44, 0.556, 0.382,
+      0.395, 0.369, 0.512, 0.537, 0.522, 0.727, 0.763, 0.685, 0.687, 0.666, 0.541, 0.653, 0.651, 0.543, 0.498,
+      0.487, 0.446, 0.561, 0.468, 0.42, 0.433, 0.502, 0.499, 0.535, 0.546, 0.549, 0.572, 0.576, 0.573, 0.544,
+      0.548, 0.51, 0.566, 0.52, 0.595, 0.607, 0.612, 0.581, 0.619, 0.518, 0.594, 0.732, 0.732, 0.739, 0.829,
+      0.75, 0.793, 0.96, 0.353, 0.324, 0.32, 0.331, 0.32, 0.335, 0.414, 0.299, 0.3, 0.298, 0.299, 0.283,
+      0.291, 0.277, 0.288, 0.289, 0.287, 0.284, 0.273, 0.271, 0.268, 0.265, 0.264, 0.265, 0.285, 0.251, 0.265,
+      0.252, 0.429, 0.511, 0.607, 0.662, 0.71, 0.738, 0.766, 0.597, 0.554, 0.517, 0.542, 0.502, 0.478, 0.504,
+      0.491, 0.477, 0.47, 0.599, 0.656, 0.762, 0.797, 0.855, 0.882, 0.887, 0.93, 0.914, 0.896, 0.952, 0.939,
+      0.929, 0.94, 0.948, 1, 1, 1, 1, 1, 0.997, 0.993, 0.993, 1, 1, 0.997, 0.997, 0.267, 0.27, 0.283, 0.282,
+      0.263, 0.26, 0.264, 0.258, 0.261, 0.264, 0.262, 0.263, 0.263, 0.26, 0.271, 0.268, 0.269, 0.275, 0.276,
+      0.277, 0.278, 0.279, 0.28, 0.281, 0.282, 0.283, 0.286, 0.276, 0.284, 0.285, 0.323, 0.315, 0.311, 0.319,
+      0.296, 0.295, 0.296, 0.286, 0.291, 0.29, 0.309, 0.262, 0.383, 0.454, 0.878, 0.855, 0.71, 0.726, 0.646,
+      0.575, 0.605, 0.596, 0.536, 0.592, 0.613, 0.627, 0.615, 0.703, 0.532, 0.527, 0.84, 0.555, 0.55, 0.538,
+      0.495, 0.463, 0.572, 0.534, 0.606, 0.613, 0.627, 0.634, 0.636, 0.63, 0.601, 0.607, 0.625, 0.656, 0.61,
+      0.512, 0.574, 0.539, 0.538, 0.515, 0.544, 0.511, 0.489, 0.542, 0.575, 0.596, 0.588, 0.566, 0.628, 0.587,
+      0.601, 0.589, 0.592, 0.654, 0.624, 0.612, 0.599, 0.632, 0.616, 0.618, 0.619, 0.586, 0.686, 0.901, 0.889,
+      0.817, 0.851, 0.933, 0.721, 0.616, 0.529, 0.499, 0.611, 0.597, 0.594, 0.75, 0.394, 0.388, 0.391, 0.315,
+      0.317, 0.407, 0.397, 0.419, 0.406, 0.391, 0.417, 0.419, 0.41, 0.413, 0.447, 0.43, 0.421, 0.425, 0.432,
+      0.477, 0.464, 0.455, 0.461, 0.465, 0.482, 0.477, 0.484, 0.474, 0.51, 0.504, 0.524, 0.517, 0.485, 0.435,
+      0.511, 0.524, 0.524, 0.524, 0.524, 0.539, 0.525, 0.523, 0.53, 0.532, 0.532, 0.532, 0.532, 0.277, 0.277,
+      0.272, 0.272, 0.364, 0.471, 0.471, 0.471, 0.47, 0.478, 0.477, 0.477, 0.477, 0.702, 0.767, 0.767, 0.782,
+      0.771, 0.771, 0.824, 0.756, 0.889, 0.701, 0.696, 0.692, 0.692, 0.71, 0.323, 0.504, 0.462, 0.398, 0.38,
+      0.358, 0.504, 0.262, 0.295, 0.283, 0.264, 0.256, 0.267, 0.255, 0.261, 0.263, 0.258, 0.259, 0.274, 0.293,
+      0.308, 0.318, 0.573, 0.587, 0.545, 0.563, 0.564, 0.574, 0.674, 0.72, 0.713, 0.711, 0.682, 0.653, 0.699,
+      0.7, 0.749, 0.707, 0.654, 0.596, 0.568, 0.57, 0.616, 0.624, 0.625, 0.622, 0.619, 0.703, 0.683, 0.688,
+      0.693, 0.699, 0.709, 0.742, 0.743, 0.74, 0.744, 0.743, 0.738, 0.788, 0.756, 0.736, 0.641, 0.766, 0.868,
+      0.834, 0.793, 0.843, 0.908, 0.88, 0.911, 0.884, 0.863, 0.918, 1, 1, 1, 0.986, 0.319, 0.339, 0.341,
+      0.335, 0.338, 0.33, 0.337, 0.319, 0.313, 0.285, 0.276, 0.273, 0.274, 0.265, 0.271, 0.256, 0.264, 0.26,
+      0.259, 0.258, 0.256, 0.254, 0.261, 0.26, 0.256, 0.256, 0.253, 0.254, 0.254, 0.254, 0.252, 0.251, 0.254,
+      0.254, 0.251, 0.25, 0.255, 0.257, 0.261, 0.261, 0.257, 0.257, 0.262, 0.262, 0.393, 0.391, 0.386, 0.388,
+      0.415, 0.382, 0.499, 0.474, 0.602, 0.472, 0.468, 0.459, 0.46, 0.448, 0.448, 0.448, 0.451, 0.439, 0.448,
+      0.446, 0.45, 0.45, 0.458, 0.444, 0.505, 0.501, 0.489, 0.486, 0.493, 0.49, 0.495, 0.49, 0.486, 0.394,
+      0.395, 0.461, 0.446, 0.439, 0.455, 0.436, 0.449, 0.476, 0.464, 0.458, 0.48, 0.48, 0.519, 0.519, 0.551,
+      0.531, 0.544, 0.579, 0.587, 0.577, 0.622, 0.756, 0.79, 1, 0.95, 0.96, 0.829, 0.881, 0.879, 0.845, 0.936,
+      0.864, 0.79, 0.791, 0.769, 0.81, 0.747, 0.755, 0.75, 0.705, 0.701, 0.755, 0.715, 0.716, 0.698, 0.696,
+      0.597, 0.612, 0.598, 0.588, 0.696, 0.647, 0.664, 0.761, 0.75, 0.557, 0.575, 0.59, 0.59, 0.594, 0.599,
+      0.648, 0.659, 0.716, 0.689, 0.693, 0.649, 0.655, 0.662, 0.671, 0.742, 0.73, 0.736, 0.841, 0.789, 0.784,
+      0.93, 0.894, 0.955, 0.928, 0.987, 0.995, 0.958, 0.937, 0.993, 0.997, 1, 1, 0.999, 1, 0.938, 0.975,
+      0.972, 0.987, 0.948, 0.936, 0.955, 0.966, 0.987, 0.313, 0.319, 0.383, 0.385, 0.387, 0.338, 0.33, 0.338,
+      0.349, 0.35, 0.34, 0.34, 0.34, 0.341, 0.347, 0.351, 0.354, 0.358, 0.357, 0.356, 0.34, 0.355, 0.346,
+      0.418, 0.401, 0.407, 0.395, 0.524, 0.518, 0.512, 0.551, 0.527, 0.566, 0.503, 0.5, 0.707, 0.69, 0.648,
+      0.642, 0.583, 0.619, 0.62, 0.625, 0.621, 0.614, 0.623, 0.586, 0.598, 0.61, 0.623, 0.626, 0.639, 0.729,
+      0.686, 0.722, 0.72, 0.717, 0.678, 0.674, 0.7, 0.717, 0.862, 0.896, 0.948, 0.784, 0.761, 0.707, 0.992,
+      0.994, 0.984, 1, 1, 1, 0.968, 0.929, 1, 0.974, 0.976, 0.994, 0.971, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.929, 0.887, 1, 0.833, 1, 0.965, 0.989, 0.812, 0.792, 0.785, 0.489,
+      0.664, 0.713, 0.602, 0.719, 0.696, 0.678, 0.688, 0.565, 0.757, 0.791, 0.739, 0.662, 0.666, 0.67, 0.682,
+      0.729, 0.817, 0.837, 0.844, 0.859, 0.835, 0.87, 0.86, 0.875, 0.903, 0.903, 0.94, 0.99, 0.867, 0.899,
+      0.951, 0.967, 1, 0.994, 0.995, 0.999, 0.3, 0.281, 0.283, 0.286, 0.281, 0.288, 0.288, 0.286, 0.284,
+      0.282, 0.277, 0.271, 0.254, 0.245, 0.394, 0.393, 0.375, 0.266, 0.266, 0.26, 0.235, 0.234, 0.234, 0.234,
+      0.234, 0.234, 0.234
+    ],
+    "market": [
+      0.143, 0.122, 0.1, 0.096, 0.068, 0.054, 0.043, 0.044, 0.022, 0.028, 0.101, 0.105, 0.131, 0.114, 0.111,
+      0.11, 0.141, 0.127, 0.13, 0.129, 0.123, 0.084, 0.106, 0.091, 0.111, 0.115, 0.114, 0.125, 0.127, 0.13,
+      0.109, 0.099, 0.101, 0.123, 0.123, 0.13, 0.138, 0.14, 0.143, 0.16, 0.174, 0.178, 0.185, 0.193, 0.176,
+      0.187, 0.184, 0.195, 0.198, 0.204, 0.242, 0.268, 0.272, 0.31, 0.325, 0.334, 0.342, 0.494, 0.497, 0.502,
+      0.446, 0.344, 0.325, 0.33, 0.215, 0.24, 0.237, 0.461, 0.29, 0.295, 0.282, 0.286, 0.968, 1, 1, 1, 1, 1,
+      0.595, 0.263, 0.229, 0.226, 0.325, 0.229, 0.574, 0.653, 0.423, 0.418, 0.42, 0.228, 0.329, 0.365, 0.37,
+      0.371, 0.363, 0.374, 0.345, 0.264, 0.275, 0.353, 0.153, 0.178, 0.364, 0.084, 0.093, 0.097, 0.144, 0.117,
+      0.347, 0.138, 0.127, 0.074, 0.14, 0.597, 0.601, 0.783, 0.701, 0.757, 0.796, 0.887, 0.884, 0.923, 0.971,
+      0.949, 0.918, 0.033, 0.033, 0.029, 0.029, 0.008, 0.336, 0.315, 0.362, 0.299, 0.284, 0.292, 0.284, 0.299,
+      0.308, 0.327, 0.315, 0.315, 0.336, 0.336, 0.336, 0.339, 0.31, 0.323, 0.324, 0.379, 0.368, 0.357, 0.332,
+      0.343, 0.442, 0.556, 0.645, 0.716, 0.775, 0.776, 0.811, 0.811, 0.895, 0.932, 0.971, 0.928, 0.94, 0.962,
+      0.977, 0.951, 0.981, 0.976, 0.982, 0.953, 0.941, 0.936, 0.961, 0.973, 0.957, 0.97, 0.955, 0.947, 0.981,
+      0.658, 0.37, 0.009, 0.009, 0.009, 0.012, 0.011, 0.011, 0.014, 0.01, 0.023, 0.026, 0.023, 0.024, 0.017,
+      0.022, 0.022, 0.023, 0.022, 0.015, 0.015, 0.014, 0.011, 0.011, 0.012, 0.012, 0.012, 0.015, 0.015, 0.015,
+      0.013, 0.016, 0.017, 0.017, 0.016, 0.016, 0.015, 0.037, 0.04, 0.021, 0.016, 0.022, 0.02, 0.019, 0.019,
+      0.022, 0.022, 0.021, 0.027, 0.024, 0.025, 0.021, 0.018, 0.007, 0.015, 0.133, 0.05, 0.051, 0.041, 0.049,
+      0.048, 0.049, 0.035, 0.031, 0.027, 0.028, 0.026, 0.049, 0.039, 0.039, 0.039, 0.042, 0.041, 0.042, 0.043,
+      0.044, 0.044, 0.045, 0.046, 0.044, 0.045, 0.034, 0.035, 0.033, 0.033, 0.034, 0.035, 0.035, 0.036, 0.036,
+      0.036, 0.038, 0.055, 0.052, 0.085, 0.064, 0.053, 0.04, 0.696, 1, 0.527, 0.204, 0.696, 0.552, 0.328,
+      0.314, 0.163, 0.158, 0.272, 0.142, 0.144, 0.117, 0.096, 0.081, 0.057, 0.117, 0.061, 0.058, 0.052, 0.054,
+      0.058, 0.058, 0.112, 0.113, 0.064, 0.055, 0.059, 0.059, 0.057, 0.058, 0.06, 0.061, 0.062, 0.063, 0.064,
+      0.066, 0.1, 0.059, 0.086, 0.077, 0.085, 0.06, 0.063, 0.053, 0.053, 0.054, 0.034, 0.027, 0.202, 0.2,
+      0.168, 0.106, 0.139, 0.16, 0.153, 0.097, 0.149, 0.197, 0.253, 0.288, 0.315, 0.343, 0.39, 0.403, 0.449,
+      0.481, 0.512, 0.528, 0.558, 0.588, 0.487, 0.657, 0.676, 0.671, 0.683, 0.461, 0.434, 0.447, 0.462, 0.454,
+      0.451, 0.512, 0.613, 0.786, 0.785, 0.861, 0.906, 0.93, 0.93, 0.911, 0.946, 0.952, 0.953, 0.949, 0.966,
+      0.992, 0.99, 0.983, 0.998, 0.995, 0.982, 0.977, 0.984, 0.994, 0.998, 1, 0.999, 0.164, 0.076, 0.052,
+      0.03, 0.03, 0.039, 0.042, 0.037, 0.072, 0.069, 0.154, 0.1, 0.081, 0.059, 0.057, 0.086, 0.075, 0.049,
+      0.042, 0.042, 0.03, 0.047, 0.052, 0.045, 0.09, 0.262, 0.243, 0.248, 0.23, 0.225, 0.162, 0.122, 0.118,
+      0.117, 0.118, 0.112, 0.107, 0.11, 0.105, 0.107, 0.108, 0.107, 0.071, 0.072, 0.071, 0.072, 0.072, 0.074,
+      0.064, 0.068, 0.067, 0.066, 0.068, 0.069, 0.082, 0.099, 0.08, 0.315, 0.158, 0.345, 0.467, 0.294, 0.24,
+      0.244, 0.219, 0.549, 0.604, 0.805, 0.662, 0.786, 0.726, 0.654, 0.147, 0.151, 0.149, 0.125, 0.135, 0.31,
+      0.181, 0.212, 0.231, 0.137, 0.087, 0.065, 0.049, 0.042, 0.044, 0.036, 0.057, 0.059, 0.073, 0.068, 0.066,
+      0.069, 0.052, 0.051, 0.05, 0.056, 0.103, 0.101, 0.053, 0.061, 0.069, 0.081, 0.069, 0.06, 0.058, 0.521,
+      0.482, 0.174, 0.142, 0.142, 0.165, 0.159, 0.153, 0.131, 0.125, 0.113, 0.117, 0.109, 0.12, 0.144, 0.157,
+      0.137, 0.137, 0.138, 0.117, 0.113, 0.122, 0.125, 0.148, 0.142, 0.144, 0.142, 0.162, 0.172, 0.175, 0.188,
+      0.204, 0.202, 0.205, 0.206, 0.206, 0.208, 0.209, 0.23, 0.23, 0.238, 0.231, 0.252, 0.267, 0.257, 0.241,
+      0.223, 0.221, 0.197, 0.248, 0.221, 0.234, 0.252, 0.278, 0.283, 0.412, 0.646, 1, 0.996, 0.895, 0.888,
+      0.122, 0.217, 0.188, 0.185, 0.188, 0.185, 0.154, 0.17, 0.149, 0.155, 0.138, 0.119, 0.149, 0.169, 0.16,
+      0.137, 0.119, 0.121, 0.113, 0.105, 0.106, 0.103, 0.119, 0.122, 0.132, 0.147, 0.148, 0.135, 0.133, 0.139,
+      0.128, 0.136, 0.145, 0.143, 0.144, 0.151, 0.152, 0.16, 0.176, 0.172, 0.144, 0.143, 0.146, 0.152, 0.158,
+      0.143, 0.162, 0.155, 0.133, 0.104, 0.094, 0.093, 0.106, 0.098, 0.104, 0.116, 0.159, 0.157, 0.162, 0.159,
+      0.204, 0.219, 0.227, 0.244, 0.232, 0.254, 0.267, 0.273, 0.287, 0.278, 0.301, 0.312, 0.316, 0.343, 0.362,
+      0.334, 0.35, 0.364, 0.358, 0.38, 0.384, 0.38, 0.404, 0.408, 0.403, 0.406, 0.384, 0.397, 0.389, 0.396,
+      0.409, 0.421, 0.416, 0.411, 0.428, 0.438, 0.453, 0.459, 0.474, 0.546, 0.548, 0.553, 0.516, 0.534, 0.534,
+      0.531, 0.516, 0.445, 0.343, 0.41, 0.251, 0.28, 0.248, 0.23, 0.219, 0.22, 0.277, 0.269, 0.42, 0.193,
+      0.21, 0.176, 0.363, 0.395, 0.376, 0.644, 0.69, 0.589, 0.591, 0.564, 0.401, 0.547, 0.544, 0.404, 0.345,
+      0.33, 0.276, 0.428, 0.305, 0.243, 0.26, 0.35, 0.347, 0.393, 0.407, 0.411, 0.441, 0.446, 0.442, 0.404,
+      0.41, 0.36, 0.433, 0.374, 0.472, 0.487, 0.493, 0.453, 0.502, 0.371, 0.47, 0.651, 0.65, 0.659, 0.777,
+      0.674, 0.73, 0.948, 0.155, 0.118, 0.112, 0.126, 0.112, 0.132, 0.235, 0.085, 0.087, 0.083, 0.085, 0.064,
+      0.075, 0.056, 0.07, 0.072, 0.07, 0.065, 0.05, 0.049, 0.044, 0.041, 0.04, 0.04, 0.066, 0.023, 0.04,
+      0.024, 0.255, 0.361, 0.488, 0.559, 0.622, 0.659, 0.695, 0.474, 0.417, 0.37, 0.402, 0.35, 0.318, 0.352,
+      0.336, 0.317, 0.308, 0.476, 0.552, 0.689, 0.735, 0.811, 0.846, 0.853, 0.909, 0.888, 0.865, 0.938, 0.92,
+      0.908, 0.921, 0.932, 1, 1, 0.999, 1, 1, 0.996, 0.991, 0.991, 1, 1, 0.996, 0.996, 0.043, 0.047, 0.064,
+      0.063, 0.038, 0.034, 0.039, 0.032, 0.036, 0.039, 0.036, 0.038, 0.038, 0.034, 0.049, 0.045, 0.046, 0.054,
+      0.055, 0.056, 0.057, 0.059, 0.06, 0.061, 0.063, 0.064, 0.068, 0.055, 0.065, 0.067, 0.116, 0.105, 0.101,
+      0.111, 0.08, 0.079, 0.081, 0.068, 0.074, 0.072, 0.097, 0.036, 0.194, 0.287, 0.841, 0.811, 0.622, 0.642,
+      0.538, 0.445, 0.484, 0.473, 0.394, 0.467, 0.494, 0.513, 0.498, 0.613, 0.39, 0.382, 0.791, 0.419, 0.412,
+      0.397, 0.34, 0.299, 0.441, 0.392, 0.485, 0.494, 0.513, 0.522, 0.524, 0.518, 0.479, 0.487, 0.51, 0.551,
+      0.49, 0.363, 0.443, 0.399, 0.397, 0.367, 0.405, 0.362, 0.333, 0.402, 0.445, 0.472, 0.462, 0.433, 0.514,
+      0.461, 0.479, 0.463, 0.468, 0.548, 0.509, 0.493, 0.476, 0.519, 0.498, 0.501, 0.503, 0.459, 0.591, 0.87,
+      0.855, 0.761, 0.805, 0.913, 0.635, 0.498, 0.385, 0.346, 0.492, 0.474, 0.47, 0.673, 0.21, 0.201, 0.204,
+      0.106, 0.108, 0.226, 0.213, 0.241, 0.224, 0.205, 0.239, 0.242, 0.229, 0.234, 0.278, 0.255, 0.244, 0.249,
+      0.259, 0.317, 0.3, 0.289, 0.297, 0.302, 0.323, 0.318, 0.327, 0.314, 0.36, 0.352, 0.378, 0.37, 0.327,
+      0.263, 0.362, 0.379, 0.378, 0.378, 0.378, 0.398, 0.379, 0.377, 0.387, 0.389, 0.389, 0.389, 0.389, 0.056,
+      0.056, 0.049, 0.049, 0.169, 0.309, 0.309, 0.309, 0.308, 0.318, 0.318, 0.318, 0.318, 0.611, 0.696, 0.696,
+      0.716, 0.701, 0.701, 0.771, 0.681, 0.856, 0.609, 0.603, 0.598, 0.597, 0.621, 0.116, 0.353, 0.298, 0.214,
+      0.191, 0.162, 0.352, 0.036, 0.079, 0.064, 0.039, 0.028, 0.043, 0.028, 0.035, 0.038, 0.031, 0.033, 0.052,
+      0.076, 0.097, 0.109, 0.443, 0.461, 0.406, 0.429, 0.43, 0.443, 0.574, 0.635, 0.626, 0.623, 0.585, 0.547,
+      0.607, 0.608, 0.672, 0.618, 0.548, 0.472, 0.436, 0.438, 0.499, 0.51, 0.511, 0.507, 0.503, 0.612, 0.587,
+      0.593, 0.599, 0.607, 0.621, 0.663, 0.664, 0.661, 0.666, 0.664, 0.658, 0.723, 0.681, 0.656, 0.531, 0.695,
+      0.828, 0.783, 0.73, 0.795, 0.879, 0.843, 0.884, 0.848, 0.821, 0.893, 1, 1, 1, 0.982, 0.111, 0.138, 0.14,
+      0.132, 0.135, 0.125, 0.134, 0.111, 0.103, 0.067, 0.054, 0.051, 0.052, 0.041, 0.048, 0.028, 0.039, 0.034,
+      0.033, 0.032, 0.029, 0.026, 0.035, 0.034, 0.029, 0.028, 0.025, 0.026, 0.026, 0.026, 0.024, 0.023, 0.026,
+      0.026, 0.022, 0.021, 0.027, 0.03, 0.036, 0.036, 0.03, 0.03, 0.037, 0.036, 0.207, 0.204, 0.199, 0.2,
+      0.237, 0.193, 0.346, 0.314, 0.481, 0.31, 0.306, 0.294, 0.295, 0.279, 0.279, 0.279, 0.283, 0.267, 0.28,
+      0.276, 0.282, 0.282, 0.292, 0.274, 0.354, 0.348, 0.333, 0.329, 0.338, 0.334, 0.34, 0.334, 0.329, 0.208,
+      0.21, 0.296, 0.277, 0.268, 0.288, 0.264, 0.28, 0.315, 0.3, 0.293, 0.321, 0.321, 0.373, 0.372, 0.413,
+      0.388, 0.405, 0.45, 0.46, 0.448, 0.507, 0.681, 0.726, 1, 0.935, 0.948, 0.777, 0.844, 0.842, 0.798,
+      0.917, 0.823, 0.726, 0.727, 0.699, 0.752, 0.67, 0.68, 0.674, 0.615, 0.609, 0.68, 0.627, 0.629, 0.606,
+      0.602, 0.474, 0.493, 0.476, 0.463, 0.603, 0.539, 0.562, 0.688, 0.673, 0.422, 0.445, 0.465, 0.465, 0.47,
+      0.476, 0.54, 0.555, 0.629, 0.594, 0.6, 0.541, 0.55, 0.558, 0.57, 0.663, 0.648, 0.655, 0.792, 0.724,
+      0.718, 0.908, 0.862, 0.941, 0.906, 0.983, 0.994, 0.946, 0.918, 0.991, 0.996, 1, 1, 0.998, 1, 0.92,
+      0.968, 0.963, 0.983, 0.933, 0.917, 0.941, 0.956, 0.983, 0.103, 0.11, 0.194, 0.197, 0.199, 0.136, 0.126,
+      0.136, 0.15, 0.151, 0.139, 0.139, 0.138, 0.14, 0.147, 0.153, 0.157, 0.162, 0.16, 0.159, 0.139, 0.159,
+      0.147, 0.241, 0.219, 0.226, 0.211, 0.378, 0.37, 0.362, 0.414, 0.382, 0.433, 0.352, 0.347, 0.617, 0.595,
+      0.541, 0.533, 0.456, 0.503, 0.504, 0.51, 0.506, 0.496, 0.508, 0.46, 0.476, 0.49, 0.508, 0.512, 0.528,
+      0.646, 0.59, 0.637, 0.634, 0.63, 0.58, 0.574, 0.608, 0.631, 0.82, 0.865, 0.932, 0.718, 0.688, 0.617,
+      0.99, 0.992, 0.979, 1, 1, 1, 0.958, 0.908, 1, 0.966, 0.969, 0.992, 0.962, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.907, 0.853, 1, 0.783, 1, 0.954, 0.985, 0.755, 0.728, 0.72,
+      0.333, 0.562, 0.625, 0.481, 0.633, 0.603, 0.58, 0.593, 0.432, 0.683, 0.727, 0.659, 0.558, 0.563, 0.57,
+      0.584, 0.647, 0.761, 0.787, 0.796, 0.816, 0.785, 0.83, 0.817, 0.836, 0.873, 0.873, 0.922, 0.987, 0.826,
+      0.868, 0.936, 0.957, 1, 0.992, 0.994, 0.999, 0.086, 0.061, 0.064, 0.068, 0.061, 0.07, 0.071, 0.068,
+      0.066, 0.063, 0.056, 0.048, 0.025, 0.014, 0.209, 0.207, 0.184, 0.042, 0.041, 0.034, 0.001, 0, 0, 0, 0,
+      0, 0
+    ],
+    "level": [
+      4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 3, 3, 3,
+      4, 3, 1, 1, 1, 1, 1, 1, 3, 4, 4, 4, 3, 4, 3, 2, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 4, 4, 3, 4, 4, 3, 5, 4,
+      4, 4, 4, 3, 4, 4, 5, 4, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+      5, 2, 1, 3, 4, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 5, 5, 4, 5, 5, 5, 5, 5, 5, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5,
+      5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 3, 4, 3, 3, 3, 4, 4, 4,
+      3, 3, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4,
+      5, 5, 5, 5, 5, 5, 5, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 2, 1, 1, 2, 2, 4, 4,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 3, 3,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 4, 4, 3,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 1, 4, 4, 4, 4, 4, 4, 4, 5, 4,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 4, 5,
+      4, 3, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2,
+      2, 3, 3, 3, 3, 3, 3, 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2,
+      2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 2, 4, 3, 3, 4, 4, 4, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 3,
+      3, 3, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+      2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4,
+      3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 3, 4, 4, 4, 4, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 3, 4, 4, 3, 4, 4,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2,
+      2, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 2, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 3, 2, 3, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 2, 1, 1, 1, 2, 2, 2, 3, 3, 2, 3,
+      2, 3, 3, 3, 3, 2, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 1, 1, 1, 1, 1, 1, 5, 5,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+    ],
+    "lead7": [
+      0.26, 0.254, 0.215, 0.205, 0.145, 0.115, 0.09, 0.09, 0.045, 0.055, 0.174, 0.163, 0.227, 0.208, 0.229,
+      0.235, 0.27, 0.262, 0.27, 0.276, 0.277, 0.25, 0.23, 0.21, 0.21, 0.219, 0.224, 0.222, 0.224, 0.226,
+      0.196, 0.191, 0.193, 0.224, 0.223, 0.225, 0.227, 0.23, 0.232, 0.235, 0.259, 0.263, 0.269, 0.274, 0.25,
+      0.257, 0.257, 0.266, 0.269, 0.274, 0.3, 0.334, 0.339, 0.431, 0.499, 0.494, 0.5, 0.619, 0.625, 0.631,
+      0.582, 0.426, 0.373, 0.378, 0.274, 0.279, 0.295, 0.69, 0.42, 0.42, 0.395, 0.395, 1, 1, 1, 1, 1, 1, 1,
+      0.96, 0.736, 0.726, 0.795, 0.807, 1, 1, 0.951, 0.931, 0.801, 0.637, 0.72, 1, 0.915, 0.97, 1, 1, 1, 1,
+      0.997, 0.992, 0.689, 0.67, 0.77, 0.461, 0.42, 0.291, 0.266, 0.293, 0.468, 0.261, 0.28, 0.1, 0.16, 0.8,
+      0.737, 0.804, 0.769, 0.877, 0.878, 0.938, 0.999, 1, 1, 1, 0.965, 0.619, 0.636, 0.69, 0.751, 0.874,
+      0.906, 0.907, 0.902, 0.918, 0.885, 0.881, 0.88, 0.882, 0.887, 0.883, 0.883, 0.883, 0.857, 0.884, 0.854,
+      0.851, 0.938, 0.86, 0.869, 0.887, 0.89, 0.89, 0.869, 0.876, 0.879, 0.88, 0.881, 0.93, 0.92, 0.869,
+      0.871, 0.864, 0.901, 0.91, 0.965, 0.906, 0.945, 0.977, 0.998, 0.966, 0.995, 0.981, 1, 0.945, 0.916,
+      0.938, 0.971, 0.974, 0.944, 0.954, 0.956, 0.936, 0.98, 0.784, 0.755, 0.013, 0.014, 0.014, 0.018, 0.016,
+      0.016, 0.022, 0.013, 0.031, 0.035, 0.034, 0.032, 0.017, 0.029, 0.029, 0.029, 0.029, 0.017, 0.016, 0.013,
+      0.009, 0.009, 0.009, 0.009, 0.009, 0.012, 0.011, 0.011, 0.008, 0.01, 0.011, 0.01, 0.009, 0.009, 0.008,
+      0.029, 0.022, 0.011, 0.011, 0.012, 0.011, 0.011, 0.01, 0.012, 0.012, 0.012, 0.02, 0.02, 0.02, 0.018,
+      0.015, 0.004, 0.011, 0.274, 0.111, 0.113, 0.092, 0.111, 0.108, 0.11, 0.079, 0.071, 0.062, 0.064, 0.06,
+      0.062, 0.064, 0.067, 0.07, 0.073, 0.075, 0.079, 0.081, 0.096, 0.085, 0.085, 0.088, 0.086, 0.09, 0.076,
+      0.08, 0.076, 0.076, 0.083, 0.085, 0.077, 0.085, 0.089, 0.092, 0.094, 0.18, 0.158, 0.257, 0.239, 0.114,
+      0.11, 1, 1, 0.805, 0.48, 1, 1, 1, 1, 0.539, 0.607, 0.807, 0.443, 0.462, 0.321, 0.444, 0.291, 0.247,
+      0.312, 0.26, 0.196, 0.194, 0.201, 0.184, 0.185, 0.229, 0.246, 0.169, 0.168, 0.195, 0.216, 0.231, 0.266,
+      0.291, 0.317, 0.342, 0.376, 0.4, 0.425, 0.444, 0.465, 0.5, 0.521, 0.54, 0.558, 0.576, 0.608, 0.569,
+      0.688, 0.691, 0.705, 0.774, 0.762, 0.786, 0.781, 0.783, 0.809, 0.86, 0.953, 0.964, 0.962, 0.962, 0.946,
+      0.943, 0.904, 0.941, 0.969, 0.981, 0.96, 0.918, 0.966, 0.953, 0.954, 0.931, 0.948, 1, 0.985, 0.991,
+      0.994, 1, 0.997, 0.999, 1, 1, 1, 1, 1, 1, 1, 0.986, 0.981, 0.982, 0.971, 0.992, 0.998, 1, 1, 1, 1,
+      0.999, 0.99, 1, 1, 0.991, 0.989, 0.989, 0.998, 1, 1, 1, 0.133, 0.072, 0.064, 0.052, 0.052, 0.053, 0.055,
+      0.055, 0.072, 0.1, 0.174, 0.106, 0.1, 0.079, 0.08, 0.094, 0.086, 0.071, 0.051, 0.049, 0.032, 0.042,
+      0.05, 0.042, 0.129, 0.389, 0.384, 0.384, 0.388, 0.379, 0.255, 0.163, 0.165, 0.167, 0.17, 0.168, 0.175,
+      0.182, 0.17, 0.173, 0.176, 0.178, 0.098, 0.099, 0.095, 0.1, 0.1, 0.1, 0.075, 0.07, 0.07, 0.07, 0.07,
+      0.072, 0.089, 0.112, 0.115, 0.41, 0.145, 0.435, 0.59, 0.34, 0.25, 0.255, 0.21, 0.645, 0.685, 0.875,
+      0.725, 0.84, 0.765, 0.675, 0.123, 0.362, 0.223, 0.164, 0.169, 0.364, 0.248, 0.264, 0.27, 0.248, 0.112,
+      0.079, 0.086, 0.062, 0.074, 0.072, 0.119, 0.112, 0.133, 0.107, 0.105, 0.113, 0.063, 0.057, 0.07, 0.078,
+      0.25, 0.219, 0.134, 0.14, 0.144, 0.132, 0.1, 0.112, 0.104, 1, 1, 0.239, 0.167, 0.179, 0.192, 0.223,
+      0.228, 0.235, 0.242, 0.238, 0.247, 0.293, 0.309, 0.318, 0.328, 0.315, 0.288, 0.219, 0.145, 0.133, 0.135,
+      0.137, 0.139, 0.141, 0.144, 0.145, 0.147, 0.149, 0.153, 0.24, 0.188, 0.181, 0.183, 0.168, 0.172, 0.182,
+      0.208, 0.248, 0.258, 0.27, 0.275, 0.31, 0.35, 0.333, 0.295, 0.246, 0.261, 0.257, 0.354, 0.289, 0.343,
+      0.314, 0.406, 0.373, 0.401, 0.719, 1, 1, 0.892, 0.909, 0.179, 0.315, 0.255, 0.245, 0.24, 0.225, 0.197,
+      0.194, 0.195, 0.285, 0.271, 0.192, 0.242, 0.254, 0.278, 0.267, 0.238, 0.262, 0.255, 0.265, 0.275, 0.278,
+      0.284, 0.296, 0.3, 0.312, 0.327, 0.322, 0.331, 0.337, 0.363, 0.364, 0.363, 0.297, 0.287, 0.293, 0.288,
+      0.293, 0.291, 0.276, 0.23, 0.225, 0.229, 0.232, 0.235, 0.202, 0.177, 0.182, 0.169, 0.132, 0.115, 0.126,
+      0.127, 0.13, 0.135, 0.159, 0.233, 0.232, 0.25, 0.249, 0.534, 0.533, 0.517, 0.527, 0.533, 0.543, 0.553,
+      0.563, 0.573, 0.574, 0.566, 0.572, 0.576, 0.589, 0.599, 0.602, 0.609, 0.615, 0.622, 0.623, 0.619, 0.624,
+      0.628, 0.634, 0.635, 0.637, 0.603, 0.602, 0.6, 0.609, 0.615, 0.62, 0.625, 0.63, 0.635, 0.658, 0.662,
+      0.667, 0.669, 0.716, 0.727, 0.732, 0.703, 0.71, 0.711, 0.717, 0.7, 0.581, 0.394, 1, 0.492, 0.466, 0.38,
+      0.408, 0.448, 0.434, 0.45, 0.491, 0.619, 0.373, 0.332, 0.303, 0.455, 0.48, 0.49, 0.8, 0.775, 0.635,
+      0.685, 0.68, 0.488, 0.484, 0.488, 0.499, 0.437, 0.433, 0.444, 0.458, 0.341, 0.727, 0.66, 0.674, 0.655,
+      0.673, 0.648, 0.664, 0.548, 0.417, 0.421, 0.411, 0.482, 0.461, 0.462, 0.52, 0.439, 0.424, 0.449, 0.421,
+      0.416, 0.399, 0.448, 0.621, 0.572, 0.613, 0.755, 0.695, 0.736, 0.963, 0.233, 0.257, 0.306, 0.401, 0.534,
+      0.53, 0.601, 0.511, 0.537, 0.632, 0.67, 0.689, 0.892, 0.838, 0.827, 0.873, 0.832, 0.894, 0.885, 0.895,
+      0.924, 0.967, 0.867, 0.971, 0.923, 0.945, 0.897, 0.894, 0.897, 0.892, 0.895, 0.91, 0.949, 0.907, 0.905,
+      0.784, 0.792, 0.761, 0.89, 0.832, 0.772, 0.704, 0.733, 0.821, 0.787, 0.795, 0.798, 0.923, 0.85, 0.849,
+      0.881, 0.906, 0.863, 0.861, 0.862, 0.951, 0.916, 0.889, 0.918, 0.938, 1, 1, 0.994, 0.991, 0.995, 1,
+      0.995, 0.995, 1, 1, 0.996, 0.999, 0.139, 0.141, 0.183, 0.173, 0.101, 0.085, 0.096, 0.079, 0.107, 0.091,
+      0.083, 0.085, 0.11, 0.114, 0.109, 0.1, 0.101, 0.114, 0.116, 0.119, 0.123, 0.122, 0.124, 0.128, 0.129,
+      0.141, 0.145, 0.173, 0.156, 0.156, 0.241, 0.229, 0.246, 0.24, 0.162, 0.135, 0.132, 0.118, 0.12, 0.12,
+      0.207, 0.069, 0.408, 0.718, 1, 1, 1, 1, 1, 1, 1, 1, 0.885, 0.805, 0.85, 0.89, 0.85, 0.97, 1, 1, 1, 1, 1,
+      1, 0.746, 0.589, 0.973, 1, 0.969, 0.827, 0.779, 0.788, 0.772, 0.805, 0.78, 0.78, 0.775, 0.826, 0.682,
+      0.595, 0.746, 0.684, 0.716, 0.76, 0.782, 0.778, 0.667, 0.709, 0.729, 0.745, 0.734, 0.71, 0.716, 0.709,
+      0.732, 0.715, 0.855, 0.885, 0.775, 0.664, 0.666, 0.727, 0.711, 0.671, 0.721, 0.687, 0.729, 0.924, 0.962,
+      0.904, 0.874, 0.937, 0.886, 0.681, 0.733, 0.658, 0.901, 0.788, 0.831, 0.897, 0.392, 0.378, 0.383, 0.189,
+      0.19, 0.41, 0.39, 0.43, 0.39, 0.36, 0.41, 0.405, 0.38, 0.38, 0.44, 0.4, 0.385, 0.385, 0.39, 0.46, 0.43,
+      0.41, 0.41, 0.41, 0.425, 0.41, 0.41, 0.385, 0.43, 0.41, 0.43, 0.41, 0.355, 0.275, 0.37, 0.375, 0.37,
+      0.37, 0.37, 0.39, 0.37, 0.37, 1, 1, 1, 1, 1, 0.735, 0.51, 0.574, 0.553, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.341, 1, 0.8, 0.692, 0.589, 0.457, 0.638, 0.579, 0.553, 0.59,
+      0.871, 0.746, 0.74, 0.792, 0.793, 0.742, 0.739, 0.738, 0.691, 0.692, 0.776, 0.725, 0.961, 0.709, 0.731,
+      0.733, 0.745, 0.742, 0.86, 0.9, 0.891, 0.847, 0.833, 0.809, 0.816, 0.822, 0.855, 0.844, 0.822, 0.751,
+      0.706, 0.708, 0.755, 0.765, 0.755, 0.735, 0.73, 0.835, 0.805, 0.805, 0.8, 0.8, 0.805, 0.84, 0.835,
+      0.825, 0.82, 0.81, 0.79, 0.845, 0.8, 0.765, 0.798, 0.791, 0.885, 0.906, 0.9, 0.878, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 0.149, 0.204, 0.168, 0.158, 0.195, 0.163, 0.169, 0.149, 0.141, 0.072, 0.057, 0.058, 0.058,
+      0.106, 0.082, 0.074, 0.076, 0.077, 0.107, 0.059, 0.05, 0.048, 0.125, 0.097, 0.092, 0.047, 0.047, 0.051,
+      0.051, 0.051, 0.068, 0.044, 0.042, 0.041, 0.042, 0.041, 0.046, 0.046, 0.049, 0.049, 0.042, 0.042, 0.057,
+      0.039, 0.215, 0.212, 0.214, 0.217, 0.201, 0.164, 0.334, 0.257, 0.295, 0.258, 0.26, 0.266, 0.254, 0.181,
+      0.182, 0.187, 0.186, 0.17, 0.172, 0.167, 0.252, 0.24, 0.248, 0.201, 0.268, 0.251, 0.231, 0.251, 0.259,
+      0.274, 0.28, 0.248, 0.247, 0.229, 0.232, 0.274, 0.241, 0.24, 0.288, 0.246, 0.236, 0.234, 0.237, 0.24,
+      0.355, 0.35, 0.368, 0.35, 0.368, 0.373, 0.373, 0.465, 0.47, 0.476, 0.487, 0.955, 1, 1, 1, 1, 1, 1, 1,
+      0.965, 1, 0.985, 0.771, 0.781, 0.762, 0.863, 0.743, 0.924, 0.968, 0.902, 1, 1, 1, 1, 1, 1, 0.859, 0.874,
+      0.783, 0.823, 1, 0.992, 0.657, 0.893, 1, 0.924, 0.948, 0.928, 0.948, 1, 1, 1, 1, 1, 0.962, 0.77, 0.967,
+      0.92, 0.873, 0.788, 0.769, 0.752, 0.79, 0.934, 0.96, 1, 1, 0.981, 1, 0.902, 0.993, 0.997, 1, 0.92,
+      0.996, 1, 1, 1, 0.991, 1, 0.944, 0.984, 0.948, 0.983, 0.964, 0.941, 0.969, 0.981, 0.999, 0.201, 0.216,
+      0.218, 0.85, 0.785, 0.83, 0.795, 0.575, 0.506, 0.403, 0.587, 1, 0.472, 0.674, 0.911, 1, 1, 0.722, 0.686,
+      0.991, 0.796, 0.617, 0.83, 0.762, 0.778, 0.974, 0.881, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.967, 0.839,
+      0.828, 0.736, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.925, 0.93, 0.875, 0.844, 0.871, 1, 0.877, 0.863, 0.786,
+      0.805, 0.765, 0.793, 0.759, 0.809, 0.835, 0.841, 0.805, 0.817, 0.84, 1, 0.853, 0.945, 0.945, 0.925, 1,
+      0.943, 0.953, 0.977, 0.063, 0.056, 0.059, 0.063, 0.056, 0.06, 0.056, 0.053, 0.052, 0.049, 0.042, 0.034,
+      0.026, 0.015, 0.2, 0.2, 0.175, 0.035, 0.035, 0.029, 0.001, 0, 0, 0, 0, 0, 0
+    ]
+  }
+}

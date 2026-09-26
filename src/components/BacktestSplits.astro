@@ -1,0 +1,95 @@
+---
+import { primaryLead, type Backtest, type CrossingRow, type Split } from '../../scripts/backtest/build';
+import { pct, signedHours } from '../../scripts/backtest/view';
+
+interface Props {
+  splits: Backtest['markets']['splits'];
+  claim: Backtest['markets']['sevenDayClaim'];
+  crossings: readonly CrossingRow[];
+}
+const { splits, claim, crossings } = Astro.props;
+const early90 = crossings.filter((c) => (primaryLead(c, 0.9) ?? 0) > 0);
+const unprompted = early90.filter((c) => c.precursor === 'none');
+const ladder = claim.perLadder.ahead;
+const PRECURSOR: Record<string, string> = {
+  announced: 'Pre-announced by the lab',
+  leak: 'Leaked or reported',
+  none: 'No HN precursor',
+};
+const groups: { title: string; rows: readonly Split[]; name: (g: string) => string }[] = [
+  { title: 'By what was public beforehand', rows: splits.byPrecursor, name: (g) => PRECURSOR[g] ?? g },
+  { title: 'By lab', rows: splits.byLab, name: (g) => g },
+];
+const tally = (t: { resolvedYes: number; fired: number }) => `${t.resolvedYes} / ${t.fired} (${pct(t.resolvedYes / Math.max(t.fired, 1))})`;
+---
+{groups.map((g) => (
+  <>
+    <h3 class="tiny sub">{g.title}</h3>
+    <div class="table-scroll" tabindex="0" role="region" aria-label={`${g.title} table`}>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Group</th>
+            <th scope="col" class="num">Launches with a dated market</th>
+            <th scope="col" class="num">Held 0.5 before</th>
+            <th scope="col" class="num">Held 0.9 before</th>
+            <th scope="col" class="num">Median 0.5 lead</th>
+            <th scope="col" class="num">Undated only</th>
+          </tr>
+        </thead>
+        <tbody>
+          {g.rows.map((r) => (
+            <tr>
+              <th scope="row">{g.name(r.group)}</th>
+              <td class="num">{r.events}</td>
+              <td class="num">{r.ahead50}</td>
+              <td class="num">{r.ahead90}</td>
+              <td class="num">{signedHours(r.medianLead50H)}</td>
+              <td class="num">{r.undated}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </>
+))}
+<p class="muted note">
+  "Undated only" launches were priced only on rungs due weeks after they shipped, which say the launch is coming but not when. Of the {early90.length} launches whose market held 0.9 before the announcement, {early90.length - unprompted.length} followed a leak, a press report or the lab's own pre-announcement{unprompted.length ? ` (the exception: ${unprompted.map((c) => c.model).join(', ')}, launched at a scheduled keynote or with no public trail)` : ''}. The markets aggregate that news rather than foresee it.
+</p>
+
+<h3 class="tiny sub" id="seven-day">The "above 50% is usually real" claim</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Above-50% claim table">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Reading</th>
+        <th scope="col" class="num">With a day or more to spare</th>
+        <th scope="col" class="num">Inside the last day</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Research note (script not kept)</th>
+        <td class="num">{tally(claim.claim.ahead)}</td>
+        <td class="num">{tally(claim.claim.near)}</td>
+      </tr>
+      <tr>
+        <th scope="row">First rung to fire per ladder</th>
+        <td class="num">{tally(claim.perLadder.ahead)}</td>
+        <td class="num">{tally(claim.perLadder.near)}</td>
+      </tr>
+      <tr>
+        <th scope="row">Every rung that fired</th>
+        <td class="num">{tally(claim.perRung.ahead)}</td>
+        <td class="num">{tally(claim.perRung.near)}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  A rung "fires" when a frontier lab's "released by" rung trades above 0.5 within 7 days of its deadline, before the model launched; it counts as real when the rung resolved Yes. Counting the first rung per ladder ({claim.ladders} ladders, {claim.rungs} rungs) gives {ladder.resolvedYes} of {ladder.fired}, close to the research note's {claim.claim.ahead.resolvedYes} of {claim.claim.ahead.fired}. Counting every rung inflates the rate, because neighbouring rungs of one ladder move together. The note's {claim.claim.near.resolvedYes} of {claim.claim.near.fired} near launch does not reproduce under either count, and its script was not kept. On the per-ladder count, a reading above 50% with a day to spare was right {pct(ladder.rate)} of the time.
+</p>
+<style>
+  .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+  .sub { color: var(--muted); margin: 18px 0 8px; }
+</style>

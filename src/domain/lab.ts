@@ -1,3 +1,5 @@
+import type { Market } from './market';
+
 /**
  * The labs we watch: the "pizza shops" of whenmodel. Pure registry, no I/O.
  */
@@ -93,7 +95,7 @@ export const LABS: readonly Lab[] = [
     titlePattern: /\bdeepseek\b/i,
     polymarketCompany: 'DeepSeek',
     xHandles: ['deepseek_ai'],
-    color: '#4b59ff',
+    color: '#7480ff',
     glyph: '◈',
   },
   {
@@ -104,7 +106,7 @@ export const LABS: readonly Lab[] = [
     titlePattern: /\b(qwen|alibaba)\b/i,
     polymarketCompany: 'Alibaba',
     xHandles: ['Alibaba_Qwen', 'JustinLin610'],
-    color: '#c400ff',
+    color: '#d24bff',
     glyph: '❖',
   },
   {
@@ -112,7 +114,7 @@ export const LABS: readonly Lab[] = [
     name: 'Meta',
     short: 'MTA',
     openRouterPrefixes: ['meta-llama', 'meta'],
-    titlePattern: /\b(meta|llama)\b/i,
+    titlePattern: /\b(meta|llama|muse)\b/i,
     polymarketCompany: 'Meta',
     xHandles: ['AIatMeta'],
     color: '#00a3ff',
@@ -164,6 +166,25 @@ export function labForTitle(title: string): Lab | undefined {
 
 export function labById(id: string | undefined): Lab | undefined {
   return id ? LABS.find((lab) => lab.id === id) : undefined;
+}
+
+/** Labs with release markets we deliberately leave off the board: SSI and Microsoft's MAI. */
+const UNTRACKED_RELEASES = /\b(ssi|mai)\b/i;
+
+/**
+ * Open release markets that no lab's titlePattern claims. A registry gap hides a lab's best odds
+ * (Muse Spark sat here at 85% while the Meta card read 4%), so this is a diagnostic worth logging.
+ */
+export function unmappedReleaseMarkets<M extends Pick<Market, 'kind' | 'labId' | 'title' | 'outcomes'>>(
+  markets: readonly M[],
+): M[] {
+  return markets.filter(
+    (m) =>
+      m.kind === 'release' &&
+      !m.labId &&
+      !UNTRACKED_RELEASES.test(m.title) &&
+      m.outcomes.some((o) => !o.closed),
+  );
 }
 
 /** Rumour-mill accounts worth a click. X has no free read API, so these are links, not a feed. */

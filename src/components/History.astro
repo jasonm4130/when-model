@@ -1,18 +1,27 @@
 ---
-const eras = [
-  { when: 'MAY 2024', title: '"her"', body: 'One word from Sam Altman the night before GPT-4o. The vague-post became the genre. Ever since, a lowercase tweet with no punctuation has moved more evals than a press release.' },
-  { when: 'AUG 2024', title: 'STRAWBERRY SEASON', body: 'A photo of strawberries, a "Q*" rumour cycle, and weeks of 🍓 replies. o1 shipped in September. The lesson: fruit is a leading indicator with a lag of 3 to 6 weeks.' },
-  { when: '2025', title: 'THE ARENA STEALTH ERA', body: 'Anonymous checkpoints with codenames appeared on LMArena days before launches: "nano-banana", "gemini-test", assorted mystery models. If a model is fighting under a fake name, somebody is about to ship.' },
-  { when: '2025', title: 'THE CHANGELOG LEAK', body: 'Model IDs land in SDK release notes, config strings and API error messages before the blog post goes up. GitHub release feeds became the new pizza delivery van.' },
-  { when: '2025–26', title: 'MARKETS PRICE THE DROP', body: 'Polymarket started listing "released by" markets per lab. Traders now aggregate every rumour into one number. When the 7-day odds cross 50%, the drop is usually real.' },
-  { when: 'NOW', title: 'WHENMODEL', body: 'Release markets, OpenRouter listings, Hugging Face trending, Hacker News, lab blogs and SDK changelogs on one screen. DROPCON does the reading for you.' },
+import type { Backtest } from '../../scripts/backtest/build';
+import marketsJson from '../../data/backtest/markets.json';
+import { WEIGHTS } from '../domain/dropcon';
+import { leadInputSkillText } from '../domain/forecast';
+import { TRUSTED_BRACKET_DAYS } from '../domain/market';
+
+/** Measured in `pnpm backtest`: first "released by" rung per ladder above 0.5 with a day or more to spare. */
+const ladder = (marketsJson as unknown as Backtest['markets']).sevenDayClaim.perLadder.ahead;
+const eras: { when: string; title: string; body: string; link?: { href: string; label: string } }[] = [
+  { when: 'MAY 2024', title: '"her"', body: 'One word from Sam Altman, posted 17 minutes after the GPT-4o announcement hit Hacker News, not the night before as this page once said. The vague-post became the genre anyway. Ever since, a lowercase tweet with no punctuation has moved more evals than a press release.', link: { href: '/backtest#trap-her', label: 'Check the timestamps' } },
+  { when: 'AUG 2024', title: 'STRAWBERRY SEASON', body: 'A photo of strawberries, a "Q*" rumour cycle, and weeks of 🍓 replies. o1 shipped in September. One photo and one launch make an anecdote, not a lead time.' },
+  { when: '2025', title: 'THE ARENA STEALTH ERA', body: 'Anonymous checkpoints with codenames turned up on LMArena around launches: "nano-banana", "gemini-test", assorted mystery models. Not measured here: the one arena registry this site could check, Design Arena, purged its codenames in June 2026 and has listed each one only after launch since.', link: { href: '/backtest#negative-results', label: 'What didn\'t lead' } },
+  { when: '2025', title: 'THE CHANGELOG LEAK', body: 'Model IDs turn up in SDK release notes, config strings and API error messages. Measured against the announcement, SDK releases land with it or after it: 5 of 7 lagged, and the best, Opus 5.5, beat the post by two minutes. GitHub release feeds were supposed to be the new pizza delivery van. They turn up once the party has started.', link: { href: '/backtest#negative-results', label: 'What didn\'t lead' } },
+  { when: '2025–26', title: 'MARKETS PRICE THE DROP', body: `Polymarket started listing "released by" markets per lab. Traders now aggregate every rumour into one number. When a lab's odds crossed 50% with a day to spare, the model shipped on time ${ladder.resolvedYes} of ${ladder.fired} times.`, link: { href: '/backtest#seven-day', label: 'The backtest' } },
+  { when: 'NOW', title: 'WHENMODEL', body: 'Release markets, OpenRouter listings, Hugging Face trending, Hacker News, lab blogs and SDK changelogs on one screen. DROPCON reads the markets; the rest is shown, not scored.' },
 ];
-const faq = [
-  { q: 'What is whenmodel?', a: 'A dashboard that fuses free public signals about frontier AI model releases: prediction market odds, model registry listings, lab blogs, SDK changelogs and Hacker News chatter, condensed into one readiness level (DROPCON).' },
-  { q: 'How is DROPCON computed?', a: 'Mostly from Polymarket release odds: the best "ships within 7 days" probability across labs carries the most weight, then 30-day odds, then how many frontier-lab models landed on OpenRouter this week, then Hacker News heat and release-shaped headlines. 5 is quiet, 1 is a release surge. Recent launches contribute to the score; it is not a calibrated prediction. Only cumulative released-by markets contribute odds.' },
-  { q: 'Where does the data come from?', a: 'Polymarket (gamma API), OpenRouter (models API), Hugging Face (trending models and daily papers), Hacker News (Algolia search), the OpenAI and DeepMind RSS feeds, the Anthropic newsroom and GitHub SDK releases. All free, all public, all fetched at the edge.' },
+const faq: { q: string; a: string; link?: { href: string; label: string } }[] = [
+  { q: 'What is whenmodel?', a: 'A dashboard of free public signals about frontier AI model releases. Its headline level, DROPCON, reads Polymarket release odds only. Model registry listings, lab blogs, SDK changelogs, Hacker News, stealth slots and leaks are shown beside it with their track records and never move it.' },
+  { q: 'How is DROPCON computed?', a: `From Polymarket release odds alone. For each frontier lab it reads the "released by" curves of its named text-model families: ${WEIGHTS.market7d} × the best 7-day probability, plus ${WEIGHTS.market30dIncrement} × whatever the best 30-day probability adds, plus up to ${WEIGHTS.repricing} when the 7-day odds jumped in the last 24 hours. 5 is quiet, 1 is a release surge. Reads extrapolated to a rung more than ${TRUSTED_BRACKET_DAYS} days out are shown but never scored. It is a lead score, not a probability: a fitted 72-hour probability was tested and did not beat the base rate out of sample. The weights are hand-set and the level itself has never been tested. In the same replay, the best 7-day read across labs, the input behind ${WEIGHTS.market7d} of the 100 points, scored worse than the base rate at 7 days (Brier skill ${leadInputSkillText()}). Early warnings and launches that already landed are listed with their track record and never move the level.`, link: { href: '/backtest', label: 'What was tested, and what was not' } },
+  { q: 'Where does the data come from?', a: 'Polymarket (gamma API), OpenRouter (models API), Hugging Face (trending models and daily papers), Hacker News (Algolia search, including a leak search), TestingCatalog, the labs\' YouTube channels, the transformers model registry, the OpenAI and DeepMind RSS feeds, the Anthropic newsroom, xAI\'s release notes and GitHub SDK releases. All free, all public, all fetched at the edge.' },
+  { q: "What can't it do?", a: 'Mostly, see a launch coming. Registry listings, feeds and Hacker News confirm a launch as it happens; the markets that reached 90% early had mostly followed a public leak or notice; and DROPCON is a lead score, not a probability. The backtest measures the signals against real launches; it does not score the level.', link: { href: '/backtest', label: 'Read the backtest' } },
   { q: 'Why no X / Twitter feed?', a: 'There is no free read API any more, and every mirror worth using has been shut down. We link the accounts that leak first instead. If that changes, the feed slots straight in.' },
-  { q: 'How often does it refresh?', a: 'Each source is cached at the Cloudflare edge for 5 to 30 minutes depending on how fast it moves. The page reloads itself every 5 minutes while open.' },
+  { q: 'How often does it refresh?', a: "Each source is cached at the Cloudflare edge for 5 to 30 minutes depending on how fast it moves. The open page checks for new data every 5 minutes and offers a one-click reload; it only reloads itself automatically once you've been idle for a minute with nothing expanded." },
   { q: 'Is this financial advice?', a: 'No. Odds are what traders think, not what labs have decided. Model release dates slip. Do not bet the GPU budget on a DROPCON reading.' },
 ];
 ---
@@ -26,6 +35,7 @@ const faq = [
         <div class="tiny glow-c">{e.when}</div>
         <h3 class="era-title">{e.title}</h3>
         <p>{e.body}</p>
+        {e.link && <a class="era-link tiny" href={e.link.href}>{e.link.label} &#9656;</a>}
       </article>
     ))}
   </div>
@@ -39,15 +49,20 @@ const faq = [
     {faq.map((f) => (
       <details class="panel">
         <summary><span class="glow-y">Q</span> <span class="head q">{f.q}</span></summary>
-        <p>{f.a}</p>
+        <p>{f.a}{f.link && <> <a href={f.link.href}>{f.link.label}</a>.</>}</p>
       </details>
     ))}
   </div>
 </section>
 <style>
   .timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
+  /* Six eras: three columns from 900px, so no width leaves a row of four with two empty cells. */
+  @media (min-width: 900px) {
+    .timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   .era-title { font-size: 11px; color: var(--yellow); margin: 8px 0; }
   .era p { color: var(--text); font-size: 19px; }
+  .era-link { display: inline-block; margin-top: 8px; }
   .faq { display: grid; gap: 10px; }
   .faq .q { font-size: 10px; color: #fff; margin-left: 6px; }
   .faq p { margin: 10px 0 0; color: var(--text); font-size: 20px; }

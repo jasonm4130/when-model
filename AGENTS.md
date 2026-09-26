@@ -4,27 +4,58 @@
 
 Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 
-- `src/domain` — pure types and rules: lab registry, market/drop/feed models, DROPCON scoring,
-  lab heat, and `assembleDashboard(inputs, now)`. No fetch, no `Date.now()`, fully unit-tested.
-- `src/adapters` — one module per upstream (Polymarket, OpenRouter, Hugging Face, Hacker News,
-  RSS, Anthropic newsroom, GitHub releases). Each exposes a pure `toX(dto)` mapper and a
+- `src/domain` — pure types and rules: lab registry, market curves and trusted reads, drop/feed
+  models, DROPCON v3 scoring, the forecast, lab heat, early warnings, landed, the first-seen
+  ledger's read side, and `assembleDashboard(inputs, now)`. No fetch, no `Date.now()`, fully
+  unit-tested. `lead.ts` holds only pure rules; its fetchers live in the adapters.
+- `src/adapters` — one module per upstream (Polymarket, OpenRouter, Hugging Face, Hacker News with
+  its week-long launch search and its leak search, TestingCatalog, lab YouTube feeds, the `transformers` registry, RSS, Anthropic
+  newsroom, xAI release notes, GitHub releases). Each exposes a pure `toX(dto)` mapper and a
   `fetchX()` that goes through the edge cache.
 - `src/infra` — `edge-cache.ts` (Workers Cache API wrapper), `source-result.ts` (`collect`:
-  timeout + degrade-to-fallback), `text.ts` (safe parsing helpers).
-- `src/app/load-dashboard.ts` — fans out to every adapter and memoises the assembled dashboard.
-- `src/ui` + `src/components` — formatting and Astro markup. Browser code is limited to the clock,
-  refresh countdown, relative timestamps, ticker behavior and the 5-minute reload.
+  timeout + degrade-to-fallback + timing), `snapshot-store.ts` (D1 snapshots, `score_series`,
+  `first_seen`), `bindings.ts` (`HISTORY_DB`), `text.ts` (safe parsing helpers).
+- `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
+  the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
+  shared by `/api/history.json` and the page's history strip; `loadHistoryForPage` adds the
+  page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
+  snapshot, score rollup and first-seen writes.
+- `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
+  early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
+  source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
+  source pills aging to STALE, ticker behavior and the 5-minute poll-and-offer reload.
 
 Rules of the house:
 
 - Run the real Worker locally with `pnpm build && pnpm exec wrangler dev`; `pnpm dev` is fine
   for markup but the Cache API code paths only execute under wrangler.
-- Every upstream call goes through `cachedText`/`cachedJson`. Buffer bodies; never stream a
+- Every upstream call goes through `cachedText`/`cachedJson` (or `cachedTextOrStale`, which
+  keeps a last good copy under its own cache key). Buffer bodies; never stream a
   `Response.clone()` into the cache (it truncated in production).
-- A source must degrade to empty data, never throw out of `buildDashboard`. Wrap it in
-  `collect()`; the health list is derived from the results automatically.
+- A source must degrade to empty data, never throw out of `buildDashboard`. Name it once in
+  `src/domain/sources.ts` and wrap it in `collect()`; the health list is derived from the results
+  automatically. The first-seen ledger records a source's sightings only when its result is `ok`,
+  so a partial poll must report not ok. A YouTube channel read from its last good copy (at most
+  a day old) counts as complete; one with neither a fresh feed nor that copy does not. YouTube is
+  in `BEST_EFFORT_SOURCES`: the health list shows its outages, the header status ignores them.
+- DROPCON scores Polymarket odds only. A new signal goes into early warnings with a track record
+  until `pnpm backtest:replay` shows it adds out-of-sample skill. Any scoring change bumps
+  `DROPCON_ALGORITHM_VERSION`: history breaks its series at a version change and the repricing
+  term reads only same-version rows.
+- What the markets, drops and feed panels show comes from `src/ui/panels.ts`, and the refresh fingerprint
+  (`src/ui/fingerprint.ts`) reads the same selections. A panel that starts printing a new field adds it to
+  `visibleContent` at its displayed precision; never hash raw floats or anything that moves with the clock,
+  or every poll offers NEW DATA. A panel's status pill comes from `sourcePill`, never a literal "LIVE".
+- A number on `/backtest` comes from `data/backtest/*.json` or a domain constant, never typed
+  into markup, and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
+  only through `pnpm backtest` or `pnpm backtest:replay`.
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
-  deploy by up to its TTL and a new render reading an old shape streams a blank page.
+  deploy by up to its TTL and a new render reading an old shape streams a blank page. The
+  compact D1 snapshot must stay under 32 KiB (`MAX_SNAPSHOT_BYTES`); the worst-case test in
+  `test/infra/snapshot-store.test.ts` enforces it, so clip new strings and lists there.
+- D1 migrations in `migrations/` apply to the remote `whenmodel-history` before the code that
+  needs them merges (command under the README's Point-in-time review). Never edit a migration that has run
+  remotely.
 - Shared CSS (tokens, panels, metrics, rows, motion) lives in `src/styles/global.css`;
   component `<style>` blocks hold presentation specific to that component. Every animation is
   gated by `prefers-reduced-motion`.
@@ -39,4 +70,12 @@ Rules of the house:
   Lint and format: `pnpm lint` (oxlint + oxfmt --check), `pnpm format` (oxfmt).
   Before delivery, run `pnpm validate` (lint, types, coverage and build).
   For UI changes, run `pnpm test:e2e` against the built Worker for desktop, narrow mobile,
-  keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`.
+  keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`. Set `E2E_PORT` when another
+  checkout's Worker already holds 8787; locally Playwright reuses whatever server answers on the port.
+  Restart a running `wrangler dev` after `pnpm build`: its reload can keep serving the old server
+  bundle (seen as HTML linking an `/_astro/*.css` that 404s), and the tests then pass or fail on old code.
+  A browser test for a state today's data may not show (a failed source, an extrapolated read, a
+  filled history strip) writes that state into the page with the component's `data-astro-cid-*`
+  attribute, as `test/browser/robustness.spec.ts` does, so it does not depend on the day's data.
+- Month names come from `src/domain/dates.ts` ("SEP", never ICU's en-GB "Sept"); do not format
+  months with `toLocaleDateString`.

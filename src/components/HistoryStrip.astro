@@ -1,0 +1,140 @@
+---
+import type { HistoryResponseBody } from '../app/load-dashboard';
+import type { Dashboard } from '../domain/dashboard';
+import { LEVEL_BANDS } from '../domain/dropcon';
+import {
+  HISTORY_WINDOW_MS,
+  HYSTERESIS_CLEAR_MARGIN,
+  HYSTERESIS_HOLD_SLOTS,
+  STRIP_WIDTH,
+  historyStrip,
+  stripDay,
+  stripSpanText,
+} from '../domain/history';
+interface Props {
+  d: Dashboard;
+  /** Absent or not ok: the strip renders its unavailable state and the page carries on. */
+  history?: HistoryResponseBody;
+  /** The render time; the strip's right edge. */
+  now?: number;
+}
+const { d, history, now = Date.now() } = Astro.props;
+const strip = historyStrip(history?.points ?? [], {
+  ok: history?.ok ?? false,
+  now,
+  currentVersion: d.measurement.algorithmVersion,
+});
+const v = strip.currentVersion;
+const current = strip.versions.find((s) => s.current);
+const pct = (x: number) => `${(x / STRIP_WIDTH) * 100}%`;
+// Band edges, top to bottom, and the level each band holds: 100–75 is 1, …, 15–0 is 5.
+const edges = [100, ...LEVEL_BANDS, 0];
+const bands = edges.slice(0, -1).map((top, i) => ({ level: i + 1, top, bottom: edges[i + 1] }));
+// Where the current version's history starts on the strip: its first reading, or the right edge.
+const lastOld = strip.versions.filter((s) => !s.current).at(-1);
+const startX = current ? current.x : lastOld ? lastOld.x + lastOld.w : STRIP_WIDTH;
+const startLabel = `v${v} history starts ${stripDay(strip.currentSince)}`;
+const showStart = strip.state === 'ok' && (!current || current.w < STRIP_WIDTH * 0.35);
+const pill =
+  strip.state === 'unavailable'
+    ? { text: 'OFFLINE', tone: 'err' }
+    : strip.state === 'empty'
+      ? { text: 'NO READINGS YET', tone: 'warn' }
+      : // A description, not a source status: the page's LIVE pills are the sources'.
+        { text: `HOURLY · ${stripSpanText(strip, HISTORY_WINDOW_MS)}`, tone: undefined };
+const nowValue = d.dropcon.state === 'ok' ? `${d.dropcon.score}` : d.dropcon.state === 'floor' ? 'FLOOR' : '?';
+---
+<div class="panel hpanel">
+  <div class="panel-head">
+    <h2><span aria-hidden="true">▤</span>DROPCON HISTORY</h2>
+    <span class:list={['pill', pill.tone]}>{pill.text}</span>
+  </div>
+  <div class="hstrip" role="img" aria-label={strip.summary} data-state={strip.state}>
+    <div class="hplot">
+      <svg viewBox={`0 0 ${STRIP_WIDTH} 100`} preserveAspectRatio="none" focusable="false">
+        {bands.map((b) => <rect class={`hband l${b.level}`} x="0" y={100 - b.top} width={STRIP_WIDTH} height={b.top - b.bottom} />)}
+        {LEVEL_BANDS.map((edge) => <line class="hguide" x1="0" x2={STRIP_WIDTH} y1={100 - edge} y2={100 - edge} />)}
+        {strip.runs.map((r) => (
+          <path class={`hrun ${r.degraded ? 'out' : r.current ? `l${r.level}` : 'old'}`} d={r.area}><title>{r.title}</title></path>
+        ))}
+        {strip.runs.filter((r) => r.edge).map((r) => (
+          <path class={`hedge ${r.current ? `l${r.level}` : 'old'}`} d={r.edge} />
+        ))}
+        {strip.breaks.map((b) => <line class="hbreak" x1={b.x} x2={b.x} y1="0" y2="100" />)}
+        {showStart && !current && <line class="hbreak" x1={startX} x2={startX} y1="0" y2="100" />}
+      </svg>
+      <div class="hlevels" aria-hidden="true">
+        {bands.map((b) => <span class={`l${b.level}`} style={`top:${100 - b.top}%; height:${b.top - b.bottom}%`}>{b.level}</span>)}
+      </div>
+      {/* An old version's label is never wider than its segment: parts that don't fit wrap onto a
+          hidden second line, so a narrow segment reads "v2", or nothing, instead of running under "v3". */}
+      {strip.versions.filter((s) => !s.current).map((s) => (
+        <span class="hver old" style={`left:${pct(s.x)}; max-width:calc(${pct(s.w)} - 6px)`} aria-hidden="true"><i></i><span>v{s.algorithmVersion}</span><span> · OLD SCORING</span></span>
+      ))}
+      {current && !showStart && <span class="hver" style={`left:${pct(current.x)}`} aria-hidden="true">v{v}</span>}
+      {showStart && (
+        <span class={`hver start ${startX > STRIP_WIDTH * 0.6 ? 'end' : ''}`} style={`left:${pct(startX)}`} aria-hidden="true">{startLabel}</span>
+      )}
+      {strip.state !== 'ok' && (
+        <div class="hempty" aria-hidden="true">
+          <b class="head">{strip.state === 'empty' ? 'NO READINGS YET' : 'HISTORY OFFLINE'}</b>
+          <span>{strip.state === 'empty'
+            ? `${startLabel}: the 15-minute capture writes the first point.`
+            : 'The score series could not be read. The level shown is live.'}</span>
+        </div>
+      )}
+    </div>
+    <div class="haxis" aria-hidden="true"><span>{strip.state === 'ok' ? stripDay(strip.from) : ''}</span><span>NOW</span></div>
+  </div>
+  <dl class="hstats">
+    <div><dt class="metric-label">NOW</dt><dd class="metric-value">{nowValue}{d.dropcon.state === 'ok' && <small> L{d.dropcon.level}</small>}</dd></div>
+    <div><dt class="metric-label">24H AGO</dt><dd class="metric-value">{strip.dayAgo ? <>{strip.dayAgo.score}<small> L{strip.dayAgo.displayLevel}</small></> : <span class="muted">—</span>}</dd></div>
+    <div><dt class="metric-label">v{v} RANGE</dt><dd class="metric-value">{current?.min !== undefined ? (current.min === current.max ? `${current.min}` : `${current.min}–${current.max}`) : <span class="muted">—</span>}</dd></div>
+    <div><dt class="metric-label">v{v} SINCE</dt><dd class="metric-value">{strip.state === 'unavailable' ? <span class="muted">—</span> : stripDay(strip.currentSince)}</dd></div>
+  </dl>
+  <p class="hlegend muted">Bar height is the lead score; colour is its level after hysteresis (a change shows once it holds {HYSTERESIS_HOLD_SLOTS} captures or clears a band by {HYSTERESIS_CLEAR_MARGIN}). Older versions are grey: their scores aren't comparable. <a href="/api/history.json">Raw series (JSON)</a></p>
+</div>
+<style>
+  .hpanel { display: flex; flex-direction: column; }
+  .hstrip { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 170px; }
+  .hplot { position: relative; flex: 1 1 auto; min-height: 140px; margin-left: 22px; border-left: 1px solid var(--line2); border-bottom: 1px solid var(--line2); }
+  .hplot svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
+  .hband { fill: var(--lc); opacity: 0.05; }
+  .hguide { stroke: var(--line2); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+  .hrun { fill: var(--lc); opacity: 0.55; shape-rendering: crispEdges; }
+  .hrun.old { fill: var(--muted); opacity: 0.22; }
+  .hrun.out { fill: var(--muted); opacity: 0.12; }
+  .hedge { fill: none; stroke: var(--lc); stroke-width: 2; stroke-linejoin: round; stroke-linecap: butt; vector-effect: non-scaling-stroke; }
+  .hedge.old { stroke: var(--muted); opacity: 0.55; }
+  .hbreak { stroke: #fff; stroke-width: 1; stroke-dasharray: 4 3; opacity: 0.7; vector-effect: non-scaling-stroke; }
+  /* A level class sets only its colour. It used to set fill too, which filled every open edge line
+     with a chord from its first point to its last: solid wedges that were not in the data. */
+  .l1 { --lc: var(--red); }
+  .l2 { --lc: var(--orange); }
+  .l3 { --lc: var(--yellow); }
+  .l4 { --lc: var(--cyan); }
+  .l5 { --lc: var(--green); }
+  .hlevels { position: absolute; inset: 0 auto 0 -22px; width: 18px; pointer-events: none; }
+  .hlevels span { position: absolute; left: 0; width: 18px; display: grid; place-items: center; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--lc); }
+  /* Labels sit on a dark chip so they keep AA contrast over any fill beneath them. */
+  .hver { position: absolute; top: 4px; margin-left: 6px; padding: 2px 4px; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: #fff; white-space: nowrap; pointer-events: none; background: rgba(7, 6, 15, 0.88); }
+  .hver.old { display: flex; flex-wrap: wrap; height: calc(var(--fs-tiny) + 4px); overflow: hidden; padding: 0; background: none; color: var(--muted); line-height: 1; }
+  /* A full-height, zero-width first item: a part that doesn't fit wraps below it, out of view,
+     instead of starting a line of its own at the top and showing a clipped "v". */
+  .hver.old > i { width: 0; height: 100%; }
+  .hver.old > span { padding: 2px 0 2px 4px; white-space: pre; background: rgba(7, 6, 15, 0.88); }
+  .hver.old > span:last-child { padding-right: 4px; }
+  .hver.start { top: auto; bottom: 6px; color: var(--yellow); }
+  .hver.end { transform: translateX(-100%); margin-left: -6px; }
+  .hempty { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; padding: 12px; text-align: center; background: rgba(7, 6, 15, 0.55); }
+  .hempty b { font-size: var(--fs-tiny); letter-spacing: 0.08em; color: var(--yellow); }
+  .hempty span { font-size: var(--fs-xs); color: var(--text); max-width: 34ch; }
+  .haxis { display: flex; justify-content: space-between; margin: 4px 0 0 22px; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .hstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; }
+  .hstats dd { margin: 4px 0 0; font-size: var(--fs-metric-sm); white-space: nowrap; }
+  .hstats small { font-size: var(--fs-xs); color: var(--muted); }
+  .hlegend { margin-top: 10px; font-size: var(--fs-xs); }
+  @media (max-width: 480px) {
+    .hstats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>

@@ -1,0 +1,585 @@
+{
+  "meta": {
+    "version": 1,
+    "pulledAt": "2026-09-26T00:46:05Z",
+    "rawEvents": 72,
+    "rawSeries": 705,
+    "scoredRungs": 696
+  },
+  "summary": {
+    "releases": 23,
+    "announced": 3,
+    "leaked": 9,
+    "surprise": 11,
+    "medianAvailabilityLagH": 0.2
+  },
+  "releases": [
+    {
+      "id": "qwen3.5",
+      "labId": "qwen",
+      "lab": "Alibaba Qwen",
+      "model": "Qwen3.5",
+      "announcedAt": "2026-02-16T09:32:21Z",
+      "announcement": {
+        "title": "Qwen3.5: Towards Native Multimodal Agents",
+        "url": "https://qwen.ai/blog?id=qwen3.5",
+        "hn": "https://news.ycombinator.com/item?id=47032876"
+      },
+      "availableAt": "2026-02-16T06:23:38Z",
+      "availableId": "qwen/qwen3.5-397b-a17b",
+      "availabilityLagH": -3.1,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN. The transformers architecture merged 6.9 days earlier (see below).",
+      "sources": [
+        {
+          "label": "transformers #43830",
+          "url": "https://github.com/huggingface/transformers/pull/43830"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "gemma-4",
+      "labId": "google",
+      "lab": "Google DeepMind",
+      "model": "Gemma 4",
+      "announcedAt": "2026-04-02T16:00:29Z",
+      "announcement": {
+        "title": "Gemma 4: Byte for byte, the most capable open models",
+        "url": "https://blog.google/innovation-and-ai/technology/developers-tools/gemma-4/",
+        "hn": "https://news.ycombinator.com/item?id=47616244"
+      },
+      "availableAt": "2026-04-02T16:48:06Z",
+      "availableId": "google/gemma-4-31b-it",
+      "availabilityLagH": 0.8,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN; the transformers merge landed 36 minutes before the blog.",
+      "sources": [
+        {
+          "label": "transformers #45192",
+          "url": "https://github.com/huggingface/transformers/pull/45192"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-opus-4.7",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Opus 4.7",
+      "announcedAt": "2026-04-16T14:23:50Z",
+      "announcement": {
+        "title": "Claude Opus 4.7",
+        "url": "https://www.anthropic.com/news/claude-opus-4-7",
+        "hn": "https://news.ycombinator.com/item?id=47793411"
+      },
+      "availableAt": "2026-04-16T14:51:40Z",
+      "availableId": "anthropic/claude-opus-4.7",
+      "availabilityLagH": 0.5,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "gpt-5.5",
+      "labId": "openai",
+      "lab": "OpenAI",
+      "model": "GPT-5.5",
+      "announcedAt": "2026-04-23T18:01:39Z",
+      "announcement": {
+        "title": "GPT-5.5",
+        "url": "https://openai.com/index/introducing-gpt-5-5/",
+        "hn": "https://news.ycombinator.com/item?id=47879092"
+      },
+      "availableAt": "2026-04-24T17:31:33Z",
+      "availableId": "openai/gpt-5.5",
+      "availabilityLagH": 23.5,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "A Codex build exposed it 38 hours early; the API (and OpenRouter) followed a day after the post.",
+      "sources": [
+        {
+          "label": "HN: \"GPT 5.5 Released in Codex\", 2026-04-22 04:12Z",
+          "url": "https://news.ycombinator.com/item?id=47858903"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "deepseek-v4",
+      "labId": "deepseek",
+      "lab": "DeepSeek",
+      "model": "DeepSeek V4",
+      "announcedAt": "2026-04-24T02:55:33Z",
+      "announcement": {
+        "title": "DeepSeek-V4 Technical Report [pdf]",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/blob/main/DeepSeek_V4.pdf",
+        "hn": "https://news.ycombinator.com/item?id=47884933"
+      },
+      "availableAt": "2026-04-24T03:17:46Z",
+      "availableId": "deepseek/deepseek-v4-flash",
+      "availabilityLagH": 0.4,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN; weights and API went live together.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-opus-4.8",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Opus 4.8",
+      "announcedAt": "2026-05-28T16:49:14Z",
+      "announcement": {
+        "title": "Claude Opus 4.8",
+        "url": "https://www.anthropic.com/news/claude-opus-4-8",
+        "hn": "https://news.ycombinator.com/item?id=48311647"
+      },
+      "availableAt": "2026-05-27T18:04:51Z",
+      "availableId": "anthropic/claude-opus-4.8",
+      "availabilityLagH": -22.7,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "A same-morning rumour. OpenRouter lists it 22.7 hours before the post.",
+      "sources": [
+        {
+          "label": "HN: \"Claude Opus 4.8 coming today?\", 2026-05-28 09:52Z",
+          "url": "https://news.ycombinator.com/item?id=48306771"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-fable-5",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Fable 5 / Mythos 5",
+      "announcedAt": "2026-06-09T16:58:01Z",
+      "announcement": {
+        "title": "Claude Fable 5",
+        "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+        "hn": "https://news.ycombinator.com/item?id=48463808"
+      },
+      "availableAt": "2026-06-09T12:18:35Z",
+      "availableId": "anthropic/claude-fable-5",
+      "availabilityLagH": -4.7,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "An unsourced \"releasing tomorrow\" post the evening before.",
+      "sources": [
+        {
+          "label": "HN: \"Claude Fable 5 by Anthropic, releasing tomorrow\", 2026-06-08 19:36Z",
+          "url": "https://news.ycombinator.com/item?id=48450521"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "labId": "google",
+      "lab": "Google DeepMind",
+      "model": "Gemini 3.5 Flash",
+      "announcedAt": "2026-05-19T17:25:55Z",
+      "announcement": {
+        "title": "Gemini 3.5 Flash",
+        "url": "https://twitter.com/GoogleDeepMind/status/2056787990110994511",
+        "hn": "https://news.ycombinator.com/item?id=48196340"
+      },
+      "availableAt": "2026-05-19T12:30:00Z",
+      "availableId": "google/gemini-3.5-flash",
+      "availabilityLagH": -4.9,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "Launched on stage at the Google I/O keynote, with no model-specific story on HN beforehand. It settled the \"Gemini 3.2\" and \"Gemini 3.5\" ladders.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-sonnet-5",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Sonnet 5",
+      "announcedAt": "2026-06-30T15:01:37Z",
+      "announcement": {
+        "title": "Claude Sonnet 5",
+        "url": "https://www.anthropic.com/news/claude-sonnet-5",
+        "hn": "https://news.ycombinator.com/item?id=48733696"
+      },
+      "availableAt": "2026-06-30T18:11:23Z",
+      "availableId": "anthropic/claude-sonnet-5",
+      "availabilityLagH": 3.2,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "grok-4.5",
+      "labId": "xai",
+      "lab": "xAI",
+      "model": "Grok 4.5",
+      "announcedAt": "2026-07-08T18:00:32Z",
+      "announcement": {
+        "title": "Grok 4.5",
+        "url": "https://x.ai/news/grok-4-5",
+        "hn": "https://news.ycombinator.com/item?id=48835111"
+      },
+      "availableAt": "2026-07-08T15:05:54Z",
+      "availableId": "x-ai/grok-4.5",
+      "availabilityLagH": -2.9,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "Settled the \"Grok 4.4 released by\" ladder.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "gpt-5.6",
+      "labId": "openai",
+      "lab": "OpenAI",
+      "model": "GPT-5.6 Sol/Terra/Luna",
+      "announcedAt": "2026-07-09T17:03:36Z",
+      "announcement": {
+        "title": "GPT 5.6 System Card",
+        "url": "https://deploymentsafety.openai.com/gpt-5-6",
+        "hn": "https://news.ycombinator.com/item?id=48849054"
+      },
+      "availableAt": "2026-07-09T09:54:10Z",
+      "availableId": "openai/gpt-5.6-sol",
+      "availabilityLagH": -7.2,
+      "preAnnounced": true,
+      "precursor": "announced",
+      "context": "OpenAI named the day 37 hours ahead; a YouTube placeholder went up the evening before.",
+      "sources": [
+        {
+          "label": "HN: OpenAI \"will launch publicly this Thursday\", 2026-07-08 04:12Z",
+          "url": "https://news.ycombinator.com/item?id=48827402"
+        },
+        {
+          "label": "HN: \"GPT-5.6 Sol Ultra will be in Codex\", 2026-07-06 01:04Z",
+          "url": "https://news.ycombinator.com/item?id=48799614"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "kimi-k3",
+      "labId": "moonshot",
+      "lab": "Moonshot Kimi",
+      "model": "Kimi K3",
+      "announcedAt": "2026-07-16T14:46:05Z",
+      "announcement": {
+        "title": "Kimi K3: Open Frontier Intelligence",
+        "url": "https://www.kimi.com/blog/kimi-k3",
+        "hn": "https://news.ycombinator.com/item?id=48935342"
+      },
+      "availableAt": "2026-07-16T15:30:58Z",
+      "availableId": "moonshotai/kimi-k3",
+      "availabilityLagH": 0.7,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "Went live in the Kimi app about an hour before the blog. Not a frontier lab in lab.ts.",
+      "sources": [
+        {
+          "label": "HN: \"Kimi K3 released on web and app\", 2026-07-16 13:48Z",
+          "url": "https://news.ycombinator.com/item?id=48934539"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-opus-5",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Opus 5",
+      "announcedAt": "2026-07-24T16:55:26Z",
+      "announcement": {
+        "title": "Claude Opus 5",
+        "url": "https://www.anthropic.com/news/claude-opus-5",
+        "hn": "https://news.ycombinator.com/item?id=49038393"
+      },
+      "availableAt": "2026-07-24T17:02:24Z",
+      "availableId": "anthropic/claude-opus-5",
+      "availabilityLagH": 0.1,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "An Artificial Analysis model page for it was on HN 23 hours before launch.",
+      "sources": [
+        {
+          "label": "HN: artificialanalysis.ai/models/claude-opus-5, 2026-07-23 18:01Z",
+          "url": "https://news.ycombinator.com/item?id=49025676"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "grok-4.6",
+      "labId": "xai",
+      "lab": "xAI",
+      "model": "Grok 4.6",
+      "announcedAt": "2026-08-12T15:32:50Z",
+      "announcement": {
+        "title": "Grok 4.6",
+        "url": "https://x.ai/news/grok-4-6",
+        "hn": "https://news.ycombinator.com/item?id=49274027"
+      },
+      "availableAt": "2026-08-12T15:35:57Z",
+      "availableId": "x-ai/grok-4.6",
+      "availabilityLagH": 0.1,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "gemini-3.7-flash",
+      "labId": "google",
+      "lab": "Google DeepMind",
+      "model": "Gemini 3.7 Flash",
+      "announcedAt": "2026-08-13T17:02:10Z",
+      "announcement": {
+        "title": "Gemini 3.7 Flash",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/",
+        "hn": "https://news.ycombinator.com/item?id=49288847"
+      },
+      "availableAt": "2026-08-13T17:03:01Z",
+      "availableId": "google/gemini-3.7-flash",
+      "availabilityLagH": 0,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "qwen3.8-flash",
+      "labId": "qwen",
+      "lab": "Alibaba Qwen",
+      "model": "Qwen3.8-Flash",
+      "announcedAt": "2026-08-26T12:36:01Z",
+      "announcement": {
+        "title": "Qwen/Qwen3.8-Flash-Next",
+        "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+        "hn": "https://news.ycombinator.com/item?id=49447935"
+      },
+      "availableAt": "2026-08-26T19:37:40Z",
+      "availableId": "qwen/qwen3.8-flash",
+      "availabilityLagH": 7,
+      "preAnnounced": true,
+      "precursor": "announced",
+      "context": "Qwen’s ModelScope page said \"releasing tomorrow\" 25 hours ahead.",
+      "sources": [
+        {
+          "label": "HN: \"Qwen 3.8-Flash-Next releasing tomorrow\" (modelscope.cn), 2026-08-25 11:49Z",
+          "url": "https://news.ycombinator.com/item?id=49432317"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-fable-5.1",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Fable 5.1 / Mythos 5.1",
+      "announcedAt": "2026-09-01T17:53:32Z",
+      "announcement": {
+        "title": "Prompting Claude Fable 5.1 and Claude Mythos 5.1",
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1",
+        "hn": "https://news.ycombinator.com/item?id=49525372"
+      },
+      "availableAt": "2026-09-01T18:03:58Z",
+      "availableId": "anthropic/claude-fable-5.1",
+      "availabilityLagH": 0.2,
+      "preAnnounced": false,
+      "precursor": "none",
+      "context": "No pre-launch story on HN.",
+      "sources": [],
+      "notLaunch": []
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "labId": "google",
+      "lab": "Google DeepMind",
+      "model": "Gemini 3.8 Flash",
+      "announcedAt": "2026-09-02T15:12:40Z",
+      "announcement": {
+        "title": "Gemini 3.8 Flash and 3.8 Flash Cyber",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/",
+        "hn": "https://news.ycombinator.com/item?id=49537553"
+      },
+      "availableAt": "2026-09-02T15:14:16Z",
+      "availableId": "google/gemini-3.8-flash",
+      "availabilityLagH": 0,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "A WSJ scoop 16 hours before launch.",
+      "sources": [
+        {
+          "label": "HN: WSJ \"New Google AI Model Said to Narrow Gap\", 2026-09-01 23:23Z",
+          "url": "https://news.ycombinator.com/item?id=49529686"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "gpt-6-astra",
+      "labId": "openai",
+      "lab": "OpenAI",
+      "model": "GPT-6 Astra",
+      "announcedAt": "2026-09-03T18:12:08Z",
+      "announcement": {
+        "title": "Playco cut manual fixes 50% prototyping games with GPT‑6 Astra",
+        "url": "http://openai.com/index/playco-game-prototyping-with-astra",
+        "hn": "https://news.ycombinator.com/item?id=49554185"
+      },
+      "availableAt": "2026-09-04T20:13:55Z",
+      "availableId": "openai/gpt-6-astra-pro",
+      "availabilityLagH": 26,
+      "preAnnounced": true,
+      "precursor": "announced",
+      "context": "OpenAI published \"Path to Astra\" two days ahead and a wordless teaser video three hours before the launch. Announced Sep 3, generally available Sep 4; the markets resolved on Sep 4.",
+      "sources": [
+        {
+          "label": "OpenAI RSS: \"Path to Astra\", 2026-09-01 13:00Z",
+          "url": "https://openai.com/index/path-to-astra"
+        },
+        {
+          "label": "HN: help.openai.com \"OpenAI Astra Launching Soon\", 2026-09-03 03:02Z",
+          "url": "https://news.ycombinator.com/item?id=49545491"
+        }
+      ],
+      "notLaunch": [
+        {
+          "title": "Path to Astra: critical capabilities and frontier safeguards",
+          "hn": "https://news.ycombinator.com/item?id=49527595",
+          "why": "the pre-launch safety post, two days early"
+        },
+        {
+          "title": "Open AI X post on Astra",
+          "hn": "https://news.ycombinator.com/item?id=49551018",
+          "why": "an @OpenAI post with no words, only a 12-second video (tweet 2095527557924082061)"
+        },
+        {
+          "title": "OpenAI Releases GPT Astra",
+          "hn": "https://news.ycombinator.com/item?id=49551175",
+          "why": "the generic models page; commenters found no Astra on it yet"
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "labId": "deepseek",
+      "lab": "DeepSeek",
+      "model": "DeepSeek V4.1 Flash",
+      "announcedAt": "2026-09-10T05:57:51Z",
+      "announcement": {
+        "title": "DeepSeek-v4.1-Exp",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+        "hn": "https://news.ycombinator.com/item?id=49638981"
+      },
+      "availableAt": "2026-09-10T06:21:25Z",
+      "availableId": "deepseek/deepseek-v4.1-flash",
+      "availabilityLagH": 0.4,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "Beta leaks two days out, then a Vercel AI Gateway beta listing 14.5 hours ahead.",
+      "sources": [
+        {
+          "label": "HN: \"v4.1 Flash is now available for internal beta testing\", 2026-09-08 08:04Z",
+          "url": "https://news.ycombinator.com/item?id=49607094"
+        },
+        {
+          "label": "HN: \"DeepSeek v4.1 Flash Beta on Vercel\", 2026-09-09 15:28Z",
+          "url": "https://news.ycombinator.com/item?id=49628163"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "grok-4.7",
+      "labId": "xai",
+      "lab": "xAI",
+      "model": "Grok 4.7",
+      "announcedAt": "2026-09-21T15:50:15Z",
+      "announcement": {
+        "title": "Grok 4.7",
+        "url": "https://x.ai/news/grok-4-7",
+        "hn": "https://news.ycombinator.com/item?id=49788838"
+      },
+      "availableAt": "2026-09-21T16:19:01Z",
+      "availableId": "x-ai/grok-4.7",
+      "availabilityLagH": 0.5,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "A 1-point \"launching soon\" tweet 3.4 days out. xAI has no leading coverage on this site.",
+      "sources": [
+        {
+          "label": "HN: \"Grok 4.7 Launching Soon\", 2026-09-18 06:42Z",
+          "url": "https://news.ycombinator.com/item?id=49750862"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "claude-opus-5.5",
+      "labId": "anthropic",
+      "lab": "Anthropic",
+      "model": "Claude Opus 5.5",
+      "announcedAt": "2026-09-22T16:27:30Z",
+      "announcement": {
+        "title": "Claude Opus 5.5",
+        "url": "https://www.anthropic.com/claude-opus-5-5",
+        "hn": "https://news.ycombinator.com/item?id=49803863"
+      },
+      "availableAt": "2026-09-22T16:32:12Z",
+      "availableId": "anthropic/claude-opus-5.5",
+      "availabilityLagH": 0.1,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "Nothing on HN, but TestingCatalog reported testing 31.7 hours ahead; the day market moved 35 minutes after it.",
+      "sources": [
+        {
+          "label": "TestingCatalog: \"Anthropic tests Fable 5.2 and Opus 5.5\", 2026-09-21 08:45Z",
+          "url": "https://www.testingcatalog.com/anthropic-tests-fable-5-2-and-opus-5-5-ahead-of-the-release/"
+        }
+      ],
+      "notLaunch": []
+    },
+    {
+      "id": "gpt-6-sol-luna",
+      "labId": "openai",
+      "lab": "OpenAI",
+      "model": "GPT-6 Sol/Luna",
+      "announcedAt": "2026-09-22T17:58:57Z",
+      "announcement": {
+        "title": "GPT-6 Sol",
+        "url": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+        "hn": "https://news.ycombinator.com/item?id=49805484"
+      },
+      "availableAt": "2026-09-22T18:12:55Z",
+      "availableId": "openai/gpt-6-sol",
+      "availabilityLagH": 0.2,
+      "preAnnounced": false,
+      "precursor": "leak",
+      "context": "A Reddit post saw the id on the API 11 days early; TestingCatalog called the day that morning.",
+      "sources": [
+        {
+          "label": "HN: \"GPT-6-sol appeared on OpenAI API\", 2026-09-11 20:43Z",
+          "url": "https://news.ycombinator.com/item?id=49665088"
+        },
+        {
+          "label": "TestingCatalog: \"prepares to launch GPT-6 Sol and Luna today\", 2026-09-22 12:07Z",
+          "url": "https://www.testingcatalog.com/openai-gpt-6-sol-luna-tuesday-release/"
+        }
+      ],
+      "notLaunch": []
+    }
+  ]
+}

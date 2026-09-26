@@ -1,0 +1,52 @@
+---
+import type { SeriesCrossings } from '../../scripts/backtest/build';
+
+interface Props {
+  pulledAt: string;
+  /** One real series to show a copy-pasteable CLOB pull for. */
+  example: { model: string; series: SeriesCrossings; hn: { query: string; from: string; to: string }; openrouter: string } | null;
+}
+const { pulledAt, example } = Astro.props;
+const REPO = 'https://github.com/jasonm4130/when-model';
+const FILES = ['v3-replay', 'release-events', 'markets', 'broadcasts', 'architecture', 'negative-results', 'timestamp-traps'];
+const epoch = (iso: string) => Math.floor(Date.parse(iso) / 1000);
+const curls = example
+  ? [
+      `# Closed AI events, 50 per page; pass next_cursor back as after_cursor`,
+      `curl 'https://gamma-api.polymarket.com/events/keyset?tag_slug=ai&closed=true&limit=50'`,
+      `# ${example.model}: "${example.series.label}" price history (windows of 15 days or less)`,
+      `curl 'https://clob.polymarket.com/prices-history?market=${example.series.token}&startTs=${example.series.window[0]}&endTs=${example.series.window[1]}&fidelity=60'`,
+      `# The announcement: first first-party story in the window (Algolia wants the filter URL-encoded)`,
+      `curl 'https://hn.algolia.com/api/v1/search_by_date?query=${encodeURIComponent(example.hn.query)}&tags=story&hitsPerPage=1000&numericFilters=${encodeURIComponent(`created_at_i>=${epoch(example.hn.from)},created_at_i<=${epoch(example.hn.to)}`)}'`,
+      `# Availability`,
+      `curl -s 'https://openrouter.ai/api/v1/models' | jq '.data[] | select(.id == "${example.openrouter}") | .created'`,
+      `# The pending architecture`,
+      `curl -s 'https://cdn.jsdelivr.net/gh/huggingface/transformers@main/src/transformers/models/__init__.py' | grep qwen4_exp`,
+    ]
+  : [];
+---
+<div class="grid grid-2">
+  <div>
+    <p>Every computed table is rebuilt from raw pulls committed to the repo. The curated tables (stealth reveals, broadcasts, architecture merges, what didn't lead, timestamp traps) are carried as sourced data, not recomputed. The rebuild is deterministic: run it twice and <code>git diff</code> stays empty.</p>
+    <pre tabindex="0" aria-label="Rebuild commands"><code>pnpm install
+pnpm backtest            # rebuild data/backtest/*.json from data/backtest/raw
+pnpm backtest:replay     # rerun the v3 replay into data/backtest/v3-replay.json
+pnpm backtest --refresh  # re-pull Gamma, CLOB, HN and OpenRouter first</code></pre>
+    <p class="muted small">Raw pulls last refreshed {pulledAt.replace('T', ' ').slice(0, 16)}Z. Curated inputs (release ids, sources, the tables that are not recomputed) live in <a href={`${REPO}/blob/main/scripts/backtest/curated.ts`} rel="noopener" target="_blank">scripts/backtest/curated.ts</a>; the replay, its pre-registered rule and every constant it fits are in <a href={`${REPO}/blob/main/scripts/backtest/replay.ts`} rel="noopener" target="_blank">scripts/backtest/replay.ts</a>.</p>
+    <ul class="files">
+      {FILES.map((f) => (
+        <li><a href={`${REPO}/blob/main/data/backtest/${f}.json`} rel="noopener" target="_blank">data/backtest/{f}.json</a></li>
+      ))}
+    </ul>
+  </div>
+  <div>
+    <p>Or check any single number by hand:</p>
+    <pre class="curl" tabindex="0" aria-label="Commands to check one number by hand"><code>{curls.join('\n')}</code></pre>
+  </div>
+</div>
+<style>
+  p { margin-bottom: 10px; max-width: 70ch; }
+  pre { background: rgba(0, 0, 0, 0.45); border: 1px solid var(--line); padding: 10px 12px; overflow-x: auto; font-size: 17px; line-height: 1.3; margin: 0 0 10px; }
+  pre code { color: var(--green); white-space: pre; }
+  .files li { padding: 3px 0; }
+</style>

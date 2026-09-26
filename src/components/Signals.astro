@@ -1,0 +1,184 @@
+---
+import type { Dashboard } from '../domain/dashboard';
+import { LABS } from '../domain/lab';
+import { ago } from '../ui/format';
+import { sourcePill } from '../ui/panels';
+import { SOURCE } from '../domain/sources';
+import { EARLY_WARNING_SOURCES, LANDED_LAB_FEEDS, LANDED_SOURCES, TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
+interface Props { d: Dashboard; now?: number }
+const { d, now = Date.now() } = Astro.props;
+const w = d.earlyWarnings;
+const l = d.landed;
+const labName = (id?: string) => LABS.find((x) => x.id === id)?.short ?? id ?? '';
+const LIMIT = 5;
+// The same pill every panel wears: LIVE, PARTIAL or DOWN from these sources, STALE once the data ages.
+const ewPill = sourcePill(d.sources, EARLY_WARNING_SOURCES, d.generatedAt, now, 'SOURCES');
+const landedPill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');
+const leaksDown = w.leaks.sources.filter((s) => !s.ok).length > 0;
+const openrouterDown = !w.stealth.ok;
+const labFeeds: readonly string[] = LANDED_LAB_FEEDS;
+const labFeedsDown = d.sources.filter((s) => labFeeds.includes(s.name) && !s.ok).length;
+const allLeaksDown = w.leaks.sources.length > 0 && w.leaks.sources.every((s) => !s.ok);
+const hnDown = d.sources.some((s) => s.name === SOURCE.hnLaunches && !s.ok);
+const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time' : h >= 0 ? `in ${Math.round(h)}h` : 'started');
+---
+<section class="section wrap reveal">
+  <div class="grid grid-2">
+    <div class="panel sig-panel">
+      <div class="panel-head">
+        <h2><span aria-hidden="true">◬</span>EARLY WARNINGS</h2>
+        <div class="pills">
+          <span class={`pill ${ewPill.tone}`} title={ewPill.title} data-source-pill data-stale-at={ewPill.staleAt} data-stale-text={ewPill.staleText}>{ewPill.text}</span>
+          <span class="pill">NOT SCORED</span>
+        </div>
+      </div>
+      <p class="sig-intro muted">Signals that have come before launches. Each shows its track record; none moves the level.</p>
+
+      <div class="sig" id="ew-stealth">
+        <h3 class="sig-head tiny">STEALTH SLOTS <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : w.stealth.items.length}</span></h3>
+        <p class="track" title={w.stealth.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.stealth}</p>
+        {w.stealth.items.slice(0, LIMIT).map((s) => (
+          <a class="sig-row" href={s.url ?? `https://openrouter.ai/${s.id}`} target="_blank" rel="noopener">
+            <span class="sig-main">{s.name}</span>
+            <span class="sig-when">{daysShort(s.daysInStealth)} in stealth</span>
+            <span class="sig-meta">OpenRouter · lab unknown{s.claimsFrontier ? ' · claims frontier' : ''}</span>
+          </a>
+        ))}
+        {w.stealth.items.length === 0 && <p class="sig-empty">{openrouterDown ? 'OpenRouter is unreachable, so stealth slots are unknown right now.' : 'No anonymous slots on OpenRouter right now.'}</p>}
+      </div>
+
+      <div class="sig" id="ew-leaks">
+        <h3 class="sig-head tiny">UNLISTED LEAKS <span class="count">{w.leaks.items.length}{leaksDown ? ' · SOURCE DOWN' : ''}</span></h3>
+        <p class="track" title={w.leaks.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.leaks}</p>
+        {!w.leaks.checkedAgainstListings && <p class="sig-note">OpenRouter is down, so models that already listed were not filtered out.</p>}
+        {w.leaks.items.slice(0, LIMIT).map((x) => (
+          <a class="sig-row" href={x.url} target="_blank" rel="noopener">
+            <span class="sig-main">{x.title}</span>
+            <span class="sig-when" data-time={x.publishedAt}>{ago(x.publishedAt, now)}</span>
+            <span class="sig-meta">{x.sourceName}{x.labId ? ` · ${labName(x.labId)}` : ''}</span>
+          </a>
+        ))}
+        {w.leaks.items.length === 0 && <p class="sig-empty">{allLeaksDown ? 'Both leak sources are unreachable right now.' : 'No unlisted leaks in the last two weeks.'}</p>}
+      </div>
+
+      <div class="sig" id="ew-streams">
+        <h3 class="sig-head tiny">SCHEDULED STREAMS <span class="count">{w.broadcasts.items.length}{w.broadcasts.ok ? '' : ' · FEED DOWN'}</span></h3>
+        <p class="track" title={w.broadcasts.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.broadcasts}</p>
+        {w.broadcasts.items.slice(0, LIMIT).map((b) => (
+          <a class="sig-row" href={b.url} target="_blank" rel="noopener">
+            <span class="sig-main">{b.title}</span>
+            <span class="sig-when">{streamWhen(b.startsInHours)}</span>
+            <span class="sig-meta">{b.channel} on YouTube{b.confirmed === false ? ' · first poll' : ''}</span>
+          </a>
+        ))}
+        {w.broadcasts.items.length === 0 && <p class="sig-empty">{w.broadcasts.ok ? 'No upcoming streams on the watched lab channels.' : 'The lab YouTube feeds did not all answer; no stream found in those that did.'}</p>}
+      </div>
+
+      <div class="sig" id="ew-arch">
+        <h3 class="sig-head tiny">PENDING ARCHITECTURES <span class="count">{w.architectures.ok ? w.architectures.items.length : 'REGISTRY DOWN'}</span></h3>
+        <p class="track" title={w.architectures.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.architectures}</p>
+        {!w.architectures.checkedAgainstListings && <p class="sig-note">OpenRouter is down, so shipped architectures were not cleared.</p>}
+        {w.architectures.items.slice(0, LIMIT).map((a) => (
+          <div class="sig-row">
+            <span class="sig-main">{a.module}</span>
+            <span class="sig-when">{daysShort(a.daysPending)} pending</span>
+            <span class="sig-meta">transformers · {labName(a.labId)}{a.frontier ? ' · frontier lab' : ''}</span>
+          </div>
+        ))}
+        {w.architectures.items.length === 0 && <p class="sig-empty">{w.architectures.ok ? 'No merged model architecture is waiting on a listing.' : 'The transformers registry is unreachable right now.'}</p>}
+      </div>
+
+      {w.events.items.length > 0 && (
+        <div class="sig" id="ew-events">
+          <h3 class="sig-head tiny">KEYNOTE WINDOWS <span class="count">{w.events.items.length}</span></h3>
+          <p class="track" title={w.events.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.events}</p>
+          {w.events.items.map((e) => (
+            <a class="sig-row" href={e.source} target="_blank" rel="noopener">
+              <span class="sig-main">{e.label}</span>
+              <span class="sig-when">{e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span>
+              <span class="sig-meta">{labName(e.labId)} · markets already price known keynotes</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class="panel sig-panel">
+      <div class="panel-head">
+        <h2><span aria-hidden="true">◆</span>LANDED</h2>
+        <div class="pills">
+          {l.banner && <span class="pill warn">MODELS JUST LANDED</span>}
+          <span class={`pill ${landedPill.tone}`} title={landedPill.title} data-source-pill data-stale-at={landedPill.staleAt} data-stale-text={landedPill.staleText}>{landedPill.text}</span>
+          <span class="pill">NOT SCORED</span>
+        </div>
+      </div>
+      <p class="sig-intro muted">{l.summary}. Launches that already happened are listed, never scored.</p>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">LISTED ON OPENROUTER · 7 DAYS <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : l.releases.length}</span></h3>
+        {l.releases.map((r) => (
+          <a class="sig-row" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener">
+            <span class="sig-main glow-m">{r.name}</span>
+            <span class="sig-when">listed {hoursAgo(r.hoursAgo)}</span>
+            <span class="sig-meta">{r.lab}</span>
+          </a>
+        ))}
+        {l.releases.length === 0 && <p class="sig-empty">{openrouterDown ? 'OpenRouter is unreachable, so this week’s listings are unknown.' : 'No frontier launch listed on OpenRouter in the last 7 days.'}</p>}
+      </div>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">LAB ANNOUNCEMENTS <span class="count">{l.announcements.length}{labFeedsDown ? ` · ${labFeedsDown} FEED${labFeedsDown === 1 ? '' : 'S'} DOWN` : ''}</span></h3>
+        {l.announcements.slice(0, LIMIT).map((a) => (
+          <a class="sig-row" href={a.url} target="_blank" rel="noopener">
+            <span class="sig-main">{a.title}</span>
+            <span class="sig-when" data-time={a.seenAt}>{ago(a.seenAt, now)}</span>
+            <span class="sig-meta">{a.source.toUpperCase()}{a.precision === 'day' ? ' · dated by day' : ''}</span>
+          </a>
+        ))}
+        {l.announcements.length === 0 && <p class="sig-empty">No launch posts on the labs’ own feeds in the last 7 days.</p>}
+      </div>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">HACKER NEWS LAUNCH STORIES <span class="count">{hnDown ? 'HN DOWN' : l.stories.length}</span></h3>
+        {l.stories.slice(0, LIMIT).map((s) => (
+          <a class="sig-row" href={s.url} target="_blank" rel="noopener">
+            <span class="sig-main">{s.title}</span>
+            <span class="sig-when">{s.score} pts</span>
+            <span class="sig-meta">Hacker News</span>
+          </a>
+        ))}
+        {l.stories.length === 0 && <p class="sig-empty">{hnDown ? 'Hacker News is unreachable right now.' : 'No release story over the points bar this week.'}</p>}
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .sig-intro { font-size: var(--fs-sm); margin-bottom: 4px; }
+  .sig { scroll-margin-top: 16px; }
+  .sig + .sig { margin-top: 14px; }
+  .sig-head { margin: 10px 0 4px; color: var(--yellow); display: flex; justify-content: space-between; gap: 8px; }
+  .sig-head .count { color: var(--muted); }
+  .track { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 2px; }
+  .track .tiny { color: var(--cyan); margin-right: 4px; }
+  .sig-note, .sig-empty { font-size: var(--fs-xs); color: var(--muted); padding: 6px 6px 6px 8px; border-left: 2px solid var(--line2); }
+  .sig-empty { margin-top: 4px; }
+  /* One layout for every row: what, then when (never wrapped), then where from. */
+  .sig-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'main when' 'meta when';
+    column-gap: 12px;
+    padding: 6px;
+    border-bottom: 1px dotted var(--line-soft);
+    border-left: 2px solid transparent;
+    color: var(--text);
+    font-size: var(--fs-sm);
+    line-height: 1.15;
+    transition: background var(--fast) var(--ease), border-color var(--fast) var(--ease);
+  }
+  a.sig-row:hover { background: rgba(0, 229, 255, 0.05); border-left-color: var(--cyan); color: var(--text); text-shadow: none; }
+  a.sig-row:focus-visible { outline-offset: -2px; }
+  .sig-main { grid-area: main; overflow-wrap: anywhere; }
+  .sig-meta { grid-area: meta; color: var(--muted); font-size: var(--fs-xs); }
+  .sig-when { grid-area: when; align-self: start; white-space: nowrap; color: var(--muted); font-size: var(--fs-xs); text-align: right; font-variant-numeric: tabular-nums; }
+</style>
