@@ -37,4 +37,5 @@ Rules of the house:
   Lint and format: `pnpm lint` (oxlint + oxfmt --check), `pnpm format` (oxfmt).
   Before delivery, run `pnpm validate` (lint, types, coverage and build).
   For UI changes, run `pnpm test:e2e` against the built Worker for desktop, narrow mobile,
-  keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`.
+  keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`. Set `E2E_PORT` when another
+  checkout's Worker already holds 8787; locally Playwright reuses whatever server answers on the port.
