@@ -1,5 +1,9 @@
 ---
 import { leadInputSkillText } from '../domain/forecast';
+import { LAUNCH_SETTLE_MS } from '../domain/lab-status';
+
+/** The first slot the Worker's D1 history holds (capture began 2026-09-23T01:00Z). */
+const HISTORY_FROM = '2026-09-23';
 
 interface Props {
   releases: number;
@@ -8,20 +12,28 @@ interface Props {
   /** Launches whose market held 0.9 before the announcement, and how many of those had a public precursor. */
   early90: number;
   early90Prompted: number;
-  /** Skill of the raw market forecast against the base rate at 72h. */
+  /** v3 replay: out-of-sample skill of (b), the best market read across labs, at 72h, and its interval. */
   marketSkill72: number;
+  marketSkill72Ci: [number, number];
+  /** v3 replay: distinct launches in the held-out window. */
+  heldOut: number;
+  /** v3 replay: a rung is readable only this many days before its deadline. */
+  admitDays: number;
 }
-const { releases, dated, medianAvailabilityLagH, early90, early90Prompted, marketSkill72 } = Astro.props;
+const { releases, dated, medianAvailabilityLagH, early90, early90Prompted, marketSkill72, marketSkill72Ci, heldOut, admitDays } = Astro.props;
 const lag = medianAvailabilityLagH === null ? 'about the same time as' : `${Math.round(Math.abs(medianAvailabilityLagH) * 60)} minutes ${medianAvailabilityLagH < 0 ? 'before' : 'after'}`;
+const launchDays = Math.round(LAUNCH_SETTLE_MS / 86_400_000);
+const signed = (n: number, d = 2) => (n > 0 ? `+${n.toFixed(d)}` : n < 0 ? `−${Math.abs(n).toFixed(d)}` : '0');
 ---
 <aside class="limits panel" aria-labelledby="limits-title">
   <h2 id="limits-title" class="tiny glow-y">WHAT THIS CAN'T DO</h2>
   <ul>
     <li><strong>It mostly detects launches after they happen.</strong> The median model reached OpenRouter {lag} its announcement. Registry listings, feeds and HN confirm a launch; they rarely precede it.</li>
-    <li><strong>DROPCON is a lead score, not a probability, and this page does not test it.</strong> It reads market release odds alone, with hand-set weights. A launch never raises it: once a model lists, its family drops out for four days. The raw market odds, read on their own, {marketSkill72 < 0 ? 'score worse than' : 'barely beat'} always guessing the base rate at 72 hours (<a href="#calibration">Brier table</a>). In the v3 replay, the level's main input, the best 7-day read across labs, scored a Brier skill of {leadInputSkillText()} against the base rate at 7 days. The level itself has not been evaluated.</li>
+    <li><strong>DROPCON is a lead score, not a probability, and nothing here tests the level.</strong> It reads market release odds alone, with hand-set weights. A launch never raises it: once a model lists, its family drops out for {launchDays} days. Read on their own, the best market odds across labs scored {signed(marketSkill72, 3)} (95% interval {signed(marketSkill72Ci[0])} to {signed(marketSkill72Ci[1])}) against always guessing the base rate at 72 hours, {marketSkill72 < 0 ? 'worse than the guess' : marketSkill72Ci[0] <= 0 ? 'not distinguishable from it' : 'better than the guess'} (<a href="#results">results</a>). In the same replay, the level's main input, the best 7-day read across labs, scored a Brier skill of {leadInputSkillText()} against the base rate at 7 days. The level itself has not been evaluated.</li>
+    <li><strong>The replay can't rebuild the level itself.</strong> Its 30-day term reads rungs up to a month out, and the price history holds each rung only from {admitDays} days before its deadline. The chart shows the inputs it can rebuild.</li>
     <li><strong>The markets aggregate leaks rather than foresee launches.</strong> Of {early90} launches whose market reached 0.9 before the announcement, {early90Prompted} followed a public leak, a press report or the lab's own notice (<a href="#splits">splits</a>).</li>
-    <li><strong>n is small.</strong> {releases} launches, {dated} of them with a market that dates the day. One lab changing its habits moves every number here.</li>
-    <li><strong>The dashboard's own history starts 2026-09-23.</strong> No launch before then can be replayed through the live score, and HN point counts cannot be replayed at all: Algolia only returns final totals.</li>
+    <li><strong>n is small.</strong> {heldOut} held-out launches in the replay, and {releases} hand-timed launches, {dated} of them with a market that dates the day. The effective sample is launches, not the thousands of hours scored. One lab changing its habits moves every number here.</li>
+    <li><strong>The dashboard's own history starts {HISTORY_FROM}.</strong> No launch before then can be replayed through the live score, and HN point counts cannot be replayed at all: Algolia only returns final totals.</li>
   </ul>
 </aside>
 <style>

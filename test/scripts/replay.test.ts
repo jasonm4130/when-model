@@ -2,13 +2,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { RawPulls } from '../../scripts/backtest/build';
 import type { OpenRouterModel } from '../../scripts/backtest/events';
 import { readJson, readRaw } from '../../scripts/backtest/io';
-import { DAY, eventKind, HOUR, parseRung } from '../../scripts/backtest/markets';
+import { DAY, eventKind, HOUR, parseRung, round } from '../../scripts/backtest/markets';
 import {
   ADMIT_DAYS,
   admittedPrice,
   bandEdges,
   bandLevels,
   brier,
+  buildGrid,
   buildReplay,
   fitFormulas,
   fitLogistic,
@@ -16,6 +17,7 @@ import {
   forecast,
   frontierReleases,
   HEADLINE_H,
+  LEAD_H,
   labEventRates,
   levelTable,
   marketsAt,
@@ -23,7 +25,9 @@ import {
   monthlyReleases,
   mulberry32,
   noisyOr,
+  PRICED_MIN,
   pricedEvents,
+  READ_MIN,
   releasedWithin,
   replayDrops,
   sanity,
@@ -425,6 +429,34 @@ describe('committed replay', () => {
     expect(series.p).toHaveLength(Math.floor(hours / series.stepH) + 1);
     expect(series.level).toHaveLength(series.p.length);
     expect(series.market).toHaveLength(series.p.length);
+    expect(series.lead7).toHaveLength(series.p.length);
+  });
+
+  it("adds the level's main input to the series: formula (b) at 7 days, the shape LEAD_INPUT_SKILL_7D scored", () => {
+    const grid = buildGrid(raw);
+    const week = grid.rows.curve[LEAD_H];
+    const unused = { base: 0, unpriced: 0, a: 0, b: 1 };
+    const byT = new Map(week.map((r) => [r.t, forecast('max', r.labP, unused)]));
+    const from = Date.parse(replay.series.from) / 1000;
+    let compared = 0;
+    replay.series.lead7.forEach((v, i) => {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+      const expected = byT.get(from + i * replay.series.stepH * HOUR);
+      if (expected === undefined) return; // the last 7 days have no outcome row, but still a read
+      expect(v).toBe(round(expected, 3));
+      compared++;
+    });
+    expect(compared).toBeGreaterThan(replay.series.lead7.length * 0.9);
+    // The Grok 4.7 week of false confidence pins P7's shape at 1 too, a week before anything listed.
+    const at = (iso: string) => (Date.parse(iso) / 1000 - from) / HOUR / replay.series.stepH;
+    expect(replay.series.lead7[at('2026-09-14T00:00:00Z')]).toBeGreaterThan(0.95);
+  });
+
+  it('records the thresholds the page quotes, and applies them', () => {
+    expect(replay.meta.protocol.pricedMin).toBe(PRICED_MIN);
+    expect(replay.meta.protocol.readMin).toBe(READ_MIN);
+    for (const e of replay.pricedEvents.events) expect(e.priced).toBe(e.maxLabP72 >= PRICED_MIN);
   });
 
   it('reproduces the documented episodes: Opus 5.5 priced ahead, the Grok 4.7 week of false confidence', () => {

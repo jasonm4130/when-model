@@ -58,6 +58,8 @@ export const HORIZONS_H = [24, 72, 168] as const;
 export type HorizonH = (typeof HORIZONS_H)[number];
 /** The DROPCON v3 headline horizon. */
 export const HEADLINE_H: HorizonH = 72;
+/** The horizon of the lead score's main input, P7. */
+export const LEAD_H: HorizonH = 168;
 /** Train on the first 60% of hours, test on the rest (purged: train outcomes end before the test starts). */
 export const TRAIN_FRACTION = 0.6;
 /** Rolling-origin check: expanding train window, each fold tested up to the next origin. */
@@ -550,8 +552,11 @@ export interface Grid {
   releases: ReleaseMarker[];
   /** rows[variant][horizon] — hourly, t from `from` while t + h ≤ until. */
   rows: Record<string, Record<HorizonH, Row[]>>;
-  /** Headline reads for every hour to `until` (no outcome needed). */
-  headline: { t: number; labP: number[] }[];
+  /**
+   * Headline reads for every hour to `until` (no outcome needed), with the level's main input: the
+   * best 7-day read across labs (formula (b) at 7 days, the shape of DROPCON's P7).
+   */
+  headline: { t: number; labP: number[]; lead7: number }[];
 }
 
 const floorHour = (t: number) => Math.floor(t / HOUR) * HOUR;
@@ -572,7 +577,11 @@ export function buildGrid(raw: RawPulls): Grid {
   for (let t = from; t <= until; t += HOUR) {
     const reads = labReadsAt(settled, t, pulledAt);
     const liveReads = labReadsAt(live, t, pulledAt).curve;
-    headline.push({ t, labP: reads.curve[HORIZONS_H.indexOf(HEADLINE_H)] });
+    headline.push({
+      t,
+      labP: reads.curve[HORIZONS_H.indexOf(HEADLINE_H)],
+      lead7: Math.max(0, ...reads.curve[HORIZONS_H.indexOf(LEAD_H)]),
+    });
     HORIZONS_H.forEach((h, hi) => {
       if (t + h * HOUR > until) return;
       const y = releasedWithin(times, t, h * HOUR);
@@ -759,6 +768,11 @@ function horizonConstants(
   };
 }
 
+/** A launch counts as priced when its own lab's 72h read reached this in the 72 hours before it listed. */
+export const PRICED_MIN = 0.5;
+/** The per-lab table counts an hour as having a read when the lab's 72h read is above this. */
+export const READ_MIN = 0.05;
+
 /** Per test event: the highest 72h read its own lab had in the 72 hours before it listed. */
 export function pricedEvents(
   releases: readonly ReleaseMarker[],
@@ -778,7 +792,7 @@ export function pricedEvents(
         labId: r.labId,
         models: r.models.slice(0, 3),
         maxLabP72: round(max, 3),
-        priced: max >= 0.5,
+        priced: max >= PRICED_MIN,
       };
     });
 }
@@ -810,7 +824,7 @@ export function labTable(
         split,
         until,
       ),
-      hoursWithRead: f.filter((p) => p > 0.05).length,
+      hoursWithRead: f.filter((p) => p > READ_MIN).length,
       brier: round(brier(f, y), 4),
       skill: round(ref > 0 ? 1 - brier(f, y) / ref : 0, 3),
     };
@@ -980,6 +994,8 @@ export function buildReplay(raw: RawPulls) {
         sanity: SANITY,
         decisionMinSkill: DECISION_MIN_SKILL,
         levelQuantiles: LEVEL_QUANTILES,
+        pricedMin: PRICED_MIN,
+        readMin: READ_MIN,
         formulasTried: FORMULAS.length,
         readVariants: ['curve (primary)', 'no-buckets', 'trusted', 'no-settle', 'uncensored'],
       },
@@ -1042,6 +1058,8 @@ export function buildReplay(raw: RawPulls) {
       p: seriesP.map((p) => round(p, 3)),
       market: series.map((r) => round(noisyOr(r.labP), 3)),
       level: seriesP.map((p) => levelFromProbability(p, bands)),
+      /** Best 7-day read across labs (formula (b) at 7 days): the replayable shape of the level's P7. */
+      lead7: series.map((r) => round(r.lead7, 3)),
     },
   };
 }

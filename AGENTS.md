@@ -45,6 +45,9 @@ Rules of the house:
   (`src/ui/fingerprint.ts`) reads the same selections. A panel that starts printing a new field adds it to
   `visibleContent` at its displayed precision; never hash raw floats or anything that moves with the clock,
   or every poll offers NEW DATA. A panel's status pill comes from `sourcePill`, never a literal "LIVE".
+- A number on `/backtest` comes from `data/backtest/*.json` or a domain constant, never typed
+  into markup, and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
+  only through `pnpm backtest` or `pnpm backtest:replay`.
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
   deploy by up to its TTL and a new render reading an old shape streams a blank page. The
   compact D1 snapshot must stay under 32 KiB (`MAX_SNAPSHOT_BYTES`); the worst-case test in

@@ -1,10 +1,19 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import type { Backtest, CrossingRow } from '../../scripts/backtest/build';
+import type { Replay } from '../../scripts/backtest/replay';
+import { pct } from '../../scripts/backtest/view';
 import BacktestAlarms from '../../src/components/BacktestAlarms.astro';
 import BacktestArchitecture from '../../src/components/BacktestArchitecture.astro';
 import BacktestBroadcasts from '../../src/components/BacktestBroadcasts.astro';
+import BacktestByLab from '../../src/components/BacktestByLab.astro';
+import BacktestFormulas from '../../src/components/BacktestFormulas.astro';
 import BacktestLimits from '../../src/components/BacktestLimits.astro';
+import BacktestReplay from '../../src/components/BacktestReplay.astro';
+import BacktestStealth from '../../src/components/BacktestStealth.astro';
+import { FORECAST_CONSTANTS, LEAD_INPUT_SKILL_7D } from '../../src/domain/forecast';
+import { LAUNCH_SETTLE_MS } from '../../src/domain/lab-status';
+import { REVEAL_STATS, REVEALS } from '../../src/domain/stealth';
 import BacktestNegatives from '../../src/components/BacktestNegatives.astro';
 import BacktestReleases from '../../src/components/BacktestReleases.astro';
 import BacktestReliability from '../../src/components/BacktestReliability.astro';
@@ -22,6 +31,7 @@ import broadcastsJson from '../../data/backtest/broadcasts.json';
 import architectureJson from '../../data/backtest/architecture.json';
 import negativesJson from '../../data/backtest/negative-results.json';
 import trapsJson from '../../data/backtest/timestamp-traps.json';
+import replayJson from '../../data/backtest/v3-replay.json';
 
 const events = releaseJson as unknown as Backtest['release-events'];
 const markets = marketsJson as unknown as Backtest['markets'];
@@ -29,6 +39,13 @@ const broadcasts = broadcastsJson as unknown as Backtest['broadcasts'];
 const architecture = architectureJson as unknown as Backtest['architecture'];
 const negatives = negativesJson as unknown as Backtest['negative-results'];
 const traps = trapsJson as unknown as Backtest['timestamp-traps'];
+const replay = replayJson as unknown as Replay;
+
+/** The page's signed numbers: a real minus sign, a plus on positives. */
+const signed = (n: number, digits: number) =>
+  n > 0 ? `+${n.toFixed(digits)}` : n < 0 ? `−${Math.abs(n).toFixed(digits)}` : '0';
+const signed2 = (n: number) => signed(n, 2);
+const signed3 = (n: number) => signed(n, 3);
 
 /** Text content with tags stripped and entities for quotes decoded, for copy assertions. */
 const text = (html: string) =>
@@ -99,24 +116,56 @@ describe('backtest components', async () => {
     );
   });
 
-  it('scores compare against the base rate and the reliability plots are labelled', async () => {
+  it("keeps wave 1's rung calibration, which v3 does not supersede, and drops its in-sample any-launch table", async () => {
     const html = await container.renderToString(BacktestScores, {
-      props: { calibration: markets.calibration, rungCalibration: markets.rungCalibration },
+      props: { rungCalibration: markets.rungCalibration },
     });
-    expect(html).toContain('max(market, base rate)');
-    expect(html).toContain('Brier 24h');
-    expect(html).toContain('Brier 72h');
-    expect(html).not.toContain('Brier 168h');
-    // The explanation of the negative skill is the measured coverage, not an assertion.
-    const c24 = markets.calibration[0].coverage;
-    expect(text(html)).toContain(`under 10% in ${c24.listedUnder10} of ${c24.listedHours} at 24h`);
-    expect(text(html)).not.toContain('most launches fall in those hours');
-    const plots = await container.renderToString(BacktestReliability, {
-      props: { horizons: markets.calibration },
+    for (const r of markets.rungCalibration) {
+      // Skill sits next to the row header so it stays on screen when the table scrolls on a phone.
+      expect(text(html)).toContain(
+        `${r.horizonH}h ${signed3(r.market.skill)} ${r.market.brier.toFixed(4)} ${r.rungs} ${pct(r.yesRate)}`,
+      );
+    }
+    expect(text(html)).toContain('wave-1 pull');
+    expect(text(html)).toContain('the markets beat their base rate');
+    // Superseded by the out-of-sample v3 replay: the in-sample "market max" and blended rows are gone.
+    expect(html).not.toContain('max(market, base rate)');
+    expect(html).not.toContain('edges ahead');
+  });
+
+  it('draws each reliability panel with its bin counts, a reference line and a table twin', async () => {
+    const d72 = replay.horizons.find((h) => h.horizonH === 72)!.formulas.find((f) => f.id === 'noisy-or')!;
+    const html = await container.renderToString(BacktestReliability, {
+      props: {
+        panels: [
+          {
+            title: 'v3 panel',
+            bins: d72.reliability,
+            unit: 'hours',
+            reference: { value: 0.631, label: 'held-out rate 63%' },
+            description: 'The v3 forecast.',
+          },
+          {
+            title: 'rung panel',
+            bins: markets.rungCalibration[1].reliability,
+            unit: 'rungs',
+            description: 'Polymarket rungs.',
+          },
+        ],
+      },
     });
-    const labels = plots.match(/aria-label="[^"]+"/g) ?? [];
+    const labels = html.match(/role="img" aria-label="[^"]+"/g) ?? [];
     expect(labels).toHaveLength(2);
-    expect(labels[0]).toContain('Reliability of the market forecast at 24 hours');
+    const total = d72.reliability.reduce((a, b) => a + b.n, 0);
+    expect(labels[0]).toContain(`The v3 forecast. Over ${total} hours in ${d72.reliability.length} bins.`);
+    // The largest miss is named from the data: the 90–100% bin at 72h.
+    const top = d72.reliability[d72.reliability.length - 1];
+    expect(labels[0]).toContain(
+      `${top.n} hours with a mean forecast of ${pct(top.meanForecast)} came true ${pct(top.observed)}`,
+    );
+    for (const b of d72.reliability) expect(html).toContain(`>${b.n}</text>`);
+    expect(html).toContain('held-out rate 63%');
+    expect((html.match(/<caption[\s>]/g) ?? []).length).toBe(2);
   });
 
   it('signal tables carry their evidence links', async () => {
@@ -153,13 +202,23 @@ describe('backtest components', async () => {
         medianAvailabilityLagH: 0.2,
         early90: 5,
         early90Prompted: 4,
-        marketSkill72: -0.49,
+        marketSkill72: -0.309,
+        marketSkill72Ci: [-0.827, 0.056],
+        heldOut: 25,
+        admitDays: 14,
       },
     });
     expect(html).toContain("WHAT THIS CAN'T DO");
     expect(text(html)).toContain('12 minutes after its announcement');
-    expect(text(html)).toContain('score worse than');
+    expect(text(html)).toContain('scored −0.309 (95% interval −0.83 to +0.06)');
+    expect(text(html)).toContain('worse than the guess');
     expect(text(html)).toContain('Of 5 launches');
+    expect(text(html)).toContain('25 held-out launches in the replay, and 23 hand-timed launches');
+    expect(text(html)).toContain("can't rebuild the level itself");
+    expect(text(html)).toContain('only from 14 days before its deadline');
+    // The launched-family window comes from the domain constant, not the copy.
+    expect(text(html)).toContain(`drops out for ${LAUNCH_SETTLE_MS / 86_400_000} days`);
+    expect(html).toContain('href="#results"');
     // v3: launches can only remove a family from P7, and the level was never tested.
     expect(text(html)).not.toContain('Recent launches raise it');
     expect(text(html)).toContain('A launch never raises it');
@@ -196,10 +255,11 @@ describe('backtest page', async () => {
   it('renders every section, links home and cites the pull time', async () => {
     const html = await container.renderToString(BacktestPage);
     for (const id of [
+      'replay',
+      'results',
       'leads',
       'splits',
       'false-alarms',
-      'calibration',
       'stealth',
       'broadcasts',
       'architecture',
@@ -213,7 +273,218 @@ describe('backtest page', async () => {
     expect(html).toContain('<title>Backtest · whenmodel</title>');
     expect(html).toContain('href="/"');
     expect(html).toContain(events.meta.pulledAt.slice(0, 10));
-    expect((html.match(/role="img"/g) ?? []).length).toBe(4);
+    // Waterfall and replay (wide and narrow layouts each), and the two reliability panels.
+    expect((html.match(/role="img"/g) ?? []).length).toBe(6);
+    // The stealth placeholder is gone; the anchors other pages link to survive.
+    expect(html).not.toContain('will be published here');
+    for (const anchor of ['id="trap-her"', 'id="seven-day"', 'id="negative-results"'])
+      expect(html).toContain(anchor);
+  });
+
+  it('opens on the question, the method and the headline results, all from the replay and the shipped constants', async () => {
+    const html = text(await container.renderToString(BacktestPage));
+    const hero = html.slice(html.indexOf('BACKTEST'), html.indexOf("WHAT THIS CAN'T DO"));
+    expect(hero).toContain('Can public signals see a frontier model launch coming?');
+    expect(hero).toContain(
+      `fitted on the first ${FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next ${FORECAST_CONSTANTS.testedOn.events}`,
+    );
+    expect(hero).toContain('1 Apr 2026 to 26 Sep 2026');
+    expect(hero).toContain(`Plus ${events.releases.length} launches timed by hand`);
+    const d = replay.decision;
+    expect(hero).toContain(
+      `Best 72h skill ${signed3(d.skill)} needed ${signed2(replay.meta.protocol.decisionMinSkill)}`,
+    );
+    expect(hero).toContain(`95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])}`);
+    expect(hero).toContain(`${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test}`);
+    expect(hero).toContain(`Level's input, 7d ${signed2(LEAD_INPUT_SKILL_7D.skill)}`);
+    const [first, second] = [...replay.byLab].sort((a, b) => b.skill - a.skill);
+    expect(hero).toContain(`${signed2(first.skill)} · ${signed2(second.skill)}`);
+    expect(hero).toContain(
+      'No formula beat the base rate at 72 hours, so DROPCON stays a hand-weighted lead score, not a probability.',
+    );
+    // Named markets work for the two labs the replay says they do, and the claim names them from the data.
+    expect(hero).toMatch(
+      /Named markets helped for two labs: Anthropic and OpenAI scored \+0\.48 and \+0\.30/,
+    );
+    expect(hero).toContain(
+      `${replay.pricedEvents.test - replay.pricedEvents.testPriced} of ${replay.pricedEvents.test}, had no market at 50% or more`,
+    );
+  });
+
+  it("labels wave-1 sections and keeps v3's replay limits in the results", async () => {
+    const html = text(await container.renderToString(BacktestPage));
+    expect(html).toContain(`WAVE 1 · ${events.releases.length} LAUNCHES TIMED BY HAND`);
+    expect(html).toContain("Wave 1 · Polymarket's own calibration");
+    expect(html).toContain('V3 REPLAY · HELD OUT 16 Jul 2026 – 26 Sep 2026');
+    const head = replay.horizons.find((h) => h.horizonH === 72)!;
+    expect(html).toContain(
+      `${head.test.hours.toLocaleString('en-US')} held-out hours hold only ${head.test.events} launches`,
+    );
+    expect(html).toContain(
+      `All ${replay.survivorship.curatedStillListed} of ${replay.survivorship.curatedFrontierLaunches} hand-curated frontier launches`,
+    );
+    expect(html).toContain(`in the last ${replay.meta.protocol.admitDays} days are censored low`);
+    expect(html).toContain('No historical bid or ask.');
+    expect(html).toContain(
+      `a median ${replay.settlementLag.medianH} hours (up to ${replay.settlementLag.maxH} hours, over ${replay.settlementLag.events} markets)`,
+    );
+    for (const l of replay.meta.limitations) expect(html).toContain(l.slice(0, 40));
+  });
+});
+
+describe('v3 replay components', async () => {
+  const container = await AstroContainer.create();
+  const h72 = FORECAST_CONSTANTS.horizons.find((h) => h.horizonHours === 72)!;
+  const h7d = FORECAST_CONSTANTS.horizons.find((h) => h.horizonHours === 168)!;
+
+  it('draws the replay as an accessible SVG from the committed series, in both layouts', async () => {
+    const html = await container.renderToString(BacktestReplay, { props: { replay } });
+    const labels = [...html.matchAll(/<svg viewBox="[^"]+" role="img" aria-label="([^"]+)"/g)].map(
+      (m) => m[1],
+    );
+    expect(labels).toHaveLength(2);
+    expect(labels[0]).toBe(labels[1]);
+    const label = text(labels[0]);
+    expect(label).toContain('Hourly replay from 2026-04-01 to 2026-09-26, drawn every 3 hours');
+    expect(label).toContain(
+      `(${FORECAST_CONSTANTS.fittedOn.events} launches, a 72-hour rate of ${pct(h72.baseRate)})`,
+    );
+    expect(label).toContain(
+      `(${FORECAST_CONSTANTS.testedOn.events} launches, a rate of ${pct(h72.test.rate)})`,
+    );
+    expect(label).toContain(
+      `Only ${replay.pricedEvents.testPriced} of the ${replay.pricedEvents.test} held-out launches`,
+    );
+    // Both series are drawn once, in data units, and reused by each layout.
+    const paths = [...html.matchAll(/<path id="bt-replay-(\w+)" d="([^"]+)"/g)];
+    expect(paths.map((p) => p[1])).toEqual(['p72', 'lead7']);
+    for (const [, id, d] of paths) {
+      const values = id === 'p72' ? replay.series.p : replay.series.lead7;
+      expect((d.match(/l1 /g) ?? []).length).toBe(values.length - 1);
+      expect(d.startsWith(`M0 1000V${Math.round(1000 - values[0] * 1000)}`)).toBe(true);
+    }
+    expect((html.match(/href="#bt-replay-p72"/g) ?? []).length).toBe(4);
+    // Base-rate lines come from the shipped constants.
+    expect(text(html)).toContain(`fit rate ${pct(h72.baseRate)}`);
+    expect(text(html)).toContain(`held out ${pct(h72.test.rate)}`);
+    expect(text(html)).toContain(`fit rate ${pct(h7d.baseRate)}`);
+    expect(text(html)).toContain(`held out ${pct(h7d.test.rate)}`);
+    // One marker per frontier launch in each layout, priced ones filled.
+    expect((html.match(/<g class="mark"/g) ?? []).length).toBe(2 * replay.releases.markers.length);
+    const priced = replay.pricedEvents.events.filter((e) => e.priced).length;
+    expect((html.match(/class="launch priced"/g) ?? []).length).toBe(2 * priced + 1);
+  });
+
+  it('names the longest false alarm from the series and has a weekly table twin', async () => {
+    const html = await container.renderToString(BacktestReplay, { props: { replay } });
+    // Grok 4.7's day buckets: the forecast sat at 90%+ from 12 to 16 Sep and nothing listed until the 21st.
+    expect(text(html)).toContain(
+      'The longest false alarm: the forecast held 90% or more from 12 Sep to 16 Sep',
+    );
+    expect(text(html)).toContain('≥90% for 4.6 days, nothing listed');
+    const weeks = Math.ceil(replay.series.p.length / 56);
+    const table = html.slice(html.indexOf('<details class="weeks"'));
+    expect((table.match(/<th scope="row"/g) ?? []).length).toBe(weeks);
+    expect(text(table)).toContain('▲ claude-opus-5.5');
+    expect(text(table)).toContain('fit / held out');
+  });
+
+  it('marks a launch as unpriced when its lab never priced it, and survives a replay without a false alarm', async () => {
+    const quiet = {
+      ...replay,
+      series: {
+        ...replay.series,
+        p: replay.series.p.map(() => 0.3),
+        lead7: replay.series.lead7.map(() => 0.2),
+      },
+    };
+    const html = await container.renderToString(BacktestReplay, { props: { replay: quiet } });
+    expect(html).not.toContain('class="alarm"');
+    expect(text(html)).not.toContain('longest false alarm');
+    const qwen = replay.pricedEvents.events.find((e) => !e.priced)!;
+    expect(text(html)).toContain(
+      `Its own lab's 72-hour read peaked at ${pct(qwen.maxLabP72)} in the 72 hours before it listed (no market priced it)`,
+    );
+  });
+
+  it('scores formulas (a)–(e) at every horizon with skill, interval and the sanity flag, and states the rule', async () => {
+    const html = await container.renderToString(BacktestFormulas, {
+      props: {
+        horizons: replay.horizons,
+        decision: replay.decision,
+        protocol: replay.meta.protocol,
+        headlineH: 72,
+      },
+    });
+    const t = text(html);
+    for (const h of replay.horizons)
+      for (const f of h.formulas.filter((x) => x.id !== 'base')) {
+        expect(t).toContain(
+          `${signed3(f.skill)} ${signed2(f.skillCi95[0])} to ${signed2(f.skillCi95[1])} ${f.sanity.sane ? 'sane' : 'fails sanity'}`,
+        );
+      }
+    // The 72h column decides and comes first.
+    expect(t.indexOf('Next 72h · decides')).toBeLessThan(t.indexOf('Next 24h'));
+    const d = replay.decision;
+    expect(t).toContain(
+      `by more than ${signed2(replay.meta.protocol.decisionMinSkill)} with sane reliability`,
+    );
+    expect(t).toContain(
+      `${signed3(d.skill)} (95% interval ${signed3(d.skillCi95[0])} to ${signed3(d.skillCi95[1])}), and its worst bin was off by ${d.worstBinGap.toFixed(2)}`,
+    );
+    expect(t).toContain('Verdict: keep the hand-weighted lead score');
+    expect(t).toContain(
+      `(d) scored ${d.rollingSkill.map(signed3).join(', ')} across the 4 folds: the sign flips`,
+    );
+    const head = replay.horizons.find((h) => h.horizonH === 72)!;
+    for (const s of head.sensitivity) expect(t).toContain(`${s.variant}`);
+    const nb = head.sensitivity.find((s) => s.variant === 'no-buckets')!.formulas['noisy-or'].skill;
+    expect(t).toContain(`moves it by ${signed2(nb - d.skill)}`);
+    expect(t).toContain('none passes the sanity check');
+  });
+
+  it('ranks labs by their own skill with launch counts, and shows the levels did not rank outcomes', async () => {
+    const html = await container.renderToString(BacktestByLab, {
+      props: {
+        byLab: replay.byLab,
+        priced: replay.pricedEvents,
+        pricedMin: replay.meta.protocol.pricedMin,
+        readMin: replay.meta.protocol.readMin,
+        levels: replay.levels,
+        split: replay.meta.split.at,
+        headlineH: 72,
+      },
+    });
+    const t = text(html);
+    const names = [...html.matchAll(/<th scope="row"[^>]*>([^<]+)<\/th>/g)]
+      .map((m) => m[1])
+      .slice(0, replay.byLab.length);
+    expect(names.slice(0, 2)).toEqual(['Anthropic', 'OpenAI']);
+    for (const l of replay.byLab) expect(t).toContain(signed3(l.skill));
+    expect(t).toContain(`(${replay.pricedEvents.testPriced} of ${replay.pricedEvents.test} overall)`);
+    expect(t).toContain(`read above ${pct(replay.meta.protocol.readMin)}`);
+    const counts = replay.byLab.map((l) => l.testEvents);
+    expect(t).toContain(`With ${Math.min(...counts)} to ${Math.max(...counts)} launches per lab`);
+    const [l1] = replay.levels.test;
+    expect(t).toContain(
+      `did not rise with the level: level 1 hours were followed by a launch ${pct(l1.observed)} of the time`,
+    );
+  });
+
+  it('reports the stealth track record from REVEAL_STATS and lists every reveal', async () => {
+    const html = await container.renderToString(BacktestStealth);
+    const t = text(html);
+    expect(t).toContain(`Revealed slots ${REVEAL_STATS.all.n}`);
+    expect(t).toContain(`Median days in stealth ${REVEAL_STATS.all.medianDays.toFixed(1)}`);
+    expect(t).toContain(
+      `Frontier-lab slots ${REVEAL_STATS.frontier.n} median ${REVEAL_STATS.frontier.medianDays.toFixed(1)} days`,
+    );
+    expect((html.match(/<th scope="row"/g) ?? []).length).toBe(REVEALS.length);
+    expect((html.match(/class="tag frontier"/g) ?? []).length).toBe(REVEAL_STATS.frontier.n);
+    for (const r of REVEALS.filter((x) => !x.verified))
+      expect(t).toContain(`${r.slot} is shown but left out`);
+    expect(t).toContain('unverified, left out of the medians');
+    for (const r of REVEALS) expect(html).toContain(`href="${r.source}"`);
   });
 });
 

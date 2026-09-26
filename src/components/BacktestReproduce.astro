@@ -8,7 +8,7 @@ interface Props {
 }
 const { pulledAt, example } = Astro.props;
 const REPO = 'https://github.com/jasonm4130/when-model';
-const FILES = ['release-events', 'markets', 'broadcasts', 'architecture', 'negative-results', 'timestamp-traps'];
+const FILES = ['v3-replay', 'release-events', 'markets', 'broadcasts', 'architecture', 'negative-results', 'timestamp-traps'];
 const epoch = (iso: string) => Math.floor(Date.parse(iso) / 1000);
 const curls = example
   ? [
@@ -30,8 +30,9 @@ const curls = example
     <p>Everything on this page is regenerated from raw pulls committed to the repo. The rebuild is deterministic: run it twice and <code>git diff</code> stays empty.</p>
     <pre tabindex="0" aria-label="Rebuild commands"><code>pnpm install
 pnpm backtest            # rebuild data/backtest/*.json from data/backtest/raw
+pnpm backtest:replay     # rerun the v3 replay into data/backtest/v3-replay.json
 pnpm backtest --refresh  # re-pull Gamma, CLOB, HN and OpenRouter first</code></pre>
-    <p class="muted small">Raw pulls last refreshed {pulledAt.replace('T', ' ').slice(0, 16)}Z. Curated inputs (release ids, sources, the tables that are not recomputed) live in <a href={`${REPO}/blob/main/scripts/backtest/curated.ts`} rel="noopener" target="_blank">scripts/backtest/curated.ts</a>.</p>
+    <p class="muted small">Raw pulls last refreshed {pulledAt.replace('T', ' ').slice(0, 16)}Z. Curated inputs (release ids, sources, the tables that are not recomputed) live in <a href={`${REPO}/blob/main/scripts/backtest/curated.ts`} rel="noopener" target="_blank">scripts/backtest/curated.ts</a>; the replay, its pre-registered rule and every constant it fits are in <a href={`${REPO}/blob/main/scripts/backtest/replay.ts`} rel="noopener" target="_blank">scripts/backtest/replay.ts</a>.</p>
     <ul class="files">
       {FILES.map((f) => (
         <li><a href={`${REPO}/blob/main/data/backtest/${f}.json`} rel="noopener" target="_blank">data/backtest/{f}.json</a></li>
