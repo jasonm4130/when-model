@@ -1,0 +1,69 @@
+/* Self-hosted VT323 and Press Start 2P. Loaded after global.css (see Layout.astro) so the
+   metric-matched fallback faces below can re-point --font-head/--font-mono without editing
+   global.css, which owns those tokens' original definitions.
+
+   Subsets: Latin (the same U+0000-00FF,U+2000-206F,… range Google Fonts serves as "latin") plus
+   the box-drawing/geometric glyphs the dashboard actually renders (▲ ▼ ▶ ≤ ∞ ♥) that each font
+   file contains — see scratchpad/fontwork/check_glyphs.py for the coverage check. Neither font
+   contains most of the other glyph spans the UI uses (◈ ◆ ▸ ✕ ▌ ▐ ◉ ◔ ▣ ◎ ▦ ▤ ◍ ⚠ ◌ ● ○ ✱ ❖ ☾ ◭,
+   and VT323 additionally lacks ▲ ▼ ▶ ♥); those already fall back to the next family in the stack
+   today (via Google Fonts too, since it's the same upstream glyph set) and continue to do so. */
+
+@font-face {
+  font-family: 'VT323';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/vt323.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('/fonts/press-start-2p.woff2') format('woff2');
+}
+
+/* Metric-matched local fallbacks: same ascent/descent/line-gap as the real webfont (as a
+   fraction of font-size, per the CSS Fonts 4 ascent-override/descent-override algorithm) and
+   glyph widths scaled by size-adjust to match each font's average character advance. This is
+   what actually kills the CLS, not font-display alone: font-display:block only hides text for
+   up to ~3s while the (preloaded, ~4-6KB) webfont downloads, and the box for that invisible
+   text is sized against whichever family resolves next in the stack — these local() faces
+   resolve instantly, so the layout is correct from first paint and never reflows when the real
+   webfont swaps in. Ratios measured against /System/Library/Fonts/SFNSMono.ttf (what
+   ui-monospace/Menlo resolve to): unitsPerEm 2048, xAvgCharWidth 1266 (61.8% of em). */
+/* local() matches a font's full name or PostScript name, not reliably its bare family name —
+   verified: on this Chrome, local('Menlo') resolves to status "error" while local('Menlo
+   Regular')/local('Menlo-Regular') both resolve "loaded" (scratchpad/fontwork/cls-fontcheck.mjs).
+   Every candidate below lists both forms so the match doesn't silently fail. */
+@font-face {
+  font-family: 'VT323 Fallback';
+  src:
+    local('Menlo Regular'), local('Menlo-Regular'), local('Menlo'), local('Consolas'),
+    local('SFMono-Regular'), local('SF Mono'), local('Liberation Mono Regular'), local('Liberation Mono'),
+    local('DejaVu Sans Mono');
+  ascent-override: 80%;
+  descent-override: 20%;
+  line-gap-override: 0%;
+  size-adjust: 64.72%;
+}
+
+@font-face {
+  font-family: 'Press Start 2P Fallback';
+  src:
+    local('Menlo Regular'), local('Menlo-Regular'), local('Menlo'), local('Consolas'),
+    local('SFMono-Regular'), local('SF Mono'), local('Liberation Mono Regular'), local('Liberation Mono'),
+    local('DejaVu Sans Mono');
+  ascent-override: 100%;
+  descent-override: 0%;
+  line-gap-override: 0%;
+  size-adjust: 161.79%;
+}
+
+:root {
+  --font-head:
+    'Press Start 2P', 'Press Start 2P Fallback', 'VT323', 'VT323 Fallback', ui-monospace, monospace;
+  --font-mono: 'VT323', 'VT323 Fallback', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
