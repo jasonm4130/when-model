@@ -229,7 +229,8 @@ const rx = (source: string) => new RegExp(source, 'i');
 
 const NO_RELEASE = rx(String.raw`\b(?:no\b.*?\breleased?|not\s+(?:be\s+)?released)\s+by\s+${DATE}`);
 const BETWEEN = rx(String.raw`\bbetween\s+${DATE}\s+and\s+${DATE}`);
-const RANGE = rx(String.raw`${DATE}\s*[–—-]\s*(?:${MONTH}\s+)?${DAY}${YEAR}`);
+/** The end day must not be the hour of a clock time: "September 30, 2026 - 11:59 PM" is no range. */
+const RANGE = rx(String.raw`${DATE}\s*[–—-]\s*(?:${MONTH}\s+)?${DAY}${YEAR}(?![\d:])`);
 const ON_OR_BEFORE = rx(String.raw`\bon\s+or\s+(?:prior\s+to|before)\s+${DATE}`);
 const BEFORE = rx(String.raw`\b(?:prior\s+to|before)\s+${DATE}`);
 const ON = rx(String.raw`\bon\s+${DATE}`);
@@ -324,8 +325,11 @@ export function parseDeadline(
     return span && { kind: 'window', start: startOfDay(span[0]), deadline: endOfDay(span[1]) };
   }
 
+  // Like "before": an open-ended bucket among date buckets, a cumulative rung on a ladder. Read as a
+  // bucket, a ladder's overlapping rungs would have their bids summed into the floor.
   const onOrBefore = single(ON_OR_BEFORE);
-  if (onOrBefore) return onOrBefore.day && { kind: 'window', deadline: endOfDay(onOrBefore.day) };
+  if (onOrBefore)
+    return onOrBefore.day && { kind: bucket ? 'window' : 'by', deadline: endOfDay(onOrBefore.day) };
 
   const before = single(BEFORE);
   if (before)

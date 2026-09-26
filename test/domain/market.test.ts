@@ -307,6 +307,23 @@ describe('parseDeadline', () => {
     expect(read('Sep 28 - Oct 4', { bucket: true, near })?.deadline).toBe('2026-10-05T03:59:59.000Z');
   });
 
+  it('never reads a clock time as the end of a range', () => {
+    for (const text of [
+      'Will GPT-6 be released by September 30, 2026 - 11:59 PM ET?',
+      'Will GPT-6 be released by October 1, 2026 - 11:59 PM ET?',
+    ]) {
+      expect(read(text, { near })).toMatchObject({ kind: 'by', start: undefined });
+    }
+  });
+
+  it('reads "on or before" as a cumulative rung outside bucket events', () => {
+    expect(read('Will GPT-6 be released on or before October 1, 2026?')).toEqual({
+      kind: 'by',
+      start: undefined,
+      deadline: '2026-10-02T03:59:59.000Z',
+    });
+  });
+
   it('reads "No release by" as the complement', () => {
     expect(read('No release by October 15', { near })).toMatchObject({
       kind: 'no-release',
@@ -561,6 +578,29 @@ describe('familyCurves', () => {
     const [bucketsOnly] = familyCurves([buckets], now);
     expect(readCurve(bucketsOnly, now + 7 * DAY, now)?.p).toBeCloseTo(0.3, 9);
     expect(readCurve(bucketsOnly, now + 12 * 3_600_000, now)).toMatchObject({ p: 0, source: 'buckets' });
+  });
+
+  it('keeps an "on or before" ladder cumulative instead of summing its rungs as buckets', () => {
+    const rung = (day: number, p: number) => ({
+      question: `Will GPT-6 be released on or before October ${day}, 2026?`,
+      groupItemTitle: `October ${day}`,
+      outcomes: '["Yes","No"]',
+      outcomePrices: `["${p}","${1 - p}"]`,
+      bestBid: p - 0.01,
+      bestAsk: p + 0.01,
+      endDate: `2026-10-${day}T23:59:00Z`,
+    });
+    const ladder = toMarket({
+      slug: 'gpt-6',
+      title: 'GPT-6 released by...?',
+      markets: [rung(1, 0.3), rung(5, 0.6), rung(20, 0.7)],
+    })!;
+    const now = at('2026-09-28T00:00:00Z');
+    const [curve] = familyCurves([ladder], now);
+    expect(curve.floors).toEqual([]);
+    expect(curve.points.map((p) => p.p)).toEqual([0.3, 0.6, 0.7]);
+    // Summed as buckets, the bids would have claimed a certain release by October 20.
+    expect(readCurve(curve, at('2026-10-21T12:00:00Z'), now)).toMatchObject({ p: 0.7, lowerBound: true });
   });
 
   it('skips closed, past, dateless and unpriceable outcomes, and counts thin ones', () => {
