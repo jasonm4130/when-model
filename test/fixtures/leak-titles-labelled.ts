@@ -10,6 +10,10 @@
  * `created` (the first listing whose id, name or `hugging_face_id` contains the leaked id). `listed` means a listing already
  * existed, so `unlistedLeaks` drops it; `launchedAfterDays` is set when a listing followed within
  * 14 days; `pending` when 14 days have not yet passed.
+ *
+ * LEAK_STORIES: the same outcomes with one row per story. An HN post can carry a TestingCatalog
+ * headline ('First outputs from GPT-6 "Astra"' ran on both), and one leak must count once in the
+ * track record; the earliest sighting is kept.
  */
 export const LEAK_TITLES_LABELLED: readonly (readonly [title: string, leak: boolean])[] = [
   ["Testing Claude Sonnet 5's agentic claims", false],
@@ -230,3 +234,14 @@ export const LEAK_OUTCOMES: readonly LeakOutcome[] = [
     pending: true,
   },
 ];
+
+/** "2026-08-29T14:47Z" → epoch ms. */
+const minuteMs = (iso: string) => Date.parse(iso.replace(/Z$/, ':00Z'));
+
+export const LEAK_STORIES: readonly LeakOutcome[] = [
+  ...new Map(
+    [...LEAK_OUTCOMES]
+      .sort((a, b) => minuteMs(b.publishedAt) - minuteMs(a.publishedAt))
+      .map((o) => [o.title, o]),
+  ).values(),
+].sort((a, b) => minuteMs(a.publishedAt) - minuteMs(b.publishedAt));

@@ -165,7 +165,7 @@ describe('components', async () => {
     expect(html).toContain('EARLY WARNINGS');
     expect(html).toContain('NOT SCORED');
     expect(html).toContain(d.earlyWarnings.stealth.track.summary);
-    expect(html).toContain('11 of 14 resolved leaks');
+    expect(html).toContain('10 of 13 resolved leaks');
     expect(html).toContain(d.earlyWarnings.broadcasts.track.summary);
     expect(html).toContain(d.earlyWarnings.architectures.track.summary);
     expect(html).toContain('LANDED');

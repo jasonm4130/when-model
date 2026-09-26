@@ -31,22 +31,23 @@ export const STEALTH_TRACK: TrackRecord = {
 };
 
 /**
- * Leak Wire, from the `classifyLeak` comment in src/domain/feed.ts and the labelled outcomes in
- * test/fixtures/leak-titles-labelled.ts (test/domain/early-warnings.test.ts recomputes it): of 14
- * resolved, unlisted leaks, 11 were followed by an OpenRouter listing within 14 days, median lead
- * 1.93 days. In-sample: the cues were written against these titles.
+ * Leak Wire, from the `classifyLeak` comment in src/domain/feed.ts and the labelled stories in
+ * test/fixtures/leak-titles-labelled.ts (`LEAK_STORIES`; test/domain/early-warnings.test.ts
+ * recomputes it): of 13 resolved, unlisted leaks, 10 were followed by an OpenRouter listing within
+ * 14 days, median lead 1.625 days. One story per leak: the GPT-6 "Astra" sighting ran on
+ * TestingCatalog and again on HN, and counts once. In-sample: the cues were written against these titles.
  */
 export const LEAK_TRACK = {
-  n: 14,
-  launched: 11,
-  precision: 11 / 14,
-  medianLeadDays: 1.93,
+  n: 13,
+  launched: 10,
+  precision: 10 / 13,
+  medianLeadDays: 1.625,
   windowDays: 14,
 } as const;
 
 const LEAK_TRACK_RECORD: TrackRecord = {
   n: LEAK_TRACK.n,
-  summary: `${LEAK_TRACK.launched} of ${LEAK_TRACK.n} resolved leaks listed on OpenRouter within ${LEAK_TRACK.windowDays} days (${Math.round(LEAK_TRACK.precision * 100)}%), a median ${LEAK_TRACK.medianLeadDays} days after the leak; in-sample.`,
+  summary: `${LEAK_TRACK.launched} of ${LEAK_TRACK.n} resolved leaks listed on OpenRouter within ${LEAK_TRACK.windowDays} days (${Math.round(LEAK_TRACK.precision * 100)}%), a median ${round1(LEAK_TRACK.medianLeadDays)} days after the leak; in-sample.`,
 };
 
 /**

@@ -14,7 +14,7 @@ import type { LeakItem } from '../../src/domain/feed';
 import type { BroadcastCandidate, PendingArchitecture } from '../../src/domain/lead';
 import { EMPTY_LEDGER, ledgerFromRows } from '../../src/domain/ledger';
 import { REVEAL_STATS } from '../../src/domain/stealth';
-import { LEAK_OUTCOMES } from '../fixtures/leak-titles-labelled';
+import { LEAK_STORIES } from '../fixtures/leak-titles-labelled';
 
 const NOW = Date.parse('2026-09-26T03:00:00Z');
 const median = (xs: number[]) => {
@@ -71,10 +71,14 @@ const arch = (
 
 describe('track records', () => {
   it('pins the leak record to the labelled outcomes it was measured on', () => {
-    const resolved = LEAK_OUTCOMES.filter((o) => !o.listed && !o.pending);
+    const resolved = LEAK_STORIES.filter((o) => !o.listed && !o.pending);
     const launched = resolved.filter((o) => o.launchedAfterDays !== undefined);
     expect([resolved.length, launched.length]).toEqual([LEAK_TRACK.n, LEAK_TRACK.launched]);
-    expect(LEAK_TRACK.precision).toBeCloseTo(11 / 14, 10);
+    expect([LEAK_TRACK.n, LEAK_TRACK.launched]).toEqual([13, 10]);
+    expect(LEAK_TRACK.precision).toBeCloseTo(10 / 13, 10);
+    // The GPT-6 "Astra" story counts once, from TestingCatalog, where it ran first.
+    const astra = LEAK_STORIES.filter((o) => o.title.includes('"Astra"'));
+    expect(astra.map((o) => o.source)).toEqual(['testingcatalog']);
     expect(median(launched.map((o) => o.launchedAfterDays!))).toBe(LEAK_TRACK.medianLeadDays);
   });
 
@@ -152,7 +156,7 @@ describe('buildEarlyWarnings', () => {
       { source: 'testingcatalog', ok: true },
     ]);
     expect(w.leaks.track.summary).toMatch(
-      /^11 of 14 resolved leaks listed on OpenRouter within 14 days \(79%\)/,
+      /^10 of 13 resolved leaks listed on OpenRouter within 14 days \(77%\), a median 1\.6 days after the leak/,
     );
   });
 

@@ -321,8 +321,9 @@ export interface LeakClass {
  * Measured 2026-09-26 over 90 days of HN (Algolia `search_by_date`, 0 points and up) and the 100
  * items in TestingCatalog's RSS; test/fixtures/leak-titles-labelled.ts holds the data. It flagged
  * 18 titles, all real pre-release reports (3 unversioned ones missed). 3 were already listed; of
- * the 14 other resolved ones, 11 were followed by an OpenRouter listing within 14 days (0.79;
- * HN 8/10, TestingCatalog 3/4), lead 0.2 to 10.9 days, median 1.9. The misses are Gemini 4 (twice)
+ * the 14 other resolved ones, 11 were followed by an OpenRouter listing within 14 days (HN 8/10,
+ * TestingCatalog 3/4), lead 0.2 to 10.9 days. One HN post repeats a TestingCatalog headline, so per
+ * distinct story it is 10 of 13 (0.77), median 1.6 days (`LEAK_TRACK`). The misses are Gemini 4 (twice)
  * and a delayed Gemini 3.5 Pro. Qwen3.8-Flash-Next listed 1.3 days on as `qwen/qwen3.8-flash`,
  * found only through its `hugging_face_id`, so pass that as a listing alias. These numbers are
  * in-sample: the cues were written against them.

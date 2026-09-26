@@ -18,7 +18,7 @@ import {
 } from '../../src/domain/feed';
 import { DEEPMIND_RSS_LABELLED } from '../fixtures/deepmind-rss-labelled';
 import { HN_TITLES_LABELLED } from '../fixtures/hn-titles-labelled';
-import { LEAK_OUTCOMES, LEAK_TITLES_LABELLED } from '../fixtures/leak-titles-labelled';
+import { LEAK_OUTCOMES, LEAK_STORIES, LEAK_TITLES_LABELLED } from '../fixtures/leak-titles-labelled';
 import { OPENAI_RSS_LABELLED } from '../fixtures/openai-rss-labelled';
 
 /** Precision and recall of `flag` against hand labels, rounded to three places. */
@@ -377,6 +377,11 @@ describe('classifyLeak', () => {
     expect(leads[0]).toBe(0.23);
     expect(leads.at(-1)).toBe(10.9);
     expect(leads[5]).toBe(1.93);
+    // Per story the HN repost of TestingCatalog's GPT-6 "Astra" sighting counts once: 10 of 13.
+    const stories = LEAK_STORIES.filter((o) => !o.listed && !o.pending);
+    expect([stories.length, stories.filter((o) => o.launchedAfterDays !== undefined).length]).toEqual([
+      13, 10,
+    ]);
     // The listing that resolved each leak is one `isListed` recognises, so the Leak Wire drops it.
     for (const o of launched) {
       const listing = { id: o.launchedAs!, name: '', aliases: o.launchedAlias ? [o.launchedAlias] : [] };
