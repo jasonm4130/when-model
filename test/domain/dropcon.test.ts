@@ -114,6 +114,25 @@ describe('computeDropcon', () => {
     expect(d.headline).toBe('Polymarket prices 90% that GPT-6 ships by Oct 31, but only 5% within 7 days');
   });
 
+  it('names both families when the 30-day and 7-day reads come from different ones', () => {
+    const haiku: MarketDriver = { ...sonnet, family: 'Next Claude Haiku', p: 0.92, quote: undefined };
+    const muse: MarketDriver = {
+      ...gpt6,
+      labId: 'meta',
+      lab: 'Meta',
+      family: 'Next Muse Spark (1.4+)',
+      p: 0.31,
+    };
+    const d = computeDropcon({ ...quiet, p7: 0.31, p30: 0.92, top7: muse, top30: haiku });
+    expect(d.provenance[1].label).toBe(
+      'Next Claude Haiku (Anthropic) · 92% within 30 days, 61% above the best 7-day read (Next Muse Spark (1.4+), Meta)',
+    );
+    const same = computeDropcon({ ...quiet, p7: 0.85, p30: 0.9, top7: sonnet, top30: { ...sonnet, p: 0.9 } });
+    expect(same.provenance[1].label).toBe(
+      'Next Claude Sonnet (Anthropic) · 90% within 30 days, 5% beyond the 7-day term',
+    );
+  });
+
   it('adds up: the provenance rows sum to the score, each rounded on its own', () => {
     const d = computeDropcon({ ...quiet, p7: 0.666, p30: 0.9, p7DayAgo: 0.5, top7: sonnet, top30: sonnet });
     const rows = d.provenance.map((r) => r.points);

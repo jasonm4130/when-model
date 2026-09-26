@@ -218,7 +218,12 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
       term: 'market-30d',
       tag: 'LEAD',
       label: i.top30
-        ? `${i.top30.family} (${i.top30.lab}) · ${pct(p30)} within 30 days, ${pct(increment)} beyond the 7-day term`
+        ? `${i.top30.family} (${i.top30.lab}) · ${pct(p30)} within 30 days, ${
+            i.top7 && (i.top7.labId !== i.top30.labId || i.top7.family !== i.top30.family)
+              ? // P7 and P30 are each the best across labs, so they can come from different families.
+                `${pct(increment)} above the best 7-day read (${i.top7.family}, ${i.top7.lab})`
+              : `${pct(increment)} beyond the 7-day term`
+          }`
         : 'No trusted frontier market read within 30 days',
       detail: `${WEIGHTS.market30dIncrement} × max(0, ${p30.toFixed(2)} − ${p7.toFixed(2)})`,
       points: Math.round(WEIGHTS.market30dIncrement * increment),
