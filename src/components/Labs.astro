@@ -1,40 +1,75 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
+import type { LabOddsRead } from '../domain/lab-status';
 import { daysLabel, monthInitials, shortDate } from '../ui/format';
-import { readNote, readValue } from '../ui/odds';
-interface Props { d: Dashboard }
-const { d } = Astro.props;
+import { histogramLabel, readBracket, readNote, readTrust, readValue } from '../ui/odds';
+import { leadFlags } from '../ui/signals';
+interface Props { d: Dashboard; now?: Date }
+const { d, now = new Date() } = Astro.props;
 const statusColor: Record<string, string> = { SHIPPING: 'var(--magenta)', HOT: 'var(--orange)', WARM: 'var(--yellow)', QUIET: 'var(--muted)' };
-const months = monthInitials(new Date());
+const months = monthInitials(now);
+const horizons: { key: 'p72' | 'p7' | 'p30'; label: string; glow: string }[] = [
+  { key: 'p72', label: '72H', glow: 'glow-m' },
+  { key: 'p7', label: '7D', glow: 'glow-y' },
+  { key: 'p30', label: '30D', glow: 'glow-c' },
+];
+const stealth = d.earlyWarnings.stealth.items.length;
+const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'extrap' : '');
 ---
 <section class="section wrap reveal">
   <div class="section-head">
-    <h2><span>▦</span>LAB WATCH <span class="sub">RELEASE TEMPO · ODDS · LAST DROP</span></h2>
-    <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
+    <h2><span aria-hidden="true">▦</span>LAB WATCH <span class="sub">RELEASE TEMPO · ODDS · LAST DROP</span></h2>
+    <div class="pills">
+      {stealth > 0 && <a class="pill warn" href="#ew-stealth" title="Stealth slots are anonymous, so no lab card carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
+      <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
+    </div>
   </div>
-  <div class="grid grid-3">
+  <div class="grid grid-3 labs-grid">
     {d.labs.map((l, idx) => {
       const max = Math.max(1, ...l.histogram);
+      const flags = leadFlags(d.earlyWarnings, l.id);
       return (
-        <article class="panel lab" style={`--lab:${l.color}; --i:${idx}`}>
+        <article class="panel lab" id={`lab-${l.id}`} style={`--lab:${l.color}; --i:${idx}`}>
           <div class="lab-head">
-            <div class="lab-name head"><span class="glyph">{l.glyph}</span> {l.name}</div>
+            <h3 class="lab-name head"><span class="glyph" aria-hidden="true">{l.glyph}</span> {l.name}</h3>
             <span class={`tag ${l.status === 'SHIPPING' ? 'pulse' : ''}`} style={`color:${statusColor[l.status]}`}>{l.status}</span>
           </div>
+          {flags.length > 0 && (
+            <div class="flags">
+              <span class="sr-only">Lead flags, shown but not scored:</span>
+              {flags.map((f) => <a class={`flag ${f.kind}`} href={f.href} title={f.detail}>{f.label}</a>)}
+            </div>
+          )}
           <div class="metrics tight">
-            <div title={readNote(l.odds?.p72)}><div class="metric-label">DROP ≤72H</div><div class={`metric-value glow-m ${l.odds?.p72.trusted === false ? 'extrap' : ''}`}>{readValue(l.odds?.p72)}</div></div>
-            <div title={readNote(l.odds?.p7)}><div class="metric-label">DROP ≤7D</div><div class={`metric-value glow-y ${l.odds?.p7.trusted === false ? 'extrap' : ''}`}>{readValue(l.odds?.p7)}</div></div>
-            <div title={readNote(l.odds?.p30)}><div class="metric-label">DROP ≤30D</div><div class={`metric-value glow-c ${l.odds?.p30.trusted === false ? 'extrap' : ''}`}>{readValue(l.odds?.p30)}</div></div>
+            {horizons.map((h) => (
+              <div title={readNote(l.odds?.[h.key])}><div class="metric-label">DROP ≤{h.label}</div><div class={`metric-value ${h.glow} ${extrap(l.odds?.[h.key])}`}>{readValue(l.odds?.[h.key])}</div></div>
+            ))}
             <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(l.daysSince)}</div></div>
           </div>
-          {l.odds && <div class="odds-note tiny muted">{l.odds.family} · 7D {readNote(l.odds.p7)}</div>}
-          {l.launchedFamilies.length > 0 && <div class="odds-note tiny muted">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
+          {l.odds ? (
+            <div class="reads">
+              <div class="reads-fam tiny muted">{l.odds.family}</div>
+              <dl>
+                {horizons.map((h) => {
+                  const read = l.odds![h.key];
+                  const trust = readTrust(read);
+                  return (
+                    <div class={`read ${trust}`} title={readNote(read)}>
+                      <dt>{h.label}</dt>
+                      <dd><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrap.'}</span> <span class="bracket">{readBracket(read)}</span></dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </div>
+          ) : <div class="reads-fam tiny muted">NO POLYMARKET RELEASE MARKET</div>}
+          {l.launchedFamilies.length > 0 && <div class="odds-note muted">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
           <div class="metric-label tempo">RELEASE TEMPO · 12 MONTHS</div>
-          <div class="hist" title="Models listed on OpenRouter per month">
+          <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
             {l.histogram.map((v, i) => <div class="col" style={`--i:${i}`}><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
           </div>
           <div class="latest">
-            <div class="metric-label">LATEST</div>
+            <span class="metric-label">LATEST</span>
             {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
           </div>
           <div class="bar heat"><i style={`width:${l.heat}%`}></i></div>
@@ -42,31 +77,64 @@ const months = monthInitials(new Date());
             <span class="tiny muted" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}>HEAT {l.heat} · {l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'} / 30D</span>
             <span class="x">{l.xHandles.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</span>
           </div>
-          {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener">▸ {l.odds.family} on Polymarket</a>}
+          {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener"><span aria-hidden="true">▸</span> {l.odds.family} on Polymarket</a>}
         </article>
       );
     })}
   </div>
 </section>
 <style>
+  .section-head .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .lab { scroll-margin-top: 16px; }
   .lab::before, .lab::after { border-color: var(--lab); }
   .lab:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 0 0 1px rgba(0,0,0,0.6), 0 0 28px color-mix(in srgb, var(--lab) 18%, transparent), 0 14px 44px rgba(0,0,0,0.55); }
+  .lab:target { border-color: var(--lab); }
   .lab-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
   .lab-name { font-size: 11px; color: var(--lab); text-shadow: 0 0 8px var(--lab); }
   .glyph { font-family: var(--font-mono); font-size: 18px; }
+  .flags { display: flex; flex-wrap: wrap; gap: 4px; margin: -2px 0 10px; }
+  .flag { font-family: var(--font-head); font-size: var(--fs-pill); letter-spacing: 0.06em; padding: 3px 5px; border: 1px dashed currentColor; color: var(--yellow); white-space: nowrap; }
+  .flag:hover { color: #fff; border-style: solid; text-shadow: none; }
+  .reads { margin-top: 6px; }
+  .reads dl { margin: 2px 0 0; display: grid; gap: 1px; font-size: var(--fs-xs); line-height: 1.1; }
+  .read { display: grid; grid-template-columns: 4ch minmax(0, 1fr); gap: 6px; align-items: baseline; }
+  .read dt { font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  .read dd { margin: 0; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .read .trust { color: var(--green); }
+  .read.extrapolated .trust { color: var(--orange); }
+  .read.extrapolated .bracket { color: var(--muted); }
+  .reads-fam { margin-top: 6px; }
   .tempo { margin: 10px 0 4px; }
-  .latest { margin-top: 10px; font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .latest { margin-top: 10px; font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .latest .metric-label { display: block; }
+  .latest a { outline-offset: -2px; }
   .heat { margin-top: 10px; }
   .heat > i { background: linear-gradient(90deg, var(--lab), var(--magenta)); }
-  .lab-foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 17px; }
+  .lab-foot { display: flex; justify-content: space-between; gap: 6px; margin-top: 6px; font-size: var(--fs-xs); }
   .x a { margin-left: 8px; color: var(--muted); }
   .x a:hover { color: #fff; }
   .extrap { opacity: 0.55; }
-  .odds-note { margin-top: 6px; }
-  .mkt { display: block; margin-top: 8px; font-size: 17px; color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
+  .odds-note { margin-top: 6px; font-size: var(--fs-xs); }
+  .mkt { display: block; margin-top: 8px; font-size: var(--fs-xs); color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
+  /* UI-17: five columns where they fit, so ten labs fill two rows with no orphans. */
+  @media (min-width: 1360px) {
+    .labs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .lab-name { font-size: 10px; }
+    .x a + a { display: none; }
+  }
+  /* UI-10: a compact card on phones. The histogram, tempo, X handles and market link are the
+     desktop's detail; the reads, flags, last drop and heat stay. */
+  @media (max-width: 480px) {
+    .lab .tempo, .lab .hist, .lab .mkt, .lab .x { display: none; }
+    .lab { padding-block: 12px; }
+    .lab-head { margin-bottom: 6px; }
+    .reads, .reads-fam { margin-top: 4px; }
+    .latest { margin-top: 4px; }
+    .latest .metric-label { display: inline; margin-right: 6px; }
+    .heat { margin-top: 6px; }
+    .lab-foot { margin-top: 4px; }
+  }
   @media (max-width: 380px) {
     .metrics.tight { grid-template-columns: repeat(2, 1fr); }
-    .lab-foot { align-items: flex-start; flex-wrap: wrap; gap: 6px; }
-    .x { display: flex; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; max-width: 100%; }
   }
 </style>

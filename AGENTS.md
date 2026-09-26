@@ -16,9 +16,12 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   timeout + degrade-to-fallback + timing), `snapshot-store.ts` (D1 snapshots, `score_series`,
   `first_seen`), `bindings.ts` (`HISTORY_DB`), `text.ts` (safe parsing helpers).
 - `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
-  the assembled dashboard. `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
+  the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
+  shared by `/api/history.json` and the page's history strip; `loadHistoryForPage` adds the
+  page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes.
-- `src/ui` + `src/components` — formatting and Astro markup. Browser code is limited to the clock,
+- `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
+  early-warning track lines, per-lab lead flags and source-health pills). Browser code is limited to the clock,
   refresh countdown, relative timestamps, ticker behavior and the 5-minute poll-and-offer reload.
 
 Rules of the house:

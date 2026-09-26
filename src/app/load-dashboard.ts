@@ -24,15 +24,17 @@ import {
 import { listingAliases } from '../domain/drop';
 import { DROPCON_ALGORITHM_VERSION } from '../domain/dropcon';
 import type { LeakItem, LeakSource } from '../domain/feed';
+import { buildHistorySeries, type DisplayPoint } from '../domain/history';
 import { unmappedReleaseMarkets } from '../domain/lab';
 import type { BroadcastCandidate, PendingArchitecture } from '../domain/lead';
 import { EMPTY_LEDGER, LEDGER_KINDS, ledgerFromRows, type Ledger } from '../domain/ledger';
 import { SOURCE } from '../domain/sources';
 import { historyDatabase } from '../infra/bindings';
-import { memoJson } from '../infra/edge-cache';
+import { cacheKey, defaultEdgeCache, memoJson, type EdgeCache } from '../infra/edge-cache';
 import {
   SIGHTING_LOOKBACK_MS,
   readHeadlineNear,
+  readScoreSeries,
   readSightings,
   type SnapshotDatabase,
 } from '../infra/snapshot-store';
@@ -171,4 +173,84 @@ export async function buildDashboard(
 /** The dashboard every request renders: memoised at the edge. */
 export function loadDashboard(): Promise<Dashboard> {
   return memoJson(`dashboard@v${DASHBOARD_SCHEMA}`, DASHBOARD_TTL_SECONDS, () => buildDashboard());
+}
+
+/* ───────────── DROPCON history: /api/history.json and the page's strip share one memo ───────────── */
+
+export const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60_000;
+export const HISTORY_CACHE_TTL_SECONDS = 15 * 60;
+/** 30 days of 15-minute slots; a stricter cap than `readScoreSeries`'s own default. */
+export const HISTORY_MAX_ROWS = 30 * 24 * 4;
+/** The page waits this long for history, then renders the strip's unavailable state. */
+export const HISTORY_PAGE_TIMEOUT_MS = 2000;
+
+export interface HistoryResponseBody {
+  ok: boolean;
+  points: DisplayPoint[];
+}
+
+/** Everything that can fail here degrades to `{ ok: false, points: [] }`; this never throws. */
+export async function buildHistoryResponseBody(
+  database: SnapshotDatabase | undefined,
+  now = Date.now(),
+): Promise<HistoryResponseBody> {
+  if (!database) return { ok: false, points: [] };
+  try {
+    const since = new Date(now - HISTORY_WINDOW_MS).toISOString();
+    const rows = await readScoreSeries(database, since, HISTORY_MAX_ROWS);
+    return { ok: true, points: buildHistorySeries(rows) };
+  } catch (e) {
+    console.error('[history-api]', e instanceof Error ? e.message : e);
+    return { ok: false, points: [] };
+  }
+}
+
+/** Versioned with the dashboard: a deploy that changes the point shape must not serve the old one. */
+export const HISTORY_MEMO_KEY = `history@v${DASHBOARD_SCHEMA}@30d`;
+
+const HISTORY_UNAVAILABLE: HistoryResponseBody = { ok: false, points: [] };
+
+/**
+ * The 30-day DROPCON series, memoised at the edge for 15 minutes under `HISTORY_MEMO_KEY`: the
+ * JSON endpoint and the page's history strip read the same entry, so the strip costs a request no
+ * upstream call and at most one D1 read per colo per 15 minutes. A failed read is served but never
+ * memoised: one D1 blip must not blank the strip for the next 15 minutes. Never throws.
+ */
+export async function loadHistory(): Promise<HistoryResponseBody> {
+  try {
+    return await memoJson(HISTORY_MEMO_KEY, HISTORY_CACHE_TTL_SECONDS, async () => {
+      const body = await buildHistoryResponseBody(historyDatabase());
+      if (!body.ok) throw new Error('history unavailable');
+      return body;
+    });
+  } catch {
+    return HISTORY_UNAVAILABLE;
+  }
+}
+
+/** After a failed or slow read, page renders skip D1 for this long (the JSON endpoint still retries). */
+export const HISTORY_DOWN_TTL_SECONDS = 60;
+const HISTORY_DOWN_KEY = `${HISTORY_MEMO_KEY}:down`;
+
+/**
+ * `loadHistory` for the page render, which must never wait long on D1: a read that fails or takes
+ * longer than `HISTORY_PAGE_TIMEOUT_MS` renders the strip's unavailable state, and for the next
+ * `HISTORY_DOWN_TTL_SECONDS` renders in this colo go straight to that state instead of each
+ * paying the timeout again. Never throws.
+ */
+export async function loadHistoryForPage(
+  timeoutMs = HISTORY_PAGE_TIMEOUT_MS,
+  cache: EdgeCache | undefined = defaultEdgeCache(),
+): Promise<HistoryResponseBody> {
+  const down = cacheKey('memo', HISTORY_DOWN_KEY);
+  if (await cache?.match(down).catch(() => undefined)) return HISTORY_UNAVAILABLE;
+  const result = await collect('DROPCON history', loadHistory, HISTORY_UNAVAILABLE, timeoutMs);
+  if (!result.ok || !result.data.ok)
+    await cache
+      ?.put(
+        down,
+        new Response('down', { headers: { 'cache-control': `public, max-age=${HISTORY_DOWN_TTL_SECONDS}` } }),
+      )
+      .catch(() => undefined);
+  return result.data;
 }

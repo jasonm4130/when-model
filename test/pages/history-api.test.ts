@@ -138,3 +138,66 @@ describe('GET /api/history.json', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
 });
+
+describe('the page history strip', () => {
+  async function loadApp(database: SnapshotDatabase | undefined) {
+    vi.doMock('cloudflare:workers', () => ({ env: database ? { HISTORY_DB: database } : {} }));
+    return import('../../src/app/load-dashboard');
+  }
+
+  it('reads the same memo as /api/history.json, so a render costs no extra D1 read', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(NOW);
+    const cache = new FakeCache();
+    vi.stubGlobal('caches', { default: cache });
+    const db = await seededDatabase();
+    const route = await loadRoute(db);
+    await get(route);
+    const reads = db.queries.length;
+    const { loadHistoryForPage } = await import('../../src/app/load-dashboard');
+    const body = await loadHistoryForPage();
+    expect(body.ok).toBe(true);
+    expect(body.points.at(-1)?.score).toBe(95);
+    expect(db.queries.length).toBe(reads);
+    expect([...cache.store.keys()]).toEqual(['https://whenmodel.com/__cache/memo/history%40v4%4030d']);
+  });
+
+  it('gives up on a hung D1 read and renders the strip unavailable instead of stalling the page', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const db = await seededDatabase();
+    vi.spyOn(db, 'prepare').mockImplementation(() => {
+      const hang = () => new Promise<never>(() => {});
+      return {
+        bind: () => ({ all: hang, first: hang, run: hang }),
+        all: hang,
+        first: hang,
+        run: hang,
+      } as never;
+    });
+    const { loadHistoryForPage } = await loadApp(db);
+    await expect(loadHistoryForPage(20)).resolves.toEqual({ ok: false, points: [] });
+    expect(err).toHaveBeenCalledWith('[source:DROPCON history]', 'timeout');
+  });
+
+  it('skips D1 for a minute after a failed read, so every render does not pay the timeout again', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const cache = new FakeCache();
+    const db = await seededDatabase();
+    const prepare = vi.spyOn(db, 'prepare').mockImplementationOnce(() => {
+      throw new Error('D1_ERROR: network connection lost');
+    });
+    const { loadHistoryForPage, HISTORY_DOWN_TTL_SECONDS } = await loadApp(db);
+    await expect(loadHistoryForPage(1000, cache)).resolves.toEqual({ ok: false, points: [] });
+    expect([...cache.store.keys()]).toEqual(['https://whenmodel.com/__cache/memo/history%40v4%4030d%3Adown']);
+    expect(cache.store.values().next().value?.headers.get('cache-control')).toBe(
+      `public, max-age=${HISTORY_DOWN_TTL_SECONDS}`,
+    );
+    const reads = prepare.mock.calls.length;
+    await expect(loadHistoryForPage(1000, cache)).resolves.toEqual({ ok: false, points: [] });
+    expect(prepare.mock.calls.length).toBe(reads);
+  });
+
+  it('never throws out of the page render when the binding is missing', async () => {
+    const { loadHistoryForPage } = await loadApp(undefined);
+    await expect(loadHistoryForPage()).resolves.toEqual({ ok: false, points: [] });
+  });
+});
