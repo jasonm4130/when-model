@@ -16,12 +16,14 @@ import {
   MOBILE_FEED,
   MOBILE_MARKETS,
   PANEL_ROWS,
+  SOURCE_ERROR_MAX,
   STALE_AFTER_MS,
   asOfMs,
   dropPrice,
   feedColour,
   otherRows,
   releaseRows,
+  sourceErrorText,
   sourcePill,
   stealthIds,
 } from '../../src/ui/panels';
@@ -119,6 +121,23 @@ function inputs(overrides: Partial<DashboardInputs> = {}): DashboardInputs {
   };
 }
 const dashboard = (overrides: Partial<DashboardInputs> = {}) => assembleDashboard(inputs(overrides), NOW);
+
+describe('sourceErrorText', () => {
+  it('cuts each URL to its host, keeps a status, and clips at SOURCE_ERROR_MAX', () => {
+    expect(sourceErrorText(undefined)).toBe('down');
+    expect(sourceErrorText('timeout')).toBe('timeout');
+    expect(sourceErrorText('503 https://gamma-api.polymarket.com/events?tag=ai&limit=500')).toBe(
+      '503 · gamma-api.polymarket.com',
+    );
+    expect(sourceErrorText('https://openai.com/news/rss.xml failed validation')).toBe(
+      'openai.com failed validation',
+    );
+    const long = sourceErrorText(`parse error: ${'x'.repeat(200)}`);
+    expect(long).toHaveLength(SOURCE_ERROR_MAX);
+    expect(long.endsWith('…')).toBe(true);
+    expect(sourceErrorText('not a url: http://')).toBe('not a url: http://');
+  });
+});
 
 describe('sourcePill (UI-04)', () => {
   const health = [
@@ -327,6 +346,18 @@ describe('panels render', async () => {
     const darkHtml = await container.renderToString(Feed, { props: { d: assembleDashboard(dark, NOW) } });
     expect(darkHtml).toContain('DOWN · 6 FEEDS');
     expect(darkHtml).toContain('Every feed is down.');
+  });
+
+  it('Feed prints a failed source by status and host, never the raw upstream URL', async () => {
+    const url = `https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(60)}`;
+    const failing = inputs();
+    failing.feeds[3] = { name: FEED_SOURCE_NAME.anthropic, data: [], ok: false, error: `503 ${url}` };
+    const html = await container.renderToString(Feed, { props: { d: assembleDashboard(failing, NOW) } });
+    expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}<span class="muted"`);
+    expect(html).toMatch(/> — 503 · hn\.algolia\.com<\/span>/);
+    expect(html).not.toContain('search_by_date');
+    // The pill's hover title uses the same short text.
+    expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}: 503 · hn.algolia.com`);
   });
 
   it('Footer lists every upstream named in SOURCE, and the backtest variant links home and to the rebuild', async () => {

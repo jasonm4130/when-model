@@ -1,6 +1,7 @@
 ---
 import type { Replay } from '../../scripts/backtest/replay';
 import { pct } from '../../scripts/backtest/view';
+import { WEIGHTS } from '../domain/dropcon';
 import { FORECAST_CONSTANTS, type ForecastConstants } from '../domain/forecast';
 import { labById, type LabId } from '../domain/lab';
 
@@ -26,6 +27,8 @@ const shortDate = (ms: number) => new Date(ms).toUTCString().slice(5, 11).replac
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const labName = (id: LabId) => labById(id)?.name ?? id;
 const modelName = (id: string) => id.replace(/^[^/]+\//, '');
+/** "≥50%": the bar a launch's own-lab read had to reach to count as priced. */
+const pricedBar = `≥${pct(meta.protocol.pricedMin)}`;
 
 /** Each launch with whether its own lab's market read 50% or more in the 72 hours before it listed. */
 const priced = new Map(replay.pricedEvents.events.map((e) => [`${e.at}|${e.labId}`, e]));
@@ -40,7 +43,7 @@ const launches = replay.releases.markers.map((m) => {
     priced: e?.priced ?? false,
     maxRead: e?.maxLabP72 ?? 0,
     shown,
-    title: `${day(t)} · ${labName(m.labId)} · ${shown}. Its own lab's ${meta.headlineH}-hour read peaked at ${pct(e?.maxLabP72 ?? 0)} in the ${meta.headlineH} hours before it listed${e?.priced ? ' (priced)' : ' (no market priced it)'}.`,
+    title: `${day(t)} · ${labName(m.labId)} · ${shown}. Its own lab's ${meta.headlineH}-hour read peaked at ${pct(e?.maxLabP72 ?? 0)} in the ${meta.headlineH} hours before it listed${e?.priced ? ` (priced ${pricedBar})` : ` (not priced ${pricedBar})`}.`,
   };
 });
 const heldOut = launches.filter((l) => l.held);
@@ -147,7 +150,7 @@ const weeks = (() => {
     <li><svg width="22" height="10"><line class="fit" x1="0" x2="22" y1="5" y2="5" /></svg>fit-window rate</li>
     <li><svg width="22" height="10"><line class="held" x1="0" x2="22" y1="5" y2="5" /></svg>held-out rate</li>
     <li><svg width="12" height="12"><path class="launch priced" d="M6 1L11 10H1Z" /></svg>launch its lab's market priced (≥{pct(meta.protocol.pricedMin)} in the {meta.headlineH}h before)</li>
-    <li><svg width="12" height="12"><path class="launch" d="M6 1L11 10H1Z" /></svg>launch no market priced</li>
+    <li><svg width="12" height="12"><path class="launch" d="M6 1L11 10H1Z" /></svg>launch not priced {pricedBar}</li>
   </ul>
   <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
@@ -214,11 +217,11 @@ const weeks = (() => {
     </svg>
   ))}
   <figcaption class="muted">
-    Both lines are market reads alone, replayed as a reader could have seen them at the time through the dashboard's own curve code. The top line is the {meta.headlineH}-hour forecast the calibration study scored: the markets combined with a {pct(h72.unpriced)} chance of a launch no market prices. The bottom line is the best 7-day read across labs, the shape of the input behind 80 of DROPCON's 100 points. The level itself can't be replayed: its 30-day term reads rungs up to a month out, and the price history holds each rung only from {meta.protocol.admitDays} days before its deadline. The rate rose from {pct(h72.baseRate)} to {pct(h72.test.rate)} of {meta.headlineH}-hour windows, and {heldOut.length - heldPriced} of the {heldOut.length} held-out launches came with no market pricing them.{falseAlarm && ` The longest false alarm: the forecast held 90% or more from ${shortDate(timeAt(falseAlarm.from))} to ${shortDate(timeAt(falseAlarm.to))} and nothing frontier listed in the 72 hours after.`}
+    Both lines are market reads alone, replayed as a reader could have seen them at the time through the dashboard's own curve code. The top line is the {meta.headlineH}-hour forecast the calibration study scored: the markets combined with a {pct(h72.unpriced)} chance of a launch no market prices. The bottom line is the best 7-day read across labs, the shape of the input behind {WEIGHTS.market7d} of DROPCON's 100 points. The level itself can't be replayed: its 30-day term reads rungs up to a month out, and the price history holds each rung only from {meta.protocol.admitDays} days before its deadline. The rate rose from {pct(h72.baseRate)} to {pct(h72.test.rate)} of {meta.headlineH}-hour windows, and {heldOut.length - heldPriced} of the {heldOut.length} held-out launches had no market at {pct(meta.protocol.pricedMin)} or more beforehand.{falseAlarm && ` The longest false alarm: the forecast held 90% or more from ${shortDate(timeAt(falseAlarm.from))} to ${shortDate(timeAt(falseAlarm.to))} and nothing frontier listed in the 72 hours after.`}
   </figcaption>
   <details class="weeks">
     <summary class="tiny">The chart as a table, by week</summary>
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Weekly replay table">
       <table>
         <caption class="sr-only">Weekly summary of the replay: the {meta.headlineH}-hour forecast, the best 7-day read and the frontier launches listed that week.</caption>
         <thead>

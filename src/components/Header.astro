@@ -37,7 +37,7 @@ const fingerprint = dashboardFingerprint(d);
   </div>
   <div class="wrap hero-inner">
     <div class="title-block">
-      <div class="tiny glow-m">▌▌ FRONTIER MODEL RELEASE INTELLIGENCE ▐▐</div>
+      <div class="tiny glow-m"><span class="nw"><span class="bars" aria-hidden="true">▌▌ </span>FRONTIER</span> MODEL RELEASE <span class="nw">INTELLIGENCE<span class="bars" aria-hidden="true"> ▐▐</span></span></div>
       <h1 class="logo"><span class="w">WHEN</span><span class="m">MODEL</span><span class="q">?</span></h1>
       <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
     </div>
@@ -65,6 +65,10 @@ const fingerprint = dashboardFingerprint(d);
   )}
 </header>
 <style>
+  /* Each end glyph pair stays with its word, so a narrow phone never wraps "▐▐" onto a line alone. */
+  /* Each bar pair stays on its word; below 380px the bars go, so the line fits on one row. */
+  .nw { white-space: nowrap; }
+  @media (max-width: 379px) { .bars { display: none; } }
   .hero {
     position: relative;
     overflow: hidden;

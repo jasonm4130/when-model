@@ -9,6 +9,9 @@ import {
   dropconTitle,
   forecastAnswer,
   histogramLabel,
+  LEVEL_HORIZON_HOURS,
+  levelBaseRateText,
+  noOddsText,
   outcomeOdds,
   readBracket,
   readNote,
@@ -70,8 +73,35 @@ describe('base rate and the forecast disclosure', () => {
     expect(skillText(h72.test.skill)).toBe('−0.002');
     expect(skillText(0.05)).toBe('+0.050');
     expect(forecastAnswer(f)).toBe(
-      'A calibrated 72-hour probability was tested and did not beat that base rate on held-out data (Brier skill −0.002), so the level stays a hand-weighted lead score, not a probability.',
+      `A fitted 72-hour probability was tested and did not beat the 72-hour base rate on held-out data (Brier skill −0.002), so the level stays a hand-weighted lead score, not a probability. ${baseRateText(f)}`,
     );
+    expect(forecastAnswer(f)).not.toContain('calibrated');
+  });
+
+  it("gives the base rate at the level's own 7-day horizon, from the replay's 168-hour fit", () => {
+    const h168 = FORECAST_CONSTANTS.horizons.find((h) => h.horizonHours === LEVEL_HORIZON_HOURS)!;
+    const pct = (p: number) => `${Math.round(p * 100)}%`;
+    expect(LEVEL_HORIZON_HOURS).toBe(168);
+    expect(levelBaseRateText()).toBe(
+      `Base rate at the level's horizon: some frontier lab listed a new text model within 7 days in ${pct(h168.baseRate)} of hours (1 Apr–16 Jul 2026) and in ${pct(h168.test.rate)} of held-out hours (16 Jul–26 Sep 2026). DROPCON reads only the named families markets price, so a high level is not unusual by itself.`,
+    );
+    expect(levelBaseRateText()).toContain('73% of hours');
+    expect(levelBaseRateText()).toContain('94% of held-out hours');
+    expect(levelBaseRateText({ ...FORECAST_CONSTANTS, horizons: [] })).toBe('');
+  });
+});
+
+describe('when the odds are offline', () => {
+  const lab = (over: Partial<LabStatus> = {}) => ({ name: 'Anthropic', daysSince: 3, ...over }) as LabStatus;
+
+  it('says the odds are offline, not that no market exists', () => {
+    expect(noOddsText(true)).toBe('NO POLYMARKET RELEASE MARKET');
+    expect(noOddsText(false)).toBe('ODDS OFFLINE · POLYMARKET UNREACHABLE');
+    const latest = { name: 'Anthropic: Claude Opus 5.5' } as LabStatus['latest'];
+    expect(topReadText(lab({ latest }))).toBe('no market; last listed Claude Opus 5.5 3d ago');
+    expect(topReadText(lab({ latest }), false)).toBe('odds offline; last listed Claude Opus 5.5 3d ago');
+    expect(topReadText(lab(), false)).toBe('odds offline and nothing listed');
+    expect(topReadText(lab())).toBe('no market and nothing listed');
   });
 });
 

@@ -35,9 +35,14 @@ export interface LabOddsRead {
   from?: RungRef;
   to?: RungRef;
   url: string;
+  /**
+   * The family this read came from, when it is not the card's (`LabOdds.family`): the 72-hour and
+   * 30-day reads are each the lab's best trusted read across its families, like P7.
+   */
+  family?: string;
 }
 
-/** A lab's strongest frontier text family, read at three horizons. */
+/** A lab's strongest frontier text family's 7-day read, and its best trusted 72-hour and 30-day reads. */
 export interface LabOdds {
   family: string;
   marketUrl: string;
@@ -163,7 +168,7 @@ export function temperatureFor(heat: number, daysSinceDrop: number | undefined):
   return 'QUIET';
 }
 
-function toRead(p: number, bracket: CurveBracket, trusted: boolean): LabOddsRead {
+function toRead(p: number, bracket: CurveBracket, trusted: boolean, family?: string): LabOddsRead {
   const rung = (point: NonNullable<CurveBracket['from']>): RungRef => ({
     label: point.label,
     deadline: point.deadline,
@@ -181,6 +186,7 @@ function toRead(p: number, bracket: CurveBracket, trusted: boolean): LabOddsRead
     ...(bracket.from ? { from: rung(bracket.from) } : {}),
     ...(bracket.to ? { to: rung(bracket.to) } : {}),
     url: bracket.url,
+    ...(family ? { family } : {}),
   };
 }
 
@@ -217,9 +223,19 @@ export function assessLab(
   const odds: LabOdds | undefined = curve && {
     family: curve.family,
     marketUrl: curve.marketUrl,
-    p72: toRead(curve.p72, curve.bracket72, curve.trusted72),
+    p72: toRead(
+      curve.p72,
+      curve.bracket72,
+      curve.trusted72,
+      curve.family72 !== curve.family ? curve.family72 : undefined,
+    ),
     p7: toRead(curve.p7, curve.bracket7, curve.trusted7),
-    p30: toRead(curve.p30, curve.bracket30, curve.trusted30),
+    p30: toRead(
+      curve.p30,
+      curve.bracket30,
+      curve.trusted30,
+      curve.family30 !== curve.family ? curve.family30 : undefined,
+    ),
     thinExcluded: curve.thinExcluded,
     ...(curve.maxSpread !== undefined ? { maxSpread: curve.maxSpread } : {}),
   };

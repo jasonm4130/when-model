@@ -2,7 +2,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import { X_WATCHLIST } from '../domain/lab';
 import { FEED_SOURCE_NAME } from '../domain/sources';
-import { MOBILE_FEED, sourcePill } from '../ui/panels';
+import { MOBILE_FEED, sourceErrorText, sourcePill } from '../ui/panels';
 import FeedRow from './FeedRow.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
@@ -47,7 +47,7 @@ const rest = d.feed.slice(MOBILE_FEED);
       <div class="panel-head sub-head"><h2><span aria-hidden="true">◌</span>SOURCE HEALTH</h2></div>
       <ul class="list">
         {d.sources.map((s) => (
-          <li><span class={s.ok ? 'glow-g dot' : 'err dot'} aria-hidden="true">{s.ok ? '●' : '○'}</span><span class="sr-only">{s.ok ? 'Up: ' : 'Down: '}</span>{s.name}{!s.ok && <span class="muted"> — {s.error}</span>}</li>
+          <li><span class={s.ok ? 'glow-g dot' : 'err dot'} aria-hidden="true">{s.ok ? '●' : '○'}</span><span class="sr-only">{s.ok ? 'Up: ' : 'Down: '}</span>{s.name}{!s.ok && <span class="muted"> — {sourceErrorText(s.error)}</span>}</li>
         ))}
       </ul>
     </div>
@@ -57,6 +57,8 @@ const rest = d.feed.slice(MOBILE_FEED);
   .feed-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .intro { margin-bottom: 10px; font-size: var(--fs-sm); }
   .list { font-size: var(--fs-md); }
+  /* A long error or handle breaks anywhere rather than running off a phone's screen. */
+  .list li { overflow-wrap: anywhere; }
   .dot { display: inline-block; width: 1em; }
   /* UI-17: the feed fills its panel, which the grid stretches to the watchlist beside it. */
   @media (min-width: 901px) {

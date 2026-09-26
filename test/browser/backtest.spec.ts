@@ -93,7 +93,8 @@ test.describe('/backtest', () => {
     await link.focus();
     const clipped = await link.evaluate((el) => {
       const style = getComputedStyle(el);
-      const ring = parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
+      // How far the ring reaches outside the link; an inset ring (offset -width) reaches 0.
+      const ring = Math.max(0, parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset));
       const r = el.getBoundingClientRect();
       let box: DOMRect | null = null;
       for (let p = el.parentElement; p; p = p.parentElement) {
@@ -103,7 +104,7 @@ test.describe('/backtest', () => {
           break;
         }
       }
-      if (style.outlineStyle === 'none' || !(ring > 0)) return 'no outline';
+      if (style.outlineStyle === 'none' || !(parseFloat(style.outlineWidth) > 0)) return 'no outline';
       if (!box) return false;
       return r.left - ring < box.left - 0.5 ||
         r.right + ring > box.right + 0.5 ||

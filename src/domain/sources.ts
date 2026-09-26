@@ -10,6 +10,7 @@ export const SOURCE = {
   hfTrending: 'HF trending',
   hfPapers: 'HF papers',
   hackerNews: 'Hacker News',
+  hnLaunches: 'HN launch stories',
   openai: 'OpenAI news',
   deepmind: 'DeepMind blog',
   anthropic: 'Anthropic news',

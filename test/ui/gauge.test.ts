@@ -101,7 +101,17 @@ describe('HistoryStrip', () => {
 
   it('draws a v2-only series dimmed and labelled, and marks where v3 will start', async () => {
     const html = await render(HistoryStrip, { d, history: { ok: true, points: series(v2) }, now: NOW });
-    expect(html).toContain('v2 · OLD SCORING');
+    // The old label is capped at its own segment's width; " · OLD SCORING" is the part that wraps away.
+    const strip = historyStrip(series(v2), { ok: true, now: NOW, currentVersion: 3 });
+    const old = strip.versions[0];
+    expect(html).toMatch(
+      new RegExp(
+        `class="hver old"[^>]*style="left:${(old.x / 10).toString()}%; max-width:calc\\(${old.w / 10}% - 6px\\)"[^>]*><i[^>]*></i><span[^>]*>v2</span><span[^>]*> · OLD SCORING</span>`,
+      ),
+    );
+    // The pill says what the strip spans: three and a half days, not "the last 30 days".
+    expect(html).toMatch(/class="pill"[^>]*>HOURLY · SINCE 23 SEP</);
+    expect(html).not.toContain('LAST 30 DAYS');
     expect(html).toContain('class="hrun old"');
     expect(html).not.toMatch(/class="hrun l\d/);
     expect(html).toContain('v3 history starts 26 Sep');
@@ -135,6 +145,42 @@ describe('HistoryStrip', () => {
   });
 });
 
+describe('HistoryStrip version labels', () => {
+  const d = dashboard();
+  const startLabel = /class="hver start[^"]*"[^>]*>v3 history starts/;
+  const bareV3 = /class="hver"[^>]*>v3</;
+
+  it('marks where v3 starts while it fills under 35% of the strip, and names it once past that', async () => {
+    // v3 is 12 of 84 hours: a sliver, so the start label at the bottom names it.
+    const sliver = await render(HistoryStrip, { d, history: { ok: true, points: series(v2, v3) }, now: NOW });
+    expect(sliver).toMatch(startLabel);
+    expect(sliver).not.toMatch(bareV3);
+    // v3 is 30 of 40 hours: the start label gives way to a plain "v3" at its left edge.
+    const shortV2 = readings('2026-09-25T06:00:00Z', 10, 2, () => 64);
+    const longV3 = readings('2026-09-25T18:00:00Z', 18, 3, () => 60);
+    const strip = historyStrip(series(shortV2, longV3), { ok: true, now: NOW, currentVersion: 3 });
+    const current = strip.versions.find((v) => v.current)!;
+    expect(current.w / 1000).toBeGreaterThanOrEqual(0.35);
+    const wide = await render(HistoryStrip, {
+      d,
+      history: { ok: true, points: series(shortV2, longV3) },
+      now: NOW,
+    });
+    expect(wide).toMatch(bareV3);
+    expect(wide).not.toMatch(startLabel);
+    // The old label is capped at its own, narrower, segment, so it cannot run under "v3".
+    const old = strip.versions.find((v) => !v.current)!;
+    expect(old.x + old.w).toBeLessThanOrEqual(current.x);
+    expect(wide).toContain(`max-width:calc(${old.w / 10}% - 6px)`);
+  });
+
+  it('says "LAST 30 DAYS" only once the series covers the whole window', async () => {
+    const month = readings(new Date(NOW - 30 * 86_400_000 + 3_600_000).toISOString(), 24 * 29, 3, () => 60);
+    const html = await render(HistoryStrip, { d, history: { ok: true, points: series(month) }, now: NOW });
+    expect(html).toMatch(/class="pill"[^>]*>HOURLY · LAST 30 DAYS</);
+  });
+});
+
 describe('Dropcon for a first-time reader', () => {
   it('shows the level, the scale right under the headline, a linked LEAD provenance and plain disclosure', async () => {
     const d = dashboard();
@@ -149,9 +195,17 @@ describe('Dropcon for a first-time reader', () => {
       /Is this a forecast\?<\/b> No — it's a hand-weighted lead score, not a probability\. <a href="\/backtest"/,
     );
     expect(html).toContain('href="/backtest"');
-    expect(html).toContain('39% of 72-hour windows');
-    expect(html).toContain('63% more recently');
+    // Beside the level: the base rate at its own 7-day horizon. The 72-hour rate sits in the note.
+    const base = html.slice(html.indexOf('class="dc-base"'), html.indexOf('class="dc-more"'));
+    expect(base).toContain('within 7 days in 73% of hours');
+    expect(base).toContain('94% of held-out hours');
+    expect(base).not.toContain('72-hour');
+    const more = html.slice(html.indexOf('class="dc-more"'));
+    expect(more).toContain('39% of 72-hour windows');
+    expect(more).toContain('63% more recently');
     expect(html).not.toContain('Context, not the level');
+    // The score-to-level cut points, from LEVEL_BANDS.
+    expect(html).toContain('Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.');
     // The hottest-lab line links to that lab's card, which Labs renders with the same id.
     const hot = d.labs[0];
     expect(html).toContain(`href="#lab-${hot.id}"`);
@@ -178,6 +232,13 @@ describe('Dropcon for a first-time reader', () => {
     expect(html).toContain('class="seg dim floor"');
     expect(html).toContain('aria-label="DROPCON floor: 5 of 5 with the odds offline"');
     expect(dropconTitle(d.dropcon)).toBe('DROPCON 5 · FLOOR (odds offline) — whenmodel');
+    // The hottest-lab line and every lab card say the odds are offline, never "no market".
+    expect(html).toContain('odds offline; last listed Claude Opus 5.5');
+    expect(html).not.toContain('no market;');
+    const labs = await render(Labs, { d });
+    expect(labs).toContain('ODDS OFFLINE · POLYMARKET UNREACHABLE');
+    expect(labs).not.toContain('NO POLYMARKET RELEASE MARKET');
+    expect(labs).toContain('title="odds offline"');
   });
 
   it('shows "?" and NO SIGNAL with every segment dimmed, and titles the page DROPCON — NO SIGNAL', async () => {
@@ -227,6 +288,68 @@ describe('Labs cards', () => {
     expect(html).toMatch(/<h3 class="lab-name head"[^>]*><span class="glyph" aria-hidden="true"/);
   });
 
+  it('says "NO POLYMARKET RELEASE MARKET" only when the odds are up, and "1 LAUNCH" in the singular', async () => {
+    const html = await render(Labs, { d: dashboard() });
+    expect(html).toContain('NO POLYMARKET RELEASE MARKET');
+    expect(html).not.toContain('ODDS OFFLINE');
+    const anthropic = html.slice(
+      html.indexOf('id="lab-anthropic"'),
+      html.indexOf('</article>', html.indexOf('id="lab-anthropic"')),
+    );
+    expect(anthropic).toMatch(/>1 LAUNCH\/30D</);
+    expect(anthropic).not.toContain('1 LAUNCHES');
+  });
+
+  it('marks an extrapolated read by its tilde and class, and names a 30-day read from another family', async () => {
+    const rung = (label: string, deadline: string, yes: number) => ({
+      ...sonnet.outcomes[0],
+      label,
+      yes,
+      deadline,
+      endDate: deadline,
+      bestBid: yes - 0.005,
+      bestAsk: yes + 0.005,
+    });
+    const google = (slug: string, title: string, outcomes: Market['outcomes']): Market => ({
+      ...sonnet,
+      slug,
+      title,
+      url: `https://polymarket.com/event/${slug}`,
+      labId: 'google',
+      outcomes,
+    });
+    const flashLite = google('flash-lite', 'Next Google Gemini Flash-Lite released by...?', [
+      rung('September 30', '2026-10-01T03:59:59.000Z', 0.075),
+      rung('October 31', '2026-11-01T03:59:59.000Z', 0.08),
+    ]);
+    const gemini4 = google('gemini-4', 'Gemini 4.0 released by...?', [
+      rung('September 30', '2026-10-01T03:59:59.000Z', 0.03),
+      rung('October 31', '2026-11-01T03:59:59.000Z', 0.79),
+    ]);
+    // xAI: one rung two months out, so every read of it is extrapolated.
+    const grok = {
+      ...google('grok', 'Next Grok released by...?', [rung('November 30', '2026-12-01T04:59:59.000Z', 0.5)]),
+      labId: 'xai' as const,
+    };
+    const d = dashboard({
+      markets: { name: SOURCE.polymarket, data: [sonnet, flashLite, gemini4, grok], ok: true },
+    });
+    const g = d.labs.find((l) => l.id === 'google')!;
+    expect(g.odds?.family).toBe('Next Google Gemini Flash-Lite');
+    expect(g.odds?.p30.family).toBe('Gemini 4.0');
+    expect(g.odds?.p7.family).toBeUndefined();
+    const html = await render(Labs, { d, now: new Date(NOW) });
+    const card = (id: string) =>
+      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</article>', html.indexOf(`id="lab-${id}"`)));
+    expect(card('google')).toMatch(
+      /<dt[^>]*>30D<\/dt><dd[^>]*>.*<span class="rfam"[^>]*> · Gemini 4\.0<\/span>/,
+    );
+    expect(card('google')).toMatch(/title="Gemini 4\.0: /);
+    expect(card('google')).not.toMatch(/<dt[^>]*>7D<\/dt><dd[^>]*>[^\n]*?rfam[^\n]*?<dt[^>]*>30D/);
+    // Extrapolated: "~" and the extrap class (muted in CSS, never dimmed by opacity).
+    expect(card('xai')).toMatch(/class="metric-value glow-y extrap"[^>]*>~\d+%</);
+  });
+
   it('keeps the compact-card parts separable: the phone layout hides tempo, histogram, handles and market link', async () => {
     const html = await render(Labs, { d: dashboard() });
     const anthropic = html.slice(
@@ -274,6 +397,7 @@ describe('Signals rows and pills', () => {
           SOURCE.testingCatalog,
           SOURCE.youtube,
           SOURCE.transformers,
+          SOURCE.hnLaunches,
           SOURCE.openai,
           SOURCE.deepmind,
           SOURCE.anthropic,
@@ -303,6 +427,28 @@ describe('Signals rows and pills', () => {
     expect(html).toMatch(/class="sig-when" data-time="2026-09-25T09:00:00Z"[^>]*>1d ago</);
     expect(html).toContain('in 5h');
     expect(html).toContain('31d pending');
+  });
+
+  it('counts only the labs\' own feeds as "FEED DOWN", and the launch search as HN', async () => {
+    const base = dashboard();
+    const withSources = (down: string[]) => ({
+      ...base,
+      sources: [SOURCE.hnLaunches, SOURCE.openai, SOURCE.deepmind, SOURCE.anthropic, SOURCE.xai].map(
+        (name) => (down.includes(name) ? { name, ok: false, error: 'down' } : { name, ok: true }),
+      ),
+    });
+    const announcements = (html: string) =>
+      /LAB ANNOUNCEMENTS <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
+    const stories = (html: string) =>
+      /HACKER NEWS LAUNCH STORIES <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
+    // HN's launch search down, every lab feed up: no feed is down.
+    const hn = await render(Signals, { d: withSources([SOURCE.hnLaunches]), now: NOW });
+    expect(announcements(hn)).toBe('0');
+    expect(stories(hn)).toBe('HN DOWN');
+    // One lab feed down: counted once.
+    const one = await render(Signals, { d: withSources([SOURCE.deepmind]), now: NOW });
+    expect(announcements(one)).toBe('0 · 1 FEED DOWN');
+    expect(stories(one)).toBe('0');
   });
 
   it('says why a subsection is empty when its source is down', async () => {

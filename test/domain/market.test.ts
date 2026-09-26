@@ -931,6 +931,55 @@ describe('release curves on live markets', () => {
   });
 });
 
+describe("releaseCurveForLab across a lab's families", () => {
+  const now = at('2026-09-01T00:00:00Z');
+  const ladder = (title: string, p7: number, p30: number) =>
+    market({
+      labId: 'google',
+      title,
+      outcomes: [quote('a', '2026-09-08T00:00:00Z', p7), quote('b', '2026-10-01T00:00:00Z', p30)],
+    });
+  // Google, live: Flash-Lite led at 7 days with 7.5%, flat to 30 days; Gemini 4.0 read 70% at 30 days.
+  const flashLite = ladder('Next Google Gemini Flash-Lite released by…?', 0.075, 0.075);
+  const gemini4 = ladder('Gemini 4.0 released by…?', 0.025, 0.7);
+
+  it('reads 30 days from the family that prices it highest, not the 7-day leader', () => {
+    const r = releaseCurveForLab([flashLite, gemini4], 'google', now)!;
+    expect(r.family).toBe('Next Google Gemini Flash-Lite');
+    expect(r.p7).toBeCloseTo(0.075, 6);
+    expect(r.family30).toBe('Gemini 4.0');
+    expect(r.p30).toBeCloseTo(0.7, 6);
+    expect(r.trusted30).toBe(true);
+    expect(r.bracket30.url).toBe(gemini4.url);
+    // 72 hours: Flash-Lite's constant-hazard read toward Sep 8 is still the higher one.
+    expect(r.family72).toBe('Next Google Gemini Flash-Lite');
+    // Order does not matter.
+    expect(releaseCurveForLab([gemini4, flashLite], 'google', now)).toMatchObject({
+      family: 'Next Google Gemini Flash-Lite',
+      family30: 'Gemini 4.0',
+    });
+  });
+
+  it('never takes a horizon from an extrapolated read: an untrusted family cannot win it', () => {
+    // A lone rung two months out: its 30-day read is a constant-hazard stretch, shown but never scored.
+    const far = market({
+      labId: 'google',
+      title: 'Next Gemini Flash released by…?',
+      outcomes: [quote('c', '2026-11-30T00:00:00Z', 0.99)],
+    });
+    const r = releaseCurveForLab([flashLite, far], 'google', now)!;
+    expect(r.family30).toBe('Next Google Gemini Flash-Lite');
+    expect(r.p30).toBeCloseTo(0.075, 6);
+    // With no trusted read anywhere at a horizon, the headline family's own read stands.
+    const alone = releaseCurveForLab([far], 'google', now)!;
+    expect([alone.family, alone.family30, alone.trusted30]).toEqual([
+      'Next Gemini Flash',
+      'Next Gemini Flash',
+      false,
+    ]);
+  });
+});
+
 describe('displayOutcomes with parsed deadlines', () => {
   it("orders by the label deadline where Gamma's endDate runs late", () => {
     const m = market({

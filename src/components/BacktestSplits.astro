@@ -14,7 +14,7 @@ const ladder = claim.perLadder.ahead;
 const PRECURSOR: Record<string, string> = {
   announced: 'Pre-announced by the lab',
   leak: 'Leaked or reported',
-  none: 'Surprise (nothing on HN)',
+  none: 'No HN precursor',
 };
 const groups: { title: string; rows: readonly Split[]; name: (g: string) => string }[] = [
   { title: 'By what was public beforehand', rows: splits.byPrecursor, name: (g) => PRECURSOR[g] ?? g },
@@ -25,7 +25,7 @@ const tally = (t: { resolvedYes: number; fired: number }) => `${t.resolvedYes} /
 {groups.map((g) => (
   <>
     <h3 class="tiny sub">{g.title}</h3>
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" role="region" aria-label={`${g.title} table`}>
       <table>
         <thead>
           <tr>
@@ -58,7 +58,7 @@ const tally = (t: { resolvedYes: number; fired: number }) => `${t.resolvedYes} /
 </p>
 
 <h3 class="tiny sub" id="seven-day">The "above 50% is usually real" claim</h3>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Above-50% claim table">
   <table>
     <thead>
       <tr>

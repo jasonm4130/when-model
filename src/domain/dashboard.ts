@@ -41,6 +41,8 @@ export interface DashboardInputs {
   architectures?: SourceResult<PendingArchitecture[]>;
   /** First-seen sightings and the day-old P7, read from D1. */
   ledger?: SourceResult<Ledger>;
+  /** Hacker News launch stories over LANDED's whole window (the feed's HN query covers 48 hours). */
+  launchStories?: SourceResult<FeedItem[]>;
 }
 
 export interface Dashboard {
@@ -80,7 +82,7 @@ function driver(lab: LabStatus, read: LabOddsRead): MarketDriver {
   return {
     labId: lab.id,
     lab: lab.name,
-    family: lab.odds!.family,
+    family: read.family ?? lab.odds!.family,
     p: read.p,
     read: read.upperBound
       ? 'ceiling'
@@ -156,9 +158,18 @@ export function assembleDashboard(inputs: DashboardInputs, now: number): Dashboa
     },
     now,
   );
-  const landed = buildLanded({ drops, feed: allFeed, feedDaySeen: ledger?.feedDay }, now);
+  const landed = buildLanded(
+    {
+      drops,
+      feed: allFeed,
+      ...(inputs.launchStories ? { launchStories: inputs.launchStories.data } : {}),
+      feedDaySeen: ledger?.feedDay,
+    },
+    now,
+  );
 
   const optional: (SourceResult<unknown> | undefined)[] = [
+    inputs.launchStories,
     inputs.broadcasts,
     inputs.architectures,
     inputs.ledger,

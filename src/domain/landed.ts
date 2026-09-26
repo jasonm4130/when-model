@@ -12,6 +12,8 @@ const LAB_FEEDS: ReadonlySet<FeedSource> = new Set<FeedSource>(['openai', 'deepm
 
 /** Stories need this much traction to count as a launch event (F4). */
 export const LAUNCH_STORY_POINTS = 150;
+/** LANDED lists what happened in this many days: listings, launch stories and lab posts ("this week"). */
+export const LANDED_WINDOW_DAYS = 7;
 /**
  * A date-only post is pinned to 00:00Z of its date, so its first sighting can trail that by a
  * day plus time zones and the 15-minute cron. A sighting later than this is a missed baseline
@@ -73,6 +75,11 @@ export interface LandedInputs {
   drops: readonly Drop[];
   /** Every feed item fetched, uncapped. */
   feed: readonly FeedItem[];
+  /**
+   * Hacker News launch-story candidates over the whole `LANDED_WINDOW_DAYS`. The feed's own HN query
+   * covers 48 hours, so without these every launch story two to seven days old was dropped.
+   */
+  launchStories?: readonly FeedItem[];
   /** Day-precision post URL → first sighting, from the ledger. */
   feedDaySeen?: ReadonlyMap<string, string>;
 }
@@ -108,7 +115,7 @@ function eventName(models: readonly ReleaseModel[]): string {
 
 export function buildLanded(input: LandedInputs, now: number): Landed {
   const releases: LandedRelease[] = releaseEvents(input.drops, now)
-    .filter((e) => e.frontier && withinDays(e.firstListedAt, 7, now))
+    .filter((e) => e.frontier && withinDays(e.firstListedAt, LANDED_WINDOW_DAYS, now))
     .map((e) => ({
       id: e.id,
       lab: e.lab,
@@ -122,13 +129,13 @@ export function buildLanded(input: LandedInputs, now: number): Landed {
   const stories: LandedStory[] = [];
   const storyUrls = new Set<string>();
   const storyModels = new Set<string>();
-  const candidates = input.feed
+  const candidates = [...input.feed, ...(input.launchStories ?? [])]
     .filter(
       (f) =>
         f.source === 'hn' &&
         (f.score ?? 0) >= LAUNCH_STORY_POINTS &&
         isReleaseHeadline(f.title) &&
-        withinDays(f.publishedAt, 7, now),
+        withinDays(f.publishedAt, LANDED_WINDOW_DAYS, now),
     )
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   for (const f of candidates) {
@@ -157,7 +164,7 @@ export function buildLanded(input: LandedInputs, now: number): Landed {
         ? sighted
         : f.publishedAt;
     const key = announcementKey(f.url);
-    if (!withinDays(seenAt, 7, now) || announcementUrls.has(key)) continue;
+    if (!withinDays(seenAt, LANDED_WINDOW_DAYS, now) || announcementUrls.has(key)) continue;
     announcementUrls.add(key);
     announcements.push({
       source: f.source,

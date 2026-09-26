@@ -2,13 +2,14 @@
 import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
 import {
-  baseRateText,
   dropconName,
   dropconNumber,
   dropconPill,
   forecastAnswer,
+  levelBaseRateText,
   topReadText,
 } from '../ui/odds';
+import { levelBandsText } from '../domain/dropcon';
 import { SOURCE } from '../domain/sources';
 import { sourcePill } from '../ui/panels';
 import HistoryStrip from './HistoryStrip.astro';
@@ -70,7 +71,7 @@ const segClass = (n: number) => {
         <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
       ) : hottest && (
         <a class="dc-hot" href={`#lab-${hottest.id}`} style={`--lab:${hottest.color}`}>
-          <span class="tiny">HOTTEST LAB</span> <b><span aria-hidden="true">{hottest.glyph}</span> {hottest.name}</b> · heat {hottest.heat} · {topReadText(hottest)}
+          <span class="tiny">HOTTEST LAB</span> <b><span aria-hidden="true">{hottest.glyph}</span> {hottest.name}</b> · heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}
         </a>
       )}
       {d.landed.bannerText && <p class="dc-landed"><span aria-hidden="true">◆</span> {d.landed.bannerText} · <span class="muted">shown, not scored</span></p>}
@@ -84,9 +85,10 @@ const segClass = (n: number) => {
         ))}
         <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
       </ul>
+      <p class="dc-bands muted">{levelBandsText()}</p>
       <div class="dc-honest">
         <p class="dc-q"><b>Is this a forecast?</b> No — it's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
-        <p class="dc-base">{baseRateText(d.forecast)}</p>
+        <p class="dc-base">{levelBaseRateText()}</p>
         <details class="dc-more">
           <summary class="tiny">WHY IT'S NOT A PROBABILITY</summary>
           <p>{forecastAnswer(d.forecast)}</p>
@@ -116,6 +118,7 @@ const segClass = (n: number) => {
   .dc-drivers .why { overflow-wrap: anywhere; }
   .dc-drivers .pts { color: var(--lvl); text-align: right; font-variant-numeric: tabular-nums; }
   .dc-drivers .total { border-top: 1px dotted var(--line2); padding-top: 4px; color: var(--text); }
+  .dc-bands { margin-top: 4px; font-size: var(--fs-xs); }
   .tag.lead { color: var(--cyan); padding: 2px 4px; margin-right: 2px; vertical-align: 2px; }
   .dc-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 14px; }
   /* UI-09: an unlit segment dims by its border and tint only; its digit keeps the full colour (≥5:1 on the tint). */

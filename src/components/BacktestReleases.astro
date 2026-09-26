@@ -15,12 +15,12 @@ const rows = [...releases]
     const other = row ? (row.primary === 'day' ? row.by : row.primary === 'by' ? row.day : (row.by ?? row.day)) : null;
     return { release, series, other, lead: (t: number) => series?.crossings.find((c) => c.threshold === t) };
   });
-const PRECURSOR: Record<string, string> = { announced: 'pre-announced', leak: 'leaked', none: 'surprise' };
+const PRECURSOR: Record<string, string> = { announced: 'pre-announced', leak: 'leaked', none: 'no HN precursor' };
 /** "on September 22", "by September 22"; labels that already say "prior to" keep their own wording. */
 const rungLabel = (s: SeriesCrossings) =>
   /^(on or )?(prior|before|by)\b/i.test(s.label) ? s.label : `${s.kind === 'day' ? 'on' : 'by'} ${s.label}`;
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Release events table">
   <table class="releases">
     <caption class="sr-only">Release events with announcement, availability and market crossing times. Leads are hours before the announcement; negative means after.</caption>
     <thead>

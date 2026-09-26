@@ -728,3 +728,22 @@ hr.neon {
   color: var(--yellow);
 }
 /* == /wp9b == */
+
+/* == fix == */
+/* Focus rings inside a scroller draw inside their link: the scroller clips anything outside it. */
+.scroll-y a:focus-visible,
+.table-scroll a:focus-visible {
+  outline-offset: -2px;
+}
+/* A table wider than its panel shows a cyan edge on the side that still scrolls. The two covers
+   (panel-coloured, attached to the content) sit over the edge glows (attached to the box) when that
+   side is fully in view, so a table that fits shows nothing. */
+.table-scroll {
+  --scroll-cover: rgb(13, 11, 29);
+  background:
+    linear-gradient(90deg, var(--scroll-cover) 40%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(270deg, var(--scroll-cover) 40%, transparent) right center / 32px 100% no-repeat local,
+    linear-gradient(90deg, rgba(0, 229, 255, 0.34), transparent) left center / 12px 100% no-repeat scroll,
+    linear-gradient(270deg, rgba(0, 229, 255, 0.34), transparent) right center / 12px 100% no-repeat scroll;
+}
+/* == /fix == */

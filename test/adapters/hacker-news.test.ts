@@ -93,6 +93,46 @@ describe('fetchHackerNews', () => {
   });
 });
 
+describe('fetchHackerNewsLaunches', () => {
+  it("searches LANDED's whole window at its points bar, asking only for the fields the mapper reads", async () => {
+    vi.useFakeTimers({ now: NOW });
+    const calls = mockUpstream({
+      'https://hn.algolia.com/api/v1/search?': {
+        hits: [
+          // Three and a half days old: past the feed's 48-hour query, inside LANDED's week.
+          {
+            objectID: '7',
+            title: 'Introducing Claude Opus 5.5',
+            url: 'https://anthropic.com/news/opus',
+            points: 700,
+            created_at: '2026-09-16T00:00:00Z',
+          },
+          { objectID: '8', title: 'Show HN: a kettle', points: 400, created_at: '2026-09-16T00:00:00Z' },
+        ],
+      },
+    });
+    const { fetchHackerNewsLaunches, LAUNCH_STORY_TTL_SECONDS } =
+      await import('../../src/adapters/hacker-news');
+    const { LANDED_WINDOW_DAYS, LAUNCH_STORY_POINTS } = await import('../../src/domain/landed');
+    const out = await fetchHackerNewsLaunches();
+    expect(out.map((f) => [f.title, f.score, f.alert])).toEqual([['Introducing Claude Opus 5.5', 700, true]]);
+    // The since bound is bucketed to the TTL so every render inside it shares one URL.
+    const bucket = Math.floor(NOW / 1000 / LAUNCH_STORY_TTL_SECONDS) * LAUNCH_STORY_TTL_SECONDS;
+    expect(Object.fromEntries(new URL(calls[0]).searchParams)).toEqual({
+      tags: 'story',
+      hitsPerPage: '1000',
+      numericFilters: `points>=${LAUNCH_STORY_POINTS},created_at_i>${bucket - LANDED_WINDOW_DAYS * 86_400}`,
+      attributesToRetrieve: 'title,url,points,created_at,num_comments',
+    });
+  });
+
+  it('throws on a body without hits so the source shows as failed', async () => {
+    mockUpstream({ 'https://hn.algolia.com/api/v1/search?': { message: 'rate limited' } });
+    const { fetchHackerNewsLaunches } = await import('../../src/adapters/hacker-news');
+    await expect(fetchHackerNewsLaunches()).rejects.toThrow(/no hits array/);
+  });
+});
+
 describe('Leak Wire on Hacker News', () => {
   it('toLeakItem keeps leak-shaped titles at any point count', async () => {
     const { toLeakItem } = await import('../../src/adapters/hacker-news');

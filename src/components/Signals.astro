@@ -3,7 +3,8 @@ import type { Dashboard } from '../domain/dashboard';
 import { LABS } from '../domain/lab';
 import { ago } from '../ui/format';
 import { sourcePill } from '../ui/panels';
-import { EARLY_WARNING_SOURCES, LANDED_SOURCES, TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
+import { SOURCE } from '../domain/sources';
+import { EARLY_WARNING_SOURCES, LANDED_LAB_FEEDS, LANDED_SOURCES, TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
 interface Props { d: Dashboard; now?: number }
 const { d, now = Date.now() } = Astro.props;
 const w = d.earlyWarnings;
@@ -15,10 +16,10 @@ const ewPill = sourcePill(d.sources, EARLY_WARNING_SOURCES, d.generatedAt, now, 
 const landedPill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');
 const leaksDown = w.leaks.sources.filter((s) => !s.ok).length > 0;
 const openrouterDown = !w.stealth.ok;
-const labFeeds: readonly string[] = LANDED_SOURCES.slice(2);
+const labFeeds: readonly string[] = LANDED_LAB_FEEDS;
 const labFeedsDown = d.sources.filter((s) => labFeeds.includes(s.name) && !s.ok).length;
 const allLeaksDown = w.leaks.sources.length > 0 && w.leaks.sources.every((s) => !s.ok);
-const hnDown = d.sources.some((s) => s.name === LANDED_SOURCES[1] && !s.ok);
+const hnDown = d.sources.some((s) => s.name === SOURCE.hnLaunches && !s.ok);
 const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time' : h >= 0 ? `in ${Math.round(h)}h` : 'started');
 ---
 <section class="section wrap reveal">

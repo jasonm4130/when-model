@@ -37,7 +37,7 @@ const excluded = rows.filter((r) => !r.verified);
     <div class="metric-note">median {days1(stats.frontier.medianDays)} days</div>
   </div>
 </div>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Stealth reveals table">
   <table>
     <caption class="sr-only">Revealed OpenRouter stealth slots: when each appeared, what it turned out to be, and how many days passed before the official listing.</caption>
     <thead>

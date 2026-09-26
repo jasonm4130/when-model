@@ -505,10 +505,19 @@ export interface CurveRead extends CurveBracket {
   p: number;
 }
 
-/** The best family curve for a lab, read at now+72h, now+7d and now+30d. */
+/** A lab's family curves read at now+72h, now+7d and now+30d. */
 export interface ReleaseCurve {
   labId: LabId;
+  /** The headline family: the best trusted 7-day read (then the highest 7-day, then 30-day read). */
   family: string;
+  /**
+   * The family the 72-hour and 30-day reads came from. Each horizon takes the lab's best trusted
+   * read across its families, as P7 does, and as the replay read labs: Google's 30 days were once
+   * Flash-Lite's 8% while its trusted Gemini 4.0 read was 70%. With no trusted read at a horizon,
+   * the headline family's read stands.
+   */
+  family72: string;
+  family30: string;
   /** P(released within 72 hours): the horizon the release forecast was calibrated on. */
   p72: number;
   p7: number;
@@ -832,43 +841,54 @@ export function releaseCurveForLab(
   labId: LabId,
   now: number,
 ): ReleaseCurve | undefined {
-  const at72 = now + 3 * DAY_MS;
-  const at7 = now + 7 * DAY_MS;
-  const at30 = now + 30 * DAY_MS;
-  let best: ReleaseCurve | undefined;
-  for (const curve of familyCurves(
+  const at = { p72: now + 3 * DAY_MS, p7: now + 7 * DAY_MS, p30: now + 30 * DAY_MS } as const;
+  type Horizon = keyof typeof at;
+  type FamilyRead = { family: FamilyCurve; read: CurveRead; trusted: boolean };
+  const families: Record<Horizon, FamilyRead>[] = [];
+  for (const family of familyCurves(
     markets.filter((m) => m.labId === labId),
     now,
   )) {
-    const read72 = readCurve(curve, at72, now);
-    const read7 = readCurve(curve, at7, now);
-    const read30 = readCurve(curve, at30, now);
-    if (!read72 || !read7 || !read30) continue;
-    const { p: p72, ...bracket72 } = read72;
-    const { p: p7, ...bracket7 } = read7;
-    const { p: p30, ...bracket30 } = read30;
-    const trusted7 = isTrustedRead(bracket7, at7);
-    if (best) {
-      const rank = Number(trusted7) - Number(best.trusted7) || p7 - best.p7 || p30 - best.p30;
-      if (rank <= 0) continue;
+    const reads: Partial<Record<Horizon, FamilyRead>> = {};
+    for (const h of ['p72', 'p7', 'p30'] as const) {
+      const read = readCurve(family, at[h], now);
+      if (read) reads[h] = { family, read, trusted: isTrustedRead(read, at[h]) };
     }
-    best = {
-      labId,
-      family: curve.family,
-      p72,
-      p7,
-      p30,
-      bracket72,
-      bracket7,
-      bracket30,
-      trusted72: isTrustedRead(bracket72, at72),
-      trusted7,
-      trusted30: isTrustedRead(bracket30, at30),
-      interpolated: read7.interpolated || read30.interpolated,
-      thinExcluded: curve.thinExcluded,
-      maxSpread: curve.maxSpread,
-      marketUrl: read7.url,
-    };
+    if (reads.p72 && reads.p7 && reads.p30) families.push(reads as Record<Horizon, FamilyRead>);
   }
-  return best;
+  if (!families.length) return undefined;
+  const better = (a: FamilyRead, b: FamilyRead) =>
+    Number(a.trusted) - Number(b.trusted) || a.read.p - b.read.p;
+  // The headline family: best trusted P7, then the highest P7, then the highest P30; the first wins a tie.
+  const head = families.reduce((best, f) =>
+    (better(f.p7, best.p7) || f.p30.read.p - best.p30.read.p) > 0 ? f : best,
+  );
+  // Every other horizon: the best trusted read across families, the headline family's on a tie or when none is trusted.
+  const bestAt = (h: Horizon): FamilyRead =>
+    families.reduce((best, f) => (f[h].trusted && better(f[h], best) > 0 ? f[h] : best), head[h]);
+  const r72 = bestAt('p72');
+  const r7 = head.p7;
+  const r30 = bestAt('p30');
+  const { p: p72, ...bracket72 } = r72.read;
+  const { p: p7, ...bracket7 } = r7.read;
+  const { p: p30, ...bracket30 } = r30.read;
+  return {
+    labId,
+    family: r7.family.family,
+    family72: r72.family.family,
+    family30: r30.family.family,
+    p72,
+    p7,
+    p30,
+    bracket72,
+    bracket7,
+    bracket30,
+    trusted72: r72.trusted,
+    trusted7: r7.trusted,
+    trusted30: r30.trusted,
+    interpolated: r7.read.interpolated || r30.read.interpolated,
+    thinExcluded: r7.family.thinExcluded,
+    maxSpread: r7.family.maxSpread,
+    marketUrl: r7.read.url,
+  };
 }

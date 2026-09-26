@@ -7,7 +7,7 @@ interface Props {
 }
 const { results, provenance } = Astro.props;
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Signals that did not lead table">
   <table>
     <caption class="sr-only">Signals that were tested and did not lead a launch.</caption>
     <thead>

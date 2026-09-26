@@ -92,7 +92,7 @@ const views = panels.map((panel) => {
 </div>
 <details class="bins">
   <summary class="tiny">The plotted bins as a table</summary>
-  <div class="table-scroll">
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Reliability bins tables">
     {views.map(({ panel, total }) => (
       <table>
         <caption>{panel.title} · {total} {panel.unit}</caption>

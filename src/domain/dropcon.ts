@@ -1,3 +1,4 @@
+import { dayMonth } from './dates';
 import { leadInputSkillText, type ForecastSummary } from './forecast';
 import type { LabId } from './lab';
 
@@ -18,6 +19,14 @@ export const DROPCON_ALGORITHM_VERSION = 3;
 export const LEVEL_BANDS = [75, 55, 35, 15] as const;
 
 export type DropconLevel = 1 | 2 | 3 | 4 | 5;
+
+/** The score range of every level, from `LEVEL_BANDS`: "1 at 75+, 2 at 55–74, …, 5 below 15". */
+export function levelBandsText(): string {
+  const bands = LEVEL_BANDS.map((min, i) =>
+    i === 0 ? `${i + 1} at ${min}+` : `${i + 1} at ${min}–${LEVEL_BANDS[i - 1] - 1}`,
+  );
+  return `Levels by score: ${bands.join(', ')}, ${LEVEL_BANDS.length + 1} below ${LEVEL_BANDS[LEVEL_BANDS.length - 1]}.`;
+}
 
 export function levelForScore(score: number): DropconLevel {
   const i = LEVEL_BANDS.findIndex((min) => score >= min);
@@ -82,7 +91,7 @@ export interface ProvenanceRow {
   /** Every scored term is forward-looking; landed launches are listed separately and score nothing. */
   tag: 'LEAD';
   label: string;
-  /** The arithmetic, e.g. "80 × 0.85". */
+  /** The arithmetic with its unrounded result, e.g. "80 × 0.884 = 70.7", so a reader can redo it. */
   detail: string;
   points: number;
   url?: string;
@@ -125,7 +134,8 @@ const LEVELS: Record<DropconLevel, { name: string; market: string }> = {
     market: 'Markets put a named frontier release at roughly even odds within 7 days.',
   },
   2: {
-    name: 'VAGUE-POSTING DETECTED',
+    // Named for what it reads: the level reads market odds, never posts (there is no X feed).
+    name: 'MARKETS SMELL A DROP',
     market: 'Markets price a named frontier release as likely within 7 days.',
   },
   1: {
@@ -187,6 +197,9 @@ function bracketText(d: MarketDriver): string {
   return d.to ? `constant hazard from now to ${d.to}` : `held at ${d.from ?? 'the last rung'}`;
 }
 
+/** "70.7": a term's points before rounding, so "80 × 0.884 = 70.7" shows why the row reads 71. */
+const exact = (x: number) => (Math.round(x * 10) / 10).toFixed(1);
+
 const signedPp = (d: number) => `${d >= 0 ? '+' : '−'}${Math.abs(Math.round(d * 100))} pts`;
 
 /** A 24-hour rise in P7 this large is worth a clause in the headline. */
@@ -210,7 +223,7 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
       label: i.top7
         ? `${i.top7.family} (${i.top7.lab}) · ${pct(p7)} within 7 days, ${bracketText(i.top7)}`
         : 'No trusted frontier market read within 7 days',
-      detail: `${WEIGHTS.market7d} × ${p7.toFixed(2)}`,
+      detail: `${WEIGHTS.market7d} × ${p7.toFixed(3)} = ${exact(WEIGHTS.market7d * p7)}`,
       points: Math.round(WEIGHTS.market7d * p7),
       ...(i.top7 ? { url: i.top7.url } : {}),
     },
@@ -225,7 +238,7 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
               : `${pct(increment)} beyond the 7-day term`
           }`
         : 'No trusted frontier market read within 30 days',
-      detail: `${WEIGHTS.market30dIncrement} × max(0, ${p30.toFixed(2)} − ${p7.toFixed(2)})`,
+      detail: `${WEIGHTS.market30dIncrement} × max(0, ${p30.toFixed(3)} − ${p7.toFixed(3)}) = ${exact(WEIGHTS.market30dIncrement * increment)}`,
       points: Math.round(WEIGHTS.market30dIncrement * increment),
       ...(i.top30 ? { url: i.top30.url } : {}),
     },
@@ -239,7 +252,7 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
       detail:
         delta === undefined
           ? `${WEIGHTS.repricing} × 0`
-          : `${WEIGHTS.repricing} × clamp(${delta.toFixed(2)} / ${WEIGHTS.repricingFullDelta}, 0, 1)`,
+          : `${WEIGHTS.repricing} × clamp(${delta.toFixed(3)} / ${WEIGHTS.repricingFullDelta}, 0, 1) = ${exact(repriced)}`,
       points: Math.round(repriced),
       url: '/api/history.json',
     },
@@ -293,12 +306,8 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
   };
 }
 
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-/** "16 Jul", in UTC. Spelled out by hand: ICU writes "Sept" for en-GB, and runtimes differ. */
-const monthDay = (iso: string) => {
-  const d = new Date(iso);
-  return `${d.getUTCDate()} ${SHORT_MONTHS[d.getUTCMonth()]}`;
-};
+/** "16 Jul", in UTC. */
+const monthDay = (iso: string) => dayMonth(iso);
 
 const span = (w: { from: string; to: string }) => `${monthDay(w.from)}–${monthDay(w.to)} ${w.to.slice(0, 4)}`;
 

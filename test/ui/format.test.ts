@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { stripDay } from '../../src/domain/history';
 import {
   ago,
   ctx,
@@ -42,8 +43,12 @@ describe('format', () => {
     expect(ctx(1_048_576)).toBe('1.0M');
   });
 
-  it('shortDate is UTC and upper-case', () => {
-    expect(shortDate('2026-09-19T23:30:00Z')).toBe('19 SEPT');
+  it("shortDate is UTC and upper-case, with the page's one month spelling", () => {
+    // ICU writes "SEPT" for en-GB; the history strip writes "Sep". The page uses one spelling.
+    expect(shortDate('2026-09-19T23:30:00Z')).toBe('19 SEP');
+    expect(shortDate('2026-09-02T00:00:00Z')).toBe('02 SEP');
+    expect(shortDate('2026-09-19T23:30:00Z')).toBe(stripDay('2026-09-19T23:30:00Z').toUpperCase());
+    expect(shortDate('not a date')).toBe('—');
   });
 
   it('perMillion keeps integer zeros and trims only decimal zeros', () => {

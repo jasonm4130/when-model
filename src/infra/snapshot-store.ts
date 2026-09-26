@@ -138,7 +138,9 @@ const oddsRead = (read: OddsReadLike | undefined) =>
 /**
  * Projects only collected values. It never derives or recomputes a release signal. A lab's odds
  * keep the family and each horizon's probability and trust flag; the brackets are on the page and
- * derivable from the markets, so they are left out to keep the row small.
+ * derivable from the markets, so they are left out to keep the row small. So is the family of a
+ * 72-hour or 30-day read taken from another of the lab's families (worst case, 20 more strings
+ * would leave under 40 bytes of the cap); the scored P30's family is in `measurement.inputs.top30`.
  */
 export function compactSnapshot(dashboard: DashboardLike): CompactSnapshot {
   timestamp(dashboard.generatedAt, 'dashboard.generatedAt');

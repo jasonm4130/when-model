@@ -41,6 +41,9 @@ export function visibleContent(d: Visible): unknown {
       readValue(l.odds?.p72),
       readValue(l.odds?.p7),
       readValue(l.odds?.p30),
+      // A 72-hour or 30-day read from another family names it on the card.
+      l.odds?.p72.family ?? null,
+      l.odds?.p30.family ?? null,
     ]),
     drops: list(d.drops)
       .slice(0, PANEL_ROWS.drops)

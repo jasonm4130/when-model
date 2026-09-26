@@ -39,6 +39,9 @@ const broadcasts = broadcastsJson as unknown as Backtest['broadcasts'];
 const architecture = architectureJson as unknown as Backtest['architecture'];
 const negatives = negativesJson as unknown as Backtest['negative-results'];
 const traps = trapsJson as unknown as Backtest['timestamp-traps'];
+const archived = broadcasts.broadcasts.filter((b) => b.capture);
+const unarchived = broadcasts.broadcasts.filter((b) => !b.capture);
+const openAiMisses = broadcasts.misses.filter((m) => m.model.startsWith('GPT'));
 const replay = replayJson as unknown as Replay;
 
 // The data only changes when the committed JSON does, i.e. on deploy.
@@ -77,6 +80,8 @@ const otherRange = otherLabs.length
   ? `${signed(Math.min(...otherLabs.map((l) => l.skill)))} to ${signed(Math.max(...otherLabs.map((l) => l.skill)))}`
   : '';
 const frontierNames = [...new Set(replay.byLab.map((l) => labName(l.labId)))];
+const fewestLaunches = Math.min(...replay.byLab.map((l) => l.testEvents));
+const mostLaunches = Math.max(...replay.byLab.map((l) => l.testEvents));
 const survivorship = replay.survivorship;
 const uncensored = head.sensitivity.find((s) => s.variant === 'uncensored');
 const pricedMin = pct(meta.protocol.pricedMin);
@@ -120,7 +125,7 @@ const toc = [
 ---
 <Layout
   title="Backtest · whenmodel"
-  description={`Can public signals see a frontier AI launch coming? An hourly replay of Polymarket release odds from ${longDate(meta.window.from)} to ${longDate(meta.window.until)}, scored out of sample on ${FORECAST_CONSTANTS.testedOn.events} launches, plus ${events.releases.length} launches timed against every signal that might have warned of them.`}
+  description={`Can public signals see a frontier AI launch coming? An hourly replay of Polymarket release odds from ${longDate(meta.window.from)} to ${longDate(meta.window.until)}, scored out of sample on ${FORECAST_CONSTANTS.testedOn.events} launches, plus ${events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in its tables.`}
 >
   <header class="bt-hero wrap">
     <a class="tiny home" href="/">&#9664; WHENMODEL DASHBOARD</a>
@@ -128,7 +133,7 @@ const toc = [
     <p class="bt-question">Can public signals see a frontier model launch coming?</p>
     <p class="bt-method">
       <span class="tiny glow-c">METHOD</span>
-      Polymarket's release odds, replayed hour by hour from {longDate(meta.window.from)} to {longDate(meta.window.until)} through the dashboard's own code: {meta.protocol.formulasTried} forecasts fitted on the first {FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next {FORECAST_CONSTANTS.testedOn.events}. Plus {events.releases.length} launches timed by hand against every signal that might have warned of them.
+      Polymarket's release odds, replayed hour by hour from {longDate(meta.window.from)} to {longDate(meta.window.until)} through the dashboard's own code: {meta.protocol.formulasTried} forecasts fitted on the first {FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next {FORECAST_CONSTANTS.testedOn.events}. Plus {events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in the tables below.
     </p>
     <div class="metrics headline">
       <div>
@@ -142,9 +147,9 @@ const toc = [
         <div class="metric-note">held-out launches, own lab ≥{pricedMin}</div>
       </div>
       <div>
-        <div class="metric-label">Best lab reads</div>
-        <div class="metric-value glow-c">{signed(lab1.skill)} · {signed(lab2.skill)}</div>
-        <div class="metric-note">{labName(lab1.labId)} · {labName(lab2.labId)}, {lab1.testEvents} and {lab2.testEvents} launches</div>
+        <div class="metric-label">Held-out launches</div>
+        <div class="metric-value glow-c">{FORECAST_CONSTANTS.testedOn.events}</div>
+        <div class="metric-note">the real sample size · fitted on {FORECAST_CONSTANTS.fittedOn.events}</div>
       </div>
       <div>
         <div class="metric-label">Level's input, 7d</div>
@@ -157,7 +162,7 @@ const toc = [
       {decision.recommendation === 'lead-score'
         ? `No formula beat the base rate at ${headH} hours, so DROPCON stays a hand-weighted lead score, not a probability.`
         : `A formula beat the base rate at ${headH} hours.`}
-      {' '}{lab2.skill > 0 ? 'Named markets helped for two labs' : 'Named markets helped for at most one lab'}: {labName(lab1.labId)} and {labName(lab2.labId)} scored {signed(lab1.skill)} and {signed(lab2.skill)} on their own launches, the other {otherLabs.length} labs {otherRange}. {unpriced > replay.pricedEvents.test / 2 ? 'Most' : 'Some'} held-out launches, {unpriced} of {replay.pricedEvents.test}, had no market at {pricedMin} or more beforehand.
+      {' '}{labName(lab1.labId)} ({lab1.testEvents} launch{lab1.testEvents === 1 ? '' : 'es'}) and {labName(lab2.labId)} ({lab2.testEvents}) scored highest on their own launches, {signed(lab1.skill)} and {signed(lab2.skill)}, and the other {otherLabs.length} labs {otherRange}; with {fewestLaunches} to {mostLaunches} launches per lab these are anecdotes, not a ranking. {unpriced > replay.pricedEvents.test / 2 ? 'Most' : 'Some'} held-out launches, {unpriced} of {replay.pricedEvents.test}, had no market at {pricedMin} or more beforehand.
     </p>
     <nav class="toc" aria-label="Sections">
       {toc.map(([id, label]) => <a class="pill" href={`#${id}`}>{label}</a>)}
@@ -169,6 +174,8 @@ const toc = [
       <BacktestLimits
         releases={events.releases.length}
         dated={dated.length}
+        early90Unprompted={early90.filter((c) => c.precursor === 'none').map((c) => c.model)}
+        byPrecursor={markets.splits.byPrecursor}
         medianAvailabilityLagH={events.summary.medianAvailabilityLagH}
         early90={early90.length}
         early90Prompted={early90.filter((c) => c.precursor !== 'none').length}
@@ -213,7 +220,7 @@ const toc = [
         <BacktestScores rungCalibration={markets.rungCalibration} />
       </div>
       <div class="panel stack-gap">
-        <h3 class="tiny sub-title">By lab: where named markets work</h3>
+        <h3 class="tiny sub-title">By lab: where named markets exist</h3>
         <BacktestByLab byLab={replay.byLab} priced={replay.pricedEvents} pricedMin={meta.protocol.pricedMin} readMin={meta.protocol.readMin} levels={replay.levels} split={meta.split.at} headlineH={headH} />
       </div>
       <div class="panel stack-gap">
@@ -251,7 +258,7 @@ const toc = [
 
     <section id="splits" class="section wrap" aria-labelledby="splits-title">
       <div class="section-head">
-        <h2 id="splits-title"><span>&#9656;</span>PRE-ANNOUNCED VS SURPRISE</h2>
+        <h2 id="splits-title"><span>&#9656;</span>PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR</h2>
         <span class="tiny wave">WAVE 1</span>
       </div>
       <div class="panel">
@@ -282,7 +289,7 @@ const toc = [
     <section id="broadcasts" class="section wrap" aria-labelledby="broadcasts-title">
       <div class="section-head"><h2 id="broadcasts-title"><span>&#9656;</span>SCHEDULED BROADCASTS</h2></div>
       <div class="panel">
-        <p class="intro">OpenAI sometimes publishes an upcoming-livestream page hours before a launch. These are the cases where an archived copy proves when it went up.</p>
+        <p class="intro">OpenAI sometimes publishes an upcoming-livestream page hours before a launch. {archived.length} of these {broadcasts.broadcasts.length} have an archived copy proving it was up before the stream{unarchived.length ? `; ${unarchived.map((b) => b.model).join(', ')} ${unarchived.length === 1 ? 'is' : 'are'} timed from YouTube's own publishedAt, with no archive` : ''}. {openAiMisses.length} other OpenAI launches had no scheduled stream at all.</p>
         <BacktestBroadcasts broadcasts={broadcasts.broadcasts} misses={broadcasts.misses} />
       </div>
     </section>

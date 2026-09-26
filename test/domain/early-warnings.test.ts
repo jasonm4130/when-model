@@ -88,6 +88,10 @@ describe('track records', () => {
     expect(median(leads)).toBe(BROADCAST_TRACK.medianLeadHours);
     expect(Math.min(...leads)).toBe(BROADCAST_TRACK.minLeadHours);
     expect(Math.max(...leads)).toBe(BROADCAST_TRACK.maxLeadHours);
+    // The OpenAI launches with no scheduled stream, which the home track line names.
+    expect(BROADCAST_TRACK.openAiMisses).toEqual(
+      broadcastsJson.misses.filter((m) => m.model.startsWith('GPT')).map((m) => m.model),
+    );
   });
 
   it('pins the architecture record to data/backtest/architecture.json', () => {

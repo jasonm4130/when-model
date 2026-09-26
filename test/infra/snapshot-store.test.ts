@@ -233,9 +233,10 @@ describe('snapshot store', () => {
         odds: {
           family: long('family'),
           marketUrl: long('m'),
-          p72: read,
+          // A read from another family carries its name; the snapshot leaves it out.
+          p72: { ...read, family: long('family') },
           p7: read,
-          p30: read,
+          p30: { ...read, family: long('family') },
           thinExcluded: 99,
         },
         latest: {
@@ -255,10 +256,14 @@ describe('snapshot store', () => {
       sources: Object.values(SOURCE).map((name) => ({ name, ok: false, error: long('error') })),
     };
     expect(LABS.length).toBeGreaterThanOrEqual(10);
-    expect(Object.values(SOURCE)).toHaveLength(15);
-    const { byteCount } = snapshotPayload(worst as unknown as Parameters<typeof snapshotPayload>[0]);
-    // 29,835 bytes when this was written: under the cap with about 9% to spare.
+    expect(Object.values(SOURCE)).toHaveLength(16);
+    const { byteCount, json } = snapshotPayload(worst as unknown as Parameters<typeof snapshotPayload>[0]);
+    // 30,012 bytes with 16 sources: under the cap with about 8% to spare.
     expect(byteCount).toBeLessThanOrEqual(MAX_SNAPSHOT_BYTES);
+    // A 72-hour or 30-day read's own family stays out: only the headline family is kept.
+    const odds = (JSON.parse(json) as { labs: { odds: Record<string, unknown> }[] }).labs[0].odds;
+    expect(Object.keys(odds.p72 as object).sort()).toEqual(['p', 'trusted']);
+    expect(Object.keys(odds.p30 as object).sort()).toEqual(['p', 'trusted']);
   });
 
   it('keeps a real v3 dashboard well under the cap', () => {

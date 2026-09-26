@@ -7,6 +7,7 @@ import {
   computeDropcon,
   familyPhrase,
   headlineProbability,
+  levelBandsText,
   levelForScore,
   shortRung,
   type DropconInput,
@@ -139,8 +140,40 @@ describe('computeDropcon', () => {
     expect(rows).toEqual([53, 2, 6]);
     expect(d.score).toBe(rows.reduce((a, b) => a + b, 0));
     expect(d.provenance.every((r) => r.tag === 'LEAD')).toBe(true);
-    expect(d.provenance[0]).toMatchObject({ term: 'market-7d', detail: '80 × 0.67', url: sonnet.url });
-    expect(d.provenance[2]).toMatchObject({ term: 'repricing', url: '/api/history.json' });
+    // Each row prints its unrounded product, so a reader can redo it: 80 × 0.666 is 53.3, shown as 53.
+    expect(d.provenance[0]).toMatchObject({
+      term: 'market-7d',
+      detail: '80 × 0.666 = 53.3',
+      url: sonnet.url,
+    });
+    expect(d.provenance[1].detail).toBe('10 × max(0, 0.900 − 0.666) = 2.3');
+    expect(d.provenance[2]).toMatchObject({
+      term: 'repricing',
+      detail: '10 × clamp(0.166 / 0.3, 0, 1) = 5.5',
+      url: '/api/history.json',
+    });
+  });
+
+  it('prints a row whose rounding would hide its input: 80 × 0.884 is 70.7, which rounds to 71', () => {
+    const d = computeDropcon({ ...quiet, p7: 0.8838, p30: 0.9492, top7: sonnet, top30: sonnet });
+    expect(d.provenance[0]).toMatchObject({ points: 71, detail: '80 × 0.884 = 70.7' });
+  });
+
+  it('spells out every level band from LEVEL_BANDS', () => {
+    expect(levelBandsText()).toBe(
+      'Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.',
+    );
+    for (const [i, min] of LEVEL_BANDS.entries()) {
+      expect(levelBandsText()).toContain(`${i + 1} at ${min}`);
+      expect(levelForScore(min)).toBe(i + 1);
+    }
+  });
+
+  it('names level 2 for what it reads: market odds, not posts it never sees', () => {
+    const d = computeDropcon({ ...quiet, p7: 0.7, p30: 0.7, top7: sonnet });
+    expect(d.level).toBe(2);
+    expect(d.name).toBe('MARKETS SMELL A DROP');
+    expect(d.name).not.toMatch(/POST|DETECT/);
   });
 
   it('scores repricing from the day-old P7, saturating at +30 points and ignoring falls', () => {

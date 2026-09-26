@@ -14,7 +14,7 @@ const { rungCalibration } = Astro.props;
 const beats = rungCalibration.every((r) => r.market.skill > 0);
 const signed = (n: number) => (n > 0 ? `+${n.toFixed(3)}` : n < 0 ? `−${Math.abs(n).toFixed(3)}` : '0');
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Polymarket calibration table">
   <table>
     <caption class="sr-only">Polymarket's own calibration: each rung's price a fixed time before its deadline against how the rung resolved.</caption>
     <thead>

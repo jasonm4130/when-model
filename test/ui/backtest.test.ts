@@ -204,6 +204,8 @@ describe('backtest components', async () => {
         medianAvailabilityLagH: 0.2,
         early90: 5,
         early90Prompted: 4,
+        early90Unprompted: ['Gemini 3.5 Flash'],
+        byPrecursor: markets.splits.byPrecursor,
         marketSkill72: -0.309,
         marketSkill72Ci: [-0.827, 0.056],
         heldOut: 25,
@@ -213,8 +215,37 @@ describe('backtest components', async () => {
     expect(html).toContain("WHAT THIS CAN'T DO");
     expect(text(html)).toContain('12 minutes after its announcement');
     expect(text(html)).toContain('scored −0.309 (95% interval −0.83 to +0.06)');
-    expect(text(html)).toContain('worse than the guess');
+    // One rule both ways: an interval spanning zero is "not distinguishable", even below zero.
+    expect(text(html)).toContain('not distinguishable from it');
+    expect(text(html)).not.toContain('worse than the guess');
     expect(text(html)).toContain('Of 5 launches');
+    // The leak claim states its threshold and n, and the 0.5 split that cuts the other way.
+    const none = markets.splits.byPrecursor.find((g) => g.group === 'none')!;
+    const leak = markets.splits.byPrecursor.find((g) => g.group === 'leak')!;
+    expect(text(html)).toContain(
+      'At 90%, most early markets followed a public leak or notice; at 50%, they did not need one.',
+    );
+    expect(text(html)).toContain('Gemini 3.5 Flash had no such precursor on HN');
+    expect(text(html)).toContain(
+      `At 0.5, markets crossed ahead of ${none.ahead50} of ${none.events} launches with no public precursor and ${leak.ahead50} of ${leak.events} leaked ones.`,
+    );
+    expect(text(html)).not.toContain('aggregate leaks rather than foresee launches');
+    const clear = await container.renderToString(BacktestLimits, {
+      props: {
+        releases: 23,
+        dated: 17,
+        medianAvailabilityLagH: 0.2,
+        early90: 5,
+        early90Prompted: 4,
+        early90Unprompted: [],
+        byPrecursor: [],
+        marketSkill72: -0.4,
+        marketSkill72Ci: [-0.8, -0.1],
+        heldOut: 25,
+        admitDays: 14,
+      },
+    });
+    expect(text(clear)).toContain('worse than the guess');
     expect(text(html)).toContain('25 held-out launches in the replay, and 23 hand-timed launches');
     expect(text(html)).toContain("can't rebuild the level itself");
     expect(text(html)).toContain('only from 14 days before its deadline');
@@ -242,6 +273,10 @@ describe('backtest components', async () => {
       },
     });
     expect(html).toContain('pnpm backtest --refresh');
+    // Only the computed tables are rebuilt; the curated ones are carried, and the page says so.
+    expect(text(html)).toContain('Every computed table is rebuilt from raw pulls committed to the repo.');
+    expect(text(html)).toContain('are carried as sourced data, not recomputed');
+    expect(text(html)).not.toContain('Everything on this page is regenerated');
     // Algolia answers 400 to an unencoded numericFilters, so the pasted line must carry it encoded.
     expect(html).toContain('numericFilters=created_at_i%3E%3D');
     expect(text(html)).not.toMatch(/created_at_i[<>]=/);
@@ -305,15 +340,27 @@ describe('backtest page', async () => {
     expect(hero).toContain(`95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])}`);
     expect(hero).toContain(`${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test}`);
     expect(hero).toContain(`Level's input, 7d ${signed2(LEAD_INPUT_SKILL_7D.skill)}`);
-    const [first, second] = [...replay.byLab].sort((a, b) => b.skill - a.skill);
-    expect(hero).toContain(`${signed2(first.skill)} · ${signed2(second.skill)}`);
+    // The fourth tile is the sample size, chosen in advance, not the two best labs after the fact.
+    expect(hero).toContain(
+      `Held-out launches ${FORECAST_CONSTANTS.testedOn.events} the real sample size · fitted on ${FORECAST_CONSTANTS.fittedOn.events}`,
+    );
+    expect(hero).not.toContain('Best lab reads');
     expect(hero).toContain(
       'No formula beat the base rate at 72 hours, so DROPCON stays a hand-weighted lead score, not a probability.',
     );
-    // Named markets work for the two labs the replay says they do, and the claim names them from the data.
-    expect(hero).toMatch(
-      /Named markets helped for two labs: Anthropic and OpenAI scored \+0\.48 and \+0\.30/,
+    // The best two labs are named as anecdotes, from the data, with their launch counts.
+    const [first, second] = [...replay.byLab].sort((a, b) => b.skill - a.skill);
+    const counts = replay.byLab.map((l) => l.testEvents);
+    expect(hero).toContain(
+      `Anthropic (${first.testEvents} launches) and OpenAI (${second.testEvents}) scored highest on their own launches, ${signed2(first.skill)} and ${signed2(second.skill)}`,
     );
+    expect(hero).toContain(
+      `with ${Math.min(...counts)} to ${Math.max(...counts)} launches per lab these are anecdotes, not a ranking`,
+    );
+    expect(hero).not.toMatch(/helped/);
+    // What was timed by hand, named, instead of "every signal that might have warned".
+    expect(hero).toContain('timed by hand against Hacker News, lab feeds, TestingCatalog');
+    expect(hero).not.toContain('every signal');
     expect(hero).toContain(
       `${replay.pricedEvents.test - replay.pricedEvents.testPriced} of ${replay.pricedEvents.test}, had no market at 50% or more`,
     );
@@ -411,7 +458,15 @@ describe('v3 replay components', async () => {
     expect(text(html)).not.toContain('longest false alarm');
     const qwen = replay.pricedEvents.events.find((e) => !e.priced)!;
     expect(text(html)).toContain(
-      `Its own lab's 72-hour read peaked at ${pct(qwen.maxLabP72)} in the 72 hours before it listed (no market priced it)`,
+      `Its own lab's 72-hour read peaked at ${pct(qwen.maxLabP72)} in the 72 hours before it listed (not priced ≥50%)`,
+    );
+    // A launch with a read below the bar was priced, just not at 50%: never "no market priced it".
+    expect(text(html)).not.toContain('no market priced');
+    expect(text(html)).toContain('launch not priced ≥50%');
+    expect(text(html)).toContain(`the input behind ${WEIGHTS.market7d} of DROPCON's 100 points`);
+    const held = replay.pricedEvents.events.filter((e) => e.at > replay.meta.split.at);
+    expect(text(html)).toContain(
+      `${held.filter((e) => !e.priced).length} of the ${held.length} held-out launches had no market at 50% or more beforehand`,
     );
   });
 
@@ -518,7 +573,7 @@ describe('site copy and links', async () => {
     expect(html).toContain('The weights are hand-set and the level itself has never been tested');
     // The FAQ's weights and trust window are the scorer's own constants.
     expect(html).toContain(
-      `${WEIGHTS.market7d} × the best 7-day probability, plus ${WEIGHTS.market30dIncrement} × whatever the 30-day probability adds, plus up to ${WEIGHTS.repricing} when`,
+      `${WEIGHTS.market7d} × the best 7-day probability, plus ${WEIGHTS.market30dIncrement} × whatever the best 30-day probability adds, plus up to ${WEIGHTS.repricing} when`,
     );
     expect(html).toContain(`more than ${TRUSTED_BRACKET_DAYS} days out`);
     expect(html).toContain(`the input behind ${WEIGHTS.market7d} of the 100 points`);
@@ -526,6 +581,35 @@ describe('site copy and links', async () => {
     // The auto-refresh answer belongs to WP-8 (polled refresh) and stays as that package wrote it.
     expect(html).toContain('The open page checks for new data every 5 minutes and offers a one-click reload');
     expect(html).not.toContain('The page reloads itself every 5 minutes while open.');
+  });
+
+  it('never says anything but the markets feeds the level (FAQ and timeline)', async () => {
+    const html = text(await container.renderToString(History));
+    const faq = html.slice(html.indexOf('FREQUENTLY ASKED QUESTIONS'));
+    expect(faq).toContain('Its headline level, DROPCON, reads Polymarket release odds only.');
+    expect(faq).toContain('are shown beside it with their track records and never move it');
+    expect(html).not.toMatch(
+      /condensed into one readiness level|fuses free public signals|DROPCON does the reading/,
+    );
+    expect(html).toContain('DROPCON reads the markets; the rest is shown, not scored.');
+    expect(html).not.toContain('calibrated 72-hour');
+    // The arena card carries the one measurement the site has, not an unmeasured lead.
+    expect(html).not.toContain('somebody is about to ship');
+    expect(html).toContain('Design Arena, purged its codenames in June 2026');
+    // The leak claim no longer says the markets never move ahead of launches.
+    expect(html).not.toContain('move on leaks rather than ahead of them');
+  });
+
+  it('says which broadcast times rest on an archive and which on YouTube, and relabels "surprise"', async () => {
+    const html = text(await container.renderToString(BacktestPage));
+    const archived = broadcasts.broadcasts.filter((b) => b.capture).length;
+    expect(html).toContain(
+      `${archived} of these ${broadcasts.broadcasts.length} have an archived copy proving it was up before the stream; GPT-5.6 is timed from YouTube's own publishedAt, with no archive.`,
+    );
+    expect(html).not.toContain('These are the cases where an archived copy proves');
+    expect(html).toContain('PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR');
+    expect(html).toContain('No HN precursor');
+    expect(html).not.toMatch(/surprise/i);
   });
 
   it('the "her" minutes in History agree with the decoded tweet id', () => {

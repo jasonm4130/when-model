@@ -2,7 +2,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import type { LabOddsRead } from '../domain/lab-status';
 import { daysLabel, monthInitials, shortDate } from '../ui/format';
-import { histogramLabel, readBracket, readNote, readTrust, readValue } from '../ui/odds';
+import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue } from '../ui/odds';
 import { leadFlags } from '../ui/signals';
 interface Props { d: Dashboard; now?: Date }
 const { d, now = new Date() } = Astro.props;
@@ -15,6 +15,8 @@ const horizons: { key: 'p72' | 'p7' | 'p30'; label: string; glow: string }[] = [
 ];
 const stealth = d.earlyWarnings.stealth.items.length;
 const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'extrap' : '');
+const oddsAvailable = d.measurement.inputs.oddsAvailable;
+const note = (read: LabOddsRead | undefined) => (read || oddsAvailable ? readNote(read) : 'odds offline');
 ---
 <section class="section wrap reveal">
   <div class="section-head">
@@ -42,7 +44,7 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
           )}
           <div class="metrics tight">
             {horizons.map((h) => (
-              <div title={readNote(l.odds?.[h.key])}><div class="metric-label">DROP ≤{h.label}</div><div class={`metric-value ${h.glow} ${extrap(l.odds?.[h.key])}`}>{readValue(l.odds?.[h.key])}</div></div>
+              <div title={note(l.odds?.[h.key])}><div class="metric-label">DROP ≤{h.label}</div><div class={`metric-value ${h.glow} ${extrap(l.odds?.[h.key])}`}>{readValue(l.odds?.[h.key])}</div></div>
             ))}
             <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(l.daysSince)}</div></div>
           </div>
@@ -56,13 +58,13 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
                   return (
                     <div class={`read ${trust}`} title={readNote(read)}>
                       <dt>{h.label}</dt>
-                      <dd><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrap.'}</span> <span class="bracket">{readBracket(read)}</span></dd>
+                      <dd><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrap.'}</span> <span class="bracket">{readBracket(read)}</span>{read.family && <span class="rfam"> · {read.family}</span>}</dd>
                     </div>
                   );
                 })}
               </dl>
             </div>
-          ) : <div class="reads-fam tiny muted">NO POLYMARKET RELEASE MARKET</div>}
+          ) : <div class="reads-fam tiny muted">{noOddsText(oddsAvailable)}</div>}
           {l.launchedFamilies.length > 0 && <div class="odds-note muted">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
           <div class="metric-label tempo">RELEASE TEMPO · 12 MONTHS</div>
           <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
@@ -70,7 +72,7 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
           </div>
           <div class="latest">
             <span class="metric-label">LATEST</span>
-            {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
+            {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted when">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
           </div>
           <div class="bar heat"><i style={`width:${l.heat}%`}></i></div>
           <div class="lab-foot">
@@ -101,15 +103,20 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
   .reads dl { margin: 2px 0 0; display: grid; gap: 1px; font-size: var(--fs-xs); line-height: 1.1; }
   .read { display: grid; grid-template-columns: 4ch minmax(0, 1fr); gap: 6px; align-items: baseline; }
   .read dt { font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
-  .read dd { margin: 0; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The bracket wraps rather than cutting its date off: at 1366px "held Sep 30" lost its date to an ellipsis. */
+  .read dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+  .read .trust { white-space: nowrap; }
   .read .trust { color: var(--green); }
   .read.extrapolated .trust { color: var(--orange); }
   .read.extrapolated .bracket { color: var(--muted); }
+  /* A 72-hour or 30-day read from another of the lab's families names it. */
+  .read .rfam { color: var(--cyan); }
   .reads-fam { margin-top: 6px; }
   .tempo { margin: 10px 0 4px; }
-  .latest { margin-top: 10px; font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The latest listing wraps instead of clipping: its date and its focus ring stay visible. */
+  .latest { margin-top: 10px; font-size: var(--fs-sm); overflow-wrap: anywhere; }
   .latest .metric-label { display: block; }
-  .latest a { outline-offset: -2px; }
+  .latest .when { white-space: nowrap; }
   .heat { margin-top: 10px; }
   .heat > i { background: linear-gradient(90deg, var(--lab), var(--magenta)); }
   /* The heat line breaks only between its two phrases, and the handle drops under it when the
@@ -119,7 +126,9 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
   .x { margin-left: auto; }
   .x a { margin-left: 8px; color: var(--muted); }
   .x a:hover { color: #fff; }
-  .extrap { opacity: 0.55; }
+  /* An extrapolated read is marked by its "~" and the muted colour, never by opacity: a dimmed
+     magenta 72H value fell to 1.8:1. --muted is 5.6:1 on the card. */
+  .metric-value.extrap { color: var(--muted); text-shadow: none; }
   .odds-note { margin-top: 6px; font-size: var(--fs-xs); }
   .mkt { display: block; margin-top: 8px; font-size: var(--fs-xs); color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
   /* Ten labs divide into rows of five or two, never three or four: below five columns a

@@ -8,7 +8,7 @@ interface Props {
 }
 const { broadcasts, misses } = Astro.props;
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Scheduled broadcasts table">
   <table>
     <caption class="sr-only">OpenAI scheduled livestreams: when the upcoming-stream placeholder was published and when it started.</caption>
     <thead>

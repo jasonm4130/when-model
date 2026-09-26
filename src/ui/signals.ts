@@ -15,12 +15,16 @@ import { SOURCE } from '../domain/sources';
 import { REVEAL_STATS } from '../domain/stealth';
 
 const round1 = (x: number) => Math.round(x * 10) / 10;
+/** "a, b and c". */
+const andList = (items: readonly string[]) =>
+  items.length < 2 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 
 /** One short sentence per signal, every number from its track-record constant. */
 export const TRACK_LINES = {
   stealth: `${REVEAL_STATS.all.n} revealed slots listed officially a median ${round1(REVEAL_STATS.all.medianDays)} days later.`,
   leaks: `${LEAK_TRACK.launched} of ${LEAK_TRACK.n} leaks listed within ${LEAK_TRACK.windowDays} days, a median ${round1(LEAK_TRACK.medianLeadDays)} days later (in-sample).`,
-  broadcasts: `${BROADCAST_TRACK.n} OpenAI launch streams went up a median ${BROADCAST_TRACK.medianLeadHours} h ahead (${BROADCAST_TRACK.minLeadHours}–${BROADCAST_TRACK.maxLeadHours} h).`,
+  // The misses are part of the record: a stream list without them read as "OpenAI always streams first".
+  broadcasts: `Streams went up ahead of ${BROADCAST_TRACK.n} of ${BROADCAST_TRACK.n + BROADCAST_TRACK.openAiMisses.length} OpenAI launches checked, a median ${BROADCAST_TRACK.medianLeadHours} h ahead (${BROADCAST_TRACK.minLeadHours}–${BROADCAST_TRACK.maxLeadHours} h); none before ${andList(BROADCAST_TRACK.openAiMisses)}.`,
   architectures: `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases, a median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead (Qwen and Z.ai only).`,
   events: (() => {
     const rate = hitRate();
@@ -97,14 +101,9 @@ export const EARLY_WARNING_SOURCES = [
   SOURCE.youtube,
   SOURCE.transformers,
 ] as const;
-export const LANDED_SOURCES = [
-  SOURCE.openrouter,
-  SOURCE.hackerNews,
-  SOURCE.openai,
-  SOURCE.deepmind,
-  SOURCE.anthropic,
-  SOURCE.xai,
-] as const;
+/** The labs' own feeds LANDED reads announcements from, named so no check depends on list order. */
+export const LANDED_LAB_FEEDS = [SOURCE.openai, SOURCE.deepmind, SOURCE.anthropic, SOURCE.xai] as const;
+export const LANDED_SOURCES = [SOURCE.openrouter, SOURCE.hnLaunches, ...LANDED_LAB_FEEDS] as const;
 
 /** "5h ago" / "3d ago" from fractional hours, for rows that carry an age rather than a timestamp. */
 export function hoursAgo(h: number): string {

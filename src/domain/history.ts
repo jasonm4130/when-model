@@ -4,6 +4,7 @@
  * wobbles don't flip the displayed level, and a split wherever the scoring algorithm
  * changed underneath the numbers. No fetch, no `Date.now()`.
  */
+import { dayMonth } from './dates';
 import { LEVEL_BANDS } from './dropcon';
 
 /** One `score_series` row, already narrowed to display-relevant columns. */
@@ -126,6 +127,9 @@ export function buildHistorySeries(points: readonly ScorePoint[]): DisplayPoint[
 
 /* ───────────── The history strip: a drawable view of `buildHistorySeries` ───────────── */
 
+/** How far back the history is read: `/api/history.json` and the strip both cover this. */
+export const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60_000;
+
 /** Width of the strip's coordinate space. Heights are the 0..100 score itself. */
 export const STRIP_WIDTH = 1000;
 const HOUR_MS = 3_600_000;
@@ -196,12 +200,9 @@ export interface HistoryStrip {
   summary: string;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/** "26 Sep", UTC. Spelled out by hand: ICU writes "Sept" for en-GB, and runtimes differ. */
+/** "26 Sep", UTC (`dayMonth`, the page's one month spelling). */
 export function stripDay(ms: number | string): string {
-  const d = new Date(ms);
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+  return dayMonth(ms);
 }
 
 /** "26 Sep 04:00Z", UTC. */
@@ -214,6 +215,18 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const hourStart = (iso: string) => Math.floor(Date.parse(iso) / HOUR_MS) * HOUR_MS;
 const clampScore = (s: number) => Math.min(100, Math.max(0, s));
 const range = (a: number, b: number) => (a === b ? `${a}` : `${a} to ${b}`);
+
+/**
+ * What span the strip covers, for its pill: "LAST 30 DAYS" once the series reaches back to the start
+ * of the `windowMs` it was read over, else "SINCE 25 SEP", the strip's own left edge. For its first
+ * month the strip spans its readings (a day at least), not the window it was read over.
+ */
+export function stripSpanText(strip: Pick<HistoryStrip, 'from' | 'to'>, windowMs: number): string {
+  const span = Date.parse(strip.to) - Date.parse(strip.from);
+  return span >= windowMs - HOUR_MS
+    ? `LAST ${Math.round(windowMs / (24 * HOUR_MS))} DAYS`
+    : `SINCE ${stripDay(strip.from).toUpperCase()}`;
+}
 
 /**
  * The strip's drawable model: one step-area run per stretch of hours sharing a version and a

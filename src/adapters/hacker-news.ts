@@ -7,6 +7,7 @@ import {
   type FeedItem,
   type LeakItem,
 } from '../domain/feed';
+import { LANDED_WINDOW_DAYS, LAUNCH_STORY_POINTS } from '../domain/landed';
 import { cachedJson } from '../infra/edge-cache';
 import { isHttpUrl, toIso } from '../infra/text';
 
@@ -62,6 +63,32 @@ export async function fetchHackerNews(hours = 48, minPoints = 60): Promise<FeedI
   const url = `${ALGOLIA}/search?tags=story&hitsPerPage=100&numericFilters=${filters}`;
   const { hits } = await cachedJson<{ hits?: HnHitDto[] }>(url, { ttl: 300 });
   return (hits ?? []).map(toFeedItem).filter((f): f is FeedItem => f !== undefined);
+}
+
+/** Launch stories move slowly once they are days old; 30 minutes keeps a cold fetch rare. */
+export const LAUNCH_STORY_TTL_SECONDS = 1800;
+
+/**
+ * Model stories at or above LANDED's points bar over its whole window, for the launch-story list. The
+ * feed's query covers 48 hours and returns 100 hits, so it missed every launch story two to seven
+ * days old. About 200 stories a week clear 150 points, so this asks for up to 1,000 and only the
+ * fields the mapper reads.
+ */
+export async function fetchHackerNewsLaunches(
+  days = LANDED_WINDOW_DAYS,
+  minPoints = LAUNCH_STORY_POINTS,
+): Promise<FeedItem[]> {
+  const params = new URLSearchParams({
+    tags: 'story',
+    hitsPerPage: '1000',
+    numericFilters: `points>=${minPoints},created_at_i>${sinceBucket(Date.now(), days * 24, LAUNCH_STORY_TTL_SECONDS)}`,
+    attributesToRetrieve: 'title,url,points,created_at,num_comments',
+  });
+  const { hits } = await cachedJson<{ hits?: HnHitDto[] }>(`${ALGOLIA}/search?${params}`, {
+    ttl: LAUNCH_STORY_TTL_SECONDS,
+  });
+  if (!Array.isArray(hits)) throw new Error('Algolia launch search returned no hits array');
+  return hits.map(toFeedItem).filter((f): f is FeedItem => f !== undefined);
 }
 
 /**

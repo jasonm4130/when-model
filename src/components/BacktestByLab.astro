@@ -32,7 +32,7 @@ const rises = observed.every((o, i) => i === 0 || o <= observed[i - 1]);
 const top = test[0];
 const peak = [...test].filter((l) => l.observed !== null).sort((a, b) => b.observed! - a.observed!)[0];
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="By-lab skill table">
   <table>
     <caption class="sr-only">Each frontier lab's own {headlineH}-hour market read scored against that lab's own launches on the held-out window.</caption>
     <thead>
@@ -62,7 +62,7 @@ const peak = [...test].filter((l) => l.observed !== null).sort((a, b) => b.obser
 </p>
 
 <h3 class="tiny sub">Had the level been the {headlineH}-hour probability</h3>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Probability bands table">
   <table>
     <caption class="sr-only">Held-out hours per probability band, their mean forecast, and how often a frontier launch followed within {headlineH} hours.</caption>
     <thead>

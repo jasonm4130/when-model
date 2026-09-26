@@ -72,6 +72,7 @@ async function load(up: Upstreams = {}) {
       throw new Error('algolia down');
     },
     fetchHackerNewsLeaks: async () => [],
+    fetchHackerNewsLaunches: async () => [],
   }));
   vi.doMock('../../src/adapters/testingcatalog', () => ({ fetchTestingCatalogLeaks: async () => [] }));
   vi.doMock('../../src/adapters/youtube', () => ({
@@ -93,7 +94,7 @@ async function load(up: Upstreams = {}) {
 }
 
 describe('buildDashboard', () => {
-  it('fans out to all fifteen sources, tolerates failures and memoises the result under the schema', async () => {
+  it('fans out to all sixteen sources, tolerates failures and memoises the result under the schema', async () => {
     const { DASHBOARD_TTL_SECONDS, loadDashboard, memo } = await load({ database: new SqliteD1() });
     const d = await loadDashboard();
     expect(memo).toHaveBeenCalledWith('dashboard@v4', DASHBOARD_TTL_SECONDS, expect.any(Function));
@@ -110,6 +111,7 @@ describe('buildDashboard', () => {
       'GitHub SDKs',
       'HN leaks',
       'TestingCatalog',
+      'HN launch stories',
       'YouTube broadcasts',
       'transformers registry',
       'First-seen ledger',
@@ -119,7 +121,7 @@ describe('buildDashboard', () => {
       ok: false,
       error: 'algolia down',
     });
-    expect(d.sources.filter((s) => s.ok)).toHaveLength(14);
+    expect(d.sources.filter((s) => s.ok)).toHaveLength(15);
     expect(d.labs.find((l) => l.id === 'openai')?.status).toBe('SHIPPING');
     expect(d.dropcon.degraded).toBe(false);
     // Build-time wall clock never leaks into the dashboard.
@@ -141,7 +143,7 @@ describe('buildDashboard', () => {
     const build = log.mock.calls.find((c) => c[0] === '[dashboard:build]');
     const parsed = JSON.parse(String(build?.[1]));
     expect(parsed.ms).toBe(0);
-    expect(Object.keys(parsed.sources)).toHaveLength(15);
+    expect(Object.keys(parsed.sources)).toHaveLength(16);
     const unmapped = log.mock.calls.find((c) => c[0] === '[diagnostic:unmapped-release-markets]');
     expect(JSON.parse(String(unmapped?.[1]))).toEqual({
       count: 1,

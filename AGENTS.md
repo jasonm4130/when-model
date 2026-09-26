@@ -8,8 +8,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   models, DROPCON v3 scoring, the forecast, lab heat, early warnings, landed, the first-seen
   ledger's read side, and `assembleDashboard(inputs, now)`. No fetch, no `Date.now()`, fully
   unit-tested. `lead.ts` holds only pure rules; its fetchers live in the adapters.
-- `src/adapters` — one module per upstream (Polymarket, OpenRouter, Hugging Face, Hacker News and
-  its leak search, TestingCatalog, lab YouTube feeds, the `transformers` registry, RSS, Anthropic
+- `src/adapters` — one module per upstream (Polymarket, OpenRouter, Hugging Face, Hacker News with
+  its week-long launch search and its leak search, TestingCatalog, lab YouTube feeds, the `transformers` registry, RSS, Anthropic
   newsroom, xAI release notes, GitHub releases). Each exposes a pure `toX(dto)` mapper and a
   `fetchX()` that goes through the edge cache.
 - `src/infra` — `edge-cache.ts` (Workers Cache API wrapper), `source-result.ts` (`collect`:
@@ -71,3 +71,10 @@ Rules of the house:
   For UI changes, run `pnpm test:e2e` against the built Worker for desktop, narrow mobile,
   keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`. Set `E2E_PORT` when another
   checkout's Worker already holds 8787; locally Playwright reuses whatever server answers on the port.
+  Restart a running `wrangler dev` after `pnpm build`: its reload can keep serving the old server
+  bundle (seen as HTML linking an `/_astro/*.css` that 404s), and the tests then pass or fail on old code.
+  A browser test for a state today's data may not show (a failed source, an extrapolated read, a
+  filled history strip) writes that state into the page with the component's `data-astro-cid-*`
+  attribute, as `test/browser/robustness.spec.ts` does, so it does not depend on the day's data.
+- Month names come from `src/domain/dates.ts` ("SEP", never ICU's en-GB "Sept"); do not format
+  months with `toLocaleDateString`.

@@ -3,6 +3,7 @@ import type { Drop } from '../../src/domain/drop';
 import type { FeedItem } from '../../src/domain/feed';
 import {
   FEED_DAY_MAX_LAG_MS,
+  LANDED_WINDOW_DAYS,
   LAUNCH_STORY_POINTS,
   announcementKey,
   buildLanded,
@@ -107,6 +108,29 @@ describe('buildLanded', () => {
     );
     expect(l.stories.map((s) => s.title)).toEqual(['Introducing GPT-6 Sol']);
     expect(l.models).toEqual(['gpt-6-sol']);
+  });
+
+  it('takes launch stories from the week-long search as well as the 48-hour feed', () => {
+    // Live on 26 Sep: the feed's query held only 48 hours, so a 3.5-day-old launch story with
+    // 700 points never reached LANDED. The launch search carries the rest of the week.
+    const opus = story('Introducing Claude Opus 5.5', 700, 'https://anthropic.com/news/opus', 84);
+    const without = buildLanded({ drops: [], feed: [] }, NOW);
+    expect(without.stories).toEqual([]);
+    const l = buildLanded(
+      {
+        drops: [],
+        feed: [story('Introducing GPT-6 Sol', 900, 'https://openai.com/index/gpt-6-sol/')],
+        launchStories: [
+          opus,
+          // The same story from both queries counts once.
+          story('Introducing GPT-6 Sol', 905, 'https://openai.com/index/gpt-6-sol/'),
+          story('Introducing Gemini 4', 500, 'https://blog.google/gemini-4', 24 * LANDED_WINDOW_DAYS + 1),
+        ],
+      },
+      NOW,
+    );
+    expect(l.stories.map((s) => s.title)).toEqual(['Introducing GPT-6 Sol', 'Introducing Claude Opus 5.5']);
+    expect(l.models.sort()).toEqual(['claude-opus-5.5', 'gpt-6-sol']);
   });
 
   it('dates a day-precision announcement by its first sighting and dedups by URL', () => {

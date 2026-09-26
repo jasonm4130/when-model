@@ -55,7 +55,14 @@ const LEAK_TRACK_RECORD: TrackRecord = {
  * while `isUpcoming`): 5 streams scheduled 2.2 to 44.2 hours ahead, median 4.9; no stream before
  * GPT-5.4, GPT-5.5, GPT-6 Astra or GPT-6 Sol/Luna, and Anthropic and DeepMind uploads trail.
  */
-export const BROADCAST_TRACK = { n: 5, medianLeadHours: 4.9, minLeadHours: 2.2, maxLeadHours: 44.2 } as const;
+export const BROADCAST_TRACK = {
+  n: 5,
+  medianLeadHours: 4.9,
+  minLeadHours: 2.2,
+  maxLeadHours: 44.2,
+  /** OpenAI launches checked that had no scheduled stream (broadcasts.json `misses`), named in the copy. */
+  openAiMisses: ['GPT-5.4', 'GPT-5.5', 'GPT-6 Astra', 'GPT-6 Sol/Luna'],
+} as const;
 
 const BROADCAST_TRACK_RECORD: TrackRecord = {
   n: BROADCAST_TRACK.n,

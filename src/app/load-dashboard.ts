@@ -1,7 +1,7 @@
 import { fetchXaiNews } from '../adapters/xai-news';
 import { fetchAnthropic } from '../adapters/anthropic-news';
 import { fetchSdkReleases } from '../adapters/github-releases';
-import { fetchHackerNews, fetchHackerNewsLeaks } from '../adapters/hacker-news';
+import { fetchHackerNews, fetchHackerNewsLaunches, fetchHackerNewsLeaks } from '../adapters/hacker-news';
 import { fetchPapers, fetchTrending } from '../adapters/huggingface';
 import { fetchDrops } from '../adapters/openrouter';
 import { fetchMarkets } from '../adapters/polymarket';
@@ -24,7 +24,7 @@ import {
 import { listingAliases } from '../domain/drop';
 import { DROPCON_ALGORITHM_VERSION } from '../domain/dropcon';
 import type { LeakItem, LeakSource } from '../domain/feed';
-import { buildHistorySeries, type DisplayPoint } from '../domain/history';
+import { HISTORY_WINDOW_MS, buildHistorySeries, type DisplayPoint } from '../domain/history';
 import { unmappedReleaseMarkets } from '../domain/lab';
 import type { BroadcastCandidate, PendingArchitecture } from '../domain/lead';
 import { EMPTY_LEDGER, LEDGER_KINDS, ledgerFromRows, type Ledger } from '../domain/ledger';
@@ -108,8 +108,8 @@ export async function buildDashboard(
 ): Promise<Dashboard> {
   const started = Date.now();
   const at = new Date(now);
-  const [markets, drops, trending, papers, feeds, leaks, ledger, modules, broadcastFetch] = await Promise.all(
-    [
+  const [markets, drops, trending, papers, feeds, leaks, ledger, modules, broadcastFetch, launchStories] =
+    await Promise.all([
       collect(SOURCE.polymarket, fetchMarkets, []),
       collect(SOURCE.openrouter, fetchDrops, []),
       collect(SOURCE.hfTrending, fetchTrending, []),
@@ -132,8 +132,8 @@ export async function buildDashboard(
         candidates: [],
         failedChannels: [],
       } as BroadcastFetch),
-    ],
-  );
+      collect(SOURCE.hnLaunches, () => fetchHackerNewsLaunches(), []),
+    ]);
 
   const broadcasts = broadcastResult(broadcastFetch);
   const architectures: SourceResult<PendingArchitecture[]> = {
@@ -160,11 +160,12 @@ export async function buildDashboard(
     broadcasts,
     architectures,
     ledger,
+    launchStories,
   };
   const dashboard = assembleDashboard(inputs, now);
   logBuild(
     dashboard,
-    [markets, drops, trending, papers, ...feeds, ...leaks, ledger, modules, broadcastFetch],
+    [markets, drops, trending, papers, ...feeds, ...leaks, ledger, modules, broadcastFetch, launchStories],
     Date.now() - started,
   );
   return dashboard;
@@ -177,7 +178,7 @@ export function loadDashboard(): Promise<Dashboard> {
 
 /* ───────────── DROPCON history: /api/history.json and the page's strip share one memo ───────────── */
 
-export const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60_000;
+export { HISTORY_WINDOW_MS };
 export const HISTORY_CACHE_TTL_SECONDS = 15 * 60;
 /** 30 days of 15-minute slots; a stricter cap than `readScoreSeries`'s own default. */
 export const HISTORY_MAX_ROWS = 30 * 24 * 4;

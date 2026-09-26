@@ -15,7 +15,7 @@ const shipped = summary.leads + summary.coincident + summary.lags;
 <p class="lede">
   The merge led the launch for <strong>{summary.leads} of {shipped}</strong> shipped families, coincided within {summary.coincidentWithinH}h for {summary.coincident}, and trailed it for {summary.lags}. {summary.pending} {summary.pending === 1 ? 'module is' : 'modules are'} merged and still unshipped.
 </p>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Architecture merges table">
   <table>
     <caption class="sr-only">Hugging Face transformers architecture merges against the first first-party Hacker News story for each model family.</caption>
     <thead>

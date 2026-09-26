@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LEVEL_BANDS } from '../../src/domain/dropcon';
 import {
+  HISTORY_WINDOW_MS,
   HYSTERESIS_CLEAR_MARGIN,
   STRIP_MIN_SPAN_MS,
   applyHysteresis,
@@ -9,6 +10,7 @@ import {
   historyStrip,
   splitByAlgorithmVersion,
   stripDay,
+  stripSpanText,
   stripHour,
   type ScorePoint,
 } from '../../src/domain/history';
@@ -377,6 +379,30 @@ describe('historyStrip', () => {
     );
     expect(strip.summary).toContain('latest reading had the odds offline');
     expect(strip.dayAgo).toBeUndefined();
+  });
+
+  it('names a version whose readings all share one score by that score, not "a to a"', () => {
+    const strip = historyStrip(series(readings('2026-09-27T00:00:00Z', 3, 3, () => 42)), opts);
+    expect(strip.summary).toContain(
+      'v3 from 27 Sep: 3 hourly readings, scores 42; latest level 3 (score 42).',
+    );
+    expect(strip.summary).not.toContain('42 to 42');
+    expect(strip.runs[0].title).toMatch(/score 42$/);
+  });
+
+  it('describes the span it draws: since its first day until it covers the whole window', () => {
+    // A day of readings: the strip spans its one-day minimum, so the pill says since when.
+    const day = historyStrip(series(readings('2026-09-27T00:00:00Z', 6, 3, () => 60)), opts);
+    expect(stripSpanText(day, HISTORY_WINDOW_MS)).toBe('SINCE 26 SEP');
+    // Four days of readings: still since its first day, never "last 30 days".
+    expect(stripSpanText(historyStrip(series(v2, v3), opts), HISTORY_WINDOW_MS)).toBe('SINCE 23 SEP');
+    // A series reaching back to the start of the window reads as the window.
+    const month = historyStrip(
+      series(readings(new Date(NOW - HISTORY_WINDOW_MS + 3_600_000).toISOString(), 24 * 29, 3, () => 60)),
+      opts,
+    );
+    expect(stripSpanText(month, HISTORY_WINDOW_MS)).toBe('LAST 30 DAYS');
+    expect(HISTORY_WINDOW_MS).toBe(30 * 24 * 3_600_000);
   });
 
   it('formats days and hours in UTC without ICU month spellings', () => {

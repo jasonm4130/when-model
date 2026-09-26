@@ -13,7 +13,7 @@ const KIND: Record<string, string> = { by: '"Released by" rungs', day: '"Release
 const shown = worst.slice(0, limit);
 const inTime = shown.filter((w) => w.announcedInTime);
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="False alarms table">
   <table>
     <caption class="sr-only">False alarms: frontier-lab rungs that resolved No but traded at or above each threshold, and the share of crossings that resolved Yes.</caption>
     <thead>
@@ -45,7 +45,7 @@ const inTime = shown.filter((w) => w.announcedInTime);
 </p>
 
 <h3 class="tiny sub">Loudest false alarms (No rungs that peaked at 0.5 or more)</h3>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Loudest false alarms table">
   <table>
     <thead>
       <tr>

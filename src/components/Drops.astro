@@ -54,7 +54,7 @@ const item = (r: (typeof rows)[number]) => ({
       </div>
       {rows.length ? (
         <>
-          <div class="table-scroll drop-table">
+          <div class="table-scroll drop-table" tabindex="0" role="region" aria-label="Newest listings table">
             <table>
               <caption class="sr-only">Newest OpenRouter listings</caption>
               <thead><tr><th scope="col">Landed</th><th scope="col">Model</th><th scope="col">Lab</th><th scope="col" class="num">Ctx</th><th scope="col" class="num">$/M in / out</th></tr></thead>
@@ -94,7 +94,7 @@ const item = (r: (typeof rows)[number]) => ({
         <span class={`pill ${pills.trending.tone}`} title={pills.trending.title} data-source-pill data-stale-at={pills.trending.staleAt} data-stale-text={pills.trending.staleText}>{pills.trending.text}</span>
       </div>
       {d.trending.length ? (
-        <div class="table-scroll">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Trending repos table">
           <table>
             <caption class="sr-only">Trending text-generation repos on Hugging Face</caption>
             <thead><tr><th scope="col">#</th><th scope="col">Repo</th><th scope="col" class="num"><span aria-hidden="true">♥</span><span class="sr-only">Likes</span></th><th scope="col" class="num">DLs</th><th scope="col" class="num">Age</th></tr></thead>

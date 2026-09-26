@@ -7,7 +7,7 @@ interface Props {
 }
 const { traps } = Astro.props;
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Timestamp traps table">
   <table>
     <caption class="sr-only">Timestamps that fake a lead, with an example of each and the fix.</caption>
     <thead>

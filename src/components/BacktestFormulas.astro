@@ -46,7 +46,7 @@ const foldVerdict = folds.every((s) => s > 0)
     ? 'no fold is above zero'
     : 'the sign flips with the window, which is what a forecast with no stable edge looks like';
 ---
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Formula skill table">
   <table class="formulas">
     <caption class="sr-only">Out-of-sample Brier skill of each candidate formula against the fit-window base rate, with its 95% block-bootstrap interval and whether its reliability passed the sanity check, at each horizon.</caption>
     <thead>
@@ -90,7 +90,7 @@ const foldVerdict = folds.every((s) => s > 0)
 </p>
 
 <h3 class="tiny sub" id="rolling">Rolling origin at {headlineH}h: fit on everything before each origin, test to the next</h3>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Rolling origin table">
   <table>
     <thead>
       <tr>
@@ -117,7 +117,7 @@ const foldVerdict = folds.every((s) => s > 0)
 </p>
 
 <h3 class="tiny sub">Sensitivity at {headlineH}h (checked after the fact; none fed the verdict)</h3>
-<div class="table-scroll">
+<div class="table-scroll" tabindex="0" role="region" aria-label="Sensitivity table">
   <table>
     <thead>
       <tr>

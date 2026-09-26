@@ -146,7 +146,9 @@ export function sourcePill(
   );
   const down = results.filter((r) => !r.ok);
   const up = results.length - down.length;
-  const title = results.map((r) => (r.ok ? `${r.name}: ok` : `${r.name}: ${r.error ?? 'down'}`)).join(' · ');
+  const title = results
+    .map((r) => (r.ok ? `${r.name}: ok` : `${r.name}: ${sourceErrorText(r.error)}`))
+    .join(' · ');
   const scope =
     names.length === 1
       ? label
@@ -162,6 +164,30 @@ export function sourcePill(
   return down.length
     ? { state: 'partial', text: `PARTIAL · ${scope}`, tone: 'warn', title, staleAt, staleText }
     : { state: 'live', text: `LIVE · ${scope}`, tone: 'live', title, staleAt, staleText };
+}
+
+/** Longest source error the page prints; /api/dashboard.json keeps the full text. */
+export const SOURCE_ERROR_MAX = 80;
+
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+};
+
+/**
+ * A source's error as the page prints it: every URL cut to its host, so "503 https://hn.algolia.com/
+ * api/v1/search_by_date?query=…" reads "503 · hn.algolia.com". A raw upstream URL has no break
+ * points and ran off the SOURCE HEALTH panel on a phone. The full text stays in the JSON.
+ */
+export function sourceErrorText(error: string | undefined): string {
+  if (!error) return 'down';
+  const short = error
+    .replace(/^(\d{3}) (https?:\/\/\S+)/, (_, status: string, url: string) => `${status} · ${hostOf(url)}`)
+    .replace(/https?:\/\/\S+/g, (url) => hostOf(url));
+  return short.length > SOURCE_ERROR_MAX ? `${short.slice(0, SOURCE_ERROR_MAX - 1)}…` : short;
 }
 
 /** True when the named source answered this build; a missing result counts as down. */

@@ -72,10 +72,12 @@ test('keeps relative ages on one line and focus rings unclipped', async ({ page 
   await openDashboard(page);
   const whens = page.locator('.sig-when');
   if (await whens.count()) await expect(whens.first()).toHaveCSS('white-space', 'nowrap');
+  // The LATEST line wraps rather than clipping, so its ring keeps the default offset; the
+  // unclipped check itself is in robustness.spec.ts.
   const latest = page.locator('.lab .latest a').first();
   if (await latest.count()) {
     await latest.focus();
-    await expect(latest).toHaveCSS('outline-offset', '-2px');
     await expect(latest).toHaveCSS('outline-style', 'solid');
+    await expect(page.locator('.lab .latest').first()).toHaveCSS('overflow', 'visible');
   }
 });

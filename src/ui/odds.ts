@@ -1,6 +1,7 @@
 /** Presentation of DROPCON states and lab odds reads. Pure; safe to unit test. */
+import { monthName } from '../domain/dates';
 import { shortRung, type Dropcon } from '../domain/dropcon';
-import type { ForecastSummary } from '../domain/forecast';
+import { FORECAST_CONSTANTS, type ForecastConstants, type ForecastSummary } from '../domain/forecast';
 import { stripDay } from '../domain/history';
 import type { LabOddsRead, LabStatus } from '../domain/lab-status';
 import { oddsRange, type Outcome } from '../domain/market';
@@ -41,9 +42,11 @@ export function readValue(read: LabOddsRead | undefined): string {
   return read.trusted ? pct(read.p) : `~${pct(read.p)}`;
 }
 
-/** Where a read comes from on the family's curve, in a few words. */
+/** Where a read comes from on the family's curve, in a few words, naming its family when it is not the card's. */
 export function readNote(read: LabOddsRead | undefined): string {
   if (!read) return 'no market';
+  const { family, ...rest } = read;
+  if (family) return `${family}: ${readNote(rest)}`;
   const to = read.to && shortRung(read.to.label);
   const from = read.from && shortRung(read.from.label);
   if (!read.trusted) return `extrapolated to ${to ?? 'a far rung'} · not scored`;
@@ -88,15 +91,28 @@ export function readBracket(read: LabOddsRead): string {
   return `quoted ${to ?? from}`;
 }
 
-/** A lab's headline read for one-line summaries: its family's 7-day odds, or its last listing. */
-export function topReadText(lab: LabStatus): string {
+/**
+ * What a lab card says in place of its reads. With Polymarket unreachable, a lab has no odds because
+ * the odds are offline, not because no market exists: "no market" there contradicted the markets
+ * panel and the DROPCON pill on the same page.
+ */
+export function noOddsText(oddsAvailable: boolean): string {
+  return oddsAvailable ? 'NO POLYMARKET RELEASE MARKET' : 'ODDS OFFLINE · POLYMARKET UNREACHABLE';
+}
+
+/**
+ * A lab's headline read for one-line summaries: its family's 7-day odds, or its last listing.
+ * `oddsAvailable` false (Polymarket down) says "odds offline" rather than "no market".
+ */
+export function topReadText(lab: LabStatus, oddsAvailable = true): string {
   if (lab.odds) {
     const trust = lab.odds.p7.trusted ? '' : ', extrapolated';
     return `${lab.odds.family} ${readValue(lab.odds.p7)} within 7 days${trust}`;
   }
+  const none = oddsAvailable ? 'no market' : 'odds offline';
   if (lab.latest)
-    return `no market; last listed ${lab.latest.name.replace(/^[^:]+:\s*/, '')} ${lab.daysSince ? `${daysLabel(lab.daysSince)} ago` : 'today'}`;
-  return 'no market and nothing listed';
+    return `${none}; last listed ${lab.latest.name.replace(/^[^:]+:\s*/, '')} ${lab.daysSince ? `${daysLabel(lab.daysSince)} ago` : 'today'}`;
+  return `${none} and nothing listed`;
 }
 
 const span = (w: { from: string; to: string }) => `${stripDay(w.from)}–${stripDay(w.to)} ${w.to.slice(0, 4)}`;
@@ -109,17 +125,29 @@ export function baseRateText(f: ForecastSummary): string {
   return `Base rate: some frontier lab listed a new text model in ${pct(f.baseRate)} of ${f.horizonHours}-hour windows (${span(f.trainWindow)}), and in ${pct(f.testRate)} more recently (${span(f.testWindow)}, the held-out test).`;
 }
 
+/** The level's own horizon: DROPCON's main term reads 7-day odds. */
+export const LEVEL_HORIZON_HOURS = 168;
+
+/**
+ * The base rate at the level's horizon, beside the level: how often some frontier lab listed a text
+ * model within 7 days, fitted and held out. Set next to "88% within 7 days", the 72-hour rate made a
+ * typical week look unusual, when the held-out 7-day rate was higher still.
+ */
+export function levelBaseRateText(constants: ForecastConstants = FORECAST_CONSTANTS): string {
+  const h = constants.horizons.find((x) => x.horizonHours === LEVEL_HORIZON_HOURS);
+  if (!h) return '';
+  return `Base rate at the level's horizon: some frontier lab listed a new text model within 7 days in ${pct(h.baseRate)} of hours (${span(constants.fittedOn)}) and in ${pct(h.test.rate)} of held-out hours (${span(constants.testedOn)}). DROPCON reads only the named families markets price, so a high level is not unusual by itself.`;
+}
+
 /** Brier skill as the page prints it, e.g. "−0.002". */
 export function skillText(skill: number): string {
   return `${skill < 0 ? '−' : '+'}${Math.abs(skill).toFixed(3)}`;
 }
 
-/** Why the level is not a probability, in one sentence from the replay's result. */
+/** Why the level is not a probability, from the replay's result, with the base rate it was scored against. */
 export function forecastAnswer(f: ForecastSummary): string {
-  return `A calibrated ${f.horizonHours}-hour probability was tested and did not beat that base rate on held-out data (Brier skill ${skillText(f.skill)}), so the level stays a hand-weighted lead score, not a probability.`;
+  return `A fitted ${f.horizonHours}-hour probability was tested and did not beat the ${f.horizonHours}-hour base rate on held-out data (Brier skill ${skillText(f.skill)}), so the level stays a hand-weighted lead score, not a probability. ${baseRateText(f)}`;
 }
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /**
  * The release-tempo histogram as text, month by month and oldest first, for its accessible name:
@@ -128,7 +156,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export function histogramLabel(histogram: readonly number[], now: Date): string {
   const months = histogram.map((count, i) => {
     const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (histogram.length - 1 - i), 1));
-    return `${MONTHS[t.getUTCMonth()]} ${t.getUTCFullYear()} ${count}`;
+    return `${monthName(t)} ${t.getUTCFullYear()} ${count}`;
   });
   return `Models listed on OpenRouter per month: ${months.join(', ')}.`;
 }

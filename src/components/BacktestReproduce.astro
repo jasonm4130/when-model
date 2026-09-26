@@ -27,7 +27,7 @@ const curls = example
 ---
 <div class="grid grid-2">
   <div>
-    <p>Everything on this page is regenerated from raw pulls committed to the repo. The rebuild is deterministic: run it twice and <code>git diff</code> stays empty.</p>
+    <p>Every computed table is rebuilt from raw pulls committed to the repo. The curated tables (stealth reveals, broadcasts, architecture merges, what didn't lead, timestamp traps) are carried as sourced data, not recomputed. The rebuild is deterministic: run it twice and <code>git diff</code> stays empty.</p>
     <pre tabindex="0" aria-label="Rebuild commands"><code>pnpm install
 pnpm backtest            # rebuild data/backtest/*.json from data/backtest/raw
 pnpm backtest:replay     # rerun the v3 replay into data/backtest/v3-replay.json

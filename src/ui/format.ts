@@ -1,4 +1,5 @@
 /** Presentation-only formatting. Pure; safe to unit test. */
+import { monthName } from '../domain/dates';
 
 export function ago(iso: string, now: number): string {
   const seconds = Math.max(0, (now - Date.parse(iso)) / 1000);
@@ -32,10 +33,11 @@ export function ctx(tokens?: number): string {
   return `${Math.round(tokens / 1000)}k`;
 }
 
+/** "02 SEP", UTC, with the page's one month spelling (ICU's en-GB wrote "SEPT"). */
 export function shortDate(iso: string): string {
-  return new Date(iso)
-    .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' })
-    .toUpperCase();
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${String(d.getUTCDate()).padStart(2, '0')} ${monthName(d).toUpperCase()}`;
 }
 
 /** Price per million tokens: 3 decimals under $0.10, 2 under $10, whole dollars above. Never strips integer zeros. */
@@ -54,7 +56,7 @@ export function monthInitials(now: Date, months = 12): string[] {
   const out: string[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
-    out.push(t.toLocaleString('en', { month: 'short', timeZone: 'UTC' })[0]);
+    out.push(monthName(t)[0]);
   }
   return out;
 }
