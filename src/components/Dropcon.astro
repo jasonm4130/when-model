@@ -1,21 +1,14 @@
 ---
 import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
-import {
-  dropconName,
-  dropconNumber,
-  dropconPill,
-  forecastAnswer,
-  levelBaseRateText,
-  topReadText,
-} from '../ui/odds';
-import { levelBandsText } from '../domain/dropcon';
+import { levelBandsText, WEIGHTS } from '../domain/dropcon';
 import { SOURCE } from '../domain/sources';
+import { dropconPill, forecastAnswer, levelBaseRateText, topReadText } from '../ui/odds';
 import { sourcePill } from '../ui/panels';
-import HistoryStrip from './HistoryStrip.astro';
+import DropconScope from './DropconScope.astro';
 interface Props {
   d: Dashboard;
-  /** The 30-day series for the strip; absent, the strip shows its unavailable state. */
+  /** The 30-day series; the instrument draws its last 7 days. Absent, it shows its offline state. */
   history?: HistoryResponseBody;
   now?: number;
 }
@@ -29,105 +22,77 @@ const color = c.state === 'ok' ? colors[c.level] : 'var(--muted)';
 const pill = c.state === 'ok' ? sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now ?? Date.now()) : dropconPill(c);
 const hottest = d.labs[0];
 const noLabData = c.state === 'no-signal';
-const scaleLabel =
-  c.state === 'no-signal'
-    ? 'DROPCON: no signal'
-    : c.state === 'floor'
-      ? `DROPCON floor: ${c.level} of 5 with the odds offline`
-      : `DROPCON ${c.level} of 5`;
-const segClass = (n: number) => {
-  if (c.state === 'no-signal') return 'seg dim';
-  if (c.state === 'floor') return `seg dim${n === c.level ? ' floor' : ''}`;
-  return `seg${n === c.level ? ' on' : ''}`;
-};
 ---
-<section class="section wrap reveal">
-  <div class="grid grid-2 dc-grid">
-    <div class={`panel dropcon ${c.state}`} style={`--lvl:${color}`}>
-      <div class="panel-head">
-        <h2><span aria-hidden="true">▣</span>DROPCON LEVEL</h2>
-        <div class="pills">
-          {d.landed.banner && <span class="pill warn" title={d.landed.bannerText}>MODELS JUST LANDED</span>}
-          {'state' in pill ? (
-            <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
-          ) : <span class={`pill ${pill.tone}`}>{pill.text}</span>}
-        </div>
-      </div>
-      <div class="dc-body">
-        <div class="dc-num head" style={`color:${color}`}>{dropconNumber(c)}</div>
-        <div class="dc-text">
-          <div class="dc-name head" style={`color:${color}`}>{dropconName(c)}</div>
-          <p class="dc-headline">{c.headline}</p>
-        </div>
-      </div>
-      <div class="dc-scale" role="img" aria-label={scaleLabel}>
-        {[5, 4, 3, 2, 1].map((n, i) => (
-          <div class={segClass(n)} style={`--c:${c.state === 'ok' ? colors[n] : 'var(--muted)'}; --i:${i}`} title={`DROPCON ${n}`}><span class="tiny">{n}</span></div>
-        ))}
-      </div>
-      <div class="dc-ends tiny" aria-hidden="true"><span>5 · QUIET ORBIT</span><span>RELEASE SURGE · 1</span></div>
-      <p class="dc-blurb">{c.blurb}</p>
-      {noLabData ? (
-        <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
-      ) : hottest && (
-        <a class="dc-hot" href={`#lab-${hottest.id}`} style={`--lab:${hottest.color}`}>
-          <span class="tiny">HOTTEST LAB</span> <b><span aria-hidden="true">{hottest.glyph}</span> {hottest.name}</b> · heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}
-        </a>
-      )}
-      {d.landed.bannerText && <p class="dc-landed"><span aria-hidden="true">◆</span> {d.landed.bannerText} · <span class="muted">shown, not scored</span></p>}
-      <h3 class="dc-sub tiny">HOW THE SCORE ADDS UP</h3>
-      <ul class="dc-drivers" aria-label="How the score adds up">
-        {c.provenance.map((row, i) => (
-          <li style={`--i:${i + 2}`} class="reveal">
-            <span class="pts">{row.points}</span>
-            <span class="why"><span class="tag lead">{row.tag}</span> {row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
-          </li>
-        ))}
-        <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
-      </ul>
-      <p class="dc-bands muted">{levelBandsText()}</p>
-      <div class="dc-honest">
-        <p class="dc-q"><b>Is this a forecast?</b> No — it's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
-        <p class="dc-base">{levelBaseRateText()}</p>
-        <details class="dc-more">
-          <summary class="tiny">WHY IT'S NOT A PROBABILITY</summary>
-          <p>{forecastAnswer(d.forecast)}</p>
-          <ul>{c.notes.map((n) => <li>{n}</li>)}</ul>
-        </details>
+<section class="section wrap reveal dc-hero" aria-labelledby="dc-title" style={`--lvl:${color}`}>
+  <div class={`panel dropcon ${c.state}`}>
+    <div class="panel-head">
+      <h2 id="dc-title"><span aria-hidden="true">▣</span>DROPCON LEVEL</h2>
+      <div class="pills">
+        {d.landed.banner && <span class="pill warn" title={d.landed.bannerText}>MODELS JUST LANDED</span>}
+        {'state' in pill ? (
+          <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
+        ) : <span class={`pill ${pill.tone}`}>{pill.text}</span>}
       </div>
     </div>
+    <DropconScope d={d} history={history} now={now} />
+  </div>
 
-    <HistoryStrip d={d} history={history} now={now} />
+  <div class="panel dc-detail" id="dc-adds">
+    <div class="dc-cols">
+      <div>
+        <h3 class="dc-sub tiny">HOW THE SCORE ADDS UP</h3>
+        <ul class="dc-drivers" aria-label="How the score adds up">
+          {c.provenance.map((row) => (
+            <li>
+              <span class="pts">{row.points}</span>
+              <span class="why"><span class="tag lead">{row.tag}</span> {row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
+            </li>
+          ))}
+          <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
+        </ul>
+        <p class="dc-bands muted">{levelBandsText()} Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
+        <p class="dc-blurb">{c.blurb}</p>
+      </div>
+      <div>
+        {noLabData ? (
+          <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
+        ) : hottest && (
+          <a class="dc-hot" href={`#lab-${hottest.id}`} style={`--lab:${hottest.color}`}>
+            <span class="tiny">HOTTEST LAB</span> <b><span aria-hidden="true">{hottest.glyph}</span> {hottest.name}</b> · heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}
+          </a>
+        )}
+        {d.landed.bannerText && <p class="dc-landed"><span aria-hidden="true">◆</span> {d.landed.bannerText} · <span class="muted">shown, not scored</span></p>}
+        <div class="dc-honest">
+          <p class="dc-q"><b>Is this a forecast?</b> No — it's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
+          <p class="dc-base">{levelBaseRateText()}</p>
+          <details class="dc-more">
+            <summary class="tiny">WHY IT'S NOT A PROBABILITY</summary>
+            <p>{forecastAnswer(d.forecast)}</p>
+            <ul>{c.notes.map((n) => <li>{n}</li>)}</ul>
+          </details>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 <style>
-  .dc-body { display: flex; gap: 20px; align-items: flex-start; }
-  .dc-num { font-size: clamp(64px, 12vw, 120px); line-height: 0.9; text-shadow: 0 0 8px currentColor; }
-  .dropcon:not(.ok) .dc-num { text-shadow: none; }
-  .dc-name { font-size: clamp(14px, 2.2vw, 22px); margin-bottom: 8px; }
-  .dc-headline { font-size: var(--fs-lg); color: #fff; }
+  .dc-hero { display: grid; gap: var(--gap); }
+
+  .dc-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 28px; }
   .dc-blurb { margin-top: 10px; color: var(--muted); }
-  .dc-hot { display: block; margin-top: 10px; padding: 6px 8px; border: 1px dashed var(--line2); color: var(--text); font-size: var(--fs-md); }
+  .dc-hot { display: block; padding: 6px 8px; border: 1px dashed var(--line2); color: var(--text); font-size: var(--fs-md); }
   .dc-hot b { font-weight: 400; color: var(--lab, var(--text)); }
   a.dc-hot:hover { border-color: var(--lab, var(--cyan)); color: #fff; text-shadow: none; background: rgba(0, 229, 255, 0.04); }
   .dc-hot .tiny { color: var(--muted); margin-right: 6px; }
   .dc-landed { margin: 8px 0 0; color: var(--yellow); font-size: var(--fs-md); }
-  .dc-sub { margin: 14px 0 6px; color: var(--muted); }
+  .dc-sub { margin: 0 0 8px; color: var(--muted); }
   .dc-drivers { color: var(--muted); font-size: var(--fs-sm); display: grid; gap: 4px; }
   .dc-drivers li { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: 10px; align-items: baseline; }
   .dc-drivers .why { overflow-wrap: anywhere; }
   .dc-drivers .pts { color: var(--lvl); text-align: right; font-variant-numeric: tabular-nums; }
   .dc-drivers .total { border-top: 1px dotted var(--line2); padding-top: 4px; color: var(--text); }
-  .dc-bands { margin-top: 4px; font-size: var(--fs-xs); }
+  .dc-bands { margin-top: 6px; font-size: var(--fs-xs); }
   .tag.lead { color: var(--cyan); padding: 2px 4px; margin-right: 2px; vertical-align: 2px; }
-  .dc-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 14px; }
-  /* UI-09: an unlit segment dims by its border and tint only; its digit keeps the full colour (≥5:1 on the tint). */
-  .seg { height: 26px; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); display: grid; place-items: center; color: var(--c); transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease); }
-  .seg:hover { border-color: var(--c); }
-  .seg.on { background: var(--c); border-color: var(--c); color: #000; box-shadow: 0 0 8px var(--c); }
-  .seg.dim { border-style: dashed; background: transparent; }
-  .seg.floor { border: 2px solid var(--muted); }
-  .dc-ends { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: var(--muted); }
   .dc-honest { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line2); display: grid; gap: 6px; font-size: var(--fs-md); }
   .dc-q b { font-weight: 400; color: var(--yellow); }
   .dc-base { color: var(--muted); }
@@ -135,8 +100,4 @@ const segClass = (n: number) => {
   .dc-more summary::before { content: '+ '; }
   .dc-more[open] summary::before { content: '- '; }
   .dc-more p, .dc-more li { color: var(--muted); margin-top: 6px; }
-  @media (max-width: 480px) {
-    .dc-body { flex-direction: column; gap: 6px; }
-    .dc-ends { font-size: 8px; }
-  }
 </style>

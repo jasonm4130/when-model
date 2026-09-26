@@ -1,0 +1,947 @@
+---
+/**
+ * The DROPCON instrument: the level now and how it got here, as one piece. The 5-level scale is the
+ * plot's vertical axis, the lead score's week runs across it, and the line ends at the NOW edge in
+ * the big number. Server-rendered SVG and HTML; the script below turns the plot into a slider whose
+ * readout names each hour, and never touches the number: that is always NOW.
+ */
+import type { HistoryResponseBody } from '../app/load-dashboard';
+import type { Dashboard } from '../domain/dashboard';
+import { LEVEL_BANDS, type DropconLevel } from '../domain/dropcon';
+import { INSTRUMENT_WIDTH, LAUNCH_NEAR_MS, buildInstrument, type ScrubPoint } from '../domain/instrument';
+import { stripDay, stripHour } from '../domain/history';
+import { LEVEL_NAMES } from '../domain/levels';
+import { SOURCE } from '../domain/sources';
+import { estimateFlagWidth, flagCandidates, placeLabels, type Box } from '../ui/labels';
+import { dropconName, dropconNumber } from '../ui/odds';
+import { launchLine, nowReadout, type ScrubData, type ScrubKind } from '../ui/readout';
+interface Props {
+  d: Dashboard;
+  history?: HistoryResponseBody;
+  now?: number;
+}
+const { d, history, now = Date.now() } = Astro.props;
+const c = d.dropcon;
+const launchesOk = d.sources.find((s) => s.name === SOURCE.openrouter)?.ok ?? false;
+const inst = buildInstrument({
+  points: history?.points ?? [],
+  ok: history?.ok ?? false,
+  now,
+  currentVersion: d.measurement.algorithmVersion,
+  live: { state: c.state, score: c.score, level: c.level, at: d.generatedAt },
+  launches: d.landed.releases.map((r) => ({ at: r.firstListedAt, labId: r.labId, lab: r.lab, name: r.name })),
+  launchesOk,
+});
+const ok = c.state === 'ok';
+// Band edges top to bottom: 100–75 is level 1, …, 15–0 is level 5.
+const edges = [100, ...LEVEL_BANDS, 0];
+const bands = edges.slice(0, -1).map((top, i) => ({ level: (i + 1) as DropconLevel, top, bottom: edges[i + 1] }));
+const pct = (x: number) => `${(x / INSTRUMENT_WIDTH) * 100}%`;
+const segClass = (n: number) => {
+  if (c.state === 'no-signal') return 'seg dim';
+  if (c.state === 'floor') return `seg dim${n === c.level ? ' floor' : ''}`;
+  return `seg${n === c.level ? ' on' : ''}`;
+};
+const scaleLabel =
+  c.state === 'no-signal'
+    ? 'DROPCON: no signal'
+    : c.state === 'floor'
+      ? `DROPCON floor: ${c.level} of 5 with the odds offline`
+      : `DROPCON ${c.level} of 5`;
+const bandRange = (b: { top: number; bottom: number }) =>
+  b.top === 100 ? `${b.bottom}+` : b.bottom === 0 ? `below ${b.top}` : `${b.bottom}–${b.top - 1}`;
+
+// What each hatched or empty stretch says, at three widths: the plot picks the one that fits whole.
+const zoneText = (z: (typeof inst.zones)[number]) =>
+  z.kind === 'old'
+    ? { head: `v${z.version} · OLD SCALE`, sub: 'another formula, not comparable', min: `v${z.version}` }
+    : z.kind === 'outage'
+      ? { head: 'ODDS OFFLINE', sub: 'level held, not measured', min: '✕' }
+      : { head: 'NO RECORD', sub: z.start ? `captures start ${stripDay(z.to)}` : 'no captures', min: '' };
+
+// The scrubber's data and the readout it starts from (the same functions the browser runs).
+const K: Record<ScrubPoint['kind'], ScrubKind> = { current: 'c', old: 'o', outage: 'x' };
+const data: ScrubData = {
+  from: inst.from,
+  to: inst.to,
+  version: inst.currentVersion,
+  history: inst.state,
+  launchesOk: inst.launchesOk,
+  ...(inst.recordedFrom ? { recordFrom: Date.parse(inst.recordedFrom) } : {}),
+  ...(inst.lastReading ? { last: Date.parse(inst.lastReading) } : {}),
+  near: LAUNCH_NEAR_MS,
+  pts: inst.scrub.map((p) => [K[p.kind], p.h, p.e, p.score, p.level ?? 0, p.held ? 1 : 0, p.version]),
+  launches: inst.launches.map((l) => [Date.parse(l.at), l.name, l.lab, l.glyph, l.color]),
+  live: { state: c.state, at: Date.parse(d.generatedAt), score: c.score, level: c.level },
+};
+const rest = nowReadout(data);
+const restNear = launchLine(data);
+
+// The current version's start: a quiet tag once its line explains itself, a callout while it is young.
+const cur = inst.current;
+const v3 = cur && cur.x > INSTRUMENT_WIDTH * 0.03 ? cur : undefined;
+const readings = cur ? `${cur.count} hourly reading${cur.count === 1 ? '' : 's'}` : '';
+const youngBelow = (cur?.y ?? inst.now.y) < 58;
+// The series is hourly, and the hour a version changed in holds both: its start is an hour, not a minute.
+const hhmm = inst.currentSince ? stripHour(inst.currentSince).slice(-6) : '';
+
+// First paint places launch names on a reference 1000 x 236 px plot with estimated widths; the
+// script measures the real plot and places them again (src/ui/labels.ts either way).
+const REF: Box = { left: 0, top: 0, right: INSTRUMENT_WIDTH, bottom: 236 };
+const flagText = (l: (typeof inst.launches)[number]) => `${l.glyph} ${l.name}`;
+const dirTop: Box = { left: 0, top: 0, right: 180, bottom: 24 };
+const changeBoxes: Box[] = inst.changes.map((ch) => {
+  const w = ch.text.length * 8 + 12;
+  const y = (ch.y / 100) * REF.bottom;
+  const left = ch.side === 'left' ? ch.x - w : ch.x;
+  return ch.hang === 'above'
+    ? { left, right: left + w, top: y - 28, bottom: y - 8 }
+    : { left, right: left + w, top: y + 8, bottom: y + 28 };
+});
+const rows = placeLabels(
+  inst.launches.map((l) => flagCandidates(l.x, estimateFlagWidth(flagText(l)), l.flip)),
+  REF,
+  [dirTop, ...changeBoxes],
+);
+
+const tableRows = inst.scrub.slice().reverse();
+---
+<div
+  class:list={['scope', c.state, `hist-${inst.state}`, { young: cur?.young, low: inst.now.y > 55, high: inst.now.y < 20 }]}
+  data-scope={JSON.stringify(data)}
+  style={`--y:${inst.now.y}`}
+>
+  <div class="dc-lede">
+    <p class="dc-name head">{dropconName(c)}</p>
+    <p class="dc-headline">{c.headline}</p>
+  </div>
+
+  <div class="sc-needle-col">
+    <div class="sc-needle">
+      <div class="dc-num head" data-num>{dropconNumber(c)}</div>
+      <p class="sc-eq">
+        {ok ? (
+          <>
+            <span class="sc-eq-score"><b>{c.score}</b><span class="of">/100</span> LEAD SCORE</span>
+            <span class="sc-eq-level"><span aria-hidden="true">→ </span><span class="sr-only">sets </span>LEVEL {c.level} OF 5</span>
+            <span class="sc-eq-nf"><span class="sr-only">, </span>NOT A FORECAST</span>
+          </>
+        ) : c.state === 'floor' ? (
+          <>
+            <span class="sc-eq-score"><b class="word">FLOOR</b> ODDS OFFLINE</span>
+            <span class="sc-eq-level">NOT A MEASUREMENT</span>
+          </>
+        ) : (
+          <span class="sc-eq-score"><b class="word">NO SIGNAL</b></span>
+        )}
+      </p>
+    </div>
+  </div>
+
+  <div class="sc-readout" data-readout data-tone={rest.tone} style={rest.tone === 'ok' && rest.level ? `--rl:var(--l${rest.level})` : undefined}>
+    <p class="sc-r1">
+      <span class="sc-rw">
+        <b class="sc-when" data-r-when>{rest.when}</b>
+        <span class="sc-what"><span data-r-what>{rest.what}</span><span class="sc-rname" data-r-name>{rest.name ? ` · ${rest.name}` : ''}</span></span>
+      </span>
+      <span class="sc-hint tiny" data-hint hidden aria-hidden="true"><span class="h-long">◀ ▶ HOVER, DRAG OR ARROW KEYS</span><span class="h-short">◀ TAP<span class="h-drag"> OR DRAG</span> ▶</span></span>
+    </p>
+    <p class="sc-r2" data-r-near>{restNear}</p>
+  </div>
+
+  <span class="sc-cap sc-cap-level tiny" aria-hidden="true">LEVEL</span>
+  <span class="sc-cap sc-cap-plot tiny" aria-hidden="true">LEAD SCORE <span class="muted">0–100 · HOURLY · LAST 7 DAYS</span></span>
+  <span class="sc-cap sc-cap-now tiny" aria-hidden="true">NOW</span>
+
+  <div class="dc-scale" role="img" aria-label={scaleLabel}>
+    {bands.map((b, i) => (
+      <div class={`${segClass(b.level)} l${b.level}`} data-seg={b.level} style={`--c:${ok ? `var(--l${b.level})` : 'var(--muted)'}; --i:${i}`} title={`DROPCON ${b.level} · ${LEVEL_NAMES[b.level]} · score ${bandRange(b)}`}>
+        <span>{b.level}</span>
+      </div>
+    ))}
+  </div>
+  <div class="sc-ticks" aria-hidden="true">
+    {edges.map((v) => <span class:list={[{ end: v === 100 || v === 0 }]} style={`top:${100 - v}%`}>{v}</span>)}
+  </div>
+
+  <div class="sc-stage">
+    <div class="sc-plot" data-plot role="img" aria-label={inst.summary}>
+      <svg class="sc-bg" viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        {bands.map((b) => (
+          <rect class:list={['sc-band', `l${b.level}`, { on: ok && b.level === c.level }]} x="0" y={100 - b.top} width={INSTRUMENT_WIDTH} height={b.top - b.bottom} />
+        ))}
+        {LEVEL_BANDS.map((edge) => <line class="sc-guide" x1="0" x2={INSTRUMENT_WIDTH} y1={100 - edge} y2={100 - edge} />)}
+        {inst.ticks.map((t) => <line class="sc-day" x1={t.x} x2={t.x} y1="0" y2="100" />)}
+      </svg>
+      {inst.zones.map((z) => {
+        const t = zoneText(z);
+        return (
+          <div class={`sc-zone ${z.kind}`} style={`left:${pct(z.x)}; width:${pct(z.w)}`} aria-hidden="true">
+            <span class="sc-zlabel" data-label="zone">
+              <span class="zl-full"><b>{t.head}</b><span>{t.sub}</span></span>
+              <b class="zl-head">{t.head}</b>
+              {t.min && <b class="zl-min">{t.min}</b>}
+            </span>
+          </div>
+        );
+      })}
+      <span class="sc-dir top l1 tiny" data-label="fixed" aria-hidden="true">▲ 1 · RELEASE SURGE</span>
+      <span class="sc-dir bottom l5 tiny" data-label="fixed" aria-hidden="true">▼ 5 · QUIET ORBIT</span>
+      {/* Labels sit under the ink, so a high or low trace is never hidden behind one. */}
+      {inst.launches.map((l, i) => (
+        <span
+          class:list={['sc-flag', { flip: l.flip, unplaced: rows[i] === undefined }]}
+          style={`left:${pct(l.x)}; --row:${rows[i] ?? 0}; --lab:${l.color}`}
+          data-launch={i}
+          data-label="flag"
+          aria-hidden="true"
+        ><i>{l.glyph}</i> {l.name}</span>
+      ))}
+      {v3 && <span class="sc-vline" style={`left:${pct(v3.x)}`} aria-hidden="true"></span>}
+      {v3 && (v3.young ? (
+        <span class:list={['sc-v3 young', youngBelow ? 'below' : 'above']} style={`left:${pct(v3.x)}; --vy:${v3.y}`} data-label="fixed" aria-hidden="true">
+          <b><span class="yl-long">v{inst.currentVersion} SCALE FROM THE {stripHour(inst.currentSince!).toUpperCase()} HOUR</span><span class="yl-short">v{inst.currentVersion} FROM {hhmm} HOUR</span></b>
+          <span>{readings} so far{inst.now.joined && <span class="yl-long"> · updates every 15 min</span>}</span>
+        </span>
+      ) : (
+        <span class="sc-v3" style={`left:${pct(v3.x)}`} data-label="fixed" aria-hidden="true"><b>v{inst.currentVersion} SCALE</b></span>
+      ))}
+      <div class="sc-ink" aria-hidden="true">
+        <svg viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" focusable="false">
+          <defs>
+            <linearGradient id="sc-level-ink" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">
+              {bands.flatMap((b) => [
+                <stop class={`l${b.level}`} offset={`${100 - b.top}%`} />,
+                <stop class={`l${b.level}`} offset={`${100 - b.bottom}%`} />,
+              ])}
+            </linearGradient>
+          </defs>
+          {inst.launches.map((l, i) => (
+            <line class="sc-launch" data-launch={i} x1={l.x} x2={l.x} y1="0" y2="100" style={`stroke:${l.color}`} />
+          ))}
+          {inst.traces.map((t) => <path class="sc-area" d={t.area} />)}
+          {inst.traces.map((t) => <path class="sc-glow" d={t.line} />)}
+          {inst.traces.map((t) => <path class="sc-line" d={t.line} />)}
+        </svg>
+      </div>
+      {/* Level changes sit over the ink, beside the step where the line was not. */}
+      {inst.changes.map((ch) => {
+        const words = ch.text.split(' ');
+        return (
+          <span
+            class:list={['sc-change', `l${ch.level}`, ch.side]}
+            style={`left:${pct(ch.x)}; top:${ch.y}%`}
+            data-side={ch.hang}
+            data-side0={ch.hang}
+            data-label="fixed"
+            aria-hidden="true"
+          ><span class="cf-dir">{words.slice(0, 2).join(' ')}</span><span class="cf-when"> {words.slice(2).join(' ')}</span></span>
+        );
+      })}
+      <span class="sc-nowline" aria-hidden="true"></span>
+      <span class="sc-sweep" aria-hidden="true"></span>
+      <div class="sc-cursor" data-cursor hidden aria-hidden="true">
+        <span class="sc-probe" data-probe hidden></span>
+      </div>
+      {inst.state !== 'ok' && (
+        <div class="sc-empty" aria-hidden="true">
+          <div class="sc-veil" data-veil>
+            <b class="head">{inst.state === 'unavailable' ? 'HISTORY OFFLINE' : inst.lastReading ? 'NO RECENT READINGS' : 'NO READINGS YET'}</b>
+            <span>{inst.state === 'unavailable'
+              ? 'The score series could not be read.'
+              : inst.lastReading
+                ? `Nothing captured in these 7 days; the last reading was ${stripHour(inst.lastReading)}.`
+                : `v${inst.currentVersion} history starts ${stripDay(now)}: the 15-minute capture writes the first point.`}{inst.state === 'empty' && !inst.lastReading ? '' : <span class="v-live"> The level shown is live.</span>}</span>
+          </div>
+        </div>
+      )}
+    </div>
+    {c.state !== 'no-signal' && <span class:list={['sc-dot', { joined: inst.now.joined }]} aria-hidden="true"></span>}
+    {c.state !== 'no-signal' && (
+      <span class="sc-nowtag tiny" aria-hidden="true">NOW <b>{dropconNumber(c)}</b></span>
+    )}
+  </div>
+
+  <div class="sc-rail" aria-hidden="true">
+    {inst.launches.map((l, i) => (
+      <span class="sc-mark" data-launch={i} style={`left:${pct(l.x)}; color:${l.color}`} title={`${l.name} · ${l.lab} · ${stripHour(l.at)}`}>{l.glyph}</span>
+    ))}
+    {!inst.launchesOk && <span class="sc-rail-note tiny">LAUNCH LISTINGS OFFLINE</span>}
+  </div>
+  <div class="sc-days" aria-hidden="true">
+    {inst.ticks.map((t) => {
+      const [day, mon] = t.label.split(' ');
+      return <span class:list={['sc-daylabel', { late: t.x > 930 }]} style={`left:${pct(t.x)}`}>{day}<span class="mon"> {mon}</span></span>;
+    })}
+    <span class="sc-ctag" data-ctag hidden></span>
+  </div>
+
+<p class="dc-what">
+  <b class="tiny">WHAT IS THIS?</b> <span class="w-long">DROPCON reads Polymarket's odds on frontier model
+  releases into a 0–100 lead score. The score's band sets the level, 5 (quiet) to 1 (release surge); the
+  line is that score over time.</span><span class="w-short">The line is the 0–100 lead score over time;
+  its band sets the level, 5 quiet to 1 surge.</span> It is a lead score, <b class="nf">NOT A FORECAST</b>. <a href="#dc-adds">How it adds up</a> · <a href="/backtest">/backtest</a>
+</p>
+<p class="dc-key">
+  <span class="k-item"><i class="k-line" aria-hidden="true"></i>lead score, coloured by its level</span>
+  <span class="k-item"><i class="k-launch" aria-hidden="true">◆</i>frontier launch (first OpenRouter listing): context only, the score has not been shown to predict launches</span>
+  <span class="k-item"><i class="k-hatch" aria-hidden="true"></i>older scoring, not comparable</span>
+</p>
+
+<details class="sc-table">
+  <summary class="tiny">THE WEEK AS A TABLE</summary>
+  <div class="table-scroll" role="region" tabindex="0" aria-label="DROPCON readings and launches, last 7 days">
+    <table>
+      <caption class="sr-only">DROPCON hourly readings, newest first, and frontier launches in the same 7 days</caption>
+      <thead><tr><th scope="col">HOUR (UTC)</th><th scope="col">SCORE</th><th scope="col">LEVEL</th></tr></thead>
+      <tbody>
+        {ok && <tr><td>NOW · {stripHour(d.generatedAt)}</td><td>{c.score}</td><td>{c.level}</td></tr>}
+        {tableRows.map((p) => (
+          <tr class:list={[{ old: p.kind === 'old' }]}>
+            <td>{stripHour(new Date(p.h).toISOString())}</td>
+            <td>{p.kind === 'outage' ? 'odds offline' : p.kind === 'old' ? `${p.score} (v${p.version}, old scale)` : p.score}</td>
+            <td>{p.kind === 'old' ? '—' : `${p.level}${p.held ? ' (held)' : ''}`}</td>
+          </tr>
+        ))}
+        {!tableRows.length && (
+          <tr><td colspan="3">{inst.state === 'unavailable' ? 'The score series could not be read.' : 'No readings recorded in these 7 days.'}</td></tr>
+        )}
+      </tbody>
+    </table>
+    {inst.launches.length > 0 && (
+      <table>
+        <caption class="sr-only">Frontier launches listed on OpenRouter in the same 7 days</caption>
+        <thead><tr><th scope="col">LISTED (UTC)</th><th scope="col">LAUNCH</th><th scope="col">LAB</th></tr></thead>
+        <tbody>
+          {[...inst.launches].reverse().map((l) => <tr><td>{stripHour(l.at)}</td><td>{l.name}</td><td>{l.lab}</td></tr>)}
+        </tbody>
+      </table>
+    )}
+  </div>
+</details>
+</div>
+
+<style>
+  .scope {
+    --l1: var(--red);
+    --l2: var(--orange);
+    --l3: var(--yellow);
+    --l4: var(--cyan);
+    --l5: var(--green);
+    --plot-h: 236px;
+    --needle-w: 212px;
+    --num: 120px;
+    /* The equation's height: score, level and the NOT A FORECAST stamp. */
+    --eq-h: 70px;
+    --sweep: 1500ms;
+    position: relative;
+    display: grid;
+    grid-template-columns: 30px 28px minmax(0, 1fr) var(--needle-w);
+    grid-template-rows: auto auto auto var(--plot-h) 26px auto auto auto auto;
+    grid-template-areas:
+      'lede lede lede lede'
+      'read read read .'
+      'lcap lcap pcap ncap'
+      'rail ticks stage needle'
+      '. . marks .'
+      '. . days .'
+      'what what what what'
+      'key key key key'
+      'table table table table';
+    column-gap: 6px;
+  }
+  .l1 { --lc: var(--l1); }
+  .l2 { --lc: var(--l2); }
+  .l3 { --lc: var(--l3); }
+  .l4 { --lc: var(--l4); }
+  .l5 { --lc: var(--l5); }
+
+  /* The name of the level and why, on one line where it fits. */
+  .dc-lede { grid-area: lede; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 22px; margin-bottom: 12px; }
+  .dc-name { font-size: var(--fs-head); line-height: 1.4; color: var(--lvl); text-shadow: 0 0 6px color-mix(in srgb, var(--lvl) 50%, transparent); }
+  .scope:not(.ok) .dc-name { text-shadow: none; }
+  .dc-headline { font-size: var(--fs-lg); line-height: 1.2; color: #fff; }
+
+  /* The readout: what the cursor is on, NOW at rest. Fixed height, so scrubbing never moves the plot. */
+  .sc-readout { --rl: var(--lvl); grid-area: read; display: grid; grid-template-rows: 22px 20px; align-content: center; gap: 2px; min-width: 0; height: 54px; margin-bottom: 10px; padding: 0 10px; border: 1px solid var(--line2); border-left: 3px solid var(--rl); background: linear-gradient(90deg, color-mix(in srgb, var(--rl) 8%, transparent), transparent 60%), rgba(5, 4, 12, 0.7); box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.6); }
+  .sc-readout[data-tone='old'], .sc-readout[data-tone='none'] { --rl: var(--muted); }
+  .sc-readout[data-tone='outage'] { --rl: var(--red); }
+  .sc-readout.is-scrub { border-color: rgba(255, 255, 255, 0.35); border-left-color: var(--rl); }
+  /* The reading comes first: when it and the hint do not both fit, the hint wraps onto a second
+     line the row clips, so it shows whole or not at all and never squeezes the reading. */
+  .sc-r1 { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: baseline; column-gap: 12px; min-width: 0; height: 22px; white-space: nowrap; overflow: hidden; }
+  .sc-rw { display: flex; flex: 0 1 auto; align-items: baseline; gap: 12px; min-width: 0; }
+  .sc-when { flex: none; font-family: var(--font-head); font-size: var(--fs-tiny); font-weight: 400; letter-spacing: 0.06em; color: var(--rl); }
+  .sc-readout.is-scrub .sc-when { color: #fff; }
+  .sc-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-md); color: #fff; }
+  .sc-readout[data-tone='old'] .sc-what, .sc-readout[data-tone='none'] .sc-what { color: var(--text); }
+  .sc-rname { color: var(--rl); }
+  .sc-what::after { content: ''; display: inline-block; width: 0.5em; height: 0.9em; margin-left: 4px; vertical-align: -1px; background: var(--rl); opacity: 0; }
+  .sc-hint { margin-left: auto; flex: none; color: var(--muted); }
+  .sc-hint[hidden] { display: none; }
+  .sc-hint .h-short { display: none; }
+  .sc-r2 { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-xs); color: var(--muted); }
+
+  .sc-cap { padding-bottom: 8px; color: var(--text); white-space: nowrap; overflow: hidden; }
+  .sc-cap-level { grid-area: lcap; color: var(--muted); }
+  .sc-cap-plot { grid-area: pcap; }
+  .sc-cap-now { grid-area: ncap; padding-left: 18px; color: var(--lvl); }
+
+  /* The DROPCON scale, standing up: each level's segment is as tall as its score band. */
+  .dc-scale { grid-area: rail; display: grid; grid-template-rows: 25fr 20fr 20fr 20fr 15fr; gap: 2px; }
+  .seg { display: grid; place-items: center; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease), outline-color var(--fast) var(--ease); outline: 1px solid transparent; outline-offset: 1px; }
+  .seg:hover { border-color: var(--c); }
+  .seg.on { background: var(--c); border-color: var(--c); color: #000; box-shadow: 0 0 10px var(--c), 0 0 2px var(--c); }
+  .seg.dim { border-style: dashed; background: transparent; }
+  .seg.floor { border: 2px solid var(--muted); }
+  .seg.is-probe { outline-color: #fff; }
+
+  .sc-ticks { grid-area: ticks; position: relative; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  .sc-ticks span { position: absolute; right: 0; transform: translateY(-50%); line-height: 1; }
+
+  .sc-stage { grid-area: stage; position: relative; min-width: 0; }
+  .sc-plot { position: absolute; inset: 0; border: 1px solid var(--line2); background: rgba(5, 4, 12, 0.6); box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 18px color-mix(in srgb, var(--lvl) 10%, transparent); overflow: hidden; touch-action: pan-y; }
+  .sc-plot[role='slider'] { cursor: crosshair; }
+  .sc-plot:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  .sc-plot svg, .sc-ink { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .sc-band { fill: var(--lc); opacity: 0.045; }
+  .sc-band.on { opacity: 0.12; }
+  .sc-guide { stroke: var(--line2); stroke-width: 1; stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
+  .sc-day { stroke: rgba(138, 132, 184, 0.14); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  #sc-level-ink stop { stop-color: var(--lc); }
+  .sc-area { fill: url(#sc-level-ink); opacity: 0.16; shape-rendering: crispEdges; }
+  .sc-glow { fill: none; stroke: url(#sc-level-ink); stroke-width: 7; opacity: 0.4; filter: blur(3px); vector-effect: non-scaling-stroke; }
+  .sc-line { fill: none; stroke: url(#sc-level-ink); stroke-width: 2.5; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+  .sc-launch { stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.55; vector-effect: non-scaling-stroke; transition: opacity var(--fast) var(--ease); }
+  .sc-launch.is-near { opacity: 1; stroke-dasharray: none; }
+
+  /* Stretches with no line on this axis: hatched or dark. The label shows whole, or not at all. */
+  .sc-zone { position: absolute; top: 0; bottom: 0; overflow: hidden; border-right: 1px dashed rgba(138, 132, 184, 0.45); container: zone / inline-size; }
+  .sc-zone.unrecorded { background: rgba(7, 6, 15, 0.72); }
+  .sc-zone.old { background: repeating-linear-gradient(135deg, rgba(138, 132, 184, 0.16) 0 2px, transparent 2px 8px), rgba(7, 6, 15, 0.6); }
+  .sc-zone.outage { background: repeating-linear-gradient(45deg, rgba(255, 51, 85, 0.16) 0 2px, transparent 2px 8px), rgba(7, 6, 15, 0.5); }
+  .sc-zlabel { position: absolute; left: 6px; bottom: 28px; max-width: calc(100% - 12px); }
+  .sc-zlabel > * { display: none; white-space: nowrap; }
+  .sc-zlabel b { font-family: var(--font-head); font-size: var(--fs-tiny); font-weight: 400; letter-spacing: 0.06em; color: var(--muted); }
+  .zl-full { gap: 5px; }
+  .zl-full span { font-size: var(--fs-xs); color: var(--muted); }
+  @container zone (min-width: 250px) {
+    .sc-zlabel > .zl-full { display: grid; }
+  }
+  @container zone (min-width: 140px) and (max-width: 249.98px) {
+    .sc-zlabel > .zl-head { display: block; }
+  }
+  @container zone (min-width: 40px) and (max-width: 139.98px) {
+    .sc-zlabel > .zl-min { display: block; }
+  }
+  /* The script may pick a shorter variant than the zone's width allows, when the longer one meets a label. */
+  .sc-zlabel[data-pick] > * { display: none; }
+  .sc-zlabel[data-pick='full'] > .zl-full { display: grid; }
+  .sc-zlabel[data-pick='head'] > .zl-head, .sc-zlabel[data-pick='min'] > .zl-min { display: block; }
+
+  /* Which way is hot, at the plot's top and bottom edges. */
+  .sc-dir { position: absolute; left: 6px; padding: 3px 5px; color: var(--lc); background: rgba(7, 6, 15, 0.82); white-space: nowrap; }
+  .sc-dir.top { top: 6px; }
+  .sc-dir.bottom { bottom: 6px; }
+
+  /* Launch names, stacked in rows at the top of the plot, each on its own dashed line. */
+  .sc-flag { position: absolute; top: calc(6px + var(--row) * 22px); height: 18px; margin-left: 4px; padding: 1px 5px; font-size: var(--fs-xs); line-height: 16px; color: var(--text); white-space: nowrap; background: rgba(7, 6, 15, 0.82); border-left: 2px solid var(--lab); transition: color var(--fast) var(--ease), background var(--fast) var(--ease); }
+  .sc-flag i { font-style: normal; color: var(--lab); }
+  .sc-flag.flip { margin-left: 0; transform: translateX(calc(-100% - 4px)); border-left: 0; border-right: 2px solid var(--lab); }
+  .sc-flag.is-near { color: #fff; background: color-mix(in srgb, var(--lab) 26%, #07060f); }
+  .scope:not(.fitted) .sc-flag.unplaced { display: none; }
+  .is-cut { visibility: hidden; }
+
+  /* Where the current scale starts, and while its line is young, how much of it there is. */
+  .sc-vline { position: absolute; top: 0; bottom: 0; border-left: 1px dashed color-mix(in srgb, var(--lvl) 60%, transparent); }
+  .sc-v3 { position: absolute; bottom: 6px; display: grid; gap: 4px; padding: 3px 6px; border-left: 2px solid var(--lvl); white-space: nowrap; background: rgba(7, 6, 15, 0.88); }
+  .sc-v3 b { font-family: var(--font-head); font-size: var(--fs-tiny); font-weight: 400; letter-spacing: 0.06em; color: var(--lvl); }
+  .sc-v3 > span { font-size: var(--fs-xs); line-height: 1; color: var(--text); }
+  .sc-v3.young { --off: 10px; bottom: auto; top: calc(var(--vy) * 1%); transform: translate(calc(-100% - 10px), calc(-100% - var(--off))); border-left: 0; border-right: 2px solid var(--lvl); text-align: right; }
+  .sc-v3.young.below { transform: translate(calc(-100% - 10px), var(--off)); }
+  .sc-v3 .yl-short { display: none; }
+
+  /* Level changes on the line: where it crossed a band and stayed. A tick joins the flag to the step. */
+  .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)); padding: 3px 5px; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.04em; color: var(--lc); white-space: nowrap; background: rgba(7, 6, 15, 0.92); border: 1px solid color-mix(in srgb, var(--lc) 70%, transparent); box-shadow: 0 0 8px color-mix(in srgb, var(--lc) 30%, transparent); }
+  .sc-change.right { --tx: 0px; }
+  .sc-change[data-side='below'] { --ty: 8px; }
+  .sc-change::after { content: ''; position: absolute; right: -1px; top: 100%; height: 9px; border-right: 1px solid var(--lc); }
+  .sc-change.right::after { right: auto; left: -1px; border-right: 0; border-left: 1px solid var(--lc); }
+  .sc-change[data-side='below']::after { top: auto; bottom: 100%; }
+  .sc-change[data-side='above']:not([data-side0='above'])::after, .sc-change[data-side='below']:not([data-side0='below'])::after { display: none; }
+
+  /* NOW: the right edge, a pulsing dot at the live score, and a leader into the number. None of it
+     takes the pointer, so hovering the edge reads the plot underneath. */
+  .sc-nowline { position: absolute; top: 0; bottom: 0; right: 0; width: 0; border-right: 1px dashed color-mix(in srgb, var(--lvl) 55%, transparent); }
+  .sc-dot { position: absolute; z-index: 4; right: -5px; top: calc(var(--y) * 1%); width: 10px; height: 10px; margin-top: -5px; background: var(--lvl); box-shadow: 0 0 10px var(--lvl), 0 0 2px #fff; pointer-events: none; }
+  .scope:not(.ok) .sc-dot { background: var(--bg); border: 2px dashed var(--muted); box-shadow: none; }
+  .sc-dot::after { content: ''; position: absolute; inset: -2px; border: 2px solid var(--lvl); opacity: 0; }
+  .sc-nowtag { display: none; }
+
+  .sc-needle-col { grid-area: needle; position: relative; pointer-events: none; }
+  .sc-needle-col::before { content: ''; position: absolute; left: -6px; width: 22px; height: 2px; top: calc(var(--y) * 1%); margin-top: -1px; background: var(--lvl); box-shadow: 0 0 6px var(--lvl); }
+  .scope.no-signal .sc-needle-col::before { display: none; }
+  .scope:not(.ok) .sc-needle-col::before { background: none; border-top: 2px dashed var(--muted); box-shadow: none; }
+  .sc-needle { position: absolute; left: 18px; right: 0; display: flex; flex-direction: column; gap: 6px; top: clamp(0px, calc(var(--y) * 1% - var(--num) * 0.5), calc(100% - var(--num) - var(--eq-h))); pointer-events: auto; }
+  /* A low reading puts the score above the number, so the number stays level with the dot. */
+  .scope.low .sc-needle { flex-direction: column-reverse; top: clamp(0px, calc(var(--y) * 1% - var(--num) * 0.5 - var(--eq-h) - 6px), calc(100% - var(--num) - var(--eq-h) - 6px)); }
+  .scope.no-signal .sc-needle { top: calc(50% - var(--num) * 0.5); }
+  .dc-num { font-size: var(--num); line-height: 1; height: var(--num); color: var(--lvl); text-shadow: 0 0 8px currentColor, 0 0 2px currentColor; }
+  .scope:not(.ok) .dc-num { text-shadow: none; }
+  .sc-eq { display: grid; gap: 4px; min-height: var(--eq-h); align-content: start; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; line-height: 1.4; color: var(--muted); }
+  .scope.low .sc-eq { align-content: end; }
+  .sc-eq b { font-family: var(--font-mono); font-size: var(--fs-metric); font-weight: 400; letter-spacing: 0; line-height: 1; color: #fff; }
+  .sc-eq .of { margin-right: 6px; font-family: var(--font-mono); font-size: var(--fs-lg); letter-spacing: 0; color: var(--muted); }
+  .sc-eq b.word { font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: var(--text); margin-right: 6px; }
+  .sc-eq-level { color: var(--lvl); }
+  .scope:not(.ok) .sc-eq-level { color: var(--muted); }
+  /* Stamped on the number itself, so wherever the number is on screen, so is what it is not. */
+  .sc-eq-nf { justify-self: start; margin-top: 2px; padding: 3px 5px 2px; line-height: 1; color: var(--yellow); border: 1px dashed color-mix(in srgb, var(--yellow) 65%, transparent); background: color-mix(in srgb, var(--yellow) 6%, transparent); }
+
+  .sc-rail { grid-area: marks; position: relative; border-bottom: 1px solid var(--line2); }
+  .sc-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 16px; line-height: 1; text-shadow: 0 0 6px currentColor; transition: transform var(--fast) var(--ease); }
+  .sc-mark::before { content: ''; position: absolute; left: 50%; top: -5px; height: 5px; border-left: 1px solid currentColor; }
+  .sc-mark.is-near { transform: translateX(-50%) scale(1.35); text-shadow: 0 0 10px currentColor, 0 0 2px #fff; }
+  .sc-rail-note { position: absolute; left: 6px; top: 8px; color: var(--muted); }
+  .sc-days { grid-area: days; container: days / inline-size; position: relative; height: 16px; margin-top: 4px; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  /* A day is about a seventh of the axis: under about 80px a day, "25 SEP" meets "26 SEP" (the script
+     drops any label that still meets its neighbour). */
+  @container days (max-width: 559.98px) {
+    .sc-days .mon { display: none; }
+  }
+  .sc-days > span { position: absolute; top: 0; white-space: nowrap; }
+  .sc-daylabel { transform: translateX(-50%); }
+  .sc-daylabel.late { transform: translateX(-100%); }
+  .sc-days > .sc-ctag { z-index: 2; top: -3px; padding: 3px 5px; color: #000; background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.5); }
+  .sc-ctag[hidden] { display: none; }
+
+  /* Scrubber: a hairline and a probe on the reading; the words go in the readout. */
+  .sc-cursor { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+  .sc-cursor[hidden] { display: none; }
+  .sc-cursor::before { content: ''; position: absolute; top: 0; bottom: 0; left: var(--cx); border-left: 1px solid rgba(255, 255, 255, 0.75); box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); }
+  .sc-probe { position: absolute; left: var(--cx); top: calc(var(--cy) * 1%); width: 8px; height: 8px; margin: -4px 0 0 -4px; background: var(--probe, #fff); box-shadow: 0 0 8px var(--probe, #fff); }
+  .sc-probe[hidden] { display: none; }
+
+  /* No series: the plot dims under a card. Launch names and the direction labels do not depend on
+     the series, so they stay above the dimming at full contrast (the script keeps them off the card). */
+  .sc-empty { position: absolute; inset: 0; display: grid; place-content: center; padding: 12px; background: rgba(7, 6, 15, 0.55); z-index: 1; }
+  .sc-veil { display: grid; justify-items: center; gap: 6px; max-width: 38ch; padding: 8px 12px; text-align: center; background: rgba(7, 6, 15, 0.94); border: 1px dashed var(--line2); }
+  .sc-veil b { font-size: var(--fs-tiny); letter-spacing: 0.08em; color: var(--yellow); }
+  .sc-veil span { font-size: var(--fs-xs); line-height: 1.1; color: var(--text); }
+  .scope:not(.hist-ok) .sc-flag, .scope:not(.hist-ok) .sc-dir { z-index: 2; }
+
+  .sc-sweep { display: none; }
+
+  /* What the reader is looking at, in one plain paragraph under the instrument. */
+  .dc-what { grid-area: what; margin: 12px 0 0; font-size: var(--fs-sm); line-height: 1.3; color: var(--text); }
+  .dc-what .tiny { margin-right: 6px; color: var(--cyan); }
+  .dc-what .w-short { display: none; }
+  .dc-what .nf { font-weight: 400; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: var(--yellow); }
+  .dc-key { grid-area: key; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--muted); }
+  .k-item i { display: inline-block; margin-right: 6px; font-style: normal; }
+  .k-line { width: 18px; height: 3px; vertical-align: 4px; background: linear-gradient(90deg, var(--l5), var(--l4), var(--l3), var(--l2), var(--l1)); box-shadow: 0 0 4px rgba(255, 226, 28, 0.6); }
+  .k-launch { color: var(--text); }
+  .k-hatch { width: 16px; height: 12px; vertical-align: -1px; border: 1px dashed rgba(138, 132, 184, 0.6); background: repeating-linear-gradient(135deg, rgba(138, 132, 184, 0.4) 0 2px, transparent 2px 5px); }
+  .sc-table { grid-area: table; margin: 4px 0 0; min-width: 0; }
+  .sc-table summary { color: var(--cyan); padding: 6px 0; display: inline-block; }
+  .sc-table summary::before { content: '+ '; }
+  .sc-table[open] summary::before { content: '- '; }
+  .sc-table .table-scroll { max-height: 280px; overflow: auto; margin-top: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+  .sc-table tr.old td { color: var(--muted); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* The oscilloscope sweep: the beam crosses the plot once and the trace is inked behind it. */
+    .sc-sweep { display: block; position: absolute; top: 0; bottom: 0; left: 0; width: 2px; z-index: 2; background: var(--lvl, #fff); box-shadow: 0 0 12px var(--lvl, #fff), 0 0 3px #fff; opacity: 0; animation: sc-sweep var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 200ms both; }
+    .sc-sweep::before { content: ''; position: absolute; top: 0; bottom: 0; right: 2px; width: 80px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--lvl, #fff) 18%, transparent)); }
+    .sc-ink { animation: sc-ink var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 200ms both; }
+    .sc-change, .sc-v3 { animation: sc-fade 360ms var(--ease) calc(var(--sweep) + 60ms) both; }
+    /* The readout's terminal cursor blinks while the reading is live. */
+    .sc-readout:not(.is-scrub) .sc-what::after { animation: sc-blink 1060ms steps(1, end) infinite; }
+    .sc-dot { animation: sc-pop 260ms var(--ease) calc(var(--sweep) + 120ms) both; }
+    .scope.ok .sc-dot::after { animation: sc-pulse 1800ms ease-out calc(var(--sweep) + 400ms) infinite; }
+    .scope.ok .seg.on { animation: sc-breathe 2800ms ease-in-out calc(var(--sweep) + 400ms) infinite; }
+    .sc-needle-col::before { animation: sc-leader 300ms var(--ease) calc(var(--sweep) + 60ms) both; transform-origin: left center; }
+    /* When the beam reaches NOW the number flares, like a phosphor struck again, then settles. */
+    .scope.ok .dc-num { animation: sc-flare 520ms steps(6, end) calc(var(--sweep) + 120ms) both; }
+    @keyframes sc-sweep {
+      0% { left: 0; opacity: 0; }
+      8% { opacity: 1; }
+      92% { opacity: 1; }
+      100% { left: 100%; opacity: 0; }
+    }
+    @keyframes sc-ink {
+      from { clip-path: inset(0 100% 0 0); }
+      to { clip-path: inset(0 0 0 0); }
+    }
+    @keyframes sc-blink {
+      0%, 49% { opacity: 0.85; }
+      50%, 100% { opacity: 0; }
+    }
+    @keyframes sc-fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes sc-pop {
+      from { transform: scale(0); }
+      to { transform: none; }
+    }
+    @keyframes sc-pulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(3.2); opacity: 0; }
+    }
+    @keyframes sc-breathe {
+      0%, 100% { box-shadow: 0 0 10px var(--c), 0 0 2px var(--c); }
+      50% { box-shadow: 0 0 20px var(--c), 0 0 4px var(--c); }
+    }
+    @keyframes sc-flare {
+      0% { text-shadow: 0 0 8px currentColor, 0 0 2px currentColor; }
+      30% { text-shadow: 0 0 22px currentColor, 0 0 6px #fff; opacity: 0.75; }
+      60% { opacity: 1; }
+      100% { text-shadow: 0 0 8px currentColor, 0 0 2px currentColor; }
+    }
+    @keyframes sc-leader {
+      from { transform: scaleX(0); }
+      to { transform: none; }
+    }
+  }
+
+  /* Below 1230px the number goes above the plot, which takes the full width, and a NOW tag marks the
+     plot's edge. The masthead wraps below 1230px, and beside the plot, level with the NOW dot, the
+     number then sat under the fold of a 768px-tall laptop (1024x768, 1180x768). */
+  @media (max-width: 1229.98px) {
+    .scope {
+      --plot-h: 200px;
+      --num: 96px;
+      grid-template-columns: 30px 28px auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto auto var(--plot-h) 26px auto auto auto auto;
+      grid-template-areas:
+        'num num num name'
+        'num num num eq'
+        'head head head head'
+        'read read read read'
+        'lcap lcap pcap pcap'
+        'rail ticks stage stage'
+        '. . marks marks'
+        '. . days days'
+        'what what what what'
+        'key key key key'
+        'table table table table';
+    }
+    .dc-lede, .sc-needle-col, .sc-needle { display: contents; }
+    .sc-needle-col::before { content: none; }
+    .dc-num { grid-area: num; align-self: center; margin-right: 14px; }
+    .dc-name { grid-area: name; align-self: end; }
+    .sc-eq { grid-area: eq; min-height: 0; margin-top: 6px; }
+    .dc-headline { grid-area: head; margin: 10px 0 12px; }
+    .sc-cap-now { display: none; }
+    .sc-dot { right: -4px; }
+    .sc-nowtag { display: block; position: absolute; z-index: 4; right: 10px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 3px 5px; color: var(--lvl); background: rgba(7, 6, 15, 0.9); border: 1px solid var(--lvl); pointer-events: none; }
+    .sc-nowtag b { font-weight: 400; }
+    .scope:not(.ok) .sc-nowtag { color: var(--muted); border-style: dashed; border-color: var(--muted); }
+    /* The NOW tag sits above the dot unless the dot is near the top; the young callout keeps clear of it. */
+    .scope.high .sc-nowtag { transform: translateY(6px); }
+    .scope.high .sc-v3.young.below, .sc-v3.young.above { --off: 36px; }
+  }
+
+  /* Touch screens cannot hover: the hint says tap. */
+  @media (max-width: 640px), (hover: none) {
+    .sc-hint .h-long { display: none; }
+    .sc-hint .h-short { display: inline; }
+    .scope.scrubbed .sc-hint { display: none; }
+  }
+  @media (max-width: 379.98px) {
+    .sc-hint .h-drag { display: none; }
+  }
+
+  /* Phones: a smaller number and plot, and what the number is before the readout. */
+  @media (max-width: 640px) {
+    .scope {
+      --plot-h: 140px;
+      --num: 64px;
+      grid-template-columns: 20px 18px 30px minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto auto var(--plot-h) 22px auto auto auto;
+      grid-template-areas:
+        'num num num name'
+        'num num num eq'
+        'head head head head'
+        'what what what what'
+        'read read read read'
+        'rail ticks stage stage'
+        '. . marks marks'
+        '. . days days'
+        'key key key key'
+        'table table table table';
+      column-gap: 4px;
+    }
+    .dc-num { margin-right: 8px; }
+    .sc-eq { gap: 2px; }
+    .sc-eq b { font-size: var(--fs-lg); }
+    .sc-eq .of { font-size: var(--fs-sm); margin-right: 4px; }
+    /* The paragraph above the readout says NOT A FORECAST here. */
+    .sc-eq-nf { display: none; }
+    .dc-headline { margin: 8px 0 0; font-size: var(--fs-sm); }
+    /* Above the readout here, so it is the short form: the headline above it varies in length. */
+    .dc-what { margin: 8px 0 10px; font-size: var(--fs-xs); line-height: 1.2; }
+    .dc-what .w-long { display: none; }
+    /* The readout above already reads the live level; the card keeps to what is missing. */
+    .sc-veil { gap: 3px; padding: 5px 8px; }
+    .sc-veil .v-live { display: none; }
+    .dc-what .w-short { display: inline; }
+    /* Three fixed rows (time and hint, reading, launches) so a long line never moves the plot under a finger. */
+    .sc-readout { height: 74px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 12px 20px 32px; gap: 2px 8px; margin-bottom: 8px; padding: 0 8px; }
+    .sc-r1, .sc-rw { display: contents; }
+    .sc-when { grid-area: 1 / 1; min-width: 0; overflow: hidden; }
+    .sc-hint { grid-area: 1 / 2; margin-left: 0; align-self: center; }
+    .sc-what { grid-area: 2 / 1 / 3 / -1; white-space: nowrap; }
+    .sc-rname { display: none; }
+    .sc-r2 { grid-column: 1 / -1; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; }
+    .sc-cap { display: none; }
+    .sc-ticks span.end { display: none; }
+    .sc-dir.top, .sc-dir.bottom { left: 4px; }
+    .scope:not(.fitted) .sc-flag { display: none; }
+    .dc-key { gap: 2px 12px; margin-top: 10px; }
+    .sc-v3 .yl-long, .sc-change .cf-when { display: none; }
+    .sc-v3 .yl-short { display: inline; }
+  }
+</style>
+
+<script>
+  import { FLAG_PITCH, placeLabels, type Box } from '../ui/labels';
+  import { launchLine, nearLine, nowReadout, readout, readoutText, type Readout, type ScrubData } from '../ui/readout';
+
+  const HOUR = 3_600_000;
+  /** A pointer this close to the NOW edge (px) reads NOW; anywhere else reads the record. */
+  const EDGE_PX = 6;
+  /** A pointer this close to a launch's mark (px) lands on it. */
+  const SNAP_PX = 8;
+
+  for (const scope of document.querySelectorAll<HTMLElement>('[data-scope]')) {
+    let data: ScrubData;
+    try {
+      data = JSON.parse(scope.dataset.scope ?? '');
+    } catch {
+      continue;
+    }
+    const one = <T extends Element = HTMLElement>(sel: string) => scope.querySelector<T>(sel)!;
+    const all = <T extends Element = HTMLElement>(sel: string) => [...scope.querySelectorAll<T>(sel)];
+    const plot = one('[data-plot]');
+    const cursor = one('[data-cursor]');
+    const probe = one('[data-probe]');
+    const ctag = one('[data-ctag]');
+    const box = one('[data-readout]');
+    const rWhen = one('[data-r-when]');
+    const rWhat = one('[data-r-what]');
+    const rName = one('[data-r-name]');
+    const rNear = one('[data-r-near]');
+    const segs = all('[data-seg]');
+    const span = data.to - data.from;
+    const max = Math.round(span / HOUR);
+    let t: number | null = null;
+
+    // Enhance the static picture into a slider. The series summary becomes its description, once:
+    // a hidden paragraph is read only through aria-describedby, never again in reading order.
+    const summary = document.createElement('p');
+    summary.id = `sc-summary-${Math.random().toString(36).slice(2, 8)}`;
+    summary.hidden = true;
+    summary.textContent = plot.getAttribute('aria-label') ?? '';
+    plot.after(summary);
+    plot.setAttribute('role', 'slider');
+    plot.setAttribute('tabindex', '0');
+    plot.setAttribute('aria-label', 'DROPCON history, last 7 days: move through it with the arrow keys');
+    plot.setAttribute('aria-describedby', summary.id);
+    plot.setAttribute('aria-valuemin', '0');
+    plot.setAttribute('aria-valuemax', String(max));
+    one('[data-hint]').hidden = false;
+
+    const paint = (r: Readout, x: number | null) => {
+      rWhen.textContent = r.when;
+      rWhat.textContent = r.what;
+      rName.textContent = r.name ? ` · ${r.name}` : '';
+      rNear.textContent = x === null || r.now ? launchLine(data) : nearLine(data, r);
+      box.dataset.tone = r.tone;
+      if (r.tone === 'ok' && r.level) box.style.setProperty('--rl', `var(--l${r.level})`);
+      else box.style.removeProperty('--rl');
+      box.classList.toggle('is-scrub', x !== null && !r.now);
+      for (const s of segs) s.classList.toggle('is-probe', x !== null && !r.now && Number(s.dataset.seg) === r.level);
+      const near = new Set(r.near.map((l) => String(data.launches.indexOf(l))));
+      for (const el of all('[data-launch]')) el.classList.toggle('is-near', x !== null && near.has(el.dataset.launch!));
+      if (x === null) {
+        cursor.hidden = true;
+        ctag.hidden = true;
+        return;
+      }
+      cursor.hidden = false;
+      cursor.style.setProperty('--cx', `${x}%`);
+      probe.hidden = r.score === undefined;
+      if (r.score !== undefined) {
+        cursor.style.setProperty('--cy', String(100 - r.score));
+        probe.style.setProperty('--probe', r.level ? `var(--l${r.level})` : '#fff');
+      }
+      // The time tag rides the day axis under the cursor, kept inside it.
+      ctag.hidden = false;
+      ctag.textContent = r.now ? 'NOW' : r.when;
+      const w = plot.clientWidth;
+      const tw = ctag.offsetWidth;
+      ctag.style.left = `${Math.min(Math.max((x / 100) * w - tw / 2, 0), w - tw)}px`;
+    };
+
+    const show = (at: number) => {
+      scope.classList.add('scrubbed');
+      t = Math.min(data.to, Math.max(data.from, at));
+      const r = readout(data, t);
+      paint(r, ((t - data.from) / span) * 100);
+      plot.setAttribute('aria-valuenow', String(Math.round((t - data.from) / HOUR)));
+      plot.setAttribute('aria-valuetext', readoutText(r));
+    };
+    const reset = () => {
+      t = null;
+      const r = nowReadout(data);
+      paint(r, null);
+      plot.setAttribute('aria-valuenow', String(max));
+      plot.setAttribute('aria-valuetext', readoutText(r));
+    };
+    reset();
+
+    const fromPointer = (e: PointerEvent) => {
+      const b = plot.getBoundingClientRect();
+      const px = Math.min(b.width, Math.max(0, e.clientX - b.left));
+      if (px >= b.width - EDGE_PX) return show(data.to);
+      const snap = data.launches.find((l) => Math.abs(((l[0] - data.from) / span) * b.width - px) <= SNAP_PX);
+      // Anywhere short of the edge is the record, never the live reading.
+      show(Math.min(snap ? snap[0] : data.from + (px / b.width) * span, data.to - 1));
+    };
+    plot.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse' || e.buttons) fromPointer(e);
+    });
+    plot.addEventListener('pointerdown', fromPointer);
+    plot.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' && document.activeElement !== plot) reset();
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (t !== null && !plot.contains(e.target as Node)) reset();
+    });
+    plot.addEventListener('focus', () => show(t ?? data.to));
+    plot.addEventListener('blur', reset);
+    plot.addEventListener('keydown', (e) => {
+      const at = t ?? data.to;
+      const step = e.shiftKey ? 24 * HOUR : HOUR;
+      const moves: Record<string, number> = {
+        ArrowLeft: at - step,
+        ArrowDown: at - step,
+        ArrowRight: at + step,
+        ArrowUp: at + step,
+        PageDown: at - 24 * HOUR,
+        PageUp: at + 24 * HOUR,
+        Home: data.from,
+        End: data.to,
+        Escape: data.to,
+      };
+      if (!(e.key in moves)) return;
+      e.preventDefault();
+      show(moves[e.key]);
+    });
+
+    // Place the plot's labels on the plot as drawn: in priority order, each whole or not at all.
+    const fit = () => {
+      const P = plot.getBoundingClientRect();
+      if (!P.width) return;
+      // Lift the pre-fit hiding before measuring. A flag still display: none has no box, so it would
+      // be skipped here and then shown unplaced; with the fonts cached (the 5-minute reload) this
+      // runs once, not twice, and nothing would repair it.
+      scope.classList.add('fitted');
+      const rel = (el: Element): Box => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left - P.left, top: r.top - P.top, right: r.right - P.left, bottom: r.bottom - P.top };
+      };
+      const shown = (el: HTMLElement) => getComputedStyle(el).display !== 'none';
+      const labels = all('[data-label]');
+      const dayLabels = all('.sc-daylabel');
+      for (const el of [...labels, ...dayLabels]) el.classList.remove('is-cut');
+      for (const el of all('[data-side0]')) el.dataset.side = el.dataset.side0;
+      const flags = all('[data-label="flag"]');
+      for (const f of flags) f.style.setProperty('--row', '0');
+      const nowTag = scope.querySelector<HTMLElement>('.sc-nowtag');
+      const veil = scope.querySelector<HTMLElement>('[data-veil]');
+      const taken = [nowTag, veil].filter((el): el is HTMLElement => !!el && shown(el)).map(rel);
+      // Fixed labels (direction, the current scale, level changes: latest first), launch names, zones.
+      const fixed = all('[data-label="fixed"]');
+      const changes = fixed.filter((el) => el.classList.contains('sc-change')).reverse();
+      const order = [...fixed.filter((el) => !el.classList.contains('sc-change')), ...changes];
+      // A zone label offers the variant its zone's width shows and each shorter one after it.
+      const VARIANTS = ['full', 'head', 'min'] as const;
+      const zoneLabels = all('[data-label="zone"]');
+      for (const z of zoneLabels) delete z.dataset.pick;
+      const zones = zoneLabels.flatMap((z) => {
+        const variant = (k: (typeof VARIANTS)[number]) => z.querySelector<HTMLElement>(`.zl-${k}`);
+        const first = VARIANTS.findIndex((k) => {
+          const v = variant(k);
+          return !!v && shown(v);
+        });
+        if (first === -1) return [];
+        const picks = VARIANTS.slice(first).filter((k) => variant(k));
+        const boxes = picks.map((k) => {
+          z.dataset.pick = k;
+          return rel(variant(k)!);
+        });
+        delete z.dataset.pick;
+        return [{ el: z, boxes, picks }];
+      });
+      // A level-change flag may take the other side of its step when its own side is taken.
+      const mirrored = (b: Box, below: boolean): Box => {
+        const h = b.bottom - b.top;
+        return below
+          ? { ...b, bottom: b.top - 16, top: b.top - 16 - h }
+          : { ...b, top: b.bottom + 16, bottom: b.bottom + 16 + h };
+      };
+      const items: { el: HTMLElement; boxes: Box[]; flag?: boolean; picks?: readonly string[] }[] = [
+        ...order.filter(shown).map((el) => {
+          const b = rel(el);
+          return { el, boxes: el.dataset.side0 ? [b, mirrored(b, el.dataset.side0 === 'below')] : [b] };
+        }),
+        ...flags.filter(shown).map((el) => {
+          const b = rel(el);
+          return {
+            el,
+            flag: true,
+            boxes: [0, 1, 2].map((row) => ({ ...b, top: b.top + row * FLAG_PITCH, bottom: b.bottom + row * FLAG_PITCH })),
+          };
+        }),
+        ...zones,
+      ];
+      const bounds: Box = { left: 0, top: 0, right: P.width, bottom: P.height };
+      const choice = placeLabels(
+        items.map((i) => i.boxes),
+        bounds,
+        taken,
+      );
+      items.forEach((item, i) => {
+        const c = choice[i];
+        if (c === undefined) item.el.classList.add('is-cut');
+        else if (item.flag) item.el.style.setProperty('--row', String(c));
+        else if (item.picks) {
+          if (c > 0) item.el.dataset.pick = item.picks[c];
+        }
+        else if (c === 1) item.el.dataset.side = item.el.dataset.side0 === 'below' ? 'above' : 'below';
+      });
+      // A flag that could not be measured is never shown unplaced.
+      for (const f of flags) if (!shown(f)) f.classList.add('is-cut');
+      // The day axis: the latest day first, each label whole or not at all.
+      const days = dayLabels.filter(shown).reverse();
+      const anywhere = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+      placeLabels(
+        days.map((d) => [rel(d)]),
+        anywhere,
+      ).forEach((c, i) => {
+        if (c === undefined) days[i].classList.add('is-cut');
+      });
+      if (t !== null) show(t);
+    };
+    let queued = 0;
+    const refit = () => {
+      cancelAnimationFrame(queued);
+      queued = requestAnimationFrame(fit);
+    };
+    new ResizeObserver(refit).observe(plot);
+    document.fonts?.ready.then(refit).catch(() => {});
+  }
+</script>

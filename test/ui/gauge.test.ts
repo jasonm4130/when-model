@@ -1,16 +1,17 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import Dropcon from '../../src/components/Dropcon.astro';
-import HistoryStrip from '../../src/components/HistoryStrip.astro';
+import DropconScope from '../../src/components/DropconScope.astro';
 import Labs from '../../src/components/Labs.astro';
 import Signals from '../../src/components/Signals.astro';
 import Layout from '../../src/layouts/Layout.astro';
 import { assembleDashboard, type Dashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
-import { HYSTERESIS_CLEAR_MARGIN, HYSTERESIS_HOLD_SLOTS, historyStrip } from '../../src/domain/history';
+import { buildInstrument } from '../../src/domain/instrument';
 import type { Market } from '../../src/domain/market';
 import { SOURCE } from '../../src/domain/sources';
 import { dropconTitle } from '../../src/ui/odds';
+import type { ScrubData } from '../../src/ui/readout';
 import { TRACK_LINES } from '../../src/ui/signals';
 import { readings, series } from '../fixtures/history';
 import { warnings } from '../fixtures/warnings';
@@ -71,113 +72,191 @@ const darkInputs = { ...floorInputs, drops: { name: SOURCE.openrouter, data: [],
 const container = await AstroContainer.create();
 const render = (component: Parameters<typeof container.renderToString>[0], props: Record<string, unknown>) =>
   container.renderToString(component, { props });
-const attr = (html: string, name: string, selector: RegExp) =>
-  html.match(selector)?.[0].match(new RegExp(`${name}="([^"]*)"`))?.[1];
 
 const v2 = readings('2026-09-23T00:00:00Z', 72, 2, (i) => (i < 24 ? 90 : 64));
-const v3 = readings('2026-09-26T00:00:00Z', 11, 3, (i) => (i < 6 ? 60 : 30));
+const v3 = readings('2026-09-26T00:00:00Z', 12, 3, (i) => (i < 6 ? 60 : 30));
 
-describe('HistoryStrip', () => {
+/** The instrument the component draws for these props, from the same pure builder. */
+const model = (d: Dashboard, points: ReturnType<typeof series>, ok = true) =>
+  buildInstrument({
+    points,
+    ok,
+    now: NOW,
+    currentVersion: d.measurement.algorithmVersion,
+    live: { state: d.dropcon.state, score: d.dropcon.score, level: d.dropcon.level, at: d.generatedAt },
+    launches: d.landed.releases.map((r) => ({
+      at: r.firstListedAt,
+      labId: r.labId,
+      lab: r.lab,
+      name: r.name,
+    })),
+  });
+
+/** The scrubber data the component embeds, parsed back out of its attribute. */
+const scopeData = (html: string) =>
+  JSON.parse(
+    html
+      .match(/data-scope="([^"]*)"/)![1]
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&'),
+  ) as ScrubData;
+
+describe('DropconScope: the level and its week as one instrument', () => {
   const d = dashboard();
 
-  it('renders an intentional empty state with an accessible name when nothing is recorded yet', async () => {
-    const html = await render(HistoryStrip, { d, history: { ok: true, points: [] }, now: NOW });
-    expect(html).toContain('role="img"');
-    expect(html).toContain(
-      'aria-label="DROPCON history: no readings recorded yet. v3 history starts 26 Sep."',
+  it('renders an intentional empty state, with the live level still at the NOW edge', async () => {
+    const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
+    expect(html).toMatch(
+      /class="sc-plot" data-plot role="img" aria-label="DROPCON history, the lead score over the last 7 days/,
     );
     expect(html).toContain('NO READINGS YET');
     expect(html).toContain('v3 history starts 26 Sep: the 15-minute capture writes the first point.');
-    expect(html).not.toContain('class="hrun');
+    expect(html).not.toContain('class="sc-line"');
+    expect(html).toMatch(new RegExp(`class="dc-num head" data-num[^>]*>${d.dropcon.level}<`));
+    expect(html).toContain(`--y:${100 - d.dropcon.score}`);
+    // The readout starts at NOW, from the same function the browser runs.
+    expect(html).toMatch(/data-r-when[^>]*>NOW · 26 SEP 12:00Z</);
+    expect(html).toMatch(new RegExp(`data-r-what[^>]*>score ${d.dropcon.score} → level ${d.dropcon.level}<`));
+    expect(scopeData(html)).toMatchObject({ history: 'empty', pts: [], launchesOk: true });
   });
 
-  it('degrades to an offline strip, never throwing, when the history is missing', async () => {
-    const html = await render(HistoryStrip, { d, now: NOW });
+  it('degrades to an offline plot, never throwing, when the history is missing', async () => {
+    const html = await render(DropconScope, { d, now: NOW });
     expect(html).toContain('HISTORY OFFLINE');
-    expect(html).toContain('class="pill err"');
-    expect(html).toContain('data-state="unavailable"');
-    expect(html).toMatch(/v3 SINCE<\/dt><dd[^>]*><span class="muted"[^>]*>—/);
+    expect(html).toContain('hist-unavailable');
+    expect(html).toContain('The score series could not be read; the level shown is live.');
+    expect(html).toContain('<td colspan="3"');
+    expect(html).toContain('The score series could not be read.</td>');
+    const data = scopeData(html);
+    expect(data).toMatchObject({ history: 'unavailable', pts: [] });
+    expect(data.live).toMatchObject({ state: 'ok', score: d.dropcon.score, level: d.dropcon.level });
+    // The big number is the live reading all the same.
+    expect(html).toMatch(new RegExp(`class="dc-num head" data-num[^>]*>${d.dropcon.level}<`));
   });
 
-  it('draws a v2-only series dimmed and labelled, and marks where v3 will start', async () => {
-    const html = await render(HistoryStrip, { d, history: { ok: true, points: series(v2) }, now: NOW });
-    // The old label is capped at its own segment's width; " · OLD SCORING" is the part that wraps away.
-    const strip = historyStrip(series(v2), { ok: true, now: NOW, currentVersion: 3 });
-    const old = strip.versions[0];
+  it('draws an old version as a labelled hatch, never a line, and calls a young v3 line what it is', async () => {
+    const points = series(v2, v3);
+    const inst = model(d, points);
+    const html = await render(DropconScope, { d, history: { ok: true, points }, now: NOW });
+    // The label comes whole at three widths; the plot shows the one that fits.
+    expect(html).toMatch(/class="sc-zone old"[^>]*>.*v2 · OLD SCALE.*another formula, not comparable/s);
+    expect(html).toMatch(/class="zl-min"[^>]*>v2</);
+    // One line, the v3 stretch, the same path the builder draws; it runs into the live reading.
+    expect(html.match(/class="sc-line"/g)).toHaveLength(1);
+    expect(html).toContain(`d="${inst.traces[0].line}"`);
+    expect(inst.now.joined).toBe(true);
+    expect(html).toContain('class="sc-dot joined"');
+    // v3 has 12 hours, so its start is a callout with an honest count.
+    expect(inst.current).toMatchObject({ count: 12, young: true });
+    // The series is hourly and a version's first hour can hold the old one too: the start is an hour.
+    expect(html).toContain('v3 SCALE FROM THE 26 SEP 00:00Z HOUR');
+    expect(html).toContain('v3 FROM 00:00Z HOUR');
+    expect(html).toContain('12 hourly readings so far');
+    expect(html).toContain('updates every 15 min');
+    // It stepped from level 2 to level 4 at 06:00, and held: a flag on the line, hung below the
+    // corner of a step down. The time is its own span, so a phone can show just "▼ L4".
+    expect(html).toMatch(
+      /class="sc-change l4 left"[^>]*data-side="below" data-side0="below"[^>]*><span class="cf-dir"[^>]*>▼ L4<\/span><span class="cf-when"[^>]*> 26 SEP 06:00Z</,
+    );
+    // v2 starts inside the window: the dark stretch before it is the record's start.
+    expect(html).toContain('captures start 23 Sep');
+    expect(html).toContain(`aria-label="${inst.summary}"`);
+    // Which way is hot, at the plot's top and bottom.
+    expect(html).toContain('▲ 1 · RELEASE SURGE');
+    expect(html).toContain('▼ 5 · QUIET ORBIT');
+    // The table keeps every number: the live reading first, then v3, then v2 marked old.
+    expect(html).toMatch(/<td[^>]*>NOW · 26 Sep 12:00Z<\/td><td[^>]*>\d+<\/td>/);
+    expect(html).toContain('90 (v2, old scale)');
+    // The scrubber gets the readings but not the live one: that answers only at NOW.
+    const data = scopeData(html);
+    expect(data.pts.filter((p) => p[0] === 'o')).toHaveLength(72);
+    expect(data.pts.filter((p) => p[0] === 'c')).toHaveLength(12);
+    expect(data.pts.every((p) => p[2] > p[1])).toBe(true);
+    expect(data.live).toEqual({
+      state: 'ok',
+      at: Date.parse(d.generatedAt),
+      score: d.dropcon.score,
+      level: d.dropcon.level,
+    });
+  });
+
+  it('shows an old version alone as the hatch, with no line and no current-scale tag', async () => {
+    const points = series(v2);
+    const html = await render(DropconScope, { d, history: { ok: true, points }, now: NOW });
+    expect(html).not.toContain('class="sc-line"');
+    expect(html).not.toContain('class="sc-v3');
+    expect(html).toContain('No v3 readings recorded yet.');
+    expect(html).toContain('class="sc-zone old"');
+  });
+
+  it("marks this week's frontier launches on the rail and names them in the plot", async () => {
+    const html = await render(DropconScope, { d, history: { ok: true, points: series(v3) }, now: NOW });
+    const release = d.landed.releases[0];
+    expect(release).toBeDefined();
+    expect(html).toMatch(
+      new RegExp(`class="sc-mark"[^>]*data-launch="0"[^>]*title="${release.name} · ${release.lab} · `),
+    );
+    expect(html).toMatch(new RegExp(`class="sc-flag[^"]*"[^>]*>.*${release.name}`, 's'));
+    expect(html).toContain('<caption class="sr-only"');
+    expect(html).toMatch(
+      /data-r-near[^>]*>1 frontier launch in 7 days · latest ✱ Claude Opus 5\.5 \(Anthropic\), 22 Sep</,
+    );
+    expect(scopeData(html).launches).toHaveLength(d.landed.releases.length);
+  });
+
+  it('says the launch listings are offline instead of drawing a week with no launches', async () => {
+    const down = dashboard({ drops: { name: SOURCE.openrouter, data: [], ok: false, error: 'down' } });
+    const html = await render(DropconScope, { d: down, history: { ok: true, points: series(v3) }, now: NOW });
+    expect(html).toContain('LAUNCH LISTINGS OFFLINE');
+    expect(html).toContain('Launch listings offline: OpenRouter unreachable, launches not marked');
+    expect(scopeData(html).launchesOk).toBe(false);
+  });
+
+  it('states the score-to-level rule beside the number', async () => {
+    const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
     expect(html).toMatch(
       new RegExp(
-        `class="hver old"[^>]*style="left:${(old.x / 10).toString()}%; max-width:calc\\(${old.w / 10}% - 6px\\)"[^>]*><i[^>]*></i><span[^>]*>v2</span><span[^>]*> · OLD SCORING</span>`,
+        `class="sc-eq-score"[^>]*><b[^>]*>${d.dropcon.score}</b><span class="of"[^>]*>/100</span> LEAD SCORE</span>`,
       ),
     );
-    // The pill says what the strip spans: three and a half days, not "the last 30 days".
-    expect(html).toMatch(/class="pill"[^>]*>HOURLY · SINCE 23 SEP</);
-    expect(html).not.toContain('LAST 30 DAYS');
-    expect(html).toContain('class="hrun old"');
-    expect(html).not.toMatch(/class="hrun l\d/);
-    expect(html).toContain('v3 history starts 26 Sep');
-    expect(html.match(/class="hbreak"/g)).toHaveLength(1);
-    expect(html).toContain(
-      'v2 (old scoring, not comparable), 23 Sep to 26 Sep: 72 hourly readings, scores 64 to 90.',
-    );
+    expect(html).toContain(`LEVEL ${d.dropcon.level} OF 5</span>`);
+    // Stamped on the number itself, so the first screen says it wherever the number is.
+    expect(html).toMatch(/class="sc-eq-nf"[^>]*><span class="sr-only"[^>]*>, <\/span>NOT A FORECAST<\/span>/);
+    for (const inputs of [floorInputs, darkInputs]) {
+      const off = await render(DropconScope, { d: dashboard(inputs), now: NOW });
+      expect(off).not.toContain('class="sc-eq-nf"');
+    }
   });
 
-  it('draws a visible break at the version change and colours v3 by its display level', async () => {
-    const points = series(v2, v3);
-    const strip = historyStrip(points, { ok: true, now: NOW, currentVersion: 3 });
-    const html = await render(HistoryStrip, { d, history: { ok: true, points }, now: NOW });
-    expect(html.match(/class="hbreak"/g)).toHaveLength(1);
-    expect(attr(html, 'x1', /<line class="hbreak"[^>]*>/)).toBe(String(strip.breaks[0].x));
-    expect(html).toContain('class="hrun old"');
-    expect(html).toContain('class="hrun l2"');
-    expect(html).toContain('class="hrun l4"');
-    expect(html).toContain('v3 history starts 26 Sep');
-    expect(html).toContain(`aria-label="${strip.summary}"`);
-    expect(strip.summary).toContain(
-      'v3 from 26 Sep: 11 hourly readings, scores 30 to 60; latest level 4 (score 30).',
-    );
-    // Stats: the live score now, and the v3 range from the series.
-    expect(html).toMatch(new RegExp(`NOW</dt><dd[^>]*>${d.dropcon.score}<small`));
-    expect(html).toMatch(/v3 RANGE<\/dt><dd[^>]*>30–60</);
-    // The hysteresis rule in the legend is the one history.ts applies.
-    expect(html).toContain(
-      `holds ${HYSTERESIS_HOLD_SLOTS} captures or clears a band by ${HYSTERESIS_CLEAR_MARGIN}`,
-    );
+  it('offers a hover hint and a tap hint; the stylesheet shows the one that fits the screen', async () => {
+    const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
+    expect(html).toMatch(/class="h-long"[^>]*>◀ ▶ HOVER, DRAG OR ARROW KEYS</);
+    expect(html).toMatch(/class="h-short"[^>]*>◀ TAP<span class="h-drag"[^>]*> OR DRAG<\/span> ▶</);
   });
-});
 
-describe('HistoryStrip version labels', () => {
-  const d = dashboard();
-  const startLabel = /class="hver start[^"]*"[^>]*>v3 history starts/;
-  const bareV3 = /class="hver"[^>]*>v3</;
+  it('says when the capture last wrote, not "none yet", when every reading is older than the window', async () => {
+    const old = readings('2026-09-10T00:00:00Z', 48, 3, () => 50);
+    const html = await render(DropconScope, { d, history: { ok: true, points: series(old) }, now: NOW });
+    expect(html).toContain('NO RECENT READINGS');
+    expect(html).toContain('Nothing captured in these 7 days; the last reading was 11 Sep 23:10Z.');
+    expect(html).not.toContain('NO READINGS YET');
+    expect(scopeData(html)).toMatchObject({ history: 'empty', last: Date.parse('2026-09-11T23:10:00Z') });
+  });
 
-  it('marks where v3 starts while it fills under 35% of the strip, and names it once past that', async () => {
-    // v3 is 12 of 84 hours: a sliver, so the start label at the bottom names it.
-    const sliver = await render(HistoryStrip, { d, history: { ok: true, points: series(v2, v3) }, now: NOW });
-    expect(sliver).toMatch(startLabel);
-    expect(sliver).not.toMatch(bareV3);
-    // v3 is 30 of 40 hours: the start label gives way to a plain "v3" at its left edge.
-    const shortV2 = readings('2026-09-25T06:00:00Z', 10, 2, () => 64);
-    const longV3 = readings('2026-09-25T18:00:00Z', 18, 3, () => 60);
-    const strip = historyStrip(series(shortV2, longV3), { ok: true, now: NOW, currentVersion: 3 });
-    const current = strip.versions.find((v) => v.current)!;
-    expect(current.w / 1000).toBeGreaterThanOrEqual(0.35);
-    const wide = await render(HistoryStrip, {
+  it('calls a gap at the window edge "no captures" when the record goes back further', async () => {
+    // Recorded from 15 Sep, the capture down 18-21 Sep across the window's left edge (19 Sep 12:00).
+    const before = readings('2026-09-15T00:00:00Z', 72, 3, () => 50);
+    const after = readings('2026-09-21T00:00:00Z', 132, 3, () => 50);
+    const html = await render(DropconScope, {
       d,
-      history: { ok: true, points: series(shortV2, longV3) },
+      history: { ok: true, points: series(before, after) },
       now: NOW,
     });
-    expect(wide).toMatch(bareV3);
-    expect(wide).not.toMatch(startLabel);
-    // The old label is capped at its own, narrower, segment, so it cannot run under "v3".
-    const old = strip.versions.find((v) => !v.current)!;
-    expect(old.x + old.w).toBeLessThanOrEqual(current.x);
-    expect(wide).toContain(`max-width:calc(${old.w / 10}% - 6px)`);
-  });
-
-  it('says "LAST 30 DAYS" only once the series covers the whole window', async () => {
-    const month = readings(new Date(NOW - 30 * 86_400_000 + 3_600_000).toISOString(), 24 * 29, 3, () => 60);
-    const html = await render(HistoryStrip, { d, history: { ok: true, points: series(month) }, now: NOW });
-    expect(html).toMatch(/class="pill"[^>]*>HOURLY · LAST 30 DAYS</);
+    expect(html).not.toContain('captures start');
+    expect(html).toMatch(/class="sc-zone unrecorded"[^>]*style="left:0%[^"]*"[^>]*>.*?no captures/s);
+    expect(scopeData(html).recordFrom).toBe(Date.parse('2026-09-15T00:00:00Z'));
+    expect(html).not.toContain('class="sc-v3');
   });
 });
 
@@ -214,8 +293,17 @@ describe('Dropcon for a first-time reader', () => {
     // Icon glyphs are hidden from the heading's accessible name.
     expect(html).toContain('<span aria-hidden="true" data-astro-cid');
     expect(html).toMatch(/<h2[^>]*><span aria-hidden="true"[^>]*>▣<\/span>DROPCON LEVEL<\/h2>/);
-    // The history strip replaces the hottest-lab panel.
-    expect(html).toContain('DROPCON HISTORY');
+    // One instrument: the number, the rule that sets it, the week that led to it, and what it is.
+    expect(html).toContain('LEAD SCORE');
+    expect(html).toContain('WHAT IS THIS?');
+    expect(html).toContain('the line is that');
+    // A phone shows the short form above its readout.
+    expect(html).toContain('The line is the 0–100 lead score over time');
+    expect(html).toMatch(/It is a lead score, <b class="nf"[^>]*>NOT A FORECAST<\/b>/);
+    expect(html).toContain('context only, the score has not been shown to predict launches');
+    expect(at('dc-name')).toBeLessThan(at('dc-num'));
+    expect(at('dc-num')).toBeLessThan(at('sc-plot'));
+    expect(html).not.toContain('DROPCON HISTORY');
     expect(html).not.toContain('COMPOSITE HEAT');
   });
 
@@ -223,13 +311,18 @@ describe('Dropcon for a first-time reader', () => {
     const d = dashboard(floorInputs);
     const html = await render(Dropcon, { d, now: NOW });
     expect(d.dropcon.state).toBe('floor');
-    expect(html).toMatch(/class="dc-num head" style="color:var\(--muted\)"[^>]*>5</);
+    expect(html).toMatch(/class="section wrap reveal dc-hero"[^>]*style="--lvl:var\(--muted\)"/);
+    expect(html).toMatch(/class="dc-num head" data-num[^>]*>5</);
     expect(html).toContain('FLOOR (ODDS OFFLINE)');
+    expect(html).toContain('class="sc-dot"');
+    expect(html).toMatch(/<b class="word"[^>]*>FLOOR<\/b> ODDS OFFLINE/);
+    expect(html).toContain('NOT A MEASUREMENT');
+    expect(html).toMatch(/data-r-what[^>]*>floor · odds offline, not measured</);
     expect(html).not.toContain('QUIET ORBIT</div>');
     expect(html).toContain('FLOOR · ODDS OFFLINE');
     expect(html).not.toMatch(/class="seg on/);
     expect(html.match(/class="seg dim/g)).toHaveLength(5);
-    expect(html).toContain('class="seg dim floor"');
+    expect(html).toContain('class="seg dim floor l5"');
     expect(html).toContain('aria-label="DROPCON floor: 5 of 5 with the odds offline"');
     expect(dropconTitle(d.dropcon)).toBe('DROPCON 5 · FLOOR (odds offline) — whenmodel');
     // The hottest-lab line and every lab card say the odds are offline, never "no market".
@@ -244,9 +337,13 @@ describe('Dropcon for a first-time reader', () => {
   it('shows "?" and NO SIGNAL with every segment dimmed, and titles the page DROPCON — NO SIGNAL', async () => {
     const d = dashboard(darkInputs);
     const html = await render(Dropcon, { d, now: NOW });
-    expect(html).toMatch(/class="dc-num head" style="color:var\(--muted\)"[^>]*>\?</);
+    expect(html).toMatch(/class="section wrap reveal dc-hero"[^>]*style="--lvl:var\(--muted\)"/);
+    expect(html).toMatch(/class="dc-num head" data-num[^>]*>\?</);
+    expect(html).not.toContain('class="sc-dot');
+    expect(html).not.toContain('class="sc-nowtag');
     expect(html).toContain('NO SIGNAL');
-    expect(html.match(/class="seg dim"/g)).toHaveLength(5);
+    expect(html).toMatch(/data-r-what[^>]*>no signal · odds and listings down</);
+    expect(html.match(/class="seg dim l\d"/g)).toHaveLength(5);
     expect(html).toContain('No lab data: Polymarket and OpenRouter are both unreachable.');
     const page = await container.renderToString(Layout, {
       props: { title: dropconTitle(d.dropcon), description: 'd' },

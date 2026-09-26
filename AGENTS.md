@@ -17,13 +17,23 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   `first_seen`), `bindings.ts` (`HISTORY_DB`), `text.ts` (safe parsing helpers).
 - `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
   the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
-  shared by `/api/history.json` and the page's history strip; `loadHistoryForPage` adds the
+  shared by `/api/history.json` and the page's DROPCON instrument; `loadHistoryForPage` adds the
   page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes.
+- `src/domain/instrument.ts` draws the hero: `buildInstrument` turns the history, the live level
+  and LANDED's launches into the 7-day trace, zones, level-change flags and scrubber data
+  `DropconScope.astro` renders. It draws the last 7 days but reads the record's start, the current
+  version's first hour and the last reading from the whole 30-day series it is given, so never
+  filter the input to the window first. Only the current algorithm version is inked on the level
+  axis; an older one is a hatched zone. Level names live in `src/domain/levels.ts`. `src/ui/readout.ts`
+  (the scrubber's readout text) and `src/ui/labels.ts` (whole-or-nothing label placement) are pure
+  and run both in the server render and in the component's browser script. The readout never
+  gives a past hour the live reading, and scrubbing never changes the big number.
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
-  source pills aging to STALE, ticker behavior and the 5-minute poll-and-offer reload.
+  source pills aging to STALE, ticker behavior, the 5-minute poll-and-offer reload, and the hero's
+  scrubber and label fitting (progressive enhancement: the server render reads NOW without it).
 
 Rules of the house:
 
@@ -75,7 +85,7 @@ Rules of the house:
   Restart a running `wrangler dev` after `pnpm build`: its reload can keep serving the old server
   bundle (seen as HTML linking an `/_astro/*.css` that 404s), and the tests then pass or fail on old code.
   A browser test for a state today's data may not show (a failed source, an extrapolated read, a
-  filled history strip) writes that state into the page with the component's `data-astro-cid-*`
+  long launch label on the instrument) writes that state into the page with the component's `data-astro-cid-*`
   attribute, as `test/browser/robustness.spec.ts` does, so it does not depend on the day's data.
 - Month names come from `src/domain/dates.ts` ("SEP", never ICU's en-GB "Sept"); do not format
   months with `toLocaleDateString`.

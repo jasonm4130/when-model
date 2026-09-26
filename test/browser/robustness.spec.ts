@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Layout and contrast rules that only matter on data the local Worker may not have today: a failed
- * source, an extrapolated read, a filled-in history strip. Each test writes that state into the page
+ * source, an extrapolated read, crowded launch names on the instrument. Each test writes that state into the page
  * with the component's own scoped attribute, so the CSS under test is what styles it.
  */
 
@@ -67,86 +67,78 @@ test('an extrapolated lab read is muted at full opacity, with AA contrast', asyn
   expect(read.ratio).toBeGreaterThanOrEqual(4.5);
 });
 
-test('the history strip strokes its edge lines and never fills them', async ({ page }) => {
+test('the instrument strokes its trace and never fills it', async ({ page }) => {
   await openDashboard(page);
-  const edges = await page.locator('.hstrip svg').evaluate((svg) => {
-    const cid = [...svg.querySelector('rect.hband')!.attributes].find((a) =>
-      a.name.startsWith('data-astro-cid'),
-    )!;
-    return [1, 2, 3, 4, 5].map((level) => {
-      const edge = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      edge.setAttribute('class', `hedge l${level}`);
-      edge.setAttribute(cid.name, '');
-      edge.setAttribute('d', 'M0 90 L500 20 L1000 60');
-      svg.append(edge);
-      const s = getComputedStyle(edge);
-      return { level, fill: s.fill, stroke: s.stroke };
-    });
+  const lines = await page.locator('.sc-ink svg').evaluate((svg) => {
+    const cid = [...svg.attributes].find((a) => a.name.startsWith('data-astro-cid'))!;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('class', 'sc-line');
+    line.setAttribute(cid.name, '');
+    line.setAttribute('d', 'M0 90H500V20H1000V60');
+    svg.append(line);
+    const s = getComputedStyle(line);
+    return { fill: s.fill, stroke: s.stroke };
   });
-  for (const e of edges) {
-    expect(e.fill, `hedge l${e.level}`).toBe('none');
-    expect(e.stroke, `hedge l${e.level}`).toMatch(/^rgb/);
-  }
+  expect(lines.fill).toBe('none');
+  expect(lines.stroke).toMatch(/url\("?#sc-level-ink"?\)/);
 });
 
 for (const width of [390, 1024, 1440]) {
-  test(`an old version's strip label never runs under the current one at ${width}px`, async ({ page }) => {
+  test(`crowded launch names are placed whole, inside the plot and clear of each other, at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 900 });
     await openDashboard(page);
-    // v2 fills the first 8 of 30 days, as on the reviewer's seeded strip; v3 starts where it ends.
-    const labels = await page.locator('.hstrip .hlevels').evaluate((levels) => {
-      const plot = levels.parentElement!;
-      const cid = [...levels.attributes].find((a) => a.name.startsWith('data-astro-cid'))!.name;
-      const tag = (el: Element) => {
-        el.setAttribute(cid, '');
-        for (const child of el.children) tag(child);
-        return el;
-      };
-      const make = (html: string) => {
-        const box = document.createElement('div');
-        box.innerHTML = html;
-        return tag(box.firstElementChild!) as HTMLElement;
-      };
-      // The parts on the label's one visible line; anything that wrapped sits below it, clipped.
-      const shown = (label: HTMLElement) => {
-        const box = label.getBoundingClientRect();
-        return [...label.querySelectorAll('span')]
-          .filter((s) => s.getBoundingClientRect().top < box.bottom - 1)
-          .map((s) => ({
-            text: s.textContent,
-            right: s.getBoundingClientRect().right,
-            cut: s.getBoundingClientRect().right > box.right + 0.5,
-          }));
-      };
-      const old = (maxWidth: string) =>
-        make(
-          `<span class="hver old" style="left:0%; max-width:${maxWidth}"><i></i><span>v2</span><span> · OLD SCORING</span></span>`,
-        );
-      const narrow = old('calc(26.667% - 6px)');
-      const current = make('<span class="hver" style="left:26.667%">v3</span>');
-      const wide = old('calc(80% - 6px)');
-      // Narrower than "v2" itself, and a sliver as v2 ages out of the window.
-      const tiny = old('14px');
-      const sliver = old('calc(1% - 6px)');
-      plot.append(narrow, current, wide, tiny, sliver);
-      return {
-        narrow: shown(narrow),
-        currentLeft: current.getBoundingClientRect().left,
-        wide: shown(wide)
-          .map((s) => s.text)
-          .join(''),
-        tiny: shown(tiny).map((s) => s.text),
-        sliver: shown(sliver).map((s) => s.text),
-      };
+    await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
+    // Six long names a few hours apart near the NOW edge, where labels read leftward.
+    await page.locator('.sc-plot').evaluate((el) => {
+      const cid = [...el.attributes].find((a) => a.name.startsWith('data-astro-cid'))!.name;
+      for (let i = 0; i < 6; i++) {
+        const f = document.createElement('span');
+        f.setAttribute(cid, '');
+        f.setAttribute('data-label', 'flag');
+        f.className = `sc-flag${i > 2 ? ' flip' : ''}`;
+        f.style.cssText = `left:${80 + i * 3}%; --row:0; --lab:#ff7a1a`;
+        f.textContent = `✱ A very long frontier launch name ${i}`;
+        el.append(f);
+      }
     });
-    for (const part of labels.narrow) {
-      expect(part.right, part.text!).toBeLessThanOrEqual(labels.currentLeft);
-      expect(part.cut, part.text!).toBe(false);
+    // Any change to the plot's size makes the script place every label again, the injected ones
+    // included: narrow the plot by a pixel.
+    await page.locator('.sc-plot').evaluate((el) => ((el as HTMLElement).style.right = '1px'));
+    await page.waitForTimeout(250);
+    const placed = await page.locator('.sc-plot').evaluate((plot) => {
+      const P = plot.getBoundingClientRect();
+      return [...plot.querySelectorAll('.sc-flag')]
+        .filter((f) => getComputedStyle(f).display !== 'none' && getComputedStyle(f).visibility !== 'hidden')
+        .map((f) => {
+          const r = f.getBoundingClientRect();
+          return { left: r.left - P.left, right: r.right - P.left, top: r.top, bottom: r.bottom, w: P.width };
+        });
+    });
+    for (const f of placed) {
+      expect(f.left).toBeGreaterThanOrEqual(-0.5);
+      expect(f.right).toBeLessThanOrEqual(f.w + 0.5);
     }
-    expect(labels.narrow[0]?.text).toBe('v2');
-    expect(labels.wide).toBe('v2 · OLD SCORING');
-    expect(labels.tiny).toEqual([]);
-    expect(labels.sliver).toEqual([]);
+    for (let i = 0; i < placed.length; i++)
+      for (let j = i + 1; j < placed.length; j++) {
+        const a = placed[i];
+        const b = placed[j];
+        expect(a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).toBe(false);
+      }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  });
+
+  test(`the scrubber's time tag stays on the day axis at the NOW edge at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openDashboard(page);
+    const box = (await page.locator('.sc-plot').boundingBox())!;
+    await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2);
+    const tag = (await page.locator('[data-ctag]').boundingBox())!;
+    const days = (await page.locator('.sc-days').boundingBox())!;
+    expect(tag.x).toBeGreaterThanOrEqual(days.x - 0.5);
+    expect(tag.x + tag.width).toBeLessThanOrEqual(days.x + days.width + 0.5);
+    await expect(page.locator('[data-ctag]')).toHaveText('NOW');
   });
 }
 
