@@ -59,10 +59,15 @@ describe('feed classification', () => {
     expect(looksLikeRelease('Anthropic partners with a university')).toBe(false);
   });
 
-  it('precisionOf tells a timestamp from a bare date', () => {
+  it('precisionOf tells a timestamp from a bare date or a date pinned to midnight', () => {
     expect(precisionOf('Thu, 17 Sep 2026 12:00:00 GMT')).toBe('instant');
-    expect(precisionOf('2026-09-16T00:00:00Z')).toBe('instant');
+    expect(precisionOf('2026-09-16T00:00:01Z')).toBe('instant');
+    expect(precisionOf('2026-09-23T16:06:00.000Z')).toBe('instant');
     expect(precisionOf('Sep 17, 2026')).toBe('day');
+    // OpenAI's RSS date for "Introducing GPT-Live"; the HN story is 2026-07-08T17:03:19Z.
+    expect(precisionOf('Wed, 08 Jul 2026 00:00:00 GMT')).toBe('day');
+    expect(precisionOf('2026-09-16T00:00:00.000Z')).toBe('day');
+    expect(precisionOf('2026-09-16T00:00Z')).toBe('day');
   });
 });
 
@@ -157,6 +162,10 @@ describe('isReleaseHeadline', () => {
       'Claude Opus 5.5 Intelligence, Performance and Price Analysis (Max)',
       "Kimi K3, Qwen 3.8, and Anthropic's (Potential) Unravelling",
       'GPT-5.6 Sol, along with Terra and Luna, will launch publicly this Thursday',
+      'Opus 5 expected to launch on July 20-21',
+      'OpenAI to unveil GPT-5.6 on Thursday after delaying launch',
+      'DeepSeek V4 official release coming in mid-July with 2x peak-hour API pricing',
+      'Claude Sonnet 5 Could Be Released Later Today, May Not Be Better Than Opus 4.8',
       'Anthropic tests Fable 5.2 and Opus 5.5 ahead of the release',
       'DeepSeek v4.1 Flash is now available for internal beta testing',
       'GPT 5.6 Sol is the best "vision" model OpenAI ever released',
@@ -165,6 +174,12 @@ describe('isReleaseHeadline', () => {
       'Redeploying Fable 5',
     ])
       expect(isReleaseHeadline(title), title).toBe(false);
+  });
+
+  it('rejects text too long to be a headline before any regex can backtrack on it', () => {
+    const started = performance.now();
+    expect(isReleaseHeadline(`GPT-6${' '.repeat(50_000)}x`)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(50);
   });
 
   // The labelled fixtures pin the classifier. The OpenAI and HN numbers are in-sample (the rule
@@ -310,23 +325,31 @@ describe('classifyLeak', () => {
   });
 
   // Precision that matters is predictive: did the leaked model ship within 14 days?
-  it('10 of 14 resolved, unlisted leaks were followed by an OpenRouter listing within 14 days', () => {
+  it('11 of 14 resolved, unlisted leaks were followed by an OpenRouter listing within 14 days', () => {
     const flagged = LEAK_OUTCOMES.filter((o) => classifyLeak(o.title));
     expect(flagged).toHaveLength(LEAK_OUTCOMES.length);
     const surfaced = flagged.filter((o) => !o.listed);
     const resolved = surfaced.filter((o) => !o.pending);
     const launched = resolved.filter((o) => o.launchedAfterDays !== undefined);
-    expect([flagged.length, surfaced.length, resolved.length, launched.length]).toEqual([18, 15, 14, 10]);
+    expect([flagged.length, surfaced.length, resolved.length, launched.length]).toEqual([18, 15, 14, 11]);
     const bySource = (source: string) => [
       resolved.filter((o) => o.source === source).length,
       launched.filter((o) => o.source === source).length,
     ];
-    expect(bySource('hn')).toEqual([10, 7]);
+    expect(bySource('hn')).toEqual([10, 8]);
     expect(bySource('testingcatalog')).toEqual([4, 3]);
     const leads = launched.map((o) => o.launchedAfterDays!).sort((a, b) => a - b);
     expect(leads[0]).toBe(0.23);
     expect(leads.at(-1)).toBe(10.9);
-    expect((leads[4] + leads[5]) / 2).toBeCloseTo(2.665, 3);
+    expect(leads[5]).toBe(1.93);
+    // The listing that resolved each leak is one `isListed` recognises, so the Leak Wire drops it.
+    for (const o of launched) {
+      const listing = { id: o.launchedAs!, name: '', aliases: o.launchedAlias ? [o.launchedAlias] : [] };
+      expect(
+        classifyLeak(o.title)!.modelIds.some((id) => isListed(id, [listing])),
+        o.title,
+      ).toBe(true);
+    }
   });
 });
 
@@ -351,6 +374,13 @@ describe('leak listings', () => {
     expect(isListed('grok-4.7', listings)).toBe(false);
     expect(isListed('grok-4.7', [])).toBe(false);
     expect(isListed('', listings)).toBe(false);
+  });
+
+  it('isListed reads aliases, because Qwen3.8-Flash-Next listed under another name', () => {
+    const qwenFlash = { id: 'qwen/qwen3.8-flash', name: 'Qwen: Qwen3.8 Flash' };
+    const [id] = classifyLeak('Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)')!.modelIds;
+    expect(isListed(id, [qwenFlash])).toBe(false);
+    expect(isListed(id, [{ ...qwenFlash, aliases: ['Qwen/Qwen3.8-Flash-Next'] }])).toBe(true);
   });
 
   it('unlistedLeaks keeps a leak while any of its models is still unlisted', () => {

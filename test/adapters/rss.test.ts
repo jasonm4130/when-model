@@ -112,6 +112,10 @@ describe('OpenAI window', () => {
       'Sam Altman’s remarks at the United Nations Security Council',
     );
     expect(out.filter((f) => f.alert).map((f) => f.title)).toEqual(['Introducing GPT-6 Sol and Luna']);
+    const precision = (title: string) => out.find((f) => f.title === title)?.precision;
+    expect(precision('Introducing GPT-6 Sol and Luna')).toBe('instant');
+    // Stamped "Tue, 22 Sep 2026 00:00:00 GMT": a date-only post, not a midnight one.
+    expect(precision('Priorities and principles for effective third party assessments')).toBe('day');
   });
 
   it('keeps the launch visible a week on, where the v2 12-item cap had lost it by the capture', async () => {

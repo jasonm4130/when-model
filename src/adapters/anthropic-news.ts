@@ -1,4 +1,4 @@
-import { isReleaseHeadline, type FeedItem } from '../domain/feed';
+import { isReleaseHeadline, precisionOf, type FeedItem } from '../domain/feed';
 import { cachedText } from '../infra/edge-cache';
 import { decodeEntities, toIso } from '../infra/text';
 
@@ -61,7 +61,8 @@ export function parseAnthropicNews(html: string, limit = 10): FeedItem[] {
       title,
       url: `${ORIGIN}${path}`,
       publishedAt,
-      precision: at ? 'instant' : 'day',
+      // 13 of 263 page-data times sit at 00:00:00Z: a date, not a moment.
+      precision: at ? precisionOf(at) : 'day',
       alert: isReleaseHeadline(title),
     });
   }

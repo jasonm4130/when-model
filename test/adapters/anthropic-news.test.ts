@@ -14,6 +14,7 @@ const HTML = `
 <a href="/news/undated"><h3>No date here at all</h3></a>
 <a href="/news/short"><h3>Hi</h3><time>Sep 17, 2026</time></a>
 <a href="/news/untitled"><time>Sep 17, 2026</time></a>
+<script>{"publishedOn":"2026-09-17T00:00:00.000Z","slug":{"_type":"slug","current":"claude-fable-5-1"}}</script>
 `;
 
 describe('parseAnthropicNews', () => {
@@ -58,6 +59,7 @@ describe('parseAnthropicNews', () => {
       ['Introducing Claude Fable 5.1', 'https://www.anthropic.com/news/claude-fable-5-1'],
       ['Circuits in production models', 'https://www.anthropic.com/research/circuits'],
     ]);
+    // The page data has this post at 00:00:00Z, which is a date, so it stays `day`.
     expect(out[0]).toMatchObject({ publishedAt: '2026-09-17T00:00:00.000Z', precision: 'day', alert: true });
   });
 

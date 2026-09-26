@@ -50,9 +50,13 @@ export function newestFirst(items: readonly FeedItem[]): FeedItem[] {
   return [...items].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
 
-/** `day` when the raw date string carries no clock time. */
+/**
+ * `day` when the raw date string carries no clock time, or only midnight: OpenAI's RSS stamps
+ * date-only posts 00:00:00 GMT (350 of 1,230, "Introducing GPT-Live" 17 h before its HN story).
+ */
 export function precisionOf(raw: string): FeedPrecision {
-  return /\d{1,2}:\d{2}/.test(raw) ? 'instant' : 'day';
+  const clock = raw.match(/\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?/)?.[0];
+  return clock && !/^0?0:00(?::00(?:\.0+)?)?$/.test(clock) ? 'instant' : 'day';
 }
 
 // ─── Versioned model ids ─────────────────────────────────────────────────────
@@ -164,6 +168,8 @@ const NOT_A_LAUNCH = new RegExp(
     `\\b(?:with|using|powered by|built (?:on|with)|vs\\.?|versus)\\s+(?:the\\s+)?(?:\\w+'s?\\s+)?${MODEL_WORD}`,
     '\\bavailable (?:in|on|via|through)\\b',
     '\\b(?:will|to be|set to|plans? to|prepar\\w*|soon|tomorrow|next week|upcoming|imminent|rumou?r\\w*|leak\\w*|spotted|appeared|tests|testing|internal|ahead of)\\b',
+    // Pre-announcements seen on HN in the 90 days measured: "Opus 5 expected to launch on July 20-21".
+    '\\b(?:expected to|could be|may be|coming (?:in|on|this|next)|later today|to (?:unveil|launch|release|debut|ship|announce)|delay\\w*|postpone\\w*)\\b',
   ].join('|'),
   'i',
 );
@@ -172,6 +178,7 @@ const LAB_PREFIX =
 const WORD = /^[-\u2010-\u2015]?[a-z0-9][\w.\-\u2010-\u2015]*$/i;
 const SIBLING_SEP = /^\s*(?:,|\band\b|&|\+|\/)/i;
 const SUBTITLE = /^\s*(?::|[\u2013\u2014]\s|\s-\s)/;
+const MAX_HEADLINE = 300;
 /** "GPT-6 Astra on OpenRouter": availability on a catalog reads as the launch itself. */
 const ON_CATALOG = /^on (?:openrouter|hugging ?face|the api)$/i;
 
@@ -204,6 +211,9 @@ function isBareName(rest: string): boolean {
  * held-out DeepMind blog 0.86 / 0.34. Recall misses are mostly unversioned names (Sora, Nano Banana).
  */
 export function isReleaseHeadline(title: string): boolean {
+  // No headline runs this long, and the bare-name regexes backtrack quadratically on long
+  // whitespace runs (a 50 KB title took a second), so untrusted text past it is not a launch.
+  if (title.length > MAX_HEADLINE) return false;
   const first = findModelIds(title)[0];
   if (!first || NOT_A_LAUNCH.test(title)) return false;
   if (LAUNCH_CUE.test(title)) return true;
@@ -265,10 +275,11 @@ export interface LeakClass {
  * Measured 2026-09-26 over 90 days of HN (Algolia `search_by_date`, 0 points and up) and the 100
  * items in TestingCatalog's RSS; test/fixtures/leak-titles-labelled.ts holds the data. It flagged
  * 18 titles, all real pre-release reports (3 unversioned ones missed). 3 were already listed; of
- * the 14 other resolved ones, 10 were followed by an OpenRouter listing within 14 days (0.71;
- * HN 7/10, TestingCatalog 3/4), lead 0.2 to 10.9 days, median 2.7. The misses are Gemini 4 (twice),
- * a delayed Gemini 3.5 Pro, and Qwen3.8-Flash-Next, which never reached OpenRouter (0.79 if its
- * Hugging Face weights count). These numbers are in-sample: the cues were written against them.
+ * the 14 other resolved ones, 11 were followed by an OpenRouter listing within 14 days (0.79;
+ * HN 8/10, TestingCatalog 3/4), lead 0.2 to 10.9 days, median 1.9. The misses are Gemini 4 (twice)
+ * and a delayed Gemini 3.5 Pro. Qwen3.8-Flash-Next listed 1.3 days on as `qwen/qwen3.8-flash`,
+ * found only through its `hugging_face_id`, so pass that as a listing alias. These numbers are
+ * in-sample: the cues were written against them.
  */
 export function classifyLeak(title: string): LeakClass | undefined {
   const cue = title.match(LEAK_CUE)?.[1];
@@ -297,11 +308,22 @@ function containsRun(haystack: readonly string[], needle: readonly string[]): bo
   return false;
 }
 
+/**
+ * A catalog row, structurally. `aliases` holds other names the same model ships under: OpenRouter
+ * listed the leaked "Qwen3.8-Flash-Next" as `qwen/qwen3.8-flash`, and only its `hugging_face_id`
+ * (`Qwen/Qwen3.8-Flash-Next`) says so.
+ */
+export interface Listing {
+  id: string;
+  name: string;
+  aliases?: readonly string[];
+}
+
 /** Is this model id (or a member of its line, e.g. `gpt-6` for `gpt-6-sol`) already listed? */
-export function isListed(modelId: string, listings: readonly { id: string; name: string }[]): boolean {
+export function isListed(modelId: string, listings: readonly Listing[]): boolean {
   const needle = modelTokens(modelId);
-  return listings.some(
-    (l) => containsRun(modelTokens(l.id), needle) || containsRun(modelTokens(l.name), needle),
+  return listings.some((l) =>
+    [l.id, l.name, ...(l.aliases ?? [])].some((s) => containsRun(modelTokens(s), needle)),
   );
 }
 
@@ -309,9 +331,6 @@ export function isListed(modelId: string, listings: readonly { id: string; name:
  * Keep the leaks that still point at something unreleased: at least one named model has no
  * listing yet. The listing shape is structural so any catalog (OpenRouter today) can feed it.
  */
-export function unlistedLeaks(
-  leaks: readonly LeakItem[],
-  listings: readonly { id: string; name: string }[],
-): LeakItem[] {
+export function unlistedLeaks(leaks: readonly LeakItem[], listings: readonly Listing[]): LeakItem[] {
   return leaks.filter((leak) => leak.modelIds.some((id) => !isListed(id, listings)));
 }

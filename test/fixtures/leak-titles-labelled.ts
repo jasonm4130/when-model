@@ -7,7 +7,7 @@
  * specific model before its release (a sighting, a leak, a dated pre-announcement).
  *
  * LEAK_OUTCOMES: every title `classifyLeak` flagged in those sources, scored against OpenRouter
- * `created` (the first listing whose id contains the leaked id). `listed` means a listing already
+ * `created` (the first listing whose id, name or `hugging_face_id` contains the leaked id). `listed` means a listing already
  * existed, so `unlistedLeaks` drops it; `launchedAfterDays` is set when a listing followed within
  * 14 days; `pending` when 14 days have not yet passed.
  */
@@ -104,6 +104,8 @@ export interface LeakOutcome {
   title: string;
   listed: boolean;
   launchedAs?: string;
+  /** The listing's `hugging_face_id`, when only that names the leaked model. */
+  launchedAlias?: string;
   launchedAfterDays?: number;
   pending?: boolean;
 }
@@ -152,6 +154,10 @@ export const LEAK_OUTCOMES: readonly LeakOutcome[] = [
     publishedAt: '2026-08-25T11:49Z',
     title: 'Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)',
     listed: false,
+    // Listed 2026-08-26T19:37:40Z; the HN story is 2026-08-25T11:49:43Z.
+    launchedAs: 'qwen/qwen3.8-flash',
+    launchedAlias: 'Qwen/Qwen3.8-Flash-Next',
+    launchedAfterDays: 1.32,
   },
   {
     source: 'hn',
