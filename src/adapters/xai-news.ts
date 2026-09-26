@@ -1,4 +1,4 @@
-import type { FeedItem } from '../domain/feed';
+import { isReleaseHeadline, modelIds, type FeedItem } from '../domain/feed';
 import { cachedText } from '../infra/edge-cache';
 import { decodeEntities, toIso } from '../infra/text';
 
@@ -17,8 +17,6 @@ const MONTHS = new Map([
   ['november', 10],
   ['december', 11],
 ]);
-const MODEL_NAME = /\bgrok(?:\s+|-)(?:\d+(?:\.\d+)*|code\s+fast\s+\d+(?:\.\d+)*)(?:\s+(?:fast|heavy))?\b/i;
-const RELEASE_WORDS = /\b(?:introduc\w*|announc\w*|releas\w*|launch\w*|preview|now available)\b/i;
 const MONTH_HEADING = /<h2\b[^>]*>\s*<a\b[^>]*>([\s\S]*?)<\/a>\s*<\/h2>/gi;
 const ENTRY =
   /<div class="relative mt-12 grid[^"]*">([\s\S]*?)(?=<div class="relative mt-12 grid[^"]*">|$)/gi;
@@ -48,7 +46,26 @@ function entryDate(block: string, month: string, year: number): string | undefin
   return toIso(`${match[1]} ${match[2]}, ${year} UTC`);
 }
 
-/** Parse dated model notes from xAI's official developer release notes page. */
+/**
+ * Mark the launch entry of each model. The notes come newest first and a model reappears in
+ * follow-ups ("Grok 4.5 available in the EU" nine days after "Grok 4.5"), so only the oldest
+ * entry naming a model may alert, and only when its title is launch-shaped.
+ */
+function markLaunches(items: FeedItem[]): FeedItem[] {
+  const named = new Set<string>();
+  for (let i = items.length - 1; i >= 0; i--) {
+    const ids = modelIds(items[i].title);
+    const first = ids.some((id) => !named.has(id));
+    for (const id of ids) named.add(id);
+    items[i].alert = first && isReleaseHeadline(items[i].title);
+  }
+  return items;
+}
+
+/**
+ * Parse dated model notes from xAI's official developer release notes page. Entries carry a
+ * date but no time, so every item is `day` precision, pinned to 00:00Z.
+ */
 export function parseXaiNews(html: string, limit = 12): FeedItem[] {
   const defaultYear = pageYear(html);
   if (!defaultYear) throw new Error('xAI release notes have no publication year metadata');
@@ -69,7 +86,6 @@ export function parseXaiNews(html: string, limit = 12): FeedItem[] {
 
   const items: FeedItem[] = [];
   const seen = new Set<string>();
-  let datedEntries = 0;
   for (const section of months) {
     const body = html.slice(section.start, section.end);
     const year = section.date.year ?? defaultYear;
@@ -79,25 +95,16 @@ export function parseXaiNews(html: string, limit = 12): FeedItem[] {
       const title = heading ? plainText(heading[2]) : '';
       const publishedAt = entryDate(block, section.date.month, year);
       if (!heading || !title || !publishedAt) continue;
-      datedEntries++;
 
       const url = `${RELEASE_NOTES_URL}#${encodeURIComponent(heading[1])}`;
       if (seen.has(url)) continue;
       seen.add(url);
-      items.push({
-        source: 'xai',
-        title,
-        url,
-        publishedAt,
-        alert: MODEL_NAME.test(title) && RELEASE_WORDS.test(plainText(block)),
-      });
-      if (items.length >= limit) break;
+      items.push({ source: 'xai', title, url, publishedAt, precision: 'day', alert: false });
     }
-    if (items.length >= limit) break;
   }
 
-  if (!datedEntries) throw new Error('xAI release notes have no recognizable dated entries');
-  return items;
+  if (!items.length) throw new Error('xAI release notes have no recognizable dated entries');
+  return markLaunches(items).slice(0, limit);
 }
 
 export async function fetchXaiNews(): Promise<FeedItem[]> {

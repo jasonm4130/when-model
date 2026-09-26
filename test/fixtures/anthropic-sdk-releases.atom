@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:github.com,2008:https://github.com/anthropics/anthropic-sdk-python/releases</id>
+  <link type="text/html" rel="alternate" href="https://github.com/anthropics/anthropic-sdk-python/releases"/>
+  <link type="application/atom+xml" rel="self" href="https://github.com/anthropics/anthropic-sdk-python/releases.atom"/>
+  <!-- First 2 of 10 entries of https://github.com/anthropics/anthropic-sdk-python/releases.atom fetched 2026-09-26, each entry copied verbatim. -->
+  <title>Release notes from anthropic-sdk-python</title>
+  <updated>2026-09-22T16:24:54Z</updated>
+  <entry>
+    <id>tag:github.com,2008:Repository/590187800/v1.8.0</id>
+    <updated>2026-09-22T16:25:23Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/anthropics/anthropic-sdk-python/releases/tag/v1.8.0"/>
+    <title>v1.8.0</title>
+    <content type="html">&lt;h2&gt;1.8.0 (2026-09-22)&lt;/h2&gt;
+&lt;p&gt;Full Changelog: &lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/compare/v1.7.0...v1.8.0&quot;&gt;v1.7.0...v1.8.0&lt;/a&gt;&lt;/p&gt;
+&lt;h3&gt;Features&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; add support for claude-opus-5-5, inline tool definitions and MCP tool-list pinning (beta) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/b5cc70071a60def1d2e93f3634d1a595919007c8&quot;&gt;b5cc700&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Bug Fixes&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; share one evaluated_permission enum across Managed Agents events (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/f4f51c8d4c8d6d8ec8ed21775034ca3b3736d733&quot;&gt;f4f51c8&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;streaming:&lt;/strong&gt; avoid a Python 3.13 crash at exit when a stream is left open (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/af029bdfe4433ce209092b017834ff0eb4f44e79&quot;&gt;af029bd&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;tools:&lt;/strong&gt; add_tools() takes effect straight away (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/issues/874&quot; data-hovercard-type=&quot;issue&quot; data-hovercard-url=&quot;/anthropics/anthropic-sdk-python/issues/874/hovercard&quot;&gt;#874&lt;/a&gt;) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/06d0a6b7edf440b8561e6ee60b84aecde27391e0&quot;&gt;06d0a6b&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;tools:&lt;/strong&gt; leave reply-only params off the tool runner&#39;s compaction request (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/issues/871&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/anthropics/anthropic-sdk-python/pull/871/hovercard&quot;&gt;#871&lt;/a&gt;) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/4687310822f40691a30afcfdf20956747fb38f5e&quot;&gt;4687310&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Chores&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; add descriptions to the Dreams API reference (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/5574c63875d9940d62af912b6495f15256535673&quot;&gt;5574c63&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; add descriptions to the User Profiles API reference (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/5574c63875d9940d62af912b6495f15256535673&quot;&gt;5574c63&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; add memory store descriptions to the Managed Agents API reference (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/5574c63875d9940d62af912b6495f15256535673&quot;&gt;5574c63&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; improve descriptions in the Dreams API reference (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/1f5e477a25f5a873480486a939d7e39529c55130&quot;&gt;1f5e477&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; simplify the session thread agent type description (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/a45b7ec22441032c19be720f273af6313dd73f1e&quot;&gt;a45b7ec&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; update diagnostics field descriptions on beta messages (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/367750c99c5daae6e28ed10b71db0410ced7c0f9&quot;&gt;367750c&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;internal:&lt;/strong&gt; fix tests (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/70c8cbd86c4095379bc6bca925126a151396efd2&quot;&gt;70c8cbd&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;internal:&lt;/strong&gt; remove mypy (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/be01ed6d7cd6798fbf442286ddc4cccc64a7a3ac&quot;&gt;be01ed6&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;tests:&lt;/strong&gt; update fixtures (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/77f6df825350e37018e2439c1178179e98e0bf96&quot;&gt;77f6df8&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Documentation&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;add path and header parameter descriptions (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/f429a301cb750f51002d2d18fb125aa43b7251c3&quot;&gt;f429a30&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Refactors&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; remove the request param transform in favour of the JSON encoder (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/539422cde127564a60d9bf1e700445f39e0cff33&quot;&gt;539422c&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>stainless-app[bot]</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/in/378072?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/590187800/v1.7.0</id>
+    <updated>2026-09-18T16:12:53Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/anthropics/anthropic-sdk-python/releases/tag/v1.7.0"/>
+    <title>v1.7.0</title>
+    <content type="html">&lt;h2&gt;1.7.0 (2026-09-18)&lt;/h2&gt;
+&lt;p&gt;Full Changelog: &lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/compare/v1.6.0...v1.7.0&quot;&gt;v1.6.0...v1.7.0&lt;/a&gt;&lt;/p&gt;
+&lt;h3&gt;Features&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; add group with display_name to rate limits, deprecate group_type (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/28f0a831355fa3d539fd3e1db1c63f92a39bb252&quot;&gt;28f0a83&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;tools:&lt;/strong&gt; add compact_before_next_turn() to the tool runner (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/issues/641&quot; data-hovercard-type=&quot;issue&quot; data-hovercard-url=&quot;/anthropics/anthropic-sdk-python/issues/641/hovercard&quot;&gt;#641&lt;/a&gt;) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/8b23fb33f326c7ffa52e8d925902af0fd94501ce&quot;&gt;8b23fb3&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Bug Fixes&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;bedrock:&lt;/strong&gt; raise an API error for eventstream exception and error frames (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/issues/769&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/anthropics/anthropic-sdk-python/pull/769/hovercard&quot;&gt;#769&lt;/a&gt;) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/8ec9cc9bdf7278ce7a1557dc7d6e455c7808946e&quot;&gt;8ec9cc9&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; accept &lt;code&gt;X | Y&lt;/code&gt; union types when parsing responses (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/b366fa5a1d62e4908a35415a1692f18621cf9e2c&quot;&gt;b366fa5&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; don&#39;t raise TypeError for &lt;code&gt;X | Y&lt;/code&gt; fields with unknown data (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/30ebd6963c4b21044fc8d7f8cf33a19981c74856&quot;&gt;30ebd69&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; join multiple anthropic-beta values with a comma and no space (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/issues/781&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/anthropics/anthropic-sdk-python/pull/781/hovercard&quot;&gt;#781&lt;/a&gt;) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/168032429a6880ef7063de7680c7abe18e45be35&quot;&gt;1680324&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;tools:&lt;/strong&gt; tidy compact_before_next_turn() state and failure handling (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/issues/804&quot; data-hovercard-type=&quot;issue&quot; data-hovercard-url=&quot;/anthropics/anthropic-sdk-python/issues/804/hovercard&quot;&gt;#804&lt;/a&gt;) (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/d3a9fc80f9792eda4944e33efb821306e632b7c6&quot;&gt;d3a9fc8&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Chores&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;deps:&lt;/strong&gt; require pydantic 1.10 or later (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/91931e1d205839e72b2a4c2c851b18874f935943&quot;&gt;91931e1&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; add descriptions for enum values and path parameters (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/99184dc76a7a6c404478556483d2118498994a47&quot;&gt;99184dc&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;docs:&lt;/strong&gt; clarify the compaction tool_changes and tool change descriptions (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/eacc0ffde324201faac42fdcb60500b2076c25b6&quot;&gt;eacc0ff&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;internal:&lt;/strong&gt; add more unnecessary cast comments (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/9e6ce27b8d89c737bd427fc91b96f9932431f547&quot;&gt;9e6ce27&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;internal:&lt;/strong&gt; pass strict= to zip() in the MCP tool helpers (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/13cfe644920119b718e0a73085b7ecd9726fb9e9&quot;&gt;13cfe64&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;internal:&lt;/strong&gt; remove an unused noqa comment from the model tests (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/2c18298ff35a1b28b98d25b424e928b3865ef405&quot;&gt;2c18298&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;internal:&lt;/strong&gt; set ruff&#39;s target version to Python 3.10 (&lt;a href=&quot;https://github.com/anthropics/anthropic-sdk-python/commit/2bdfd415fe4842b44f871b31328cc76135b48fbb&quot;&gt;2bdfd41&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>stainless-app[bot]</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/in/378072?s=60&amp;v=4"/>
+  </entry>
+</feed>

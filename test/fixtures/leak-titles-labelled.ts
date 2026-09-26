@@ -1,0 +1,232 @@
+/**
+ * Leak Wire regression data, measured 2026-09-26.
+ *
+ * LEAK_TITLES_LABELLED: titles from 90 days of Hacker News stories matching the leak query
+ * (any points) and from TestingCatalog's RSS (100 items, 2026-08-04 to 2026-09-25), kept when
+ * they name a versioned model or carry a label worth pinning. True means the title reports a
+ * specific model before its release (a sighting, a leak, a dated pre-announcement).
+ *
+ * LEAK_OUTCOMES: every title `classifyLeak` flagged in those sources, scored against OpenRouter
+ * `created` (the first listing whose id, name or `hugging_face_id` contains the leaked id). `listed` means a listing already
+ * existed, so `unlistedLeaks` drops it; `launchedAfterDays` is set when a listing followed within
+ * 14 days; `pending` when 14 days have not yet passed.
+ */
+export const LEAK_TITLES_LABELLED: readonly (readonly [title: string, leak: boolean])[] = [
+  ["Testing Claude Sonnet 5's agentic claims", false],
+  ['"Can\'t wait to see what people will do with GPT-5.6 Sol"', false],
+  ['Anthropic says Fable 5 will now flag and route harmless queries to Opus', false],
+  ['Fable 5 will default to Opus 4.8 for coding tasks', false],
+  ['Fable 5 will be using Opus 4.8 for coding tasks pending fix', false],
+  ['Ask HN: What will you work on when Fable 5 comes back online today?', false],
+  ['Coding and debugging will fall back to older model in Fable 5.Losing hope as Dev', false],
+  ['Claude Fable 5 available globally tomorrow', false],
+  ['Anthropic restoring access to Claude Fable 5 and Mythos 5 from tomorrow', false],
+  ['Qwen3.5 2B burns all the output tokens while thinking', false],
+  ['DeepSeek v4 Releasing Mid July', true],
+  ['Anthropic Claude Fable 5, on track to return soon (possibly this week)', false],
+  ['White House Will Ad Hoc Decide Who Can Individually Access GPT-5.6', false],
+  ['Powerful Anthropic model, Fable 5, on track to return soon', false],
+  ['Testing GPT 5.6 [video]', false],
+  ['OpenAI Will Reset Codex Limits Twice to Celebrate GPT-5.6 in 24h', false],
+  ['Tell HN: GPT5.6 Is Imminent?', true],
+  ['Grok 4.5 arriving tomorrow', true],
+  ['GPT-5.6 Sol, along with Terra and Luna, will launch publicly this Thursday', true],
+  ["Claude Sonnet 5: Anthropic's Most Agentic AI Model Arrives at a Reduced Price (2026)", false],
+  ['GPT-5.6 Sol Ultra will be in Codex', true],
+  ['Beginning July 20, Claude Fable 5 will be included in all Max plans', false],
+  ['Gemini 3.5 Pro delays due to coding performance, upgraded Flash model in testing', true],
+  ['Testing Gemini 3.5 Flash Lite for human detection in home surveillance', false],
+  ['An open-source model on par with DeepSeek v4 has appeared in South Korea', false],
+  ["Claude 5 family's hallucinations look a lot like internal Anthropic emails", false],
+  ["Why do OpenAI's GPT-2 weights beat mine? Part three: testing overtraining", false],
+  ['Ask HN: Do you think Opus 5 will improve?', false],
+  ['Show HN: What Will You Build with Kimi K3?', false],
+  ["China's Kimi K3 AI model escapes isolated sandbox during security test", false],
+  ["Moonshot's AI model Kimi k3 breaks out of testing environment, researchers say", false],
+  ['Releasing Muse Code in beta today, and Muse Spark 1.2', false],
+  ['Preparing GLM-5.3 for Open Release: A Responsible Path to Cyber Defense', true],
+  ["We're releasing a new model (GPT-5.6-Cyber)", false],
+  ['Kimi K3 Sandbox Escape Exposes Weak Links in Agent Testing', false],
+  ["Vomit: Clean up Claude 5's token output with a separate LLM", false],
+  ['Claude Sonnet 5 will remain $2/$10 per M; September increase cancelled', false],
+  ["Testing Moonshot AI's Kimi K3 Inside Claude Code", false],
+  ['First outputs from GPT-6 "Astra" model from OpenAI', true],
+  ['Tell HN: GLM 5.3 "Flash" appears on DeepSWE with a score of 63%', true],
+  ['Z.ai confirms Ox Alpha is a new GLM-series model and will release its weights', true],
+  ['Ask HN: Opus 5 is unusable for writing, even internal use. Alternatives/fix?', false],
+  ['Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)', true],
+  ['The dislike for Opus 5 is usually because it tests the prompter', false],
+  ['Gemini 4 Leak. Google is back', true],
+  ['Gemini 3.8 Flash Arrives, Promptly Mocked by Rivals', false],
+  ['Fable 5.1 way ahead on revised FrontierSWE long horizon benchmarks', false],
+  ['Gemini 3.8 Flash appears to be rolling out now', false],
+  ["Testing Grok 4.6's Enhanced Biology Safeguards", false],
+  ['GPT-6-sol appeared on OpenAI API', true],
+  ['DeepSeek v4.1 Flash is now available for internal beta testing', true],
+  ['Grok 4.7 Launching Soon', true],
+  ['Harness your expectations: a 27B model matched GLM-5.3-Flash after leak fixes', false],
+  ['Due to concerns about malicious applications, GPT2 will not be released (2019)', false],
+  ['Google launches Gemini 3.8 Live with Live Avatar', false],
+  ['Google tests new Gemini 4 Pro checkpoints, early outputs', true],
+  ['OpenAI launches faster, cheaper GPT-6 Sol and Luna', false],
+  ['Anthropic launches Claude Opus 5.5 with lower API costs', false],
+  ['OpenAI prepares to launch GPT-6 Sol and Luna models today', true],
+  ['Xiaomi open-sources MiMo-V2.6 Pro and Flash models', false],
+  ['SpaceXAI releases Grok 4.7 for coding and knowledge work', false],
+  ['Anthropic tests Fable 5.2 and Opus 5.5 ahead of the release', true],
+  ['Leaks: Google testing math-focused DeepThink V3 model', true],
+  ['Google rolled out Gemini 3.8 Live and Extended Thinking', false],
+  ['OpenAI launches GPT-Live-1 for full-duplex voice agents', false],
+  ['OpenAI launches GPT-6 Astra across ChatGPT and API', false],
+  ['Google releases Gemini 3.8 Flash and Flash Cyber', false],
+  ['Anthropic launches Claude Fable 5.1 and Mythos 5.1', false],
+  ['Z.ai launches GLM-5.3-Flash under MIT license', false],
+  ['Google prepares Gemini App for Avatars, Plugins, and Gemini 4', true],
+  ['Google launches Gemini 3.7 Flash for coding and AI agents', false],
+  ['OpenAI previews Ultrafast API tier for GPT-5.6 Sol', false],
+  ['ICYMI: xAI releases Grok 4.6 for long-running agent work', false],
+  ['OpenAI is rolling out GPT-5.6 Luna to Free ChatGPT users', false],
+  ['Meta launches Muse Code beta powered by Muse Spark 1.2', false],
+  ['Alibaba released Qwen3.8-Max with open weights coming soon', false],
+  ['New Apple TV 4K Leaked', false],
+  ["McDonald's is testing ads on its drive-thru menus", false],
+  ['Imminent Zero-Day Attack: KiteWorks Urges Customers to Shut Down Servers', false],
+  ["Meta's Muse appears to use an OpenAI model labeled muse-special", false],
+  ['OpenAI prepares new $500/month Pro Max plan for ChatGPT', false],
+  ['Grokbot Source Code Leak', false],
+  ["Ask HN: Anyone else's OpenAI and Claude API keys mysteriously leaked last night?", false],
+  ['Gemini Task mode in testing along with Gemini Live support', false],
+];
+
+export interface LeakOutcome {
+  source: 'hn' | 'testingcatalog';
+  publishedAt: string;
+  title: string;
+  listed: boolean;
+  launchedAs?: string;
+  /** The listing's `hugging_face_id`, when only that names the leaked model. */
+  launchedAlias?: string;
+  launchedAfterDays?: number;
+  pending?: boolean;
+}
+
+export const LEAK_OUTCOMES: readonly LeakOutcome[] = [
+  { source: 'hn', publishedAt: '2026-06-29T11:06Z', title: 'DeepSeek v4 Releasing Mid July', listed: true },
+  {
+    source: 'hn',
+    publishedAt: '2026-07-08T04:12Z',
+    title: 'GPT-5.6 Sol, along with Terra and Luna, will launch publicly this Thursday',
+    listed: false,
+    launchedAs: 'openai/gpt-5.6-sol',
+    launchedAfterDays: 1.24,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-07-08T09:34Z',
+    title: 'Grok 4.5 arriving tomorrow',
+    listed: false,
+    launchedAs: 'x-ai/grok-4.5',
+    launchedAfterDays: 0.23,
+  },
+  { source: 'hn', publishedAt: '2026-07-09T16:20Z', title: 'Tell HN: GPT5.6 Is Imminent?', listed: true },
+  {
+    source: 'hn',
+    publishedAt: '2026-07-17T08:23Z',
+    title: 'Gemini 3.5 Pro delays due to coding performance, upgraded Flash model in testing',
+    listed: false,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-08-15T06:32Z',
+    title: 'Preparing GLM-5.3 for Open Release: A Responsible Path to Cyber Defense',
+    listed: false,
+    launchedAs: 'z-ai/glm-5.3',
+    launchedAfterDays: 3.6,
+  },
+  {
+    source: 'testingcatalog',
+    publishedAt: '2026-08-24T14:01Z',
+    title: 'Google prepares Gemini App for Avatars, Plugins, and Gemini 4',
+    listed: false,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-08-25T11:49Z',
+    title: 'Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)',
+    listed: false,
+    // Listed 2026-08-26T19:37:40Z; the HN story is 2026-08-25T11:49:43Z.
+    launchedAs: 'qwen/qwen3.8-flash',
+    launchedAlias: 'Qwen/Qwen3.8-Flash-Next',
+    launchedAfterDays: 1.32,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-08-26T14:10Z',
+    title: 'Tell HN: GLM 5.3 "Flash" appears on DeepSWE with a score of 63%',
+    listed: true,
+  },
+  {
+    source: 'testingcatalog',
+    publishedAt: '2026-08-29T14:47Z',
+    title: 'First outputs from GPT-6 "Astra" model from OpenAI',
+    listed: false,
+    launchedAs: 'openai/gpt-6-astra-pro',
+    launchedAfterDays: 6.23,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-08-29T20:52Z',
+    title: 'First outputs from GPT-6 "Astra" model from OpenAI',
+    listed: false,
+    launchedAs: 'openai/gpt-6-astra-pro',
+    launchedAfterDays: 5.97,
+  },
+  { source: 'hn', publishedAt: '2026-09-05T16:11Z', title: 'Gemini 4 Leak. Google is back', listed: false },
+  {
+    source: 'hn',
+    publishedAt: '2026-09-08T08:04Z',
+    title: 'DeepSeek v4.1 Flash is now available for internal beta testing',
+    listed: false,
+    launchedAs: 'deepseek/deepseek-v4.1-flash',
+    launchedAfterDays: 1.93,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-09-11T20:43Z',
+    title: 'GPT-6-sol appeared on OpenAI API',
+    listed: false,
+    launchedAs: 'openai/gpt-6-sol',
+    launchedAfterDays: 10.9,
+  },
+  {
+    source: 'hn',
+    publishedAt: '2026-09-18T06:42Z',
+    title: 'Grok 4.7 Launching Soon',
+    listed: false,
+    launchedAs: 'x-ai/grok-4.7',
+    launchedAfterDays: 3.4,
+  },
+  {
+    source: 'testingcatalog',
+    publishedAt: '2026-09-21T08:45Z',
+    title: 'Anthropic tests Fable 5.2 and Opus 5.5 ahead of the release',
+    listed: false,
+    launchedAs: 'anthropic/claude-opus-5.5',
+    launchedAfterDays: 1.32,
+  },
+  {
+    source: 'testingcatalog',
+    publishedAt: '2026-09-22T12:07Z',
+    title: 'OpenAI prepares to launch GPT-6 Sol and Luna models today',
+    listed: false,
+    launchedAs: 'openai/gpt-6-sol',
+    launchedAfterDays: 0.25,
+  },
+  {
+    source: 'testingcatalog',
+    publishedAt: '2026-09-23T07:53Z',
+    title: 'Google tests new Gemini 4 Pro checkpoints, early outputs',
+    listed: false,
+    pending: true,
+  },
+];
