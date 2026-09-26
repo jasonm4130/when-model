@@ -140,7 +140,7 @@ const toc = [
       <div class="section-head"><h2 id="calibration-title"><span>&#9656;</span>BRIER SCORE VS BASE RATE</h2></div>
       <div class="panel">
         <p class="intro">
-          One event definition throughout: <em>some frontier lab lists a new model on OpenRouter within the next 24 or 72 hours</em>, scored every hour from {markets.meta.scoreFrom.slice(0, 10)}. A 7-day horizon is left out on purpose: a frontier model lands in most weeks, so a constant forecast scores well there and the comparison says nothing.
+          One event definition throughout: <em>some frontier lab lists a new model on OpenRouter within the next 24 or 72 hours</em>, scored every hour from {markets.meta.scoreFrom.slice(0, 10)}. A 7-day horizon is left out on purpose: a frontier model lands in most weeks, so a constant forecast scores well there and the comparison says nothing. Listings come from OpenRouter's model list as pulled, so a model it has since removed does not count.
         </p>
         <BacktestScores calibration={markets.calibration} rungCalibration={markets.rungCalibration} />
       </div>
