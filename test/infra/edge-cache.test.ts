@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { cacheKey, cachedJson, cachedText, defaultEdgeCache, memoJson } from '../../src/infra/edge-cache';
+import {
+  cacheKey,
+  cachedJson,
+  cachedText,
+  cachedTextOrStale,
+  defaultEdgeCache,
+  memoJson,
+} from '../../src/infra/edge-cache';
 import { FakeCache, fetchStub } from './fake-cache';
 
 const URL_A = 'https://upstream.test/a';
@@ -103,6 +110,102 @@ describe('cachedText', () => {
     expect(await cachedText(URL_A, { cache, fetch: fn })).toBe('hi');
     expect(err).toHaveBeenCalledWith('[cache:put]', expect.stringContaining('__cache/src/'), 'quota');
     err.mockRestore();
+  });
+});
+
+describe('cachedTextOrStale', () => {
+  const T0 = Date.parse('2026-09-26T12:00:00Z');
+  const expire = (cache: FakeCache) => cache.store.delete(cacheKey('src', URL_A).url);
+
+  it('keeps a last good copy of a fresh body, stamped with when it was fetched', async () => {
+    vi.useFakeTimers({ now: T0 });
+    try {
+      const cache = new FakeCache();
+      const { fn } = fetchStub({ [URL_A]: 'good' });
+      expect(await cachedTextOrStale(URL_A, { cache, fetch: fn, ttl: 1800, staleTtl: 7200 })).toEqual({
+        text: 'good',
+      });
+      const copy = cache.store.get(cacheKey('stale', URL_A).url);
+      expect(copy?.body).toBe('good');
+      expect(copy?.headers.get('cache-control')).toBe('public, max-age=7200');
+      expect(copy?.headers.get('x-whenmodel-fetched-at')).toBe('2026-09-26T12:00:00.000Z');
+      // A cache hit is not a fresh fetch: the copy keeps its original stamp.
+      vi.setSystemTime(T0 + 60_000);
+      await cachedTextOrStale(URL_A, { cache, fetch: fn, ttl: 1800, staleTtl: 7200 });
+      expect(cache.puts).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('serves the last good copy with its fetch time when the upstream fails', async () => {
+    vi.useFakeTimers({ now: T0 });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const cache = new FakeCache();
+      await cachedTextOrStale(URL_A, { cache, fetch: fetchStub({ [URL_A]: 'good' }).fn, staleTtl: 7200 });
+      expire(cache);
+      vi.setSystemTime(T0 + 7200_000);
+      const failing = fetchStub({ [URL_A]: { status: 404 } }).fn;
+      expect(await cachedTextOrStale(URL_A, { cache, fetch: failing, staleTtl: 7200 })).toEqual({
+        text: 'good',
+        stale: { fetchedAt: '2026-09-26T12:00:00.000Z' },
+      });
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+      warn.mockRestore();
+    }
+  });
+
+  it('serves the copy when a fresh body fails validation, and never keeps that body', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const cache = new FakeCache();
+    const validate = (b: string) => {
+      if (b !== 'good') throw new Error('not the feed');
+      return true;
+    };
+    await cachedTextOrStale(URL_A, {
+      cache,
+      fetch: fetchStub({ [URL_A]: 'good' }).fn,
+      validate,
+      staleTtl: 60,
+    });
+    expire(cache);
+    const junk = fetchStub({ [URL_A]: '<html>consent</html>' }).fn;
+    const out = await cachedTextOrStale(URL_A, { cache, fetch: junk, validate, staleTtl: 60 });
+    expect(out.text).toBe('good');
+    expect(out.stale).toBeDefined();
+    expect(cache.store.get(cacheKey('stale', URL_A).url)?.body).toBe('good');
+    expect(cache.store.has(cacheKey('src', URL_A).url)).toBe(false);
+    vi.restoreAllMocks();
+  });
+
+  it('rethrows the upstream error when the copy is older than staleTtl, or there is none', async () => {
+    vi.useFakeTimers({ now: T0 });
+    try {
+      const cache = new FakeCache();
+      const failing = fetchStub({ [URL_A]: { status: 503 } }).fn;
+      await expect(cachedTextOrStale(URL_A, { cache, fetch: failing, staleTtl: 7200 })).rejects.toThrow(
+        '503 https://upstream.test/a',
+      );
+      await cachedTextOrStale(URL_A, { cache, fetch: fetchStub({ [URL_A]: 'good' }).fn, staleTtl: 7200 });
+      expire(cache);
+      // The Cache API may keep an entry past max-age; the stamp, not the store, decides.
+      vi.setSystemTime(T0 + 7200_001);
+      await expect(cachedTextOrStale(URL_A, { cache, fetch: failing, staleTtl: 7200 })).rejects.toThrow(
+        '503 https://upstream.test/a',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rethrows when there is no cache at all', async () => {
+    const failing = fetchStub({ [URL_A]: { status: 500 } }).fn;
+    await expect(
+      cachedTextOrStale(URL_A, { cache: undefined, fetch: failing, staleTtl: 60 }),
+    ).rejects.toThrow('500');
   });
 });
 

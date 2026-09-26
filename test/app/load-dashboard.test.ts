@@ -23,7 +23,11 @@ const candidate: BroadcastCandidate = {
 
 interface Upstreams {
   database?: SnapshotDatabase;
-  youtube?: () => Promise<{ candidates: BroadcastCandidate[]; failedChannels: string[] }>;
+  youtube?: () => Promise<{
+    candidates: BroadcastCandidate[];
+    failedChannels: string[];
+    staleChannels?: string[];
+  }>;
   modules?: () => Promise<string[]>;
   markets?: () => Promise<unknown[]>;
 }
@@ -157,6 +161,18 @@ describe('buildDashboard', () => {
     });
     expect(d.earlyWarnings.broadcasts.ok).toBe(false);
     expect(d.earlyWarnings.broadcasts.items.map((b) => b.videoId)).toEqual(['v1']);
+  });
+
+  it('counts a channel read from its last good copy as complete, so the poll stays ok', async () => {
+    const { buildDashboard } = await load({
+      youtube: async () => ({ candidates: [candidate], failedChannels: [], staleChannels: ['Anthropic'] }),
+    });
+    const d = await buildDashboard(NOW, undefined);
+    expect(d.sources.find((s) => s.name === 'YouTube broadcasts')).toEqual({
+      name: 'YouTube broadcasts',
+      ok: true,
+    });
+    expect(d.earlyWarnings.broadcasts.ok).toBe(true);
   });
 
   it('degrades the ledger to empty without a binding, and every lead signal still renders', async () => {

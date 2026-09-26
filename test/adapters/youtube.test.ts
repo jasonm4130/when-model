@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mockUpstream } from './mock-cache';
+import { mockUpstream, StaleBody } from './mock-cache';
 
 afterEach(() => {
   vi.resetModules();
@@ -286,7 +286,8 @@ describe('fetchYoutubeChannel', () => {
     const { fetchYoutubeChannel, CHANNELS } = await import('../../src/adapters/youtube');
     const channel = CHANNELS.find((c) => c.channelId === ANTHROPIC_CHANNEL)!;
     const out = await fetchYoutubeChannel(channel);
-    expect(out).toHaveLength(1);
+    expect(out.entries).toHaveLength(1);
+    expect(out.staleFrom).toBeUndefined();
     expect(calls).toEqual([`https://www.youtube.com/feeds/videos.xml?channel_id=${ANTHROPIC_CHANNEL}`]);
   });
 });
@@ -415,6 +416,39 @@ describe('fetchBroadcasts', () => {
     expect(err).toHaveBeenCalledTimes(1);
     expect(err.mock.calls[0][1]).toBe('Google for Developers');
     expect(String(err.mock.calls[0][2])).toMatch(/no entries/);
+  });
+
+  it('reads a channel served from its last good copy as of that copy, and does not count it failed', async () => {
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // v1 was published 11:30 and was still at views=0 when the copy was fetched at 12:10: 40 minutes
+    // old then, so not yet a scheduled stream. Read as of now (13:00) it would pass the 60-minute bar.
+    const young = candidateFeed('v1').replace('2026-09-25T12:00:00+00:00', '2026-09-26T11:30:00+00:00');
+    mockUpstream({
+      [feedUrl(OPENAI)]: new StaleBody(young, '2026-09-26T12:10:00.000Z'),
+      [feedUrl(ANTHROPIC)]: new StaleBody(candidateFeed('v2'), '2026-09-26T12:10:00.000Z'),
+      [feedUrl(DEEPMIND)]: quietFeed(DEEPMIND),
+      [feedUrl(GDEV)]: quietFeed(GDEV),
+    });
+    const { fetchBroadcasts } = await import('../../src/adapters/youtube');
+    const out = await fetchBroadcasts(new Date('2026-09-26T13:00:00Z'));
+    expect(out.failedChannels).toEqual([]);
+    expect(out.staleChannels).toEqual(['OpenAI', 'Anthropic']);
+    expect(out.candidates.map((c) => c.videoId)).toEqual(['v2']);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('omits staleChannels when every channel was fresh', async () => {
+    mockUpstream({
+      [feedUrl(OPENAI)]: quietFeed(OPENAI),
+      [feedUrl(ANTHROPIC)]: quietFeed(ANTHROPIC),
+      [feedUrl(DEEPMIND)]: quietFeed(DEEPMIND),
+      [feedUrl(GDEV)]: quietFeed(GDEV),
+    });
+    const { fetchBroadcasts } = await import('../../src/adapters/youtube');
+    expect(await fetchBroadcasts(new Date('2026-09-26T00:00:00Z'))).toEqual({
+      candidates: [],
+      failedChannels: [],
+    });
   });
 
   it('throws only when every channel fails', async () => {

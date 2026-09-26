@@ -8,7 +8,7 @@
  */
 import type { LabId } from '../domain/lab';
 import type { BroadcastCandidate } from '../domain/lead';
-import { cachedText } from '../infra/edge-cache';
+import { cachedText, cachedTextOrStale } from '../infra/edge-cache';
 import { decodeEntities, isHttpUrl, toIso } from '../infra/text';
 
 export interface YoutubeChannel {
@@ -74,17 +74,42 @@ export function parseYoutubeFeed(xml: string): YoutubeEntry[] {
 
 /** Edge-cache lifetime of a channel feed, in seconds. `broadcastCandidates` compensates for it. */
 const FEED_TTL_S = 1800;
+/**
+ * How long a channel's last good feed stands in when YouTube fails. The feed endpoint fails in
+ * bursts (2026-09-26: the OpenAI feed returned 404 twice in four rounds a second apart, then 200;
+ * Anthropic failed 6 of 8 in one 43-second window), and one failed channel used to mark the whole
+ * source down and skip the ledger write.
+ */
+const STALE_TTL_S = 2 * 3600;
+
+/** One channel's entries; `staleFrom` is set when YouTube failed and a last good copy was read. */
+export interface ChannelFeed {
+  entries: YoutubeEntry[];
+  /** When the served copy was fetched: candidates are read as of then. */
+  staleFrom?: string;
+}
 
 /**
- * One channel's feed, cached at the edge. Throws on a non-200, a network failure, or a body with no
- * parseable entries: every watched channel carries 15, so an empty parse means the response was
- * not the feed (an interstitial, a format change) and must count as a failed source.
+ * One channel's feed, cached at the edge, falling back to its last good copy (up to
+ * `STALE_TTL_S` old) when YouTube fails. Throws on a non-200, a network failure, or a body with no
+ * parseable entries when there is no such copy: every watched channel carries 15, so an empty parse
+ * means the response was not the feed (an interstitial, a format change) and must count as failed.
  */
-export async function fetchYoutubeChannel(channel: YoutubeChannel): Promise<YoutubeEntry[]> {
+export async function fetchYoutubeChannel(channel: YoutubeChannel): Promise<ChannelFeed> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channel.channelId}`;
-  const entries = parseYoutubeFeed(await cachedText(url, { ttl: FEED_TTL_S }));
-  if (!entries.length) throw new Error(`no entries in ${url}`);
-  return entries;
+  const noEntries = () => new Error(`no entries in ${url}`);
+  const { text, stale } = await cachedTextOrStale(url, {
+    ttl: FEED_TTL_S,
+    staleTtl: STALE_TTL_S,
+    // Never cache, or keep as last good, a body that is not the feed.
+    validate: (body) => {
+      if (!parseYoutubeFeed(body).length) throw noEntries();
+      return true;
+    },
+  });
+  const entries = parseYoutubeFeed(text);
+  if (!entries.length) throw noEntries();
+  return stale ? { entries, staleFrom: stale.fetchedAt } : { entries };
 }
 
 const BROADCAST_TITLE = /introduc|live|livestream|keynote|new model|dev ?day|announce|launch/i;
@@ -171,8 +196,10 @@ export async function fetchScheduledStartTime(videoId: string): Promise<string |
 /** One poll of every lab channel. `failedChannels` is non-empty when the list is partial. */
 export interface BroadcastFetch {
   candidates: BroadcastCandidate[];
-  /** Labels of channels whose feed failed this poll; their candidates are missing, not absent. */
+  /** Labels of channels whose feed failed this poll with no last good copy; their candidates are missing, not absent. */
   failedChannels: string[];
+  /** Labels of channels read from their last good copy (at most two hours old) because YouTube failed. */
+  staleChannels?: string[];
 }
 
 /**
@@ -189,22 +216,31 @@ export async function fetchBroadcasts(
 ): Promise<BroadcastFetch> {
   const settled = await Promise.allSettled(CHANNELS.map((channel) => fetchYoutubeChannel(channel)));
   const failedChannels: string[] = [];
+  const staleChannels: string[] = [];
+  const candidates: BroadcastCandidate[] = [];
   settled.forEach((r, i) => {
-    if (r.status === 'fulfilled') return;
-    failedChannels.push(CHANNELS[i].label);
-    console.error('[source:YouTube broadcasts]', CHANNELS[i].label, r.reason);
+    if (r.status === 'rejected') {
+      failedChannels.push(CHANNELS[i].label);
+      console.error('[source:YouTube broadcasts]', CHANNELS[i].label, r.reason);
+      return;
+    }
+    // A last good copy is read as of when it was fetched, so its views=0 entries still had to be
+    // an hour old then: an ordinary upload at 0 views in an old body is not a scheduled stream now.
+    if (r.value.staleFrom) staleChannels.push(CHANNELS[i].label);
+    candidates.push(
+      ...broadcastCandidates(r.value.entries, r.value.staleFrom ? new Date(r.value.staleFrom) : now),
+    );
   });
   if (failedChannels.length === settled.length)
     throw new Error(`all ${settled.length} YouTube channels failed`);
 
-  const entries = settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
-  const candidates = broadcastCandidates(entries, now);
-  if (!options.probeSchedule || candidates.length === 0) return { candidates, failedChannels };
+  const polled = { failedChannels, ...(staleChannels.length ? { staleChannels } : {}) };
+  if (!options.probeSchedule || candidates.length === 0) return { candidates, ...polled };
   const withSchedule = await Promise.all(
     candidates.map(async (c) => {
       const scheduledStartTime = await fetchScheduledStartTime(c.videoId);
       return scheduledStartTime ? { ...c, scheduledStartTime } : c;
     }),
   );
-  return { candidates: withSchedule, failedChannels };
+  return { candidates: withSchedule, ...polled };
 }
