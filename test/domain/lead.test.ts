@@ -27,7 +27,19 @@ function candidateFeed(videoId: string, title = 'Introducing something new'): st
   </feed>`;
 }
 
-const EMPTY_FEED = '<feed></feed>';
+/** A channel with nothing scheduled: one ordinary upload that already has views. */
+function quietFeed(channelId: string): string {
+  return `<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/">
+    <entry>
+      <yt:videoId>quiet-${channelId}</yt:videoId>
+      <yt:channelId>${channelId}</yt:channelId>
+      <title>Introducing a feature</title>
+      <link rel="alternate" href="https://www.youtube.com/watch?v=quiet"/>
+      <published>2026-09-25T12:00:00+00:00</published>
+      <media:group><media:community><media:statistics views="5120"/></media:community></media:group>
+    </entry>
+  </feed>`;
+}
 
 describe('isWithinEventWindow / toEventWindow', () => {
   const start = '2026-09-29T17:00:00Z';
@@ -72,9 +84,9 @@ describe('fetchBroadcasts', () => {
   it('aggregates every channel and applies broadcastCandidates', async () => {
     mockUpstream({
       [feedUrl(OPENAI)]: candidateFeed('v1'),
-      [feedUrl(ANTHROPIC)]: EMPTY_FEED,
-      [feedUrl(DEEPMIND)]: EMPTY_FEED,
-      [feedUrl(GDEV)]: EMPTY_FEED,
+      [feedUrl(ANTHROPIC)]: quietFeed(ANTHROPIC),
+      [feedUrl(DEEPMIND)]: quietFeed(DEEPMIND),
+      [feedUrl(GDEV)]: quietFeed(GDEV),
     });
     const { fetchBroadcasts } = await import('../../src/domain/lead');
     const out = await fetchBroadcasts(new Date('2026-09-26T00:00:00Z'));
@@ -95,14 +107,28 @@ describe('fetchBroadcasts', () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockUpstream({
       [feedUrl(OPENAI)]: candidateFeed('v1'),
-      [feedUrl(ANTHROPIC)]: EMPTY_FEED,
-      [feedUrl(DEEPMIND)]: EMPTY_FEED,
+      [feedUrl(ANTHROPIC)]: quietFeed(ANTHROPIC),
+      [feedUrl(DEEPMIND)]: quietFeed(DEEPMIND),
       // GDEV missing on purpose: mockUpstream throws "404 <url>" for it.
     });
     const { fetchBroadcasts } = await import('../../src/domain/lead');
     const out = await fetchBroadcasts(new Date('2026-09-26T00:00:00Z'));
     expect(out.map((c) => c.videoId)).toEqual(['v1']);
     expect(err).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts a 200 that is not a feed as a failed channel', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockUpstream({
+      [feedUrl(OPENAI)]: candidateFeed('v1'),
+      [feedUrl(ANTHROPIC)]: quietFeed(ANTHROPIC),
+      [feedUrl(DEEPMIND)]: quietFeed(DEEPMIND),
+      [feedUrl(GDEV)]: '<html>Before you continue to YouTube</html>',
+    });
+    const { fetchBroadcasts } = await import('../../src/domain/lead');
+    expect((await fetchBroadcasts(new Date('2026-09-26T00:00:00Z'))).map((c) => c.videoId)).toEqual(['v1']);
+    expect(err).toHaveBeenCalledTimes(1);
+    expect(String(err.mock.calls[0][1])).toMatch(/no entries/);
   });
 
   it('throws only when every channel fails', async () => {
@@ -117,9 +143,9 @@ describe('fetchBroadcasts', () => {
   it('probes the watch page for a scheduledStartTime only when asked', async () => {
     mockUpstream({
       [feedUrl(OPENAI)]: candidateFeed('v1'),
-      [feedUrl(ANTHROPIC)]: EMPTY_FEED,
-      [feedUrl(DEEPMIND)]: EMPTY_FEED,
-      [feedUrl(GDEV)]: EMPTY_FEED,
+      [feedUrl(ANTHROPIC)]: quietFeed(ANTHROPIC),
+      [feedUrl(DEEPMIND)]: quietFeed(DEEPMIND),
+      [feedUrl(GDEV)]: quietFeed(GDEV),
       'https://www.youtube.com/watch?v=v1':
         '{"liveBroadcastDetails":{"isLiveNow":false,"startTimestamp":"2026-09-28T19:00:00+00:00"}}',
     });

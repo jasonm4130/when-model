@@ -3,8 +3,8 @@
  *
  * A lab's Atom feed carries an entry for a video the moment it is scheduled, before it airs:
  * `views` sits at 0 and the title is often a placeholder ("New models in the API"). That is the
- * only lead signal here; ordinary uploads clear `views=0` fast (see `broadcastCandidates` below),
- * so the same test doubles as a scheduled-vs-ordinary discriminator.
+ * only lead signal here; ordinary uploads leave `views=0` within minutes (measured in
+ * `broadcastCandidates` below), so an entry that stays at 0 for an hour is a scheduled one.
  */
 import type { LabId } from '../domain/lab';
 import type { BroadcastCandidate } from '../domain/lead';
@@ -72,29 +72,46 @@ export function parseYoutubeFeed(xml: string): YoutubeEntry[] {
   return out;
 }
 
-/** One channel's feed, cached at the edge. Throws on a non-200 or network failure. */
+/** Edge-cache lifetime of a channel feed, in seconds. `broadcastCandidates` compensates for it. */
+const FEED_TTL_S = 1800;
+
+/**
+ * One channel's feed, cached at the edge. Throws on a non-200, a network failure, or a body with no
+ * parseable entries: every watched channel carries 15, so an empty parse means the response was
+ * not the feed (an interstitial, a format change) and must count as a failed source.
+ */
 export async function fetchYoutubeChannel(channel: YoutubeChannel): Promise<YoutubeEntry[]> {
-  const xml = await cachedText(`https://www.youtube.com/feeds/videos.xml?channel_id=${channel.channelId}`, {
-    ttl: 1800,
-  });
-  return parseYoutubeFeed(xml);
+  const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channel.channelId}`;
+  const entries = parseYoutubeFeed(await cachedText(url, { ttl: FEED_TTL_S }));
+  if (!entries.length) throw new Error(`no entries in ${url}`);
+  return entries;
 }
 
 const BROADCAST_TITLE = /introduc|live|livestream|keynote|new model|dev ?day|announce|launch/i;
 const CANDIDATE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const MIN_SEEN_AGE_MS = 15 * 60 * 1000;
+/** YouTube's own `cache-control: public, max-age=900` on the feed; a body can be served that stale. */
+const UPSTREAM_MAX_AGE_S = 900;
+/**
+ * 15 minutes at views=0 as of the moment the body was generated. The body we read can be our
+ * edge TTL plus YouTube's max-age old, so the entry must be 15 + 30 + 15 = 60 minutes old.
+ */
+const MIN_ZERO_VIEW_AGE_MS = MIN_SEEN_AGE_MS + (FEED_TTL_S + UPSTREAM_MAX_AGE_S) * 1000;
 
 /**
- * Empirical check (2026-09-26, current entries across all four feeds, ages 8.2h–303d): every
- * upload already has thousands of views by the time it appears in the feed at all — none sit at
- * `views=0`. `views=0` is therefore not an ordinary-upload artifact; when it does show up on a
- * fresh, title-matching entry it is a real signal, not caching lag. The two-poll ≥15min gate below
- * exists to reject the (unobserved but plausible) case of a genuinely fast-indexing view counter.
+ * Empirical check (2026-09-26: ten high-volume news channels plus NASA polled at 00:37Z, eight
+ * of them again at 00:52Z): ordinary uploads can read `views=0` briefly — Reuters `0VO36Y28KYE`
+ * did at 5.5 min and had 37 views at 20.2 min, while ABC had 11 views at 5.6 min and DW 131 at
+ * 6.6 min. Every
+ * entry still at `views=0` past 20 minutes was a scheduled stream (NASA `j9epFget1W8` at 2.2h,
+ * Sky News `RMKgbL7dXP4` and `SPtvJn-RRZE` at 3.5h and 4.8h, all `isUpcoming` on their watch
+ * pages). DW's feed came back byte-identical across the 15-minute gap, so the stats in a body can
+ * lag by YouTube's max-age too. None of the four lab feeds had a `views=0` entry at the time.
  *
- * Pure: candidates where `views === 0`, `publishedAt` is within the last 7 days, and the title
- * matches a broadcast-shaped pattern. When `firstSeen` is supplied (videoId → ISO first-seen time,
- * meant to be backed by D1 across cron polls), a candidate must also have been seen at least 15
- * minutes ago — i.e. present on a prior poll, not just this one.
+ * Pure: candidates where `views === 0`, the entry is between 60 minutes and 7 days old, and the
+ * title matches a broadcast-shaped pattern. When `firstSeen` is supplied (videoId → ISO first-seen
+ * time, meant to be backed by D1 across cron polls), a candidate must also have been seen at least
+ * 15 minutes ago — i.e. present on a prior poll, not just this one.
  */
 export function broadcastCandidates(
   entries: readonly YoutubeEntry[],
@@ -107,8 +124,8 @@ export function broadcastCandidates(
     if (entry.views !== 0) continue;
     if (!BROADCAST_TITLE.test(entry.title)) continue;
     const publishedMs = Date.parse(entry.publishedAt);
-    if (!Number.isFinite(publishedMs) || publishedMs > nowMs || nowMs - publishedMs > CANDIDATE_WINDOW_MS)
-      continue;
+    const ageMs = nowMs - publishedMs;
+    if (!Number.isFinite(ageMs) || ageMs < MIN_ZERO_VIEW_AGE_MS || ageMs > CANDIDATE_WINDOW_MS) continue;
     if (firstSeen) {
       const seenAt = firstSeen.get(entry.videoId);
       const seenMs = seenAt ? Date.parse(seenAt) : NaN;
@@ -141,7 +158,9 @@ const LIVE_BROADCAST_DETAILS = /"liveBroadcastDetails":\{[^}]*"startTimestamp":"
  */
 export async function fetchScheduledStartTime(videoId: string): Promise<string | undefined> {
   try {
-    const html = await cachedText(`https://www.youtube.com/watch?v=${videoId}`, { ttl: 300 });
+    const html = await cachedText(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, {
+      ttl: 300,
+    });
     return toIso(html.match(LIVE_BROADCAST_DETAILS)?.[1]);
   } catch (e) {
     console.error('[source:youtube watch]', videoId, e instanceof Error ? e.message : e);

@@ -48,6 +48,81 @@ function feed(entries: string[]): string {
   </feed>`;
 }
 
+// Verbatim entries from live feeds fetched 2026-09-26T00:37Z (descriptions elided): NASA's upcoming
+// stream (watch page: isUpcoming, startTimestamp 2026-09-28T19:00Z), a Reuters upload 5.5 minutes
+// old and still at views=0, and an OpenAI Short.
+const LIVE_ENTRIES = `<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <entry>
+  <id>yt:video:j9epFget1W8</id>
+  <yt:videoId>j9epFget1W8</yt:videoId>
+  <yt:channelId>UCLA_DiR1FfKNvjuUpBHmylQ</yt:channelId>
+  <title>Space Station Operations Update (Sept. 28, 2026)</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=j9epFget1W8"/>
+  <author>
+   <name>NASA</name>
+   <uri>https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ</uri>
+  </author>
+  <published>2026-09-25T22:24:07+00:00</published>
+  <updated>2026-09-25T22:26:04+00:00</updated>
+  <media:group>
+   <media:title>Space Station Operations Update (Sept. 28, 2026)</media:title>
+   <media:content url="https://www.youtube.com/v/j9epFget1W8?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/j9epFget1W8/hqdefault.jpg" width="480" height="360"/>
+   <media:description>…</media:description>
+   <media:community>
+    <media:starRating count="26" average="5.00" min="1" max="5"/>
+    <media:statistics views="0"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:0VO36Y28KYE</id>
+  <yt:videoId>0VO36Y28KYE</yt:videoId>
+  <yt:channelId>UChqUTb7kYRX8-EiaN3XFrSQ</yt:channelId>
+  <title>How drones and dollars are piling misery on Sudan's people</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=0VO36Y28KYE"/>
+  <author>
+   <name>Reuters</name>
+   <uri>https://www.youtube.com/channel/UChqUTb7kYRX8-EiaN3XFrSQ</uri>
+  </author>
+  <published>2026-09-26T00:31:37+00:00</published>
+  <updated>2026-09-26T00:32:00+00:00</updated>
+  <media:group>
+   <media:title>How drones and dollars are piling misery on Sudan's people</media:title>
+   <media:content url="https://www.youtube.com/v/0VO36Y28KYE?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/0VO36Y28KYE/hqdefault.jpg" width="480" height="360"/>
+   <media:description>…</media:description>
+   <media:community>
+    <media:starRating count="0" average="0.00" min="1" max="5"/>
+    <media:statistics views="0"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:rmDu2sSBIrw</id>
+  <yt:videoId>rmDu2sSBIrw</yt:videoId>
+  <yt:channelId>UCXZCJLdBC09xxGZ6gcdrc6A</yt:channelId>
+  <title>Today’s forecast? Nothing but 80s, baby.</title>
+  <link rel="alternate" href="https://www.youtube.com/shorts/rmDu2sSBIrw"/>
+  <author>
+   <name>OpenAI</name>
+   <uri>https://www.youtube.com/channel/UCXZCJLdBC09xxGZ6gcdrc6A</uri>
+  </author>
+  <published>2026-09-23T18:48:52+00:00</published>
+  <updated>2026-09-23T18:49:12+00:00</updated>
+  <media:group>
+   <media:title>Today’s forecast? Nothing but 80s, baby.</media:title>
+   <media:content url="https://www.youtube.com/v/rmDu2sSBIrw?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/rmDu2sSBIrw/hqdefault.jpg" width="480" height="360"/>
+   <media:description>…</media:description>
+   <media:community>
+    <media:starRating count="220" average="5.00" min="1" max="5"/>
+    <media:statistics views="7256"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>`;
+
 describe('parseYoutubeFeed', () => {
   it('parses a well-formed entry, decoding the title', async () => {
     const { parseYoutubeFeed } = await import('../../src/adapters/youtube');
@@ -62,6 +137,36 @@ describe('parseYoutubeFeed', () => {
         views: 42,
       },
     ]);
+  });
+
+  it('reads the live feed layout: entry title (not media:title), statistics views, Shorts links', async () => {
+    const { parseYoutubeFeed } = await import('../../src/adapters/youtube');
+    expect(
+      parseYoutubeFeed(LIVE_ENTRIES).map((e) => [e.videoId, e.channelId, e.publishedAt, e.views, e.url]),
+    ).toEqual([
+      [
+        'j9epFget1W8',
+        'UCLA_DiR1FfKNvjuUpBHmylQ',
+        '2026-09-25T22:24:07.000Z',
+        0,
+        'https://www.youtube.com/watch?v=j9epFget1W8',
+      ],
+      [
+        '0VO36Y28KYE',
+        'UChqUTb7kYRX8-EiaN3XFrSQ',
+        '2026-09-26T00:31:37.000Z',
+        0,
+        'https://www.youtube.com/watch?v=0VO36Y28KYE',
+      ],
+      [
+        'rmDu2sSBIrw',
+        'UCXZCJLdBC09xxGZ6gcdrc6A',
+        '2026-09-23T18:48:52.000Z',
+        7256,
+        'https://www.youtube.com/shorts/rmDu2sSBIrw',
+      ],
+    ]);
+    expect(parseYoutubeFeed(LIVE_ENTRIES)[2].title).toBe('Today’s forecast? Nothing but 80s, baby.');
   });
 
   it('defaults views to -1 when the feed carries no statistics block', async () => {
@@ -133,7 +238,23 @@ describe('broadcastCandidates', () => {
     expect(broadcastCandidates(entries, now)).toEqual([]);
   });
 
-  it('without firstSeen, accepts a fresh views==0 match on the first poll', async () => {
+  it('holds back a views==0 match until it is 60 minutes old (15 at zero + 30 edge cache + 15 upstream)', async () => {
+    const { parseYoutubeFeed, broadcastCandidates } = await import('../../src/adapters/youtube');
+    // Ordinary uploads can read views=0 for their first minutes: live, Reuters 0VO36Y28KYE did at
+    // 5.5 min and had 37 views at 20.2 min; ABC had 11 views at 5.6 min.
+    const at = (minutes: number) => new Date(now.getTime() - minutes * 60_000).toISOString();
+    const entries = parseYoutubeFeed(
+      feed([
+        entry({ id: 'fresh', published: at(5.5) }),
+        entry({ id: 'stale-body', published: at(59) }),
+        entry({ id: 'aged', published: at(60) }),
+        entry({ id: 'future', published: at(-60) }),
+      ]),
+    );
+    expect(broadcastCandidates(entries, now).map((c) => c.videoId)).toEqual(['aged']);
+  });
+
+  it('without firstSeen, accepts an aged views==0 match on the first poll', async () => {
     const { parseYoutubeFeed, broadcastCandidates } = await import('../../src/adapters/youtube');
     const entries = parseYoutubeFeed(feed([entry({ id: 'first-poll', views: 0 })]));
     expect(broadcastCandidates(entries, now)).toHaveLength(1);
@@ -167,6 +288,17 @@ describe('fetchYoutubeChannel', () => {
     const out = await fetchYoutubeChannel(channel);
     expect(out).toHaveLength(1);
     expect(calls).toEqual([`https://www.youtube.com/feeds/videos.xml?channel_id=${ANTHROPIC_CHANNEL}`]);
+  });
+});
+
+describe('fetchYoutubeChannel failures', () => {
+  it('throws on a 200 body with no entries, so the channel counts as failed', async () => {
+    mockUpstream({
+      [`https://www.youtube.com/feeds/videos.xml?channel_id=${ANTHROPIC_CHANNEL}`]: '<html>consent</html>',
+    });
+    const { fetchYoutubeChannel, CHANNELS } = await import('../../src/adapters/youtube');
+    const channel = CHANNELS.find((c) => c.channelId === ANTHROPIC_CHANNEL)!;
+    await expect(fetchYoutubeChannel(channel)).rejects.toThrow(/no entries/);
   });
 });
 

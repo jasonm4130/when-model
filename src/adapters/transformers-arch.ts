@@ -25,13 +25,20 @@ export function parseModuleNames(source: string): string[] {
   return [...source.matchAll(MODULE_IMPORT)].map((m) => m[1]);
 }
 
+/** A 200 that isn't the registry (rate-limit page, format change) must fail, not read as "no modules". */
+async function fetchModuleList(url: string): Promise<string[]> {
+  const modules = parseModuleNames(await cachedText(url, { ttl: 1800 }));
+  if (!modules.length) throw new Error(`no "from .X import *" lines in ${url}`);
+  return modules;
+}
+
 /** Primary fetch, falling back to the jsdelivr mirror on any failure. Throws only if both fail. */
 export async function fetchTransformersModules(): Promise<string[]> {
   try {
-    return parseModuleNames(await cachedText(PRIMARY_URL, { ttl: 1800 }));
+    return await fetchModuleList(PRIMARY_URL);
   } catch (e) {
     console.error('[source:transformers-arch primary]', e instanceof Error ? e.message : e);
-    return parseModuleNames(await cachedText(FALLBACK_URL, { ttl: 1800 }));
+    return fetchModuleList(FALLBACK_URL);
   }
 }
 
@@ -604,21 +611,44 @@ export function labIdForModule(module: string): LabId | undefined {
   return PREFIX_LABS.find((p) => p.prefix.test(module))?.labId;
 }
 
-const FAMILY_SUFFIX = /_(exp|preview|beta|rc\d*|next)$/i;
-const SPECIAL_CHARS = /[.*+?^${}()|[\]\\]/g;
-const LETTER_THEN_DIGIT = /([a-z])[_-]?(\d)/gi;
+/**
+ * Trailing module tokens that describe a build or layer type and never appear in a listing name
+ * ("Qwen3.5-35B-A3B" ships from `qwen3_5_moe`). `next` is deliberately absent: "Qwen3 Next" is a
+ * product name, and stripping it would let any existing Qwen3 listing clear `qwen3_next`.
+ */
+const NON_NAME_SUFFIX = /(?:_(?:exp|experimental|preview|beta|rc\d*|moe))+$/i;
 
 /**
  * A module name → the loose pattern that matches its family in a listing name, e.g.
- * `qwen4_exp` → `/qwen[ -]?4/i` (the report's own example: strip the experimental suffix, then
- * allow an optional space or dash between the family letters and its generation number).
+ * `qwen4_exp` → `qwen[ _-]?4` (the report's own example): strip non-name suffixes, allow a space
+ * or dash between letters and a generation number, read `_` or adjacent digits inside a version
+ * as an optional dot (`qwen3_5` → "Qwen3.5", `kimi_k25` → "Kimi K2.5"), and refuse a match that
+ * is only a prefix of a longer word or number ("ColQwen4", "Qwen 40B").
+ *
+ * Module names that are codenames rather than versions cannot be recovered this way: `glm4_moe`
+ * shipped as GLM-4.5 and `glm_moe_dsa` as GLM-5. Those clear early or never; seed them by hand.
  */
 export function familyRegex(module: string): RegExp {
-  const core = module.replace(FAMILY_SUFFIX, '');
-  const escaped = core.replace(SPECIAL_CHARS, '\\$&');
-  const withDigitGap = escaped.replace(LETTER_THEN_DIGIT, '$1[ -]?$2');
-  const pattern = withDigitGap.replace(/_/g, '[ _-]?');
-  return new RegExp(pattern, 'i');
+  const core = module.toLowerCase().replace(NON_NAME_SUFFIX, '');
+  let pattern = '';
+  for (let i = 0; i < core.length; i++) {
+    const ch = core[i];
+    const prev = core[i - 1] ?? '';
+    const next = core[i + 1] ?? '';
+    if (ch === '_') {
+      if (/\d/.test(prev) && /\d/.test(next)) pattern += '[._-]?';
+      else if (/[a-z]/.test(prev) && /\d/.test(next)) pattern += '[ _-]?';
+      else pattern += '[ ._-]?';
+      continue;
+    }
+    if (/\d/.test(ch) && /[a-z]/.test(prev)) {
+      // The family's own generation may follow a tier word: `mistral4` shipped as "Mistral Small 4".
+      pattern += /^[a-z]+$/.test(core.slice(0, i)) ? '(?:[ -][a-z]+)?[ _-]?' : '[ _-]?';
+    } else if (/\d/.test(ch) && /\d/.test(prev)) pattern += '\\.?';
+    pattern += /[a-z0-9]/.test(ch) ? ch : `\\${ch}`;
+  }
+  const tail = /\d$/.test(core) ? '(?!\\d)' : '';
+  return new RegExp(`(?<![a-z0-9])${pattern}${tail}`, 'i');
 }
 
 /**

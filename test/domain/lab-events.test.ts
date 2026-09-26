@@ -17,10 +17,23 @@ describe('EVENTS', () => {
 
 describe('hitRate', () => {
   it('computes hits/weak/misses/total from whichever rows carry an outcome, not a hard-coded fraction', () => {
-    const rate = hitRate();
-    expect(rate.total).toBe(5); // every dated row except the still-upcoming DevDay 2026
-    expect(rate.hits + rate.weak + rate.misses).toBe(rate.total);
-    expect(rate.rate).toBe((rate.hits + rate.weak * 0.5) / rate.total);
+    // Every dated row except the still-upcoming DevDay 2026: 2023 and CwC 2025 hit, DevDay 2025 is
+    // weak (GPT-5 Pro reached the API), DevDay 2024 and CwC 2026 missed.
+    expect(hitRate()).toEqual({ hits: 2, weak: 1, misses: 2, total: 5, rate: 0.4 });
+  });
+
+  it('counts a weak row in the total but never as a hit', () => {
+    const row = {
+      label: 'W',
+      labId: 'openai' as const,
+      start: '2020-01-01T00:00:00Z',
+      source: 'https://x.test',
+    };
+    const table = [
+      { ...row, id: 'w1', outcome: 'weak' as const },
+      { ...row, id: 'h1', outcome: 'hit' as const },
+    ];
+    expect(hitRate(table)).toEqual({ hits: 1, weak: 1, misses: 0, total: 2, rate: 0.5 });
   });
 
   it('returns a zero rate for an empty table instead of dividing by zero', () => {

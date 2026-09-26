@@ -95,8 +95,9 @@ export function toEventWindow(
  * Every lab channel's Atom feed → broadcast candidates. Individual channel failures are logged and
  * skipped (never thrown) unless every channel fails. `firstSeen` and `probeSchedule` are optional
  * so a caller with no D1 state yet can still call this: without `firstSeen`, the two-poll gate in
- * `broadcastCandidates` is skipped; with `probeSchedule: true`, each candidate's watch page is
- * fetched (fail-soft) for a `scheduledStartTime`.
+ * `broadcastCandidates` is skipped and only its stateless 60-minute age floor applies; with
+ * `probeSchedule: true`, each candidate's watch page (about 1.2 MB) is fetched, fail-soft, for a
+ * `scheduledStartTime`.
  */
 export async function fetchBroadcasts(
   now: Date = new Date(),
