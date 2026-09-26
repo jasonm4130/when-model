@@ -19,6 +19,8 @@ export interface HnPull {
   query: string;
   from: string;
   to: string;
+  /** Algolia's count for the window; `hits` must hold all of them or the earliest story may be missing. */
+  nbHits?: number;
   hits: HnHit[];
 }
 

@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  announcementsByEvent,
   architectureRows,
   broadcastRows,
   buildBacktest,
+  calibration,
   crossingSplits,
+  falseAlarms,
   marketForecast,
   primaryLead,
   releaseRows,
@@ -190,6 +193,31 @@ describe('markets: price series', () => {
       [start + 2 * HOUR, 0.4],
     ]);
     expect(seriesPoints(undefined, opened)).toEqual([]);
+  });
+
+  it('carries a price the book moved to inside its first hour past the hour, but not the opening quote', () => {
+    const opened = '2026-09-01T00:00:00Z';
+    const start = t(opened);
+    // Compacted hourly pull: opened at 0.5, moved to 0.67 at 00:40, held it (snapshots dropped) until 18:00.
+    const moved = {
+      startTs: start,
+      endTs: start + DAY,
+      fidelity: 60,
+      points: [start + 10 * 60, 0.5, start + 40 * 60, 0.67, start + 18 * HOUR, 0.3],
+    };
+    expect(seriesPoints(moved, opened)).toEqual([
+      [start + 40 * 60 + HOUR, 0.67],
+      [start + 18 * HOUR, 0.3],
+    ]);
+    // A book still at its opening quote when the hour ends has no price until it first moves.
+    const idle = { ...moved, points: [start + 10 * 60, 0.5, start + 18 * HOUR, 0.3] };
+    expect(seriesPoints(idle, opened)).toEqual([[start + 18 * HOUR, 0.3]]);
+    // The next real snapshot supersedes the carried one when nothing was compacted away.
+    const busy = { ...moved, points: [start + 10 * 60, 0.5, start + 40 * 60, 0.67, start + 100 * 60, 0.6] };
+    expect(seriesPoints(busy, opened)).toEqual([[start + 100 * 60, 0.6]]);
+    // A book that moved and then went quiet until the pull ended still reads its last price.
+    const quiet = { ...moved, points: [start + 10 * 60, 0.5, start + 40 * 60, 0.67] };
+    expect(seriesPoints(quiet, opened)).toEqual([[start + 40 * 60 + HOUR, 0.67]]);
   });
 
   it('reads the last price at or before a time', () => {
@@ -399,6 +427,30 @@ describe('fetch: network half, against a stubbed fetch', () => {
     const series = await fetchSeries(events);
     expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain('fidelity=60');
     expect(series.tok.points).toEqual([10, 0.1, 30, 0.4]);
+  });
+
+  it('pages through every HN story in the window and refuses a truncated pull', async () => {
+    const story = (id: number) => ({ objectID: String(id), created_at_i: id, title: `s${id}`, url: '' });
+    const fetchMock = vi.fn(async (url: string) => {
+      const page = Number(new URL(url).searchParams.get('page'));
+      return json({ hits: page === 0 ? [story(3), story(2)] : [story(1)], nbHits: 3, nbPages: 2 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const hn = await fetchHn([
+      { id: 'r', query: 'Astra', from: '2026-09-01T00:00:00Z', to: '2026-09-02T00:00:00Z' },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // search_by_date is newest first: the oldest story, the one an announcement is, sits on the last page.
+    expect(hn.r.hits.map((h) => h.id)).toEqual(['1', '2', '3']);
+    expect(hn.r.nbHits).toBe(3);
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json({ hits: [story(3)], nbHits: 2000, nbPages: 1 })),
+    );
+    await expect(
+      fetchHn([{ id: 'r', query: 'x', from: '2026-09-01T00:00:00Z', to: '2026-09-02T00:00:00Z' }]),
+    ).rejects.toThrow('1 of 2000 stories read');
   });
 
   it('maps HN hits and OpenRouter models into sorted raw rows', async () => {
@@ -647,6 +699,126 @@ describe('build: pure metrics', () => {
   });
 });
 
+describe('build: exclusions, false alarms and coverage', () => {
+  const hit = (id: string, at: string, title: string, url: string) => ({
+    id,
+    t: t(at),
+    title,
+    url,
+    points: 1,
+  });
+
+  it('skips first-party stories curated as not the launch and reports them', () => {
+    const astra = RELEASES.find((r) => r.id === 'gpt-6-astra')!;
+    const raw: RawPulls = {
+      pulledAt: '2026-09-26T00:00:00Z',
+      events: [],
+      series: {},
+      hn: {
+        'gpt-6-astra': {
+          query: 'Astra',
+          from: '',
+          to: '',
+          hits: [
+            hit(
+              '49527595',
+              '2026-09-01T20:20:41Z',
+              'Path to Astra: critical capabilities',
+              'https://openai.com/index/path-to-astra/',
+            ),
+            hit(
+              '49551018',
+              '2026-09-03T15:03:40Z',
+              'Open AI X post on Astra',
+              'https://twitter.com/OpenAI/status/2095527557924082061',
+            ),
+            hit(
+              '49554185',
+              '2026-09-03T18:12:08Z',
+              'Playco prototyping games with GPT-6 Astra',
+              'http://openai.com/index/playco',
+            ),
+          ],
+        },
+      },
+      openrouter: [],
+    };
+    const [row] = releaseRows(raw, [astra]);
+    expect(row.announcedAt).toBe('2026-09-03T18:12:08Z');
+    expect(row.notLaunch.map((n) => n.hn)).toEqual([
+      'https://news.ycombinator.com/item?id=49527595',
+      'https://news.ycombinator.com/item?id=49551018',
+    ]);
+    expect(row.notLaunch[1].why).toContain('no words');
+  });
+
+  const rung = (over: Partial<Rung2> & { deadline: number; from?: number; points: Point[] }): Rung2 => ({
+    event: { id: 'e1', slug: 's', title: 'GPT-X released on...?', createdAt: '', closed: true, markets: [] },
+    market: { id: 'm', label: 'September 3', openedAt: '', closed: true, resolved: 'no', yesToken: 'tok' },
+    rung: {
+      kind: over.from === undefined ? 'by' : 'day',
+      deadline: over.deadline,
+      from: over.from,
+      date: '',
+    },
+    labId: 'openai',
+    opened: 0,
+    closed: over.deadline,
+    settled: Infinity,
+    leftCensored: false,
+    window: [0, over.deadline],
+    ...over,
+  });
+
+  it('marks a No rung whose launch was announced inside it', () => {
+    const from = t('2026-09-03T04:00:00Z');
+    const deadline = t('2026-09-04T03:59:59Z');
+    const day = rung({
+      from,
+      deadline,
+      points: [
+        [from, 0.2],
+        [t('2026-09-03T16:00:00Z'), 0.966],
+      ],
+    });
+    const early = rung({
+      from: from - DAY,
+      deadline: deadline - DAY,
+      points: [[from - DAY, 0.6]],
+      market: { ...day.market, id: 'm2', label: 'September 2' },
+    });
+    const { worst } = falseAlarms([day, early], new Map([['e1', t('2026-09-03T18:12:08Z')]]));
+    expect(worst.map((w) => [w.label, w.announcedInTime])).toEqual([
+      ['September 3', true],
+      ['September 2', false],
+    ]);
+    expect(falseAlarms([day]).worst[0].announcedInTime).toBe(false);
+  });
+
+  it('maps curated launches to their Gamma events', () => {
+    const map = announcementsByEvent([
+      { id: 'gpt-6-astra', announcedAt: '2026-09-03T18:12:08Z' } as ReleaseRow,
+    ]);
+    expect(map.get('948075')).toBe(t('2026-09-03T18:12:08Z'));
+    expect(map.has('850711')).toBe(false);
+  });
+
+  it('says where the market forecast misses the listings it is scored on', () => {
+    const raw: RawPulls = {
+      pulledAt: '2026-04-03T00:00:00Z',
+      events: [],
+      series: {},
+      hn: {},
+      openrouter: [{ id: 'openai/gpt-x', name: '', created: t('2026-04-02T12:00:00Z'), canonical: '' }],
+    };
+    const r = rung({ deadline: t('2026-04-02T03:59:59Z'), points: [[t('2026-03-31T00:00:00Z'), 0.05]] });
+    const [h24] = calibration(raw, [{ ...r, opened: t('2026-03-30T00:00:00Z') }]);
+    // 25 hourly samples; a listing lands inside (t, t+24h] from Apr 1 12:00 on; the rung is due inside it from Apr 1 04:00.
+    expect(h24.samples).toBe(25);
+    expect(h24.coverage).toEqual({ hoursWithOdds: 21, listedHours: 13, listedNoOdds: 0, listedUnder10: 13 });
+  });
+});
+
 describe('view helpers', () => {
   it('formats signed durations, times and percentages', () => {
     expect(signedHours(31)).toBe('+31.0h');
@@ -703,6 +875,14 @@ describe('committed data', () => {
         `${r.id} OpenRouter id`,
       ).toBe(true);
       for (const m of r.markets) expect(events.has(m), `${r.id} market ${m}`).toBe(true);
+      // search_by_date is newest first, so a pull short of Algolia's count has lost the earliest stories.
+      expect(raw.hn[r.id].hits.length, `${r.id} HN pull is complete`).toBe(raw.hn[r.id].nbHits);
+      for (const n of r.notLaunch ?? []) {
+        expect(
+          raw.hn[r.id].hits.some((h) => h.id === n.story),
+          `${r.id} not-launch ${n.story}`,
+        ).toBe(true);
+      }
     }
     const built = JSON.parse(JSON.stringify(buildBacktest(raw))) as Record<string, unknown>;
     for (const [name, value] of Object.entries(built)) {

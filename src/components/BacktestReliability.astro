@@ -31,6 +31,9 @@ const panels = horizons.map((h) => {
   const label = `Reliability of the market forecast at ${h.horizonH} hours over ${h.samples} hourly samples. Brier ${market?.brier}, skill ${market?.skill} against the ${pct(h.baseRate)} base rate. The largest miss is the ${worst?.from.toFixed(1)}–${worst?.to.toFixed(1)} bin: ${worst?.n} hours with a mean forecast of ${pct(worst?.meanForecast)} saw a listing ${pct(worst?.observed)} of the time.`;
   return { h, bins, path, label };
 });
+/** Every bin that has hours at some horizon, for the table twin of the plots. */
+const binRows = [...new Map(horizons.flatMap((h) => h.reliability.map((b) => [b.from, b.to] as const))).entries()].sort((a, b) => a[0] - b[0]);
+const binAt = (h: HorizonScore, from: number) => h.reliability.find((b) => b.from === from);
 ---
 <div class="reliability">
   {panels.map(({ h, bins, path, label }) => (
@@ -63,6 +66,43 @@ const panels = horizons.map((h) => {
 <p class="muted note">
   Hourly samples from 2026-04-01. The forecast is the highest price among frontier-lab rungs trading at that hour and due inside the window; the outcome is whether any frontier lab listed a model on OpenRouter inside it. The diagonal is perfect calibration; circle area is the number of hours in the bin.
 </p>
+<details class="bins">
+  <summary class="tiny">The plotted bins as a table</summary>
+  <div class="table-scroll">
+    <table>
+      <caption class="sr-only">Reliability bins: hours per forecast bin, their mean market forecast and how often a frontier model was listed.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Forecast</th>
+          {horizons.map((h) => (
+            <>
+              <th scope="col" class="num">Hours, {h.horizonH}h</th>
+              <th scope="col" class="num">Mean forecast</th>
+              <th scope="col" class="num">Listed</th>
+            </>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {binRows.map(([from, to]) => (
+          <tr>
+            <th scope="row">{from.toFixed(1)}–{to.toFixed(1)}</th>
+            {horizons.map((h) => {
+              const b = binAt(h, from);
+              return (
+                <>
+                  <td class="num">{b?.n ?? 0}</td>
+                  <td class="num">{pct(b?.meanForecast, 1)}</td>
+                  <td class="num">{pct(b?.observed, 1)}</td>
+                </>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</details>
 <style>
   .reliability { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
   figure { margin: 0; }
@@ -78,4 +118,6 @@ const panels = horizons.map((h) => {
   .axis { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
   .note { fill: var(--text); font-size: 16px; }
   p.note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+  .bins { margin-top: 10px; }
+  .bins summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
 </style>

@@ -140,19 +140,40 @@ export interface HnQuery {
   to: string;
 }
 
+/** Algolia pages to read per query. `search_by_date` is newest first, so a short read loses the oldest stories. */
+export const MAX_HN_PAGES = 10;
+
+/**
+ * Every story in each query's window. Pages until Algolia's `nbPages`, and throws rather than
+ * keep a truncated pull: the announcement is the *earliest* matching story, which is exactly
+ * the one a newest-first page cap would drop.
+ */
 export async function fetchHn(queries: readonly HnQuery[]): Promise<Record<string, HnPull>> {
   const out: Record<string, HnPull> = {};
   for (const q of queries) {
     const from = Date.parse(q.from) / 1000;
     const to = Date.parse(q.to) / 1000;
-    const params = new URLSearchParams({
-      query: q.query,
-      tags: 'story',
-      hitsPerPage: '100',
-      numericFilters: `created_at_i>=${from},created_at_i<=${to}`,
-    });
-    const body = (await getJson(`${HN}?${params}`)) as { hits?: Record<string, unknown>[] };
-    const hits: HnHit[] = (body.hits ?? [])
+    const raw: Record<string, unknown>[] = [];
+    let nbHits = 0;
+    for (let page = 0; page < MAX_HN_PAGES; page++) {
+      const params = new URLSearchParams({
+        query: q.query,
+        tags: 'story',
+        hitsPerPage: '100',
+        page: String(page),
+        numericFilters: `created_at_i>=${from},created_at_i<=${to}`,
+      });
+      const body = (await getJson(`${HN}?${params}`)) as {
+        hits?: Record<string, unknown>[];
+        nbHits?: number;
+        nbPages?: number;
+      };
+      raw.push(...(body.hits ?? []));
+      nbHits = Number(body.nbHits ?? raw.length);
+      if (page + 1 >= Number(body.nbPages ?? 0) || !body.hits?.length) break;
+    }
+    if (raw.length < nbHits) throw new Error(`HN "${q.query}": ${raw.length} of ${nbHits} stories read`);
+    const hits: HnHit[] = raw
       .map((h) => ({
         id: String(h.objectID),
         t: Number(h.created_at_i),
@@ -161,7 +182,7 @@ export async function fetchHn(queries: readonly HnQuery[]): Promise<Record<strin
         points: Number(h.points ?? 0),
       }))
       .sort((a, b) => a.t - b.t || a.id.localeCompare(b.id));
-    out[q.id] = { query: q.query, from: q.from, to: q.to, hits };
+    out[q.id] = { query: q.query, from: q.from, to: q.to, nbHits, hits };
   }
   return out;
 }

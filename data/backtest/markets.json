@@ -1111,8 +1111,8 @@
       "labId": "openai",
       "model": "GPT-6 Astra",
       "precursor": "announced",
-      "announcedAt": "2026-09-03T15:03:40Z",
-      "availabilityH": 29.2,
+      "announcedAt": "2026-09-03T18:12:08Z",
+      "availabilityH": 26,
       "day": {
         "event": "OpenAI's Astra released on...?",
         "label": "September 4",
@@ -1121,33 +1121,33 @@
         "window": [1788276897, 1788561241],
         "deadline": "2026-09-05T03:59:59Z",
         "kind": "day",
-        "slackH": 36.9,
+        "slackH": 33.8,
         "dated": true,
         "crossings": [
           {
             "threshold": 0.5,
             "heldAt": "2026-09-04T19:00:32Z",
-            "heldLeadH": -27.9,
+            "heldLeadH": -24.8,
             "touchAt": "2026-09-04T19:00:32Z",
-            "touchLeadH": -27.9,
+            "touchLeadH": -24.8,
             "censored": false,
             "atOpen": false
           },
           {
             "threshold": 0.7,
             "heldAt": "2026-09-04T19:00:32Z",
-            "heldLeadH": -27.9,
+            "heldLeadH": -24.8,
             "touchAt": "2026-09-04T19:00:32Z",
-            "touchLeadH": -27.9,
+            "touchLeadH": -24.8,
             "censored": false,
             "atOpen": false
           },
           {
             "threshold": 0.9,
             "heldAt": "2026-09-04T20:00:19Z",
-            "heldLeadH": -28.9,
+            "heldLeadH": -25.8,
             "touchAt": "2026-09-04T20:00:19Z",
-            "touchLeadH": -28.9,
+            "touchLeadH": -25.8,
             "censored": false,
             "atOpen": false
           }
@@ -1162,33 +1162,33 @@
         "window": [1788248695, 1788557536],
         "deadline": "2026-09-05T03:59:59Z",
         "kind": "by",
-        "slackH": 36.9,
+        "slackH": 33.8,
         "dated": true,
         "crossings": [
           {
             "threshold": 0.5,
             "heldAt": "2026-09-01T21:00:18Z",
-            "heldLeadH": 42.1,
+            "heldLeadH": 45.2,
             "touchAt": "2026-09-01T21:00:18Z",
-            "touchLeadH": 42.1,
+            "touchLeadH": 45.2,
             "censored": false,
             "atOpen": false
           },
           {
             "threshold": 0.7,
             "heldAt": "2026-09-02T01:00:14Z",
-            "heldLeadH": 38.1,
+            "heldLeadH": 41.2,
             "touchAt": "2026-09-02T01:00:14Z",
-            "touchLeadH": 38.1,
+            "touchLeadH": 41.2,
             "censored": false,
             "atOpen": false
           },
           {
             "threshold": 0.9,
             "heldAt": "2026-09-03T10:00:15Z",
-            "heldLeadH": 5.1,
+            "heldLeadH": 8.2,
             "touchAt": "2026-09-02T14:00:14Z",
-            "touchLeadH": 25.1,
+            "touchLeadH": 28.2,
             "censored": false,
             "atOpen": false
           }
@@ -1508,7 +1508,7 @@
         "undated": 1,
         "ahead50": 1,
         "ahead90": 1,
-        "medianLead50H": 37.6
+        "medianLead50H": 39.2
       },
       {
         "group": "leak",
@@ -1607,7 +1607,8 @@
         "deadline": "2026-09-04T03:59:59Z",
         "peak": 0.966,
         "peakAt": "2026-09-03T16:00:20Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": true
       },
       {
         "event": "OpenAI’s Astra released by…?",
@@ -1618,7 +1619,8 @@
         "deadline": "2026-09-04T03:59:59Z",
         "peak": 0.964,
         "peakAt": "2026-09-03T16:00:21Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": true
       },
       {
         "event": "Next Claude Opus released by...?",
@@ -1629,7 +1631,8 @@
         "deadline": "2026-07-24T03:59:59Z",
         "peak": 0.92,
         "peakAt": "2026-07-23T13:00:10Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -1640,7 +1643,8 @@
         "deadline": "2026-08-15T03:59:59Z",
         "peak": 0.915,
         "peakAt": "2026-08-03T18:00:08Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -1651,7 +1655,8 @@
         "deadline": "2026-07-01T03:59:59Z",
         "peak": 0.9,
         "peakAt": "2026-06-19T19:00:05Z",
-        "slipDays": 9
+        "slipDays": 9,
+        "announcedInTime": false
       },
       {
         "event": "New Gemini reasoning flagship released by...?",
@@ -1662,7 +1667,8 @@
         "deadline": "2026-05-23T03:59:59Z",
         "peak": 0.895,
         "peakAt": "2026-05-11T19:00:08Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -1673,7 +1679,8 @@
         "deadline": "2026-07-09T03:59:59Z",
         "peak": 0.89,
         "peakAt": "2026-07-03T05:00:06Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Opus released on...?",
@@ -1684,7 +1691,8 @@
         "deadline": "2026-07-24T03:59:59Z",
         "peak": 0.89,
         "peakAt": "2026-07-23T13:00:08Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -1695,7 +1703,8 @@
         "deadline": "2026-08-08T03:59:59Z",
         "peak": 0.885,
         "peakAt": "2026-07-24T15:00:13Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Grok Model (4.7+) released by...?",
@@ -1706,7 +1715,8 @@
         "deadline": "2026-09-19T03:59:59Z",
         "peak": 0.885,
         "peakAt": "2026-09-07T23:00:33Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "New Gemini reasoning flagship released by...?",
@@ -1717,7 +1727,8 @@
         "deadline": "2026-07-01T03:59:59Z",
         "peak": 0.879,
         "peakAt": "2026-06-16T17:00:06Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -1728,7 +1739,8 @@
         "deadline": "2026-07-01T03:59:59Z",
         "peak": 0.85,
         "peakAt": "2026-06-16T12:00:12Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released on...?",
@@ -1739,7 +1751,8 @@
         "deadline": "2026-08-11T03:59:59Z",
         "peak": 0.841,
         "peakAt": "2026-08-04T05:00:30Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Opus released on...?",
@@ -1750,7 +1763,8 @@
         "deadline": "2026-09-22T03:59:59Z",
         "peak": 0.834,
         "peakAt": "2026-09-21T14:00:12Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -1761,7 +1775,8 @@
         "deadline": "2026-07-08T03:59:59Z",
         "peak": 0.805,
         "peakAt": "2026-07-03T09:00:07Z",
-        "slipDays": 2
+        "slipDays": 2,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released on...?",
@@ -1772,7 +1787,8 @@
         "deadline": "2026-07-08T03:59:59Z",
         "peak": 0.805,
         "peakAt": "2026-07-03T18:00:07Z",
-        "slipDays": 2
+        "slipDays": 2,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -1783,7 +1799,8 @@
         "deadline": "2026-06-16T03:59:59Z",
         "peak": 0.785,
         "peakAt": "2026-06-02T06:00:06Z",
-        "slipDays": 24
+        "slipDays": 24,
+        "announcedInTime": false
       },
       {
         "event": "Next Grok Model (4.7+) released by...?",
@@ -1794,7 +1811,8 @@
         "deadline": "2026-09-15T03:59:59Z",
         "peak": 0.78,
         "peakAt": "2026-09-11T17:00:32Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released on...?",
@@ -1805,7 +1823,8 @@
         "deadline": "2026-07-18T03:59:59Z",
         "peak": 0.725,
         "peakAt": "2026-07-05T11:00:06Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -1816,7 +1835,8 @@
         "deadline": "2026-07-18T03:59:59Z",
         "peak": 0.715,
         "peakAt": "2026-07-05T00:00:07Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Opus released by...?",
@@ -1827,7 +1847,8 @@
         "deadline": "2026-07-23T03:59:59Z",
         "peak": 0.715,
         "peakAt": "2026-07-15T18:00:10Z",
-        "slipDays": 2
+        "slipDays": 2,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Opus released by...?",
@@ -1838,7 +1859,8 @@
         "deadline": "2026-09-21T03:59:59Z",
         "peak": 0.715,
         "peakAt": "2026-09-15T23:00:13Z",
-        "slipDays": 2
+        "slipDays": 2,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -1849,7 +1871,8 @@
         "deadline": "2026-06-24T03:59:59Z",
         "peak": 0.695,
         "peakAt": "2026-06-10T22:00:05Z",
-        "slipDays": 16
+        "slipDays": 16,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.5 released by...?",
@@ -1860,7 +1883,8 @@
         "deadline": "2026-04-16T03:59:59Z",
         "peak": 0.69,
         "peakAt": "2026-04-09T08:00:52Z",
-        "slipDays": 8
+        "slipDays": 8,
+        "announcedInTime": false
       },
       {
         "event": "Next Grok Model (4.7+) released by...?",
@@ -1871,7 +1895,8 @@
         "deadline": "2026-09-13T03:59:59Z",
         "peak": 0.69,
         "peakAt": "2026-09-10T00:00:21Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released on...?",
@@ -1882,7 +1907,8 @@
         "deadline": "2026-07-01T03:59:59Z",
         "peak": 0.685,
         "peakAt": "2026-06-20T15:00:06Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -1893,7 +1919,8 @@
         "deadline": "2026-06-27T03:59:59Z",
         "peak": 0.68,
         "peakAt": "2026-06-12T07:00:09Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "DeepSeek V4 released by...?",
@@ -1904,7 +1931,8 @@
         "deadline": "2026-04-16T03:59:59Z",
         "peak": 0.67,
         "peakAt": "2026-04-08T02:00:40Z",
-        "slipDays": 9
+        "slipDays": 9,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.5 released by...?",
@@ -1915,7 +1943,8 @@
         "deadline": "2026-04-20T03:59:59Z",
         "peak": 0.64,
         "peakAt": "2026-04-13T17:00:56Z",
-        "slipDays": 4
+        "slipDays": 4,
+        "announcedInTime": false
       },
       {
         "event": "Next Mythos-Class Model released by…?",
@@ -1926,7 +1955,8 @@
         "deadline": "2026-09-01T03:59:59Z",
         "peak": 0.64,
         "peakAt": "2026-08-26T18:00:21Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "Grok 4.6 released by...?",
@@ -1937,7 +1967,8 @@
         "deadline": "2026-08-12T03:59:59Z",
         "peak": 0.615,
         "peakAt": "2026-08-11T09:00:15Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "Claude Mythos released on…?",
@@ -1948,7 +1979,8 @@
         "deadline": "2026-06-11T03:59:59Z",
         "peak": 0.605,
         "peakAt": "2026-06-09T03:00:06Z",
-        "slipDays": -1
+        "slipDays": -1,
+        "announcedInTime": false
       },
       {
         "event": "Next Grok Model (4.7+) released on...?",
@@ -1959,7 +1991,8 @@
         "deadline": "2026-09-18T03:59:59Z",
         "peak": 0.596,
         "peakAt": "2026-09-17T16:00:15Z",
-        "slipDays": 4
+        "slipDays": 4,
+        "announcedInTime": false
       },
       {
         "event": "New Gemini reasoning flagship released by...?",
@@ -1970,7 +2003,8 @@
         "deadline": "2026-06-20T03:59:59Z",
         "peak": 0.595,
         "peakAt": "2026-06-06T02:00:18Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Opus released by...?",
@@ -1981,7 +2015,8 @@
         "deadline": "2026-07-18T03:59:59Z",
         "peak": 0.575,
         "peakAt": "2026-07-15T00:00:12Z",
-        "slipDays": 7
+        "slipDays": 7,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -1992,7 +2027,8 @@
         "deadline": "2026-06-09T03:59:59Z",
         "peak": 0.57,
         "peakAt": "2026-05-29T10:00:05Z",
-        "slipDays": 31
+        "slipDays": 31,
+        "announcedInTime": false
       },
       {
         "event": "Next Grok Model (4.7+) released on...?",
@@ -2003,7 +2039,8 @@
         "deadline": "2026-09-19T03:59:59Z",
         "peak": 0.565,
         "peakAt": "2026-09-08T00:00:16Z",
-        "slipDays": 3
+        "slipDays": 3,
+        "announcedInTime": false
       },
       {
         "event": "Next Alibaba Qwen Plus (3.8+) released by...?",
@@ -2014,7 +2051,8 @@
         "deadline": "2026-09-01T03:59:59Z",
         "peak": 0.55,
         "peakAt": "2026-08-25T13:00:15Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next OpenAI GPT Terra (5.7+) released by...?",
@@ -2025,7 +2063,8 @@
         "deadline": "2026-09-01T03:59:59Z",
         "peak": 0.545,
         "peakAt": "2026-08-18T22:00:15Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Grok Model (4.7+) released on...?",
@@ -2036,7 +2075,8 @@
         "deadline": "2026-09-24T03:59:59Z",
         "peak": 0.535,
         "peakAt": "2026-09-16T23:00:16Z",
-        "slipDays": -2
+        "slipDays": -2,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Opus released on...?",
@@ -2047,7 +2087,8 @@
         "deadline": "2026-08-01T03:59:59Z",
         "peak": 0.525,
         "peakAt": "2026-07-15T03:00:15Z",
-        "slipDays": -7
+        "slipDays": -7,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -2058,7 +2099,8 @@
         "deadline": "2026-06-20T03:59:59Z",
         "peak": 0.52,
         "peakAt": "2026-06-05T07:00:04Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -2069,7 +2111,8 @@
         "deadline": "2026-07-28T03:59:59Z",
         "peak": 0.515,
         "peakAt": "2026-07-13T14:00:21Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Claude Sonnet released by...?",
@@ -2080,7 +2123,8 @@
         "deadline": "2026-06-30T03:59:59Z",
         "peak": 0.505,
         "peakAt": "2026-06-25T23:00:05Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "Next Gemini Flash Model (3.8+) released on...?",
@@ -2091,7 +2135,8 @@
         "deadline": "2026-09-04T03:59:59Z",
         "peak": 0.501,
         "peakAt": "2026-09-01T13:00:14Z",
-        "slipDays": -1
+        "slipDays": -1,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.5 released on...?",
@@ -2102,7 +2147,8 @@
         "deadline": "2026-04-17T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-04-13T04:00:56Z",
-        "slipDays": 7
+        "slipDays": 7,
+        "announcedInTime": false
       },
       {
         "event": "DeepSeek V4 released on...?",
@@ -2113,7 +2159,8 @@
         "deadline": "2026-04-30T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-04-24T01:00:12Z",
-        "slipDays": -5
+        "slipDays": -5,
+        "announcedInTime": false
       },
       {
         "event": "DeepSeek V4 released on...?",
@@ -2124,7 +2171,8 @@
         "deadline": "2026-05-03T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-04-24T01:00:12Z",
-        "slipDays": -8
+        "slipDays": -8,
+        "announcedInTime": false
       },
       {
         "event": "New Gemini reasoning flagship released by...?",
@@ -2135,7 +2183,8 @@
         "deadline": "2026-05-09T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-04-30T16:00:06Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "DeepSeek V4 released on...?",
@@ -2146,7 +2195,8 @@
         "deadline": "2026-05-11T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-04-24T01:00:05Z",
-        "slipDays": -16
+        "slipDays": -16,
+        "announcedInTime": false
       },
       {
         "event": "Gemini 3.2 released by...?",
@@ -2157,7 +2207,8 @@
         "deadline": "2026-05-19T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-05-15T17:00:05Z",
-        "slipDays": 1
+        "slipDays": 1,
+        "announcedInTime": false
       },
       {
         "event": "GPT-5.6 released by...?",
@@ -2168,7 +2219,8 @@
         "deadline": "2026-06-06T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-05-23T04:00:06Z",
-        "slipDays": 34
+        "slipDays": 34,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -2179,7 +2231,8 @@
         "deadline": "2026-06-06T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-06-02T00:00:05Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       },
       {
         "event": "Next Google Gemini Pro Model released by...?",
@@ -2190,7 +2243,8 @@
         "deadline": "2026-06-13T03:59:59Z",
         "peak": 0.5,
         "peakAt": "2026-06-02T00:00:08Z",
-        "slipDays": null
+        "slipDays": null,
+        "announcedInTime": false
       }
     ]
   },
@@ -2207,22 +2261,22 @@
         },
         {
           "forecast": "market max",
-          "brier": 0.2023,
-          "skill": -0.148
+          "brier": 0.2016,
+          "skill": -0.144
         },
         {
           "forecast": "max(market, base rate)",
-          "brier": 0.1706,
-          "skill": 0.032
+          "brier": 0.1702,
+          "skill": 0.034
         }
       ],
       "reliability": [
         {
           "from": 0,
           "to": 0.1,
-          "n": 3522,
+          "n": 3519,
           "meanForecast": 0.012,
-          "observed": 0.208
+          "observed": 0.207
         },
         {
           "from": 0.1,
@@ -2276,16 +2330,16 @@
         {
           "from": 0.8,
           "to": 0.9,
-          "n": 50,
+          "n": 51,
           "meanForecast": 0.852,
-          "observed": 0.82
+          "observed": 0.824
         },
         {
           "from": 0.9,
           "to": 1,
-          "n": 49,
+          "n": 51,
           "meanForecast": 0.959,
-          "observed": 0.714
+          "observed": 0.725
         }
       ],
       "byLab": [
@@ -2294,11 +2348,11 @@
           "baseRate": 0.034,
           "market": {
             "forecast": "market",
-            "brier": 0.0368,
-            "skill": -0.124
+            "brier": 0.0374,
+            "skill": -0.142
           },
           "samples": 4249,
-          "hoursWithOdds": 1071
+          "hoursWithOdds": 1074
         },
         {
           "labId": "anthropic",
@@ -2366,7 +2420,13 @@
           "samples": 4249,
           "hoursWithOdds": 52
         }
-      ]
+      ],
+      "coverage": {
+        "hoursWithOdds": 3514,
+        "listedHours": 970,
+        "listedNoOdds": 197,
+        "listedUnder10": 730
+      }
     },
     {
       "horizonH": 72,
@@ -2380,12 +2440,12 @@
         },
         {
           "forecast": "market max",
-          "brier": 0.3711,
-          "skill": -0.488
+          "brier": 0.3704,
+          "skill": -0.485
         },
         {
           "forecast": "max(market, base rate)",
-          "brier": 0.235,
+          "brier": 0.2348,
           "skill": 0.058
         }
       ],
@@ -2393,9 +2453,9 @@
         {
           "from": 0,
           "to": 0.1,
-          "n": 2658,
+          "n": 2655,
           "meanForecast": 0.021,
-          "observed": 0.465
+          "observed": 0.464
         },
         {
           "from": 0.1,
@@ -2456,9 +2516,9 @@
         {
           "from": 0.9,
           "to": 1,
-          "n": 172,
+          "n": 175,
           "meanForecast": 0.948,
-          "observed": 0.953
+          "observed": 0.954
         }
       ],
       "byLab": [
@@ -2467,11 +2527,11 @@
           "baseRate": 0.103,
           "market": {
             "forecast": "market",
-            "brier": 0.0641,
-            "skill": 0.303
+            "brier": 0.0634,
+            "skill": 0.311
           },
           "samples": 4201,
-          "hoursWithOdds": 1670
+          "hoursWithOdds": 1673
         },
         {
           "labId": "anthropic",
@@ -2539,7 +2599,13 @@
           "samples": 4201,
           "hoursWithOdds": 148
         }
-      ]
+      ],
+      "coverage": {
+        "hoursWithOdds": 3671,
+        "listedHours": 2208,
+        "listedNoOdds": 320,
+        "listedUnder10": 1232
+      }
     }
   ],
   "rungCalibration": [

@@ -33,6 +33,12 @@ export interface CuratedRelease {
   /** What telegraphed it, in one line. */
   context: string;
   sources: readonly Source[];
+  /**
+   * First-party HN stories (by id) that name the model but are not its launch, and why. The
+   * teaser regex reads titles; these are the ones a title cannot give away: a post with no text,
+   * a docs page that did not list the model yet, a pre-launch safety post.
+   */
+  notLaunch?: readonly { story: string; why: string }[];
 }
 
 /** A lab's official X account, as `host/handle/` prefixes for both domains. Staff accounts do not count. */
@@ -345,13 +351,21 @@ export const RELEASES: readonly CuratedRelease[] = [
     markets: ['783555', '948075', '36307'],
     precursor: 'announced',
     context:
-      'OpenAI published "Path to Astra" two days ahead. Announced Sep 3, generally available Sep 4; the markets resolved on Sep 4.',
+      'OpenAI published "Path to Astra" two days ahead and a wordless teaser video three hours before the launch. Announced Sep 3, generally available Sep 4; the markets resolved on Sep 4.',
     sources: [
       {
         label: 'OpenAI RSS: "Path to Astra", 2026-09-01 13:00Z',
         url: 'https://openai.com/index/path-to-astra',
       },
       hn(49545491, 'HN: help.openai.com "OpenAI Astra Launching Soon", 2026-09-03 03:02Z'),
+    ],
+    notLaunch: [
+      { story: '49527595', why: 'the pre-launch safety post, two days early' },
+      {
+        story: '49551018',
+        why: 'an @OpenAI post with no words, only a 12-second video (tweet 2095527557924082061)',
+      },
+      { story: '49551175', why: 'the generic models page; commenters found no Astra on it yet' },
     ],
   },
   {

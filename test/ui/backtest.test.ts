@@ -64,6 +64,8 @@ describe('backtest components', async () => {
     expect(html).toContain('https://news.ycombinator.com/item?id=');
     // Labels that already say "prior to" are not prefixed again.
     expect(html).not.toContain('by On or prior');
+    // Astra's wordless teaser video is shown as set aside, not used as the announcement.
+    expect(text(html)).toContain('Not the launch: "Open AI X post on Astra"');
   });
 
   it('release table explains a launch priced only on a far-off rung', async () => {
@@ -90,6 +92,11 @@ describe('backtest components', async () => {
     });
     expect((alarms.match(/<tr[\s>]/g) ?? []).length).toBe(1 + markets.falseAlarms.summary.length + 1 + 3);
     expect(text(alarms)).toContain(`${markets.falseAlarms.worst.length} No rungs peaked at 0.5 or more`);
+    // Astra's Sep 3 rungs top the list, but Astra was announced on Sep 3: flagged, not read as a day-early miss.
+    expect(markets.falseAlarms.worst[0]).toMatchObject({ label: 'September 3', announcedInTime: true });
+    expect(text(alarms)).toContain(
+      "resolved No under the market's own release rule (OpenAI's Astra released on...?",
+    );
   });
 
   it('scores compare against the base rate and the reliability plots are labelled', async () => {
@@ -100,6 +107,10 @@ describe('backtest components', async () => {
     expect(html).toContain('Brier 24h');
     expect(html).toContain('Brier 72h');
     expect(html).not.toContain('Brier 168h');
+    // The explanation of the negative skill is the measured coverage, not an assertion.
+    const c24 = markets.calibration[0].coverage;
+    expect(text(html)).toContain(`under 10% in ${c24.listedUnder10} of ${c24.listedHours} at 24h`);
+    expect(text(html)).not.toContain('most launches fall in those hours');
     const plots = await container.renderToString(BacktestReliability, {
       props: { horizons: markets.calibration },
     });
@@ -165,6 +176,9 @@ describe('backtest components', async () => {
       },
     });
     expect(html).toContain('pnpm backtest --refresh');
+    // Algolia answers 400 to an unencoded numericFilters, so the pasted line must carry it encoded.
+    expect(html).toContain('numericFilters=created_at_i%3E%3D');
+    expect(text(html)).not.toMatch(/created_at_i[<>]=/);
     expect(html).toContain(`market=${series.token}&amp;startTs=${series.window[0]}`);
     expect(html).toContain('fidelity=60');
     expect(html).toContain('data/backtest/markets.json');
@@ -208,6 +222,8 @@ describe('site copy and links', async () => {
     expect(html).not.toContain('lag of 3 to 6 weeks');
     expect(html).not.toContain('the drop is usually real');
     expect(html).not.toContain('before the blog post goes up');
+    // Only SDK release feeds were timed against launches; config strings and API errors were not.
+    expect(html).toContain('SDK releases land with it or after it: 5 of 7 lagged');
     const ladder = markets.sevenDayClaim.perLadder.ahead;
     expect(html).toContain(`shipped on time ${ladder.resolvedYes} of ${ladder.fired} times`);
     expect(html).toContain("xAI's release notes");

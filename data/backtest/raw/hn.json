@@ -3,6 +3,7 @@
     "query": "Qwen3.5",
     "from": "2026-02-13T00:00:00Z",
     "to": "2026-02-18T00:00:00Z",
+    "nbHits": 4,
     "hits": [
       {
         "id": "47032876",
@@ -38,6 +39,7 @@
     "query": "Gemma 4",
     "from": "2026-03-30T00:00:00Z",
     "to": "2026-04-04T00:00:00Z",
+    "nbHits": 19,
     "hits": [
       {
         "id": "47573491",
@@ -178,6 +180,7 @@
     "query": "Opus 4.7",
     "from": "2026-04-13T00:00:00Z",
     "to": "2026-04-18T00:00:00Z",
+    "nbHits": 35,
     "hits": [
       {
         "id": "47793411",
@@ -430,6 +433,7 @@
     "query": "GPT-5.5",
     "from": "2026-04-20T00:00:00Z",
     "to": "2026-04-26T00:00:00Z",
+    "nbHits": 23,
     "hits": [
       {
         "id": "47858903",
@@ -598,6 +602,7 @@
     "query": "DeepSeek V4",
     "from": "2026-04-21T00:00:00Z",
     "to": "2026-04-26T00:00:00Z",
+    "nbHits": 16,
     "hits": [
       {
         "id": "47884933",
@@ -717,6 +722,7 @@
     "query": "Opus 4.8",
     "from": "2026-05-25T00:00:00Z",
     "to": "2026-05-30T00:00:00Z",
+    "nbHits": 16,
     "hits": [
       {
         "id": "48306771",
@@ -836,6 +842,7 @@
     "query": "Fable 5",
     "from": "2026-06-06T00:00:00Z",
     "to": "2026-06-11T00:00:00Z",
+    "nbHits": 47,
     "hits": [
       {
         "id": "48450521",
@@ -1172,6 +1179,7 @@
     "query": "Gemini 3.5",
     "from": "2026-05-16T00:00:00Z",
     "to": "2026-05-21T00:00:00Z",
+    "nbHits": 8,
     "hits": [
       {
         "id": "48196340",
@@ -1235,6 +1243,7 @@
     "query": "Sonnet 5",
     "from": "2026-06-27T00:00:00Z",
     "to": "2026-07-02T00:00:00Z",
+    "nbHits": 16,
     "hits": [
       {
         "id": "48733696",
@@ -1354,6 +1363,7 @@
     "query": "Grok 4.5",
     "from": "2026-07-05T00:00:00Z",
     "to": "2026-07-10T00:00:00Z",
+    "nbHits": 8,
     "hits": [
       {
         "id": "48829727",
@@ -1417,6 +1427,7 @@
     "query": "GPT-5.6",
     "from": "2026-07-06T00:00:00Z",
     "to": "2026-07-11T00:00:00Z",
+    "nbHits": 27,
     "hits": [
       {
         "id": "48799614",
@@ -1613,6 +1624,7 @@
     "query": "Kimi K3",
     "from": "2026-07-13T00:00:00Z",
     "to": "2026-07-18T00:00:00Z",
+    "nbHits": 24,
     "hits": [
       {
         "id": "48934539",
@@ -1788,6 +1800,7 @@
     "query": "Opus 5",
     "from": "2026-07-21T00:00:00Z",
     "to": "2026-07-26T00:00:00Z",
+    "nbHits": 23,
     "hits": [
       {
         "id": "48994848",
@@ -1956,6 +1969,7 @@
     "query": "Grok 4.6",
     "from": "2026-08-09T00:00:00Z",
     "to": "2026-08-14T00:00:00Z",
+    "nbHits": 9,
     "hits": [
       {
         "id": "49274027",
@@ -2026,6 +2040,7 @@
     "query": "Gemini 3.7",
     "from": "2026-08-10T00:00:00Z",
     "to": "2026-08-15T00:00:00Z",
+    "nbHits": 4,
     "hits": [
       {
         "id": "49288847",
@@ -2061,6 +2076,7 @@
     "query": "Qwen3.8",
     "from": "2026-08-23T00:00:00Z",
     "to": "2026-08-28T00:00:00Z",
+    "nbHits": 14,
     "hits": [
       {
         "id": "49410672",
@@ -2166,6 +2182,7 @@
     "query": "Fable 5.1",
     "from": "2026-08-29T00:00:00Z",
     "to": "2026-09-03T00:00:00Z",
+    "nbHits": 23,
     "hits": [
       {
         "id": "49525372",
@@ -2334,6 +2351,7 @@
     "query": "Gemini 3.8",
     "from": "2026-08-30T00:00:00Z",
     "to": "2026-09-04T00:00:00Z",
+    "nbHits": 14,
     "hits": [
       {
         "id": "49529686",
@@ -2439,7 +2457,190 @@
     "query": "Astra",
     "from": "2026-08-31T00:00:00Z",
     "to": "2026-09-06T00:00:00Z",
+    "nbHits": 126,
     "hits": [
+      {
+        "id": "49506142",
+        "t": 1788156182,
+        "title": "uv: Deduplicate all files in the wheel cache",
+        "url": "https://github.com/astral-sh/uv/pull/21327",
+        "points": 231
+      },
+      {
+        "id": "49507125",
+        "t": 1788165203,
+        "title": "Show HN: Schist – the open source photo editor that feels nice to use",
+        "url": "https://schist.app/",
+        "points": 5
+      },
+      {
+        "id": "49507599",
+        "t": 1788168143,
+        "title": "Ask HN: What is the next Burning Man in NA?",
+        "url": "",
+        "points": 4
+      },
+      {
+        "id": "49508054",
+        "t": 1788172572,
+        "title": "Data Abstraction, Distributed Systems – Barbara Liskov (Turing Award Winner) [video]",
+        "url": "https://www.youtube.com/watch?v=T9CGjbPZeaM",
+        "points": 3
+      },
+      {
+        "id": "49508900",
+        "t": 1788179550,
+        "title": "Show HN: Astral – Astro.js, but in Elixir",
+        "url": "https://github.com/elixir-volt/astral",
+        "points": 10
+      },
+      {
+        "id": "49510627",
+        "t": 1788188534,
+        "title": "Risk averse Australians not 'having a go' in a culture of compliance (2019)",
+        "url": "https://www.smh.com.au/business/the-economy/risk-averse-australians-not-having-a-go-in-a-culture-of-compliance-20190922-p52trp.html",
+        "points": 2
+      },
+      {
+        "id": "49510652",
+        "t": 1788188669,
+        "title": "Australia risks missing out on AI economic boom due to 'slow' business uptake",
+        "url": "https://www.abc.net.au/news/2026-08-31/ai-could-boost-australias-economy-treasury-flag-slow-uptake/107099934",
+        "points": 2
+      },
+      {
+        "id": "49511100",
+        "t": 1788190910,
+        "title": "Songs created by AI banned from Australia's music charts",
+        "url": "https://www.bbc.com/news/articles/c20vl4vm2pno",
+        "points": 1
+      },
+      {
+        "id": "49513072",
+        "t": 1788200888,
+        "title": "Re-engineering Apache Airflow for speed and scale",
+        "url": "https://www.astronomer.io/blog/astro-airflow-re-engineered-for-speed-and-scale/",
+        "points": 3
+      },
+      {
+        "id": "49513287",
+        "t": 1788201776,
+        "title": "Show HN: Appwrite 2.0",
+        "url": "https://appwrite.io/blog/post/announcing-appwrite-2",
+        "points": 5
+      },
+      {
+        "id": "49514289",
+        "t": 1788206828,
+        "title": "AI hallucinations are infiltrating Australia's parliament",
+        "url": "https://www.theguardian.com/australia-news/2026/sep/01/how-misinformation-ai-hallucinations-infiltrating-australian-parliament",
+        "points": 3
+      },
+      {
+        "id": "49516273",
+        "t": 1788220503,
+        "title": "Why Syracuse Can't Attract the Students It Needs to Pay the Bills",
+        "url": "https://www.wsj.com/us-news/education/syracuse-student-application-enrollment-crisis-budget-ff142896",
+        "points": 7
+      },
+      {
+        "id": "49517439",
+        "t": 1788231091,
+        "title": "Astronomers detect fastest known star in Milky Way",
+        "url": "https://www.theguardian.com/science/2026/aug/19/astronomers-detect-fastest-known-star-in-milky-way-s301",
+        "points": 6
+      },
+      {
+        "id": "49517593",
+        "t": 1788232620,
+        "title": "Two Alleged 'TeamPCP' Hackers Arrested in Australia",
+        "url": "https://krebsonsecurity.com/2026/08/two-alleged-teampcp-hackers-arrested-in-australia/",
+        "points": 4
+      },
+      {
+        "id": "49520629",
+        "t": 1788262982,
+        "title": "Why Syracuse Can't Attract the Students It Needs to Pay the Bills",
+        "url": "https://www.wsj.com/us-news/education/syracuse-student-application-enrollment-crisis-budget-ff142896",
+        "points": 4
+      },
+      {
+        "id": "49523693",
+        "t": 1788277937,
+        "title": "Job Loss Fears in the First Years of Generative Artificial Intelligence",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5136877&__cf_chl_tk=2WJamtftqdfDIR9yFfYIrEBu9TugTrmIRI0Zik5sUPs-1788228368-1.0.1.1-v8szdkEGHn_fabviS.7NDaGxeVc7tIE1ievCc8_1tx8",
+        "points": 2
+      },
+      {
+        "id": "49525123",
+        "t": 1788283963,
+        "title": "Nicholas Decker in Hell",
+        "url": "https://www.astralcodexten.com/p/nicholas-decker-in-hell",
+        "points": 4
+      },
+      {
+        "id": "49527595",
+        "t": 1788294041,
+        "title": "Path to Astra: critical capabilities and frontier safeguards",
+        "url": "https://openai.com/index/path-to-astra/",
+        "points": 178
+      },
+      {
+        "id": "49528322",
+        "t": 1788297398,
+        "title": "Show HN: Fountain – OSS API to give your app a computer it can talk to",
+        "url": "https://managoat.com/oss-launch",
+        "points": 1
+      },
+      {
+        "id": "49528347",
+        "t": 1788297488,
+        "title": "OpenAI to Restrict Astra Model After Rating It 'Critical' Cyber Risk",
+        "url": "https://www.wsj.com/tech/ai/openai-to-restrict-astra-model-after-rating-it-critical-cyber-risk-499b5a46",
+        "points": 6
+      },
+      {
+        "id": "49529062",
+        "t": 1788301505,
+        "title": "Show HN: TinyJS – small apps on Win/Mac/Linux",
+        "url": "https://tinyjs.app",
+        "points": 8
+      },
+      {
+        "id": "49529511",
+        "t": 1788304028,
+        "title": "OpenAI delayed its new model's development after the Hugging Face hack",
+        "url": "https://www.theverge.com/ai-artificial-intelligence/987695/openai-astra-unreleased-model-cybersecurity-delay",
+        "points": 5
+      },
+      {
+        "id": "49532025",
+        "t": 1788326227,
+        "title": "OpenAI's Astra uses \"recurrent depth\" to think silently",
+        "url": "https://www.reddit.com/r/singularity/comments/1w4wc0p/openais_astra_uses_recurrent_depth_to_think/",
+        "points": 2
+      },
+      {
+        "id": "49532462",
+        "t": 1788330395,
+        "title": "Thousands of University of Sydney staff on strike over AI and job security",
+        "url": "https://www.theguardian.com/australia-news/2026/sep/02/we-have-had-enough-thousands-of-staff-at-the-university-of-sydney-walk-off-the-job-over-ai-job-security",
+        "points": 4
+      },
+      {
+        "id": "49533620",
+        "t": 1788339123,
+        "title": "Beyond Lambdas: Raising the Abstraction Level of Functional Code",
+        "url": "https://adamtornhill.substack.com/p/beyond-lambdas-raising-the-abstraction",
+        "points": 1
+      },
+      {
+        "id": "49534936",
+        "t": 1788350054,
+        "title": "The Two Abstractions of System Design: Hide or Reduce",
+        "url": "http://muratbuffalo.blogspot.com/2026/05/the-two-abstractions-of-system-design.html",
+        "points": 120
+      },
       {
         "id": "49535001",
         "t": 1788350509,
@@ -3146,6 +3347,7 @@
     "query": "DeepSeek",
     "from": "2026-09-07T00:00:00Z",
     "to": "2026-09-12T00:00:00Z",
+    "nbHits": 37,
     "hits": [
       {
         "id": "49594337",
@@ -3412,6 +3614,7 @@
     "query": "Grok 4.7",
     "from": "2026-09-18T00:00:00Z",
     "to": "2026-09-23T00:00:00Z",
+    "nbHits": 7,
     "hits": [
       {
         "id": "49750862",
@@ -3468,6 +3671,7 @@
     "query": "Opus 5.5",
     "from": "2026-09-19T00:00:00Z",
     "to": "2026-09-24T00:00:00Z",
+    "nbHits": 20,
     "hits": [
       {
         "id": "49803863",
@@ -3615,6 +3819,7 @@
     "query": "GPT-6",
     "from": "2026-09-19T00:00:00Z",
     "to": "2026-09-24T00:00:00Z",
+    "nbHits": 24,
     "hits": [
       {
         "id": "49763987",

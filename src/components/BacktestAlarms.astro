@@ -11,6 +11,7 @@ interface Props {
 const { summary, worst, limit = 12 } = Astro.props;
 const KIND: Record<string, string> = { by: '"Released by" rungs', day: '"Released on" day buckets' };
 const shown = worst.slice(0, limit);
+const inTime = shown.filter((w) => w.announcedInTime);
 ---
 <div class="table-scroll">
   <table>
@@ -40,7 +41,7 @@ const shown = worst.slice(0, limit);
   </table>
 </div>
 <p class="muted note">
-  Market-days count the traded life of every No rung ({summary[0]?.noMarketDays ?? 0} days for "by" rungs). A Yes rung counts only prices from before its model was announced, so a post-launch settlement at 0.99 is not a correct call.
+  Market-days count the traded life of every No rung ({summary[0]?.noMarketDays ?? 0} days for "by" rungs). A Yes rung counts only prices from before its model was announced, so a post-launch settlement at 0.99 is not a correct call. Every rung's price counts from the end of its first hour, and only once it has moved off the quote the book opened at (often exactly 0.5 before anyone trades).
 </p>
 
 <h3 class="tiny sub">Loudest false alarms (No rungs that peaked at 0.5 or more)</h3>
@@ -62,13 +63,19 @@ const shown = worst.slice(0, limit);
           <td>{w.kind === 'day' ? 'on' : 'by'} {w.label}</td>
           <td class="num">{w.peak.toFixed(3)}</td>
           <td class="num">{utcMinute(w.peakAt)}</td>
-          <td class="num">{w.slipDays === null ? 'not yet' : w.slipDays < 0 ? `${-w.slipDays}d earlier` : w.slipDays === 0 ? 'same day' : `${w.slipDays}d later`}</td>
+          <td class="num">
+            {w.slipDays === null ? 'not yet' : w.slipDays < 0 ? `${-w.slipDays}d earlier` : w.slipDays === 0 ? 'same day' : `${w.slipDays}d later`}
+            {w.announcedInTime && <span class="muted" title="announced inside this rung; resolved No under the market's own release rule">†</span>}
+          </td>
         </tr>
       ))}
     </tbody>
   </table>
 </div>
-<p class="muted note">{worst.length} No rungs peaked at 0.5 or more; the {shown.length} highest are listed. "Launch came" is the gap to the ladder's first Yes deadline.</p>
+<p class="muted note">
+  {worst.length} No rungs peaked at 0.5 or more; the {shown.length} highest are listed. "Launch came" is the gap to the ladder's first Yes deadline.
+  {inTime.length > 0 && ` † The launch was announced inside this rung, which still resolved No under the market's own release rule (${[...new Set(inTime.map((w) => w.event))].join(', ')}). Those are rule misses more than timing misses.`}
+</p>
 <style>
   .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
   .sub { color: var(--muted); margin: 18px 0 8px; }

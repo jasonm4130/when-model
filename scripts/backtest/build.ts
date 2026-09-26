@@ -102,6 +102,16 @@ export function settleTimes(raw: RawPulls, releases: readonly ReleaseRow[]): Map
   return out;
 }
 
+/** Announcement time per Gamma event linked to a curated launch, epoch seconds. */
+export function announcementsByEvent(releases: readonly ReleaseRow[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const r of RELEASES) {
+    const at = releases.find((x) => x.id === r.id)?.announcedAt;
+    if (at) for (const id of r.markets) out.set(id, Date.parse(at) / 1000);
+  }
+  return out;
+}
+
 export function joinRungs(raw: RawPulls, settle: ReadonlyMap<string, number> = new Map()): Rung2[] {
   const out: Rung2[] = [];
   for (const event of raw.events) {
@@ -152,12 +162,16 @@ export interface ReleaseRow {
   precursor: CuratedRelease['precursor'];
   context: string;
   sources: CuratedRelease['sources'];
+  /** Earlier first-party stories that were set aside by hand as not the launch, with the reason. */
+  notLaunch: { title: string; hn: string; why: string }[];
 }
 
 export function releaseRows(raw: RawPulls, releases = RELEASES): ReleaseRow[] {
   return releases.map((r) => {
+    const skip = new Map((r.notLaunch ?? []).map((n) => [n.story, n.why]));
+    const hits = raw.hn[r.id]?.hits ?? [];
     const story = firstPartyStory(
-      { ...raw.hn[r.id], hits: (raw.hn[r.id]?.hits ?? []).filter((h) => !TEASER.test(h.title)) },
+      { ...raw.hn[r.id], hits: hits.filter((h) => !TEASER.test(h.title) && !skip.has(h.id)) },
       r.hosts,
       r.hn.title,
     );
@@ -178,6 +192,13 @@ export function releaseRows(raw: RawPulls, releases = RELEASES): ReleaseRow[] {
       precursor: r.precursor,
       context: r.context,
       sources: r.sources,
+      notLaunch: hits
+        .filter((h) => skip.has(h.id))
+        .map((h) => ({
+          title: h.title,
+          hn: `https://news.ycombinator.com/item?id=${h.id}`,
+          why: skip.get(h.id)!,
+        })),
     };
   });
 }
@@ -308,6 +329,11 @@ export interface FalseAlarm {
   peakAt: string;
   /** Days from this deadline to the ladder's first YES deadline; null if the ladder never resolved YES. */
   slipDays: number | null;
+  /**
+   * The linked launch was announced inside this rung (before its deadline; on its day for a day
+   * bucket), yet it resolved No under the market's own release rule, e.g. general availability.
+   */
+  announcedInTime: boolean;
 }
 
 export interface AlarmSummary {
@@ -334,7 +360,14 @@ function forecastPoints(r: Rung2): Point[] {
   return r.market.resolved === 'yes' ? r.points.filter(([t]) => t < r.settled) : r.points;
 }
 
-export function falseAlarms(rungs: readonly Rung2[]): { summary: AlarmSummary[]; worst: FalseAlarm[] } {
+/**
+ * `announced` maps a Gamma event id to its linked launch's announcement (epoch seconds), so a No
+ * rung the launch was announced inside can be told apart from a market that was simply early.
+ */
+export function falseAlarms(
+  rungs: readonly Rung2[],
+  announced: ReadonlyMap<string, number> = new Map(),
+): { summary: AlarmSummary[]; worst: FalseAlarm[] } {
   const scored = rungs.filter((r) => frontier(r) && r.points.length);
   const summary = (['by', 'day'] as const).flatMap((kind) => {
     const mine = scored.filter((r) => r.rung.kind === kind);
@@ -368,6 +401,7 @@ export function falseAlarms(rungs: readonly Rung2[]): { summary: AlarmSummary[];
     .sort((a, b) => b.top.p - a.top.p || a.r.rung.deadline - b.r.rung.deadline)
     .map(({ r, top }) => {
       const yesAt = firstYes.get(r.event.id);
+      const at = announced.get(r.event.id);
       return {
         event: r.event.title,
         label: r.market.label,
@@ -378,6 +412,7 @@ export function falseAlarms(rungs: readonly Rung2[]): { summary: AlarmSummary[];
         peak: round(top.p, 3),
         peakAt: iso(top.t),
         slipDays: yesAt === undefined ? null : round((yesAt - r.rung.deadline) / DAY, 1),
+        announcedInTime: at !== undefined && at <= r.rung.deadline && at >= (r.rung.from ?? -Infinity),
       };
     });
   return { summary, worst };
@@ -407,6 +442,11 @@ export interface HorizonScore {
   scores: Score[];
   reliability: ReliabilityBin[];
   byLab: { labId: LabId; baseRate: number; market: Score; samples: number; hoursWithOdds: number }[];
+  /**
+   * Where the market forecast misses: hours with any frontier rung due inside the window, hours
+   * in which a listing did land, and how many of those the market had at no price or under 10%.
+   */
+  coverage: { hoursWithOdds: number; listedHours: number; listedNoOdds: number; listedUnder10: number };
 }
 
 function brier(forecasts: readonly number[], outcomes: readonly number[]): number {
@@ -503,6 +543,12 @@ export function calibration(raw: RawPulls, rungs: readonly Rung2[]): HorizonScor
       ],
       reliability: reliability(market, y),
       byLab,
+      coverage: {
+        hoursWithOdds: market.filter((p) => p > 0).length,
+        listedHours: y.filter((v) => v === 1).length,
+        listedNoOdds: y.filter((v, i) => v === 1 && market[i] === 0).length,
+        listedUnder10: y.filter((v, i) => v === 1 && market[i] < 0.1).length,
+      },
     };
   });
 }
@@ -757,7 +803,7 @@ export function buildBacktest(raw: RawPulls) {
   const releases = releaseRows(raw);
   const rungs = joinRungs(raw, settleTimes(raw, releases));
   const crossings = crossingRows(rungs, releases);
-  const alarms = falseAlarms(rungs);
+  const alarms = falseAlarms(rungs, announcementsByEvent(releases));
   const meta = {
     version: BACKTEST_VERSION,
     pulledAt: raw.pulledAt,

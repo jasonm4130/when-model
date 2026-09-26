@@ -214,17 +214,40 @@ export function compactPoints(points: readonly Point[]): number[] {
   return out;
 }
 
-/** Unpacks a flat CLOB pull into sorted points, dropping anything inside the first hour after the book opened. */
+/**
+ * Unpacks a flat CLOB pull into sorted points. A price counts from the end of the book's first
+ * hour, and only once it has moved off the book's opening quote: a new rung shows the quote it
+ * was seeded with (often exactly 0.5) until somebody trades, and snapshots of that are not a
+ * forecast. The pull is compacted, so when the book did move inside its first hour, the price it
+ * held at the end of that hour is put back at the first hourly snapshot after it.
+ */
 export function seriesPoints(series: RawSeries | undefined, openedAt: string): Point[] {
   if (!series) return [];
   const settle = Date.parse(openedAt) / 1000 + HOUR;
-  const points: Point[] = [];
+  const sorted: Point[] = [];
   for (let i = 0; i + 1 < series.points.length; i += 2) {
-    const t = series.points[i];
-    const p = series.points[i + 1];
-    if (t >= settle && Number.isFinite(p)) points.push([t, p]);
+    if (Number.isFinite(series.points[i + 1])) sorted.push([series.points[i], series.points[i + 1]]);
   }
-  return points.sort((a, b) => a[0] - b[0]);
+  sorted.sort((a, b) => a[0] - b[0]);
+  const opening = sorted[0]?.[1];
+  const points: Point[] = [];
+  // The last price inside the first hour, if the book had already moved off its opening quote.
+  let carry: Point | undefined;
+  const snapshotAfterSettle = (from: number) => from + Math.ceil((settle - from) / HOUR) * HOUR;
+  for (const [t, p] of sorted) {
+    if (t < settle) {
+      carry = p === opening ? undefined : [t, p];
+      continue;
+    }
+    // Only when a snapshot was compacted away between the carried price and this one.
+    if (carry && snapshotAfterSettle(carry[0]) + 5 * 60 < t)
+      points.push([snapshotAfterSettle(carry[0]), carry[1]]);
+    carry = undefined;
+    points.push([t, p]);
+  }
+  if (carry && snapshotAfterSettle(carry[0]) <= series.endTs)
+    points.push([snapshotAfterSettle(carry[0]), carry[1]]);
+  return points;
 }
 
 /** Last traded/mid price at or before `t`, or undefined before the first point. */

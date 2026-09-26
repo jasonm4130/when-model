@@ -58,6 +58,9 @@ const rungLabel = (s: SeriesCrossings) =>
             {release.sources.map((s) => (
               <a class="src" href={s.url} rel="noopener" target="_blank">{s.label}</a>
             ))}
+            {release.notLaunch.map((n) => (
+              <a class="src muted" href={n.hn} rel="noopener" target="_blank">Not the launch: "{n.title}", {n.why}</a>
+            ))}
           </td>
           <td>
             {series ? (
