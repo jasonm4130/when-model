@@ -49,7 +49,9 @@ Rules of the house:
   gated by `prefers-reduced-motion`.
 - Cloudflare Builds deploys `main` after `pnpm validate`; GitHub requires `check` and `browser`
   before merging. Manual deploy is `op run --env-file .env.op -- pnpm deploy`. Custom domains are attached at the
-  account level; do not add `routes` to `wrangler.jsonc` (see README).
+  account level; do not add `routes` to `wrangler.jsonc` (see README). Keep `workers_dev: false`
+  and an explicit `preview_urls`: the scoped deploy token cannot read the account's workers.dev
+  subdomain, so enabling workers.dev breaks `wrangler deploy`.
 - Tests: `pnpm test --coverage` (vitest, `test/` mirrors `src/`; components render through
   `experimental_AstroContainer`). Coverage thresholds live in `vitest.config.ts` and are enforced
   by the coverage invocation.

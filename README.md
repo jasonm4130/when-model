@@ -162,9 +162,13 @@ For a manual deploy, secrets come from 1Password via [`op run`](https://develope
 op run --env-file .env.op -- pnpm deploy
 ```
 
+The deploy token is `whenmodel-prod-v1`, issued from the `stacks/whenmodel-token` OpenTofu stack in `jasonm4130-cf`. It grants D1 Write, Workers AI Read and Workers Editor on this Worker only, so it can deploy `whenmodel` but cannot create, read or change any other Worker.
+
 `whenmodel.com` and `www.whenmodel.com` are attached to the Worker as account-level custom domains and are deliberately **not** declared as `routes` in `wrangler.jsonc`: the deploy token cannot read zone routes for this zone, and declaring them made every deploy fail after upload.
 
-To run your own copy: change `name` in `wrangler.jsonc`, drop or replace the Skopia analytics `<script>` in `src/layouts/Layout.astro`, and `wrangler deploy`. Nothing else is account-specific.
+`workers_dev` is `false`, so the site has no public `workers.dev` copy. This also keeps `wrangler deploy` from reading the account's `workers.dev` subdomain, which the scoped token is refused (API error 10000). Version URLs stay enabled through an explicit `preview_urls: true`. `wrangler versions upload` still reads that subdomain to print the Version URL, so with this token it uploads the version and then exits with that error. The version is usable at `https://<first 8 characters of the version ID>-whenmodel.<account subdomain>.workers.dev`.
+
+To run your own copy: change `name` in `wrangler.jsonc`, set `workers_dev` to `true` (or attach your own domain), drop or replace the Skopia analytics `<script>` in `src/layouts/Layout.astro`, and `wrangler deploy`. Nothing else is account-specific.
 
 ## Contributing
 
