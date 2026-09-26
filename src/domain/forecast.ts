@@ -220,10 +220,16 @@ export interface ForecastSummary {
   labs: LabRead[];
   /** Share of train-window hours with a frontier text release within the horizon. */
   baseRate: number;
+  /**
+   * The same share over the held-out window. The rate is not stationary (39% then 63% at 72h), so
+   * the train rate alone makes a typical recent forecast look like unusual activity.
+   */
+  testRate: number;
   /** Out-of-sample Brier skill against `baseRate`, and its 95% block-bootstrap interval. */
   skill: number;
   skillCi95: [number, number];
   trainWindow: { from: string; to: string };
+  testWindow: { from: string; to: string };
   recommendation: ForecastConstants['recommendation'];
   /** False when Polymarket was down: `p` is then the unpriced term alone. */
   oddsAvailable: boolean;
@@ -245,9 +251,11 @@ export function forecastSummary(
     market: forecast.components.market,
     labs: forecast.components.labs,
     baseRate: fit?.baseRate ?? 0,
+    testRate: fit?.test.rate ?? 0,
     skill: fit?.test.skill ?? 0,
     skillCi95: fit?.test.skillCi95 ?? [0, 0],
     trainWindow: { from: constants.fittedOn.from, to: constants.fittedOn.to },
+    testWindow: { from: constants.testedOn.from, to: constants.testedOn.to },
     recommendation: constants.recommendation,
     oddsAvailable,
   };

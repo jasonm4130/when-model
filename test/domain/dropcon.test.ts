@@ -235,7 +235,9 @@ describe('computeDropcon', () => {
 describe('baseRateLine', () => {
   it('drops the market read when the odds are offline', () => {
     const line = baseRateLine(forecastSummary([], false));
-    expect(line).toMatch(/^Base rate: a frontier lab listed a text model within 72h in 39% of hours/);
+    expect(line).toMatch(
+      /^Base rate: a frontier lab listed a text model within 72h in 39% of hours \(1 Apr–16 Jul 2026\) and in 63% of held-out hours \(16 Jul–26 Sep 2026\)\./,
+    );
     expect(line).toMatch(/Odds are offline, so there is no market read\.$/);
   });
 });

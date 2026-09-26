@@ -293,13 +293,21 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
   };
 }
 
-const monthDay = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** "16 Jul", in UTC. Spelled out by hand: ICU writes "Sept" for en-GB, and runtimes differ. */
+const monthDay = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getUTCDate()} ${SHORT_MONTHS[d.getUTCMonth()]}`;
+};
 
-/** The base-rate line: the calibrated probability as context, next to the rate it failed to beat. */
+const span = (w: { from: string; to: string }) => `${monthDay(w.from)}–${monthDay(w.to)} ${w.to.slice(0, 4)}`;
+
+/**
+ * The base-rate line: the calibrated probability as context, next to the rate it failed to beat
+ * and the rate in the held-out window, so a typical recent forecast does not read as a surge.
+ */
 export function baseRateLine(f: ForecastSummary): string {
-  const window = `${monthDay(f.trainWindow.from)}–${monthDay(f.trainWindow.to)} ${f.trainWindow.to.slice(0, 4)}`;
-  const base = `a frontier lab listed a text model within ${f.horizonHours}h in ${pct(f.baseRate)} of hours (${window})`;
+  const base = `a frontier lab listed a text model within ${f.horizonHours}h in ${pct(f.baseRate)} of hours (${span(f.trainWindow)}) and in ${pct(f.testRate)} of held-out hours (${span(f.testWindow)})`;
   if (!f.oddsAvailable) return `Base rate: ${base}. Odds are offline, so there is no market read.`;
   const skill = `${f.skill < 0 ? '−' : '+'}${Math.abs(f.skill).toFixed(3)}`;
   return `Context, not the level: ${pct(f.p)} that some frontier lab lists a text model within ${f.horizonHours}h (market reads plus a ${pct(f.unpriced)} unpriced rate). Base rate: ${base}. Out of sample it did not beat the base rate (Brier skill ${skill}).`;

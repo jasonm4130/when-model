@@ -249,10 +249,12 @@ describe('forecastSummary', () => {
     expect(live.baseRate).toBeCloseTo(0.3904, 4);
     expect(live.skill).toBeCloseTo(-0.002, 3);
     expect(live.trainWindow).toEqual({ from: C.fittedOn.from, to: C.fittedOn.to });
+    expect(live.testRate).toBeCloseTo(0.631, 3);
+    expect(live.testWindow).toEqual({ from: C.testedOn.from, to: C.testedOn.to });
     const offline = forecastSummary([{ labId: 'openai', p: 0.5 }], false);
     expect(offline.labs).toEqual([]);
     expect(offline.p).toBeCloseTo(offline.unpriced, 10);
     const bare = forecastSummary([], true, 72, { ...C, horizons: [] });
-    expect([bare.baseRate, bare.skill, bare.skillCi95]).toEqual([0, 0, [0, 0]]);
+    expect([bare.baseRate, bare.testRate, bare.skill, bare.skillCi95]).toEqual([0, 0, 0, [0, 0]]);
   });
 });
