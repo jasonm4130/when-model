@@ -14,7 +14,10 @@ export default defineConfig({
   reporter: isCI ? 'github' : 'list',
   use: {
     baseURL: `http://127.0.0.1:${port}`,
-    trace: 'on-first-retry',
+    // Keep evidence from the first failing attempt too: a flake that fails once and passes on the
+    // retry (the intermittent `browser` failure that could not be reproduced) otherwise leaves nothing.
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
