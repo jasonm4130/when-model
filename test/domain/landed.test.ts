@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Drop } from '../../src/domain/drop';
 import type { FeedItem } from '../../src/domain/feed';
-import { FEED_DAY_MAX_LAG_MS, LAUNCH_STORY_POINTS, buildLanded, canonicalUrl } from '../../src/domain/landed';
+import {
+  FEED_DAY_MAX_LAG_MS,
+  LAUNCH_STORY_POINTS,
+  announcementKey,
+  buildLanded,
+  canonicalUrl,
+} from '../../src/domain/landed';
 
 const NOW = Date.parse('2026-09-26T03:00:00Z');
 const HOUR = 3_600_000;
@@ -180,5 +186,29 @@ describe('buildLanded', () => {
       NOW,
     );
     expect(late.announcements.map((a) => a.seenAt)).toEqual([fresh.publishedAt]);
+  });
+
+  it('keeps two xAI release notes on one page apart: the #anchor is the post', () => {
+    const note = (title: string, anchor: string, date: string): FeedItem => ({
+      source: 'xai',
+      title,
+      url: `https://docs.x.ai/developers/release-notes#${anchor}`,
+      publishedAt: `${date}T00:00:00.000Z`,
+      precision: 'day',
+      alert: true,
+    });
+    const l = buildLanded(
+      {
+        drops: [],
+        feed: [note('Grok 4.8', 'grok-48', '2026-09-25'), note('Grok 4.7', 'grok-47', '2026-09-21')],
+      },
+      NOW,
+    );
+    expect(l.announcements.map((a) => a.title)).toEqual(['Grok 4.8', 'Grok 4.7']);
+    expect(announcementKey('https://www.anthropic.com/news/x/?utm=1')).toBe('anthropic.com/news/x');
+    expect(announcementKey('https://docs.x.ai/developers/release-notes#grok-48')).toBe(
+      'docs.x.ai/developers/release-notes#grok-48',
+    );
+    expect(announcementKey('not a url')).toBe('not a url');
   });
 });

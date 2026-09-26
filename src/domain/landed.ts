@@ -88,6 +88,19 @@ export function canonicalUrl(url: string): string {
   }
 }
 
+/**
+ * An announcement's identity: its canonical page plus any #fragment. xAI publishes every release
+ * note as an anchor on one page (docs.x.ai/developers/release-notes#grok-47), so the page alone
+ * would fold a week's launches into one.
+ */
+export function announcementKey(url: string): string {
+  try {
+    return `${canonicalUrl(url)}${new URL(url).hash}`;
+  } catch {
+    return url;
+  }
+}
+
 function eventName(models: readonly ReleaseModel[]): string {
   const names = [...new Set(models.map((m) => m.name.replace(/^[^:]+:\s*/, '')))];
   return names.length <= 2 ? names.join(' / ') : `${names[0]} +${names.length - 1} more`;
@@ -143,7 +156,7 @@ export function buildLanded(input: LandedInputs, now: number): Landed {
       sighted && Date.parse(sighted) - Date.parse(f.publishedAt) <= FEED_DAY_MAX_LAG_MS
         ? sighted
         : f.publishedAt;
-    const key = canonicalUrl(f.url);
+    const key = announcementKey(f.url);
     if (!withinDays(seenAt, 7, now) || announcementUrls.has(key)) continue;
     announcementUrls.add(key);
     announcements.push({
