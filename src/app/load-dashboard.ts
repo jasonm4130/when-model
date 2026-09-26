@@ -213,9 +213,9 @@ const HISTORY_UNAVAILABLE: HistoryResponseBody = { ok: false, points: [] };
 
 /**
  * The 30-day DROPCON series, memoised at the edge for 15 minutes under `HISTORY_MEMO_KEY`: the
- * JSON endpoint and the page's history strip read the same entry, so the strip costs a request no
- * upstream call and at most one D1 read per colo per 15 minutes. A failed read is served but never
- * memoised: one D1 blip must not blank the strip for the next 15 minutes. Never throws.
+ * JSON endpoint and the page's DROPCON instrument read the same entry, so the instrument costs a
+ * request no upstream call and at most one D1 read per colo per 15 minutes. A failed read is served
+ * but never memoised: one D1 blip must not blank the instrument for the next 15 minutes. Never throws.
  */
 export async function loadHistory(): Promise<HistoryResponseBody> {
   try {

@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Layout and contrast rules that only matter on data the local Worker may not have today: a failed
- * source, an extrapolated read, a filled-in history strip. Each test writes that state into the page
+ * source, an extrapolated read, crowded launch names on the instrument. Each test writes that state into the page
  * with the component's own scoped attribute, so the CSS under test is what styles it.
  */
 
@@ -84,40 +84,61 @@ test('the instrument strokes its trace and never fills it', async ({ page }) => 
 });
 
 for (const width of [390, 1024, 1440]) {
-  test(`launch labels and the scrubber chip stay inside the plot at ${width}px`, async ({ page }) => {
+  test(`crowded launch names are placed whole, inside the plot and clear of each other, at ${width}px`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width, height: 900 });
     await openDashboard(page);
-    const plot = page.locator('.sc-plot');
-    const box = (await plot.boundingBox())!;
-    // A launch label at the NOW edge reads leftward, so it never runs past it.
-    const flag = await plot.evaluate((el) => {
+    await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
+    // Six long names a few hours apart near the NOW edge, where labels read leftward.
+    await page.locator('.sc-plot').evaluate((el) => {
       const cid = [...el.attributes].find((a) => a.name.startsWith('data-astro-cid'))!.name;
-      const f = document.createElement('span');
-      f.setAttribute(cid, '');
-      f.className = 'sc-flag flip';
-      f.style.cssText = 'left:99%; --row:0; --lab:#ff7a1a';
-      f.textContent = '✱ A very long frontier launch name';
-      el.append(f);
-      const r = f.getBoundingClientRect();
-      const p = el.getBoundingClientRect();
-      return {
-        display: getComputedStyle(f).display,
-        right: r.right,
-        plotRight: p.right,
-        left: r.left,
-        plotLeft: p.left,
-      };
+      for (let i = 0; i < 6; i++) {
+        const f = document.createElement('span');
+        f.setAttribute(cid, '');
+        f.setAttribute('data-label', 'flag');
+        f.className = `sc-flag${i > 2 ? ' flip' : ''}`;
+        f.style.cssText = `left:${80 + i * 3}%; --row:0; --lab:#ff7a1a`;
+        f.textContent = `✱ A very long frontier launch name ${i}`;
+        el.append(f);
+      }
     });
-    if (flag.display !== 'none') {
-      expect(flag.right).toBeLessThanOrEqual(flag.plotRight);
-      expect(flag.left).toBeGreaterThanOrEqual(flag.plotLeft);
+    // Any change to the plot's size makes the script place every label again, the injected ones
+    // included: narrow the plot by a pixel.
+    await page.locator('.sc-plot').evaluate((el) => ((el as HTMLElement).style.right = '1px'));
+    await page.waitForTimeout(250);
+    const placed = await page.locator('.sc-plot').evaluate((plot) => {
+      const P = plot.getBoundingClientRect();
+      return [...plot.querySelectorAll('.sc-flag')]
+        .filter((f) => getComputedStyle(f).display !== 'none' && getComputedStyle(f).visibility !== 'hidden')
+        .map((f) => {
+          const r = f.getBoundingClientRect();
+          return { left: r.left - P.left, right: r.right - P.left, top: r.top, bottom: r.bottom, w: P.width };
+        });
+    });
+    for (const f of placed) {
+      expect(f.left).toBeGreaterThanOrEqual(-0.5);
+      expect(f.right).toBeLessThanOrEqual(f.w + 0.5);
     }
-    // The chip flips left of the cursor near the NOW edge.
-    await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2);
-    const chip = (await page.locator('[data-chip]').boundingBox())!;
-    expect(chip.x + chip.width).toBeLessThanOrEqual(box.x + box.width + 0.5);
-    expect(chip.x).toBeGreaterThanOrEqual(box.x - 0.5);
+    for (let i = 0; i < placed.length; i++)
+      for (let j = i + 1; j < placed.length; j++) {
+        const a = placed[i];
+        const b = placed[j];
+        expect(a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).toBe(false);
+      }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  });
+
+  test(`the scrubber's time tag stays on the day axis at the NOW edge at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openDashboard(page);
+    const box = (await page.locator('.sc-plot').boundingBox())!;
+    await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2);
+    const tag = (await page.locator('[data-ctag]').boundingBox())!;
+    const days = (await page.locator('.sc-days').boundingBox())!;
+    expect(tag.x).toBeGreaterThanOrEqual(days.x - 0.5);
+    expect(tag.x + tag.width).toBeLessThanOrEqual(days.x + days.width + 0.5);
+    await expect(page.locator('[data-ctag]')).toHaveText('NOW');
   });
 }
 

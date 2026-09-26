@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { HISTORY_CACHE_TTL_SECONDS, loadHistory } from '../../app/load-dashboard';
 
-// The series is built and memoised in src/app/load-dashboard.ts, which the page's history strip
+// The series is built and memoised in src/app/load-dashboard.ts, which the page's DROPCON instrument
 // shares; these re-exports keep the endpoint's contract importable from the route.
 export {
   HISTORY_CACHE_TTL_SECONDS,

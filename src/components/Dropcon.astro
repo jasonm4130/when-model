@@ -3,7 +3,7 @@ import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
 import { levelBandsText, WEIGHTS } from '../domain/dropcon';
 import { SOURCE } from '../domain/sources';
-import { dropconName, dropconPill, forecastAnswer, levelBaseRateText, topReadText } from '../ui/odds';
+import { dropconPill, forecastAnswer, levelBaseRateText, topReadText } from '../ui/odds';
 import { sourcePill } from '../ui/panels';
 import DropconScope from './DropconScope.astro';
 interface Props {
@@ -22,7 +22,6 @@ const color = c.state === 'ok' ? colors[c.level] : 'var(--muted)';
 const pill = c.state === 'ok' ? sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now ?? Date.now()) : dropconPill(c);
 const hottest = d.labs[0];
 const noLabData = c.state === 'no-signal';
-const levelLine = c.state === 'ok' ? `LEVEL ${c.level} OF 5` : c.state === 'floor' ? 'NOT A MEASUREMENT' : 'NO SIGNAL';
 ---
 <section class="section wrap reveal dc-hero" aria-labelledby="dc-title" style={`--lvl:${color}`}>
   <div class={`panel dropcon ${c.state}`}>
@@ -35,13 +34,7 @@ const levelLine = c.state === 'ok' ? `LEVEL ${c.level} OF 5` : c.state === 'floo
         ) : <span class={`pill ${pill.tone}`}>{pill.text}</span>}
       </div>
     </div>
-    <div class="dc-lede">
-      <p class="dc-name head"><span class="dc-of tiny">{levelLine}</span>{dropconName(c)}</p>
-      <p class="dc-headline">{c.headline}</p>
-    </div>
-
     <DropconScope d={d} history={history} now={now} />
-
   </div>
 
   <div class="panel dc-detail" id="dc-adds">
@@ -84,11 +77,6 @@ const levelLine = c.state === 'ok' ? `LEVEL ${c.level} OF 5` : c.state === 'floo
 </section>
 <style>
   .dc-hero { display: grid; gap: var(--gap); }
-  .dc-lede { display: grid; gap: 6px; margin-bottom: 14px; }
-  .dc-name { font-size: var(--fs-head); line-height: 1.4; color: var(--lvl); text-shadow: 0 0 6px color-mix(in srgb, var(--lvl) 50%, transparent); }
-  .dropcon:not(.ok) .dc-name { text-shadow: none; }
-  .dc-of { display: block; margin-bottom: 6px; color: var(--text); text-shadow: none; }
-  .dc-headline { font-size: var(--fs-lg); color: #fff; }
 
   .dc-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 28px; }
   .dc-blurb { margin-top: 10px; color: var(--muted); }
@@ -112,7 +100,4 @@ const levelLine = c.state === 'ok' ? `LEVEL ${c.level} OF 5` : c.state === 'floo
   .dc-more summary::before { content: '+ '; }
   .dc-more[open] summary::before { content: '- '; }
   .dc-more p, .dc-more li { color: var(--muted); margin-top: 6px; }
-  @media (max-width: 640px) {
-    .dc-headline { font-size: var(--fs-body); }
-  }
 </style>

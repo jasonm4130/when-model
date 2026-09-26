@@ -139,7 +139,7 @@ describe('GET /api/history.json', () => {
   });
 });
 
-describe('the page history strip', () => {
+describe("the page's history read", () => {
   async function loadApp(database: SnapshotDatabase | undefined) {
     vi.doMock('cloudflare:workers', () => ({ env: database ? { HISTORY_DB: database } : {} }));
     return import('../../src/app/load-dashboard');

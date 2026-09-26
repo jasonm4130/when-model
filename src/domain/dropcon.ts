@@ -1,6 +1,7 @@
 import { dayMonth } from './dates';
 import { leadInputSkillText, type ForecastSummary } from './forecast';
 import type { LabId } from './lab';
+import { LEVEL_NAMES } from './levels';
 
 /**
  * DROPCON v3: a hand-weighted lead score, 0..100, from forward-looking market reads only.
@@ -121,25 +122,24 @@ export interface Dropcon {
  */
 const LEVELS: Record<DropconLevel, { name: string; market: string }> = {
   5: {
-    name: 'QUIET ORBIT',
+    name: LEVEL_NAMES[5],
     market:
       'No market prices a named frontier release as likely this week. Unannounced releases remain possible.',
   },
   4: {
-    name: 'RUMOUR MILL',
+    name: LEVEL_NAMES[4],
     market: 'A market gives a named frontier release a real but minority chance within 7 days.',
   },
   3: {
-    name: 'GPU FANS SPINNING',
+    name: LEVEL_NAMES[3],
     market: 'Markets put a named frontier release at roughly even odds within 7 days.',
   },
   2: {
-    // Named for what it reads: the level reads market odds, never posts (there is no X feed).
-    name: 'MARKETS SMELL A DROP',
+    name: LEVEL_NAMES[2],
     market: 'Markets price a named frontier release as likely within 7 days.',
   },
   1: {
-    name: 'RELEASE SURGE',
+    name: LEVEL_NAMES[1],
     market: 'Markets price a named frontier release as near-certain within 7 days.',
   },
 };

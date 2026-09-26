@@ -21,12 +21,17 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes.
 - `src/domain/instrument.ts` draws the hero: `buildInstrument` turns the history, the live level
-  and LANDED's launches into the 7-day trace, zones and scrubber data `DropconScope.astro` renders.
-  Only the current algorithm version is inked on the level axis; an older one is a hatched zone.
+  and LANDED's launches into the 7-day trace, zones, level-change flags and scrubber data
+  `DropconScope.astro` renders. Only the current algorithm version is inked on the level axis; an
+  older one is a hatched zone. Level names live in `src/domain/levels.ts`. `src/ui/readout.ts`
+  (the scrubber's readout text) and `src/ui/labels.ts` (whole-or-nothing label placement) are pure
+  and run both in the server render and in the component's browser script. The readout never
+  gives a past hour the live reading, and scrubbing never changes the big number.
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
-  source pills aging to STALE, ticker behavior and the 5-minute poll-and-offer reload.
+  source pills aging to STALE, ticker behavior, the 5-minute poll-and-offer reload, and the hero's
+  scrubber and label fitting (progressive enhancement: the server render reads NOW without it).
 
 Rules of the house:
 
