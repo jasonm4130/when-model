@@ -1,0 +1,50 @@
+{
+  "id": "961779",
+  "slug": "next-grok-model-4pt7-released-by",
+  "title": "Next Grok Model (4.7+) released by...?",
+  "closed": true,
+  "negRisk": false,
+  "endDate": "2026-10-18T23:59:00Z",
+  "volume": 50800.45242900001,
+  "markets": [
+    {
+      "question": "Next Grok Model (4.7+) released by September 12, 2026?",
+      "groupItemTitle": "September 12",
+      "outcomes": "[\"Yes\", \"No\"]",
+      "outcomePrices": "[\"0\", \"1\"]",
+      "closed": true,
+      "endDate": "2026-10-12T23:59:00Z",
+      "bestAsk": 0.005,
+      "spread": 0.005,
+      "lastTradePrice": 0.022,
+      "oneDayPriceChange": -0.037,
+      "clobTokenIds": "[\"81573967220958202245153005099295750307435376876156119005877218938492269932952\", \"109812851303829051277912496254751616720980432695290495114350721936703765870311\"]"
+    },
+    {
+      "question": "Next Grok Model (4.7+) released by September 14, 2026?",
+      "groupItemTitle": "September 14",
+      "outcomes": "[\"Yes\", \"No\"]",
+      "outcomePrices": "[\"0\", \"1\"]",
+      "closed": true,
+      "endDate": "2026-10-14T23:59:00Z",
+      "bestAsk": 0.001,
+      "spread": 0.001,
+      "lastTradePrice": 0.01,
+      "oneDayPriceChange": -0.0475,
+      "clobTokenIds": "[\"24154887546491910420601024347568710594941690648504023840958077125428138929150\", \"39858905003915815810293706637644249677545928276969512416336091935400980464760\"]"
+    },
+    {
+      "question": "Next Grok Model (4.7+) released by September 18, 2026?",
+      "groupItemTitle": "September 18",
+      "outcomes": "[\"Yes\", \"No\"]",
+      "outcomePrices": "[\"0\", \"1\"]",
+      "closed": true,
+      "endDate": "2026-10-18T23:59:00Z",
+      "bestAsk": 0.001,
+      "spread": 0.001,
+      "lastTradePrice": 0.003,
+      "oneDayPriceChange": -0.2195,
+      "clobTokenIds": "[\"101861661069019842672412021736729374111042451642435832413294869737069617119681\", \"67340501658346034264400652081735438582182912996467269262757943041461627777347\"]"
+    }
+  ]
+}
