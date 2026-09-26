@@ -37,6 +37,9 @@ Rules of the house:
   until `pnpm backtest:replay` shows it adds out-of-sample skill. Any scoring change bumps
   `DROPCON_ALGORITHM_VERSION`: history breaks its series at a version change and the repricing
   term reads only same-version rows.
+- A number on `/backtest` comes from `data/backtest/*.json` or a domain constant, never typed
+  into markup, and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
+  only through `pnpm backtest` or `pnpm backtest:replay`.
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
   deploy by up to its TTL and a new render reading an old shape streams a blank page. The
   compact D1 snapshot must stay under 32 KiB (`MAX_SNAPSHOT_BYTES`); the worst-case test in

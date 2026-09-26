@@ -1,123 +1,142 @@
 ---
-import type { HorizonScore } from '../../scripts/backtest/build';
+import type { ReliabilityBin } from '../../scripts/backtest/build';
 import { pct } from '../../scripts/backtest/view';
 
-interface Props {
-  horizons: readonly HorizonScore[];
+/** One reliability diagram: forecast vs how often it came true, with the number of samples per bin. */
+interface ReliabilityPanel {
+  /** Short heading above the plot. */
+  title: string;
+  bins: readonly ReliabilityBin[];
+  /** What one sample is: "hours", "rungs". */
+  unit: string;
+  /** A horizontal reference, e.g. the rate that actually happened over the scored window. */
+  reference?: { value: number; label: string };
+  /** What the plot is, for its accessible name; the largest miss is appended. */
+  description: string;
 }
-const { horizons } = Astro.props;
 
-const S = 300;
-const M = { top: 16, right: 16, bottom: 44, left: 52 };
+interface Props {
+  panels: readonly ReliabilityPanel[];
+}
+const { panels } = Astro.props;
+
+const S = 280;
+const HIST = 56;
+const M = { top: 14, right: 14, left: 50, bottom: 40 };
 const W = M.left + S + M.right;
-const H = M.top + S + M.bottom;
+const H = M.top + S + 16 + HIST + M.bottom;
 const px = (p: number) => M.left + p * S;
 const py = (p: number) => M.top + (1 - p) * S;
+const histTop = M.top + S + 16;
 const ticks = [0, 0.25, 0.5, 0.75, 1];
-const maxN = Math.max(1, ...horizons.flatMap((h) => h.reliability.map((b) => b.n)));
-const radius = (n: number) => 4 + 8 * Math.sqrt(n / maxN);
 
-const panels = horizons.map((h) => {
-  const bins = h.reliability.map((b) => ({
+const views = panels.map((panel) => {
+  const maxN = Math.max(1, ...panel.bins.map((b) => b.n));
+  const total = panel.bins.reduce((a, b) => a + b.n, 0);
+  const bins = panel.bins.map((b) => ({
     ...b,
     cx: px(b.meanForecast),
     cy: py(b.observed),
-    r: radius(b.n),
-    title: `${h.horizonH}h, forecast ${b.from.toFixed(1)}–${b.to.toFixed(1)}: ${b.n} hours, mean forecast ${pct(b.meanForecast)}, a frontier model was listed ${pct(b.observed)} of the time`,
+    r: 4 + 7 * Math.sqrt(b.n / maxN),
+    barH: Math.max(1, (b.n / maxN) * (HIST - 14)),
+    title: `Forecast ${pct(b.from)}–${pct(b.to)}: ${b.n} ${panel.unit}, mean forecast ${pct(b.meanForecast)}, came true ${pct(b.observed)} of the time`,
   }));
   const path = bins.map((b, i) => `${i ? 'L' : 'M'}${b.cx.toFixed(1)},${b.cy.toFixed(1)}`).join(' ');
-  const market = h.scores.find((s) => s.forecast === 'market max');
-  const worst = [...h.reliability].sort((a, b) => Math.abs(b.observed - b.meanForecast) * b.n - Math.abs(a.observed - a.meanForecast) * a.n)[0];
-  const label = `Reliability of the market forecast at ${h.horizonH} hours over ${h.samples} hourly samples. Brier ${market?.brier}, skill ${market?.skill} against the ${pct(h.baseRate)} base rate. The largest miss is the ${worst?.from.toFixed(1)}–${worst?.to.toFixed(1)} bin: ${worst?.n} hours with a mean forecast of ${pct(worst?.meanForecast)} saw a listing ${pct(worst?.observed)} of the time.`;
-  return { h, bins, path, label };
+  const worst = [...panel.bins].sort((a, b) => Math.abs(b.observed - b.meanForecast) * b.n - Math.abs(a.observed - a.meanForecast) * a.n)[0];
+  const label = `${panel.description} Over ${total} ${panel.unit} in ${panel.bins.length} bins.${worst ? ` The largest miss is the ${pct(worst.from)}–${pct(worst.to)} bin: ${worst.n} ${panel.unit} with a mean forecast of ${pct(worst.meanForecast)} came true ${pct(worst.observed)} of the time.` : ''} The table below has every bin.`;
+  return { panel, bins, path, label, total };
 });
-/** Every bin that has hours at some horizon, for the table twin of the plots. */
-const binRows = [...new Map(horizons.flatMap((h) => h.reliability.map((b) => [b.from, b.to] as const))).entries()].sort((a, b) => a[0] - b[0]);
-const binAt = (h: HorizonScore, from: number) => h.reliability.find((b) => b.from === from);
 ---
 <div class="reliability">
-  {panels.map(({ h, bins, path, label }) => (
+  {views.map(({ panel, bins, path, label }) => (
     <figure>
-      <figcaption class="tiny">Next {h.horizonH}h · market max</figcaption>
+      <figcaption class="tiny">{panel.title}</figcaption>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} class="chart">
         {ticks.map((t) => (
           <g>
             <line class="grid" x1={px(t)} x2={px(t)} y1={M.top} y2={M.top + S} />
             <line class="grid" x1={M.left} x2={M.left + S} y1={py(t)} y2={py(t)} />
-            <text class="tick" x={px(t)} y={M.top + S + 20} text-anchor="middle">{t}</text>
-            <text class="tick" x={M.left - 8} y={py(t) + 5} text-anchor="end">{t}</text>
+            <text class="tick" x={px(t)} y={H - 22} text-anchor="middle">{t * 100}</text>
+            <text class="tick" x={M.left - 8} y={py(t) + 5} text-anchor="end">{t * 100}</text>
           </g>
         ))}
         <line class="diag" x1={px(0)} y1={py(0)} x2={px(1)} y2={py(1)} />
-        <line class="base" x1={px(0)} x2={px(1)} y1={py(h.baseRate)} y2={py(h.baseRate)} />
-        <text class="note" x={px(1) - 4} y={py(h.baseRate) - 6} text-anchor="end">base rate {pct(h.baseRate)}</text>
+        <text class="note" x={px(0.97)} y={py(0.97) + 22} text-anchor="end">perfect</text>
+        {panel.reference && (
+          <>
+            <line class="ref" x1={px(0)} x2={px(1)} y1={py(panel.reference.value)} y2={py(panel.reference.value)} />
+            <text class="note" x={px(0) + 6} y={py(panel.reference.value) - 7}>{panel.reference.label}</text>
+          </>
+        )}
         <path class="curve" d={path} />
         {bins.map((b) => (
-          <circle cx={b.cx} cy={b.cy} r={b.r}>
+          <g class="bin">
             <title>{b.title}</title>
-          </circle>
+            <circle cx={b.cx} cy={b.cy} r={b.r} />
+          </g>
         ))}
-        <text class="axis" x={M.left + S / 2} y={H - 4} text-anchor="middle">market forecast</text>
-        <text class="axis" x={14} y={M.top + S / 2} text-anchor="middle" transform={`rotate(-90 14 ${M.top + S / 2})`}>observed</text>
+        {bins.map((b) => (
+          <g class="bin">
+            <title>{b.title}</title>
+            <rect class="hbar" x={px(b.from) + 2} width={Math.max(2, px(b.to) - px(b.from) - 4)} y={histTop + HIST - b.barH} height={b.barH} />
+            <text class="count" x={(px(b.from) + px(b.to)) / 2} y={histTop + HIST - b.barH - 3} text-anchor="middle">{b.n}</text>
+          </g>
+        ))}
+        <line class="axis" x1={M.left} x2={M.left + S} y1={histTop + HIST} y2={histTop + HIST} />
+        <text class="axis-label" x={M.left + S / 2} y={H - 4} text-anchor="middle">forecast, %</text>
+        <text class="axis-label" x={14} y={M.top + S / 2} text-anchor="middle" transform={`rotate(-90 14 ${M.top + S / 2})`}>came true, %</text>
+        <text class="axis-label" x={14} y={histTop + HIST / 2} text-anchor="middle" transform={`rotate(-90 14 ${histTop + HIST / 2})`}>{panel.unit}</text>
       </svg>
     </figure>
   ))}
 </div>
-<p class="muted note">
-  Hourly samples from 2026-04-01. The forecast is the highest price among frontier-lab rungs trading at that hour and due inside the window; the outcome is whether any frontier lab listed a model on OpenRouter inside it. The diagonal is perfect calibration; circle area is the number of hours in the bin.
-</p>
 <details class="bins">
   <summary class="tiny">The plotted bins as a table</summary>
   <div class="table-scroll">
-    <table>
-      <caption class="sr-only">Reliability bins: hours per forecast bin, their mean market forecast and how often a frontier model was listed.</caption>
-      <thead>
-        <tr>
-          <th scope="col">Forecast</th>
-          {horizons.map((h) => (
-            <>
-              <th scope="col" class="num">Hours, {h.horizonH}h</th>
-              <th scope="col" class="num">Mean forecast</th>
-              <th scope="col" class="num">Listed</th>
-            </>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {binRows.map(([from, to]) => (
+    {views.map(({ panel, total }) => (
+      <table>
+        <caption>{panel.title} · {total} {panel.unit}</caption>
+        <thead>
           <tr>
-            <th scope="row">{from.toFixed(1)}–{to.toFixed(1)}</th>
-            {horizons.map((h) => {
-              const b = binAt(h, from);
-              return (
-                <>
-                  <td class="num">{b?.n ?? 0}</td>
-                  <td class="num">{pct(b?.meanForecast, 1)}</td>
-                  <td class="num">{pct(b?.observed, 1)}</td>
-                </>
-              );
-            })}
+            <th scope="col">Forecast</th>
+            <th scope="col" class="num">{panel.unit}</th>
+            <th scope="col" class="num">Mean forecast</th>
+            <th scope="col" class="num">Came true</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {panel.bins.map((b) => (
+            <tr>
+              <th scope="row">{pct(b.from)}–{pct(b.to)}</th>
+              <td class="num">{b.n}</td>
+              <td class="num">{pct(b.meanForecast, 1)}</td>
+              <td class="num">{pct(b.observed, 1)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ))}
   </div>
 </details>
 <style>
-  .reliability { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
-  figure { margin: 0; }
-  figcaption { color: var(--muted); margin-bottom: 6px; }
-  .chart { display: block; width: 100%; max-width: 420px; height: auto; font-family: var(--font-mono); }
+  .reliability { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px 28px; }
+  figure { margin: 0; min-width: 0; }
+  figcaption { color: var(--text); margin-bottom: 8px; line-height: 1.6; }
+  .chart { display: block; width: 100%; max-width: 400px; height: auto; font-family: var(--font-mono); }
   .grid { stroke: var(--line); stroke-width: 1; }
+  .axis { stroke: var(--line2); stroke-width: 1; }
   .diag { stroke: var(--muted); stroke-width: 1; }
-  .base { stroke: #d9731f; stroke-width: 1; }
-  .curve { fill: none; stroke: #1aa0b3; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  circle { fill: #1aa0b3; stroke: #0d0b1e; stroke-width: 2; }
-  circle:hover { stroke: var(--yellow); }
-  .tick { fill: var(--muted); font-size: 16px; }
-  .axis { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
-  .note { fill: var(--text); font-size: 16px; }
-  p.note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+  .ref { stroke: var(--text); stroke-width: 2; stroke-dasharray: 2 4; stroke-linecap: round; }
+  .curve { fill: none; stroke: #2ec4d6; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  circle { fill: #2ec4d6; stroke: var(--bg2); stroke-width: 2; }
+  .hbar { fill: #1f6f7c; }
+  .bin:hover circle, .bin:hover .hbar { stroke: var(--yellow); stroke-width: 2; }
+  .tick, .count { fill: var(--muted); font-size: 16px; }
+  .count { font-size: 14px; }
+  .note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--bg2); stroke-width: 4px; stroke-linejoin: round; }
+  .axis-label { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
   .bins { margin-top: 10px; }
-  .bins summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
+  .bins summary { color: var(--muted); margin-bottom: 8px; }
+  .bins table { margin-bottom: 12px; }
+  .bins caption { text-align: left; color: var(--muted); font-size: var(--fs-xs); padding: 4px 6px; }
 </style>
