@@ -15,6 +15,12 @@
       "migrations_dir": "migrations",
     },
   ],
+  // Production is served only from the custom domains below; the public workers.dev copy is off.
+  // With workers_dev off, `wrangler deploy` no longer reads the account's workers.dev subdomain,
+  // which the scoped deploy token cannot do. preview_urls must stay explicit: unset, it follows
+  // workers_dev and turns Version URLs off too.
+  "workers_dev": false,
+  "preview_urls": true,
   // Custom domains whenmodel.com and www.whenmodel.com are attached at the account level
   // (PUT /accounts/<id>/workers/domains). The deploy token cannot read zone routes for this
   // zone, so declaring them here as `routes` makes `wrangler deploy` fail after upload.
