@@ -1,19 +1,57 @@
 ---
-interface Props { generatedAt: string }
-const { generatedAt } = Astro.props;
+import { SOURCE } from '../domain/sources';
+interface Props {
+  /** When the data on this page was produced: the dashboard build, or the backtest's raw pulls. */
+  generatedAt: string;
+  /** `backtest` links back to the dashboard and says how to rebuild the page's data. */
+  variant?: 'dashboard' | 'backtest';
+}
+const { generatedAt, variant = 'dashboard' } = Astro.props;
+const REPO = 'https://github.com/jasonm4130/when-model';
+/** Every upstream in `SOURCE` needs a home here, or this stops type-checking. The first-seen ledger is our own D1. */
+type Upstream = Exclude<keyof typeof SOURCE, 'ledger'>;
+const HOME: Readonly<Record<Upstream, string>> = {
+  polymarket: 'https://polymarket.com?utm_source=whenmodel.com',
+  openrouter: 'https://openrouter.ai/models',
+  hfTrending: 'https://huggingface.co/models?pipeline_tag=text-generation&sort=trending',
+  hfPapers: 'https://huggingface.co/papers',
+  hackerNews: 'https://news.ycombinator.com',
+  openai: 'https://openai.com/news/',
+  deepmind: 'https://deepmind.google/discover/blog/',
+  anthropic: 'https://www.anthropic.com/news',
+  xai: 'https://docs.x.ai/developers/release-notes',
+  // Three SDK repos; the adapter lists which.
+  github: `${REPO}/blob/main/src/adapters/github-releases.ts`,
+  hnLeaks: 'https://hn.algolia.com',
+  testingCatalog: 'https://www.testingcatalog.com',
+  youtube: 'https://www.youtube.com',
+  transformers: 'https://github.com/huggingface/transformers',
+};
+const upstreams = (Object.keys(HOME) as Upstream[]).map((key) => ({ name: SOURCE[key], href: HOME[key] }));
+const stamp = generatedAt.replace('T', ' ').slice(0, variant === 'backtest' ? 16 : 19);
 ---
 <footer class="wrap foot reveal">
   <div class="panel disclaimer">
     <div class="tiny glow-y">OPERATIONAL DISCLAIMER</div>
-    <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly. ▼</p>
+    <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly. <span aria-hidden="true">▼</span></p>
+    <p class="sources"><span class="tiny muted">SOURCES</span> {upstreams.map((u, i) => <><span class="src-item"><a href={u.href} target="_blank" rel="noopener">{u.name}</a>{i < upstreams.length - 1 && <span aria-hidden="true"> ·</span>}</span> </>)}</p>
   </div>
   <div class="foot-row">
-    <span class="muted">GENERATED {generatedAt.replace('T', ' ').slice(0, 19)}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a> · <a href="/backtest">backtest</a> · <a href="https://github.com/jasonm4130/when-model" target="_blank" rel="noopener">source</a></span>
+    {variant === 'backtest' ? (
+      <span class="muted"><a href="/">◂ DASHBOARD</a> · DATA PULLED {stamp}Z · REPRODUCE: <a href="#reproduce"><code>pnpm backtest</code></a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
+    ) : (
+      <span class="muted">GENERATED {stamp}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a> · <a href="/backtest">backtest</a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
+    )}
     <span class="muted">whenmodel.com · built on Astro + Cloudflare Workers</span>
   </div>
 </footer>
 <style>
   .foot { margin: 30px auto 40px; }
-  .disclaimer p { margin: 8px 0 0; font-size: 19px; color: var(--muted); }
-  .foot-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: 17px; }
+  .disclaimer p { margin: 8px 0 0; font-size: var(--fs-md); color: var(--muted); }
+  .disclaimer .sources { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line2); font-size: var(--fs-sm); }
+  .sources .tiny { margin-right: 6px; }
+  /* A separator trails its name so a wrapped line never starts with one. */
+  .src-item { white-space: nowrap; }
+  .foot-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: var(--fs-sm); }
+  .foot-row code { font-family: var(--font-mono); color: var(--yellow); }
 </style>

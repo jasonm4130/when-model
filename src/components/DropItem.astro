@@ -1,0 +1,30 @@
+---
+/** One Fresh Drops listing as a stacked row, for phones (≤480px), where the table's price column was cut off. */
+interface Props {
+  name: string;
+  url: string;
+  lab: string;
+  labColor: string;
+  ctx: string;
+  price: string;
+  free: boolean;
+  vision: boolean;
+  stealth: boolean;
+  fresh: boolean;
+  when: string;
+  createdAt: string;
+}
+const p = Astro.props;
+---
+<li class={`drop-item ${p.fresh ? 'fresh' : ''}`}>
+  <span class="di-name"><a href={p.url} target="_blank" rel="noopener">{p.name}</a>{p.stealth && <span class="tag stealth">STEALTH</span>}{p.vision && <span class="tag vis">VIS</span>}</span>
+  <span class={`di-when ${p.fresh ? 'glow-m' : 'muted'}`} title={p.createdAt} data-time={p.fresh ? p.createdAt : undefined}>{p.when}</span>
+  <span class="di-meta"><span style={`color:${p.labColor}`}>{p.lab}</span><span class="muted"> · {p.ctx} ctx · </span><span class={p.free ? 'glow-g' : ''}>{p.price}</span></span>
+</li>
+<style>
+  .drop-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: baseline; padding: 8px 6px; border-bottom: 1px dotted var(--line-soft); }
+  .drop-item.fresh { background: rgba(255, 43, 214, 0.06); }
+  .di-name { min-width: 0; overflow-wrap: anywhere; }
+  .di-when { font-size: var(--fs-xs); white-space: nowrap; }
+  .di-meta { grid-column: 1 / -1; font-size: var(--fs-md); }
+</style>

@@ -54,7 +54,11 @@ describe('Header', async () => {
   it('exposes a PAUSE AUTO-REFRESH toggle and an empty, live reload status region (UI-11)', async () => {
     const html = await container.renderToString(Header, { props: { d: dashboard() } });
     expect(html).toContain('data-refresh-toggle');
-    expect(html).toContain('PAUSE AUTO-REFRESH');
+    // Phones show only the verb; the noun stays in the accessible name, so it reads the same everywhere.
+    const toggle = html.match(/<button[^>]*data-refresh-toggle[^>]*>(.*?)<\/button>/)?.[1] ?? '';
+    expect(toggle.replace(/<[^>]+>/g, '')).toBe('PAUSE AUTO-REFRESH');
+    expect(toggle).toMatch(/data-refresh-verb[^>]*>PAUSE</);
+    expect(toggle).toMatch(/class="rt-noun"[^>]*> AUTO-REFRESH</);
     expect(html).toMatch(/data-refresh-toggle[^>]*aria-pressed="false"/);
     expect(html).toContain('<span class="refresh-status" aria-live="polite" data-reload-status');
     expect(html).toMatch(/<span class="refresh-status"[^>]*><\/span>/);
