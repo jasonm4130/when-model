@@ -11,6 +11,7 @@ export interface OpenRouterModelDto {
   /** Unix seconds. */
   created?: number;
   description?: string;
+  hugging_face_id?: string;
   context_length?: number;
   /** Per token, as decimal strings. Routers report "-1". */
   pricing?: { prompt?: string; completion?: string };
@@ -86,6 +87,7 @@ export function toDrop(model: OpenRouterModelDto): Drop | undefined {
     textOutput: outputs ? outputs.length > 0 && outputs.every((m) => m === 'text') : undefined,
     stealth,
     description: stealth && typeof model.description === 'string' ? model.description : undefined,
+    huggingFaceId: typeof model.hugging_face_id === 'string' ? model.hugging_face_id : undefined,
   };
 }
 

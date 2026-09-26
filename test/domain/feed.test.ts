@@ -3,6 +3,7 @@ import {
   HN_ALERT_POINTS,
   LEAK_SOURCE_NAMES,
   classifyLeak,
+  distinctAlertModels,
   isListed,
   isReleaseHeadline,
   labForModelId,
@@ -73,7 +74,7 @@ describe('feed classification', () => {
 
 describe('modelIds', () => {
   it('canonicalises versioned ids across every hyphen headlines use', () => {
-    expect(modelIds('GPT‑6 Sol and Luna')).toEqual(['gpt-6-sol']);
+    expect(modelIds('GPT‑6 Sol and Luna')).toEqual(['gpt-6-sol', 'gpt-6-luna']);
     expect(modelIds('OpenAI GPT–6 Astra breaks Enigma')).toEqual(['gpt-6-astra']);
     expect(modelIds('api: add support for claude-opus-5-5, inline tool definitions')).toEqual([
       'claude-opus-5.5',
@@ -125,6 +126,40 @@ describe('modelIds', () => {
     expect(labForModelId('kimi-k3')).toBe('moonshot');
     expect(labForModelId('glm-5.3')).toBe('zai');
     expect(labForModelId('mimo-v2.6')).toBeUndefined();
+  });
+});
+
+describe('modelIds sibling expansion', () => {
+  it('expands "X and Y" siblings sharing a family+version prefix', () => {
+    expect(modelIds('Introducing GPT-6 Sol and Luna')).toEqual(['gpt-6-sol', 'gpt-6-luna']);
+    expect(modelIds('GPT-6 Sol & Luna')).toEqual(['gpt-6-sol', 'gpt-6-luna']);
+  });
+
+  it('expands "X, Y and Z" lists, one sibling per separator', () => {
+    expect(modelIds('GPT-6 Sol, Luna and Astra')).toEqual(['gpt-6-sol', 'gpt-6-luna', 'gpt-6-astra']);
+  });
+
+  it('never expands past a word outside the suffix vocabulary', () => {
+    // "Pro" is a real suffix, but "Football" is not: the loop stops there, not before it.
+    expect(modelIds('GPT-6 Pro and Football')).toEqual(['gpt-6-pro']);
+  });
+
+  it('never scans for siblings when the base match consumed no suffix', () => {
+    // No suffix on the base id ("gpt-6" alone), so "and beyond" is ordinary prose, not a sibling.
+    expect(modelIds('GPT-6 and beyond')).toEqual(['gpt-6']);
+    expect(modelIds('GPT-6 Solves a WWI cipher and Luna')).toEqual(['gpt-6']);
+  });
+
+  it('requires "and" as a whole word, not a substring of the next word', () => {
+    expect(modelIds('GPT-6 Pro android app')).toEqual(['gpt-6-pro']);
+  });
+
+  it('does not expand across an unrelated model change of family', () => {
+    // "Fable 5.2 and Opus 5.5": two independent matches, not siblings of one prefix.
+    expect(modelIds('Anthropic tests Fable 5.2 and Opus 5.5 ahead of the release')).toEqual([
+      'fable-5.2',
+      'opus-5.5',
+    ]);
   });
 });
 
@@ -397,6 +432,33 @@ describe('leak listings', () => {
     const sol = leak(['gpt-6-sol']);
     expect(unlistedLeaks([both, shipped, sol], listings)).toEqual([both, sol]);
     expect(LEAK_SOURCE_NAMES).toEqual({ hn: 'Hacker News', testingcatalog: 'TestingCatalog' });
+  });
+});
+
+describe('distinctAlertModels', () => {
+  const item = (title: string, alert: boolean, source: FeedItem['source'] = 'hn'): FeedItem => ({
+    source,
+    title,
+    url: 'https://x.test',
+    publishedAt: '2026-09-22T00:00:00Z',
+    alert,
+  });
+
+  it('counts one launch once, even when RSS, HN and an SDK confirmation all raise an alert for it', () => {
+    const feed: FeedItem[] = [
+      item('Introducing GPT-6 Sol and Luna', true, 'openai'),
+      item('GPT-6 Sol and Luna launch today', true, 'hn'),
+      item('OpenAI SDK v3.18.0 · confirms gpt-6-sol, gpt-6-luna', true, 'github'),
+      item('A GPT-6 Astra customer story with Codex', false, 'openai'),
+    ];
+    expect(distinctAlertModels(feed)).toEqual(['gpt-6-sol', 'gpt-6-luna']);
+  });
+
+  it('ignores non-alerting items and items naming no model', () => {
+    expect(distinctAlertModels([item('Grok 4.7 launches', true, 'hn'), item('Grok is neat', false)])).toEqual(
+      ['grok-4.7'],
+    );
+    expect(distinctAlertModels([])).toEqual([]);
   });
 });
 

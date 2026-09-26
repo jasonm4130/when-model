@@ -33,7 +33,8 @@ describe('releaseModelIds', () => {
           'Add GPT-6 Sol and Luna model identifiers',
         ].join('\n'),
       ),
-    ).toEqual(['gpt-6-sol']);
+      // Sibling expansion (feed.ts): the changelog names both models, so both count.
+    ).toEqual(['gpt-6-sol', 'gpt-6-luna']);
   });
 });
 
@@ -98,7 +99,9 @@ describe('sdkFeedItems', () => {
     expect(inWindow.map((f) => [f.title, f.alert])).toEqual([
       ['OpenAI SDK v3.19.2', false],
       ['OpenAI SDK v3.19.1', false],
-      ['OpenAI SDK v3.18.0 · confirms gpt-6-sol', true],
+      // Sibling expansion: the changelog's "add GPT-6 Sol and Luna model identifiers" now
+      // confirms both, where it used to confirm only Sol.
+      ['OpenAI SDK v3.18.0 · confirms gpt-6-sol, gpt-6-luna', true],
     ]);
     const later = sdkFeedItems(
       releases,
