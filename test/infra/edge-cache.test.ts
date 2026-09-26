@@ -56,6 +56,43 @@ describe('cachedText', () => {
     expect(calls).toHaveLength(1);
   });
 
+  it('does not store a freshly fetched body that fails validation, returning false', async () => {
+    const cache = new FakeCache();
+    const { fn } = fetchStub({ [URL_A]: '{"items":[]}' });
+    const validate = vi.fn().mockReturnValue(false);
+    await expect(cachedText(URL_A, { cache, fetch: fn, validate })).rejects.toThrow('failed validation');
+    expect(validate).toHaveBeenCalledWith('{"items":[]}');
+    expect(cache.puts).toBe(0);
+  });
+
+  it('propagates a thrown validation error unchanged, and does not store', async () => {
+    const cache = new FakeCache();
+    const { fn } = fetchStub({ [URL_A]: 'not xml' });
+    const validate = vi.fn(() => {
+      throw new Error('zero items parsed');
+    });
+    await expect(cachedText(URL_A, { cache, fetch: fn, validate })).rejects.toThrow('zero items parsed');
+    expect(cache.puts).toBe(0);
+  });
+
+  it('stores a body that passes validation', async () => {
+    const cache = new FakeCache();
+    const { fn } = fetchStub({ [URL_A]: '{"items":[1]}' });
+    expect(await cachedText(URL_A, { cache, fetch: fn, validate: (body) => body.includes('items') })).toBe(
+      '{"items":[1]}',
+    );
+    expect(cache.puts).toBe(1);
+  });
+
+  it('never re-runs validate on a cache hit', async () => {
+    const cache = new FakeCache();
+    const { fn } = fetchStub({ [URL_A]: 'ok' });
+    const validate = vi.fn().mockReturnValue(true);
+    await cachedText(URL_A, { cache, fetch: fn, validate });
+    await cachedText(URL_A, { cache, fetch: fn, validate });
+    expect(validate).toHaveBeenCalledTimes(1);
+  });
+
   it('survives a cache that refuses writes', async () => {
     const cache = new FakeCache();
     cache.put = async () => {
@@ -77,6 +114,14 @@ describe('cachedJson', () => {
     expect(cache.store.get(cacheKey('src', URL_A).url)?.headers.get('cache-control')).toBe(
       'public, max-age=300',
     );
+  });
+
+  it('validates the raw body before parsing, not the parsed value', async () => {
+    const cache = new FakeCache();
+    const { fn } = fetchStub({ [URL_A]: '{"n":[]}' });
+    await expect(
+      cachedJson(URL_A, { cache, fetch: fn, validate: (body) => JSON.parse(body).n.length > 0 }),
+    ).rejects.toThrow('failed validation');
   });
 });
 

@@ -49,6 +49,13 @@ export interface FetchOptions {
   headers?: Record<string, string>;
   cache?: EdgeCache;
   fetch?: typeof fetch;
+  /**
+   * Runs on a freshly fetched body before it is cached. Returning `false` throws (the
+   * body is not stored); throwing from `validate` itself propagates unchanged, also
+   * without storing. Never runs again on a cache hit: a body was already valid when it
+   * was written.
+   */
+  validate?: (body: string) => boolean;
 }
 
 /** Fetch a URL as text, serving from the edge cache for `ttl` seconds when possible. */
@@ -70,6 +77,7 @@ export async function cachedText(url: string, options: FetchOptions = {}): Promi
   });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   const text = await res.text();
+  if (options.validate?.(text) === false) throw new Error(`${url} failed validation`);
   await store(cache, key, text, res.headers.get('content-type') ?? 'text/plain; charset=utf-8', ttl);
   return text;
 }
