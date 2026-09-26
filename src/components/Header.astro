@@ -11,18 +11,20 @@ const ticker = [
   ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${x.lab.toUpperCase()})`),
   ...d.feed.filter((f) => f.alert).slice(0, 6).map((f) => `${f.source.toUpperCase()}: ${f.title.toUpperCase()}`),
 ];
-/** The page reloads itself on this cadence; the statusbar counts it down. */
+/** The client polls /api/dashboard.json on this cadence and compares a fingerprint before offering a reload. */
 const REFRESH_SECONDS = 300;
 ---
 <header class="hero">
   <div class="statusbar wrap">
     <div class="left">
       <span class={`tiny status-live ${statusClass}`}>STATUS: {status}</span>
-      <span class="tiny muted">{d.labs.length} LABS · {okCount}/{d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
+      <span class="tiny muted counts">{d.labs.length} LABS · {okCount}/{d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
     </div>
     <div class="right">
-      <span class="tiny muted">SYNC <span data-synced={d.generatedAt}>{d.generatedAt.slice(11, 19)}Z</span> · NEXT <span class="glow-y" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
-      <span class="tiny muted">UTC</span> <span class="clock glow-c" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
+      <span class="tiny muted sync">SYNC <span data-synced={d.generatedAt}>{d.generatedAt.slice(11, 19)}Z</span> · NEXT <span class="glow-y" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
+      <button type="button" class="tiny refresh-toggle" data-refresh-toggle aria-pressed="false">PAUSE AUTO-REFRESH</button>
+      <span class="refresh-status" aria-live="polite" data-reload-status></span>
+      <span class="tiny muted utc-label">UTC</span> <span class="clock glow-c" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
     </div>
   </div>
   <div class="wrap hero-inner">
@@ -42,15 +44,17 @@ const REFRESH_SECONDS = 300;
       <a class="pill" href="/api/dashboard.json">◈ JSON API</a>
     </div>
   </div>
-  <div class="ticker-wrap">
-    <div class="ticker-controls">
-      <button class="ticker-toggle tiny" type="button" data-ticker-toggle aria-pressed="false" aria-controls="ticker-track">PAUSE TICKER</button>
+  {ticker.length > 0 && (
+    <div class="ticker-wrap">
+      <div class="ticker-controls">
+        <button class="ticker-toggle tiny" type="button" data-ticker-toggle aria-pressed="false" aria-controls="ticker-track">PAUSE TICKER</button>
+      </div>
+      <div class="marquee mono glow-y" data-ticker>
+        <p class="sr-only">Ticker: {ticker.join('. ')}</p>
+        <div id="ticker-track" aria-hidden="true"><span class="ticker-group">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span><span class="ticker-group ticker-copy">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span></div>
+      </div>
     </div>
-    <div class="marquee mono glow-y" data-ticker>
-      <p class="sr-only">Ticker: {ticker.join('. ')}</p>
-      <div id="ticker-track" aria-hidden="true"><span class="ticker-group">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span><span class="ticker-group ticker-copy">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span></div>
-    </div>
-  </div>
+  )}
 </header>
 <style>
   .hero {
@@ -84,18 +88,23 @@ const REFRESH_SECONDS = 300;
   .brands { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: var(--fs-body); }
   .brands a { border-bottom: 1px dotted var(--line2); }
   .status-live::before { content: '◉'; margin-right: 5px; }
-  .ticker-toggle { min-height: 44px; padding: 6px 8px; color: var(--yellow); background: var(--bg2); border: 1px solid var(--line2); cursor: pointer; }
-  .ticker-toggle[aria-pressed="true"] { color: var(--text); border-color: var(--cyan); }
+  .ticker-toggle, .refresh-toggle { min-height: 44px; padding: 6px 8px; color: var(--yellow); background: var(--bg2); border: 1px solid var(--line2); cursor: pointer; }
+  .ticker-toggle[aria-pressed="true"], .refresh-toggle[aria-pressed="true"] { color: var(--text); border-color: var(--cyan); }
+  .refresh-status { display: inline-flex; }
+  .refresh-status .pill { cursor: pointer; }
   @media (max-width: 700px) { .hero-side { align-items: flex-start; text-align: left; } .brands { justify-content: flex-start; } }
   @media (max-width: 480px) {
     .statusbar { gap: 6px; padding-block: 7px; }
     .statusbar .left, .statusbar .right { gap: 8px; }
+    /* UI-06: on a real Safari viewport (~664px tall) the header has to leave room for DROPCON above the fold,
+       so the statusbar drops everything but STATUS and the clock, and the hero drops the tag-line and brands. */
+    .counts, .sync, .utc-label, .refresh-toggle { display: none; }
     .hero-inner { padding-block: 18px 16px; gap: 10px; }
     .logo { margin: 8px 0; }
-    .tag-line { font-size: var(--fs-sm); }
+    .tag-line { display: none; }
     .hero-side { width: 100%; flex-direction: row; align-items: center; }
     .hero-side > .tiny { display: none; }
-    .brands { flex: 1; gap: 8px; font-size: var(--fs-xs); }
+    .brands { display: none; }
   }
 </style>
 <script>
@@ -103,28 +112,126 @@ const REFRESH_SECONDS = 300;
   const refresh = document.querySelector<HTMLElement>('[data-refresh]');
   const ticker = document.querySelector<HTMLElement>('[data-ticker]');
   const tickerToggle = document.querySelector<HTMLButtonElement>('[data-ticker-toggle]');
+  const refreshToggle = document.querySelector<HTMLButtonElement>('[data-refresh-toggle]');
+  const reloadStatus = document.querySelector<HTMLElement>('[data-reload-status]');
   const total = Number(refresh?.dataset.refresh ?? 300);
-  const started = Date.now();
+
+  // UI-11: a hard `location.reload()` every 5 minutes collapsed open <details> and dropped focus.
+  // Poll instead, compare a fingerprint that ignores generatedAt, and only reload on our own initiative
+  // when nothing the reader is doing would be interrupted.
+  const STORAGE_KEY = 'whenmodel:autoRefreshPaused';
+  const readPaused = (): boolean => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === 'true';
+    } catch {
+      return false; // private browsing, a full quota, or a disabled store: default to refreshing
+    }
+  };
+  const writePaused = (next: boolean) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, String(next));
+    } catch {
+      /* the toggle still works for this tab even if it can't persist */
+    }
+  };
+  let autoRefreshPaused = readPaused();
+  if (refreshToggle) {
+    refreshToggle.setAttribute('aria-pressed', String(autoRefreshPaused));
+    refreshToggle.textContent = autoRefreshPaused ? 'RESUME AUTO-REFRESH' : 'PAUSE AUTO-REFRESH';
+  }
+
+  let baseline: string | null = null;
+  let pendingReload = false;
+
+  const fingerprint = (text: string): string => {
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      delete parsed.generatedAt;
+      return JSON.stringify(parsed);
+    } catch {
+      return text;
+    }
+  };
+
+  const showReloadPill = () => {
+    if (pendingReload || !reloadStatus) return;
+    pendingReload = true;
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'pill warn';
+    pill.textContent = 'NEW DATA · RELOAD';
+    pill.addEventListener('click', () => location.reload());
+    reloadStatus.replaceChildren(pill);
+  };
+
+  const poll = async () => {
+    if (document.visibilityState !== 'visible') return;
+    try {
+      const res = await fetch('/api/dashboard.json', { cache: 'no-store' });
+      if (!res.ok) return;
+      const fp = fingerprint(await res.text());
+      if (baseline === null) {
+        baseline = fp; // first look: this becomes the "unchanged" baseline, nothing to announce yet
+        return;
+      }
+      if (fp !== baseline) {
+        baseline = fp;
+        showReloadPill();
+      }
+    } catch {
+      // offline, or the fetch was aborted; the next interval tries again
+    }
+  };
+
+  // A reader typing in the FAQ search, mid-drag, or with a details panel open shouldn't be yanked away.
+  let lastActivity = Date.now();
+  const markActive = () => {
+    lastActivity = Date.now();
+  };
+  for (const type of ['pointerdown', 'keydown', 'touchstart', 'scroll']) {
+    document.addEventListener(type, markActive, { passive: true });
+  }
+  const isFocusInControl = (): boolean => {
+    const active = document.activeElement;
+    if (!active || active === document.body) return false;
+    return active.closest('a, button, input, select, textarea, summary, [tabindex]') !== null;
+  };
+  const isIdle = (): boolean =>
+    Date.now() - lastActivity >= 60_000 && !document.querySelector('details[open]') && !isFocusInControl();
+  const maybeAutoReload = () => {
+    if (pendingReload && !autoRefreshPaused && isIdle()) location.reload();
+  };
+  setInterval(maybeAutoReload, 5_000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') poll();
+  });
+
+  let started = Date.now();
   const tick = () => {
     if (clock) clock.textContent = new Date().toISOString().slice(11, 19) + 'Z';
     const left = Math.max(0, total - Math.floor((Date.now() - started) / 1000));
     if (refresh) refresh.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
-    if (left === 0) reload();
-  };
-  // The page is edge-cached and cheap to reload; wait for a visible tab so a background tab doesn't churn.
-  let reloading = false;
-  const reload = () => {
-    if (reloading) return;
-    reloading = true;
-    if (document.visibilityState === 'visible') location.reload();
-    else document.addEventListener('visibilitychange', () => location.reload(), { once: true });
+    if (left === 0) {
+      started = Date.now();
+      poll();
+    }
   };
   tick();
   setInterval(tick, 1000);
+  poll(); // establish the baseline fingerprint right away, rather than waiting a full interval
+
   tickerToggle?.addEventListener('click', () => {
     const paused = tickerToggle.getAttribute('aria-pressed') !== 'true';
     tickerToggle.setAttribute('aria-pressed', String(paused));
     tickerToggle.textContent = paused ? 'RESUME TICKER' : 'PAUSE TICKER';
     ticker?.classList.toggle('is-paused', paused);
+  });
+
+  refreshToggle?.addEventListener('click', () => {
+    autoRefreshPaused = !autoRefreshPaused;
+    writePaused(autoRefreshPaused);
+    refreshToggle.setAttribute('aria-pressed', String(autoRefreshPaused));
+    refreshToggle.textContent = autoRefreshPaused ? 'RESUME AUTO-REFRESH' : 'PAUSE AUTO-REFRESH';
   });
 </script>
