@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "version": 1,
+    "pulledAt": "2026-09-26T00:46:05Z",
+    "rawEvents": 72,
+    "rawSeries": 705,
+    "scoredRungs": 696
+  },
+  "traps": [
+    {
+      "id": "git-commit-dates",
+      "trap": "Git commit dates",
+      "example": "The anthropic-sdk-python commit adding claude-opus-5-5 is dated 2026-09-20 22:54:59Z; it shipped in v1.8.0 at 2026-09-22 16:25:23Z, two minutes before the launch post.",
+      "fakeLeadH": 41.5,
+      "fix": "Use the release or push time, never the author or committer date.",
+      "source": {
+        "label": "commit b5cc700",
+        "url": "https://github.com/anthropics/anthropic-sdk-python/commit/b5cc70071a60def1d2e93f3634d1a595919007c8"
+      }
+    },
+    {
+      "id": "aws-what-s-new-pubdate",
+      "trap": "AWS What’s New pubDate",
+      "example": "The GovCloud Opus 5.5 item was created 2h30m after its own pubDate (research pass; not re-probed here).",
+      "fakeLeadH": 2.5,
+      "fix": "Record when the item was first seen.",
+      "source": {
+        "label": "AWS What’s New feed",
+        "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+      }
+    },
+    {
+      "id": "hugging-face-createdat",
+      "trap": "Hugging Face createdAt",
+      "example": "createdAt is when the repo was made, while still private: google/gemma-4-E4B-it says 2026-03-02 19:57Z, 30.8 days before the launch post.",
+      "fakeLeadH": 740.1,
+      "fix": "Only a first-seen time from polling counts.",
+      "source": {
+        "label": "google/gemma-4-E4B-it",
+        "url": "https://huggingface.co/api/models/google/gemma-4-E4B-it"
+      }
+    },
+    {
+      "id": "date-only-fields-pinned-to-midnight",
+      "trap": "Date-only fields pinned to midnight",
+      "example": "xAI’s release notes date Grok 4.7 \"September 21, 2026\" with no time. Read as 00:00Z, that is 15h50m before its HN story.",
+      "fakeLeadH": 15.8,
+      "fix": "Mark day-precision items and keep them out of lead analysis.",
+      "source": {
+        "label": "xAI release notes",
+        "url": "https://docs.x.ai/developers/release-notes"
+      }
+    },
+    {
+      "id": "rounded-rss-pubdates",
+      "trap": "Rounded RSS pubDates",
+      "example": "openai.com’s RSS dates \"GPT-6 Astra: A new generation of intelligence\" to 2026-09-03 11:00:00Z; its HN story is 18:41Z.",
+      "fakeLeadH": 7.7,
+      "fix": "Treat whole-hour and midnight pubDates as day precision.",
+      "source": {
+        "label": "openai.com RSS",
+        "url": "https://openai.com/news/rss.xml"
+      }
+    },
+    {
+      "id": "openrouter-created",
+      "trap": "OpenRouter created before the announcement",
+      "example": "Listed before the announcement: Claude Opus 4.8 -22.7h, GPT-5.6 Sol/Terra/Luna -7.2h, Gemini 3.5 Flash -4.9h, Claude Fable 5 / Mythos 5 -4.7h, Qwen3.5 -3.1h, Grok 4.5 -2.9h. OpenRouter also rewrites it: Space Bunny Alpha moved from 2026-09-22 10:58Z to 2026-09-23 14:48Z.",
+      "fakeLeadH": 22.7,
+      "fix": "Use it as availability, measured against the announcement, never as a lead.",
+      "source": {
+        "label": "OpenRouter models API",
+        "url": "https://openrouter.ai/api/v1/models"
+      }
+    },
+    {
+      "id": "her",
+      "trap": "This site’s own \"her\" story",
+      "example": "The History timeline said Altman posted \"her\" the night before GPT-4o. The tweet id decodes to 2024-05-13T17:45:09Z; the GPT-4o announcement hit HN at 2024-05-13T17:28:00Z, so the tweet came 17 minutes after it.",
+      "fakeLeadH": null,
+      "fix": "Decode the tweet id rather than trusting a remembered order.",
+      "source": {
+        "label": "sama/status/1790075827666796666",
+        "url": "https://x.com/sama/status/1790075827666796666"
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+---
+import type { ArchitectureRow } from '../../scripts/backtest/build';
+import { signedHours, utcMinute } from '../../scripts/backtest/view';
+
+interface Props {
+  rows: readonly ArchitectureRow[];
+  summary: { leads: number; coincident: number; lags: number; pending: number; coincidentWithinH: number };
+  misses: readonly { family: string; note: string }[];
+}
+const { rows, summary, misses } = Astro.props;
+const ORDER = { leads: 0, coincident: 1, lags: 2, pending: 3 } as const;
+const sorted = [...rows].sort((a, b) => ORDER[a.verdict] - ORDER[b.verdict] || (b.leadH ?? 0) - (a.leadH ?? 0));
+const shipped = summary.leads + summary.coincident + summary.lags;
+---
+<p class="lede">
+  The merge led the launch for <strong>{summary.leads} of {shipped}</strong> shipped families, coincided within {summary.coincidentWithinH}h for {summary.coincident}, and trailed it for {summary.lags}. {summary.pending} {summary.pending === 1 ? 'module is' : 'modules are'} merged and still unshipped.
+</p>
+<div class="table-scroll">
+  <table>
+    <caption class="sr-only">Hugging Face transformers architecture merges against the first first-party Hacker News story for each model family.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Family</th>
+        <th scope="col">Module</th>
+        <th scope="col" class="num">Merged</th>
+        <th scope="col" class="num">Announced</th>
+        <th scope="col" class="num">Merge lead</th>
+        <th scope="col">Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      {sorted.map((a) => (
+        <tr>
+          <th scope="row">{a.family}<span class="muted small block">{a.lab}</span></th>
+          <td><a href={a.prUrl} rel="noopener" target="_blank"><code>{a.module}</code> #{a.pr}</a></td>
+          <td class="num">{utcMinute(a.mergedAt)}</td>
+          <td class="num">{a.storyUrl ? <a href={a.storyUrl} rel="noopener" target="_blank">{utcMinute(a.announcedAt)}</a> : 'not yet'}</td>
+          <td class="num">{a.verdict === 'pending' ? `${a.pendingDays}d pending` : signedHours(a.leadH)}</td>
+          <td><span class={`tag v-${a.verdict}`}>{a.verdict}</span></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<ul class="misses">
+  {misses.map((m) => (
+    <li><span class="miss">{m.family}</span> <span class="muted">{m.note}</span></li>
+  ))}
+</ul>
+<style>
+  .lede { margin-bottom: 10px; max-width: 90ch; }
+  th[scope='row'] { white-space: nowrap; }
+  .block { display: block; }
+  .v-leads { color: var(--cyan); }
+  .v-coincident { color: var(--muted); }
+  .v-lags { color: var(--muted); }
+  .v-pending { color: var(--yellow); }
+  .misses { margin-top: 10px; }
+  .misses li { padding: 4px 0; border-bottom: 1px dotted var(--line-soft); }
+  .miss { color: #fff; }
+</style>

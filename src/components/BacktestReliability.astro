@@ -1,0 +1,81 @@
+---
+import type { HorizonScore } from '../../scripts/backtest/build';
+import { pct } from '../../scripts/backtest/view';
+
+interface Props {
+  horizons: readonly HorizonScore[];
+}
+const { horizons } = Astro.props;
+
+const S = 300;
+const M = { top: 16, right: 16, bottom: 44, left: 52 };
+const W = M.left + S + M.right;
+const H = M.top + S + M.bottom;
+const px = (p: number) => M.left + p * S;
+const py = (p: number) => M.top + (1 - p) * S;
+const ticks = [0, 0.25, 0.5, 0.75, 1];
+const maxN = Math.max(1, ...horizons.flatMap((h) => h.reliability.map((b) => b.n)));
+const radius = (n: number) => 4 + 8 * Math.sqrt(n / maxN);
+
+const panels = horizons.map((h) => {
+  const bins = h.reliability.map((b) => ({
+    ...b,
+    cx: px(b.meanForecast),
+    cy: py(b.observed),
+    r: radius(b.n),
+    title: `${h.horizonH}h, forecast ${b.from.toFixed(1)}–${b.to.toFixed(1)}: ${b.n} hours, mean forecast ${pct(b.meanForecast)}, a frontier model was listed ${pct(b.observed)} of the time`,
+  }));
+  const path = bins.map((b, i) => `${i ? 'L' : 'M'}${b.cx.toFixed(1)},${b.cy.toFixed(1)}`).join(' ');
+  const market = h.scores.find((s) => s.forecast === 'market max');
+  const worst = [...h.reliability].sort((a, b) => Math.abs(b.observed - b.meanForecast) * b.n - Math.abs(a.observed - a.meanForecast) * a.n)[0];
+  const label = `Reliability of the market forecast at ${h.horizonH} hours over ${h.samples} hourly samples. Brier ${market?.brier}, skill ${market?.skill} against the ${pct(h.baseRate)} base rate. The largest miss is the ${worst?.from.toFixed(1)}–${worst?.to.toFixed(1)} bin: ${worst?.n} hours with a mean forecast of ${pct(worst?.meanForecast)} saw a listing ${pct(worst?.observed)} of the time.`;
+  return { h, bins, path, label };
+});
+---
+<div class="reliability">
+  {panels.map(({ h, bins, path, label }) => (
+    <figure>
+      <figcaption class="tiny">Next {h.horizonH}h · market max</figcaption>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} class="chart">
+        {ticks.map((t) => (
+          <g>
+            <line class="grid" x1={px(t)} x2={px(t)} y1={M.top} y2={M.top + S} />
+            <line class="grid" x1={M.left} x2={M.left + S} y1={py(t)} y2={py(t)} />
+            <text class="tick" x={px(t)} y={M.top + S + 20} text-anchor="middle">{t}</text>
+            <text class="tick" x={M.left - 8} y={py(t) + 5} text-anchor="end">{t}</text>
+          </g>
+        ))}
+        <line class="diag" x1={px(0)} y1={py(0)} x2={px(1)} y2={py(1)} />
+        <line class="base" x1={px(0)} x2={px(1)} y1={py(h.baseRate)} y2={py(h.baseRate)} />
+        <text class="note" x={px(1) - 4} y={py(h.baseRate) - 6} text-anchor="end">base rate {pct(h.baseRate)}</text>
+        <path class="curve" d={path} />
+        {bins.map((b) => (
+          <circle cx={b.cx} cy={b.cy} r={b.r}>
+            <title>{b.title}</title>
+          </circle>
+        ))}
+        <text class="axis" x={M.left + S / 2} y={H - 4} text-anchor="middle">market forecast</text>
+        <text class="axis" x={14} y={M.top + S / 2} text-anchor="middle" transform={`rotate(-90 14 ${M.top + S / 2})`}>observed</text>
+      </svg>
+    </figure>
+  ))}
+</div>
+<p class="muted note">
+  Hourly samples from 2026-04-01. The forecast is the highest price among frontier-lab rungs trading at that hour and due inside the window; the outcome is whether any frontier lab listed a model on OpenRouter inside it. The diagonal is perfect calibration; circle area is the number of hours in the bin.
+</p>
+<style>
+  .reliability { margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+  figure { margin: 0; }
+  figcaption { color: var(--muted); margin-bottom: 6px; }
+  .chart { display: block; width: 100%; max-width: 420px; height: auto; font-family: var(--font-mono); }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .diag { stroke: var(--muted); stroke-width: 1; }
+  .base { stroke: #d9731f; stroke-width: 1; }
+  .curve { fill: none; stroke: #1aa0b3; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  circle { fill: #1aa0b3; stroke: #0d0b1e; stroke-width: 2; }
+  circle:hover { stroke: var(--yellow); }
+  .tick { fill: var(--muted); font-size: 16px; }
+  .axis { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .note { fill: var(--text); font-size: 16px; }
+  p.note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+</style>

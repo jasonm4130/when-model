@@ -1,0 +1,102 @@
+---
+import type { CrossingRow, ReleaseRow, SeriesCrossings } from '../../scripts/backtest/build';
+import { signedHours, utcMinute } from '../../scripts/backtest/view';
+
+interface Props {
+  releases: readonly ReleaseRow[];
+  crossings: readonly CrossingRow[];
+}
+const { releases, crossings } = Astro.props;
+const rows = [...releases]
+  .sort((a, b) => Date.parse(a.announcedAt ?? '') - Date.parse(b.announcedAt ?? ''))
+  .map((release) => {
+    const row = crossings.find((c) => c.id === release.id);
+    const series: SeriesCrossings | null = row?.primary ? row[row.primary] : null;
+    const other = row ? (row.primary === 'day' ? row.by : row.primary === 'by' ? row.day : (row.by ?? row.day)) : null;
+    return { release, series, other, lead: (t: number) => series?.crossings.find((c) => c.threshold === t) };
+  });
+const PRECURSOR: Record<string, string> = { announced: 'pre-announced', leak: 'leaked', none: 'surprise' };
+/** "on September 22", "by September 22"; labels that already say "prior to" keep their own wording. */
+const rungLabel = (s: SeriesCrossings) =>
+  /^(on or )?(prior|before|by)\b/i.test(s.label) ? s.label : `${s.kind === 'day' ? 'on' : 'by'} ${s.label}`;
+---
+<div class="table-scroll">
+  <table class="releases">
+    <caption class="sr-only">Release events with announcement, availability and market crossing times. Leads are hours before the announcement; negative means after.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Launch</th>
+        <th scope="col">Announced (first first-party HN story)</th>
+        <th scope="col" class="num">OpenRouter</th>
+        <th scope="col">Before launch</th>
+        <th scope="col">Market read</th>
+        <th scope="col" class="num">0.5</th>
+        <th scope="col" class="num">0.7</th>
+        <th scope="col" class="num">0.9</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map(({ release, series, other, lead }) => (
+        <tr>
+          <th scope="row">
+            <span class="model">{release.model}</span>
+            <span class="muted lab">{release.lab}</span>
+          </th>
+          <td>
+            <span class="num-inline">{utcMinute(release.announcedAt)}</span>
+            {release.announcement && (
+              <a class="src" href={release.announcement.url} rel="noopener" target="_blank">{release.announcement.title}</a>
+            )}
+            {release.announcement && (
+              <a class="src muted" href={release.announcement.hn} rel="noopener" target="_blank">HN</a>
+            )}
+          </td>
+          <td class="num" title={release.availableId ?? undefined}>{signedHours(release.availabilityLagH)}</td>
+          <td>
+            <span class={`tag pre-${release.precursor}`}>{PRECURSOR[release.precursor]}</span>
+            <span class="ctx">{release.context}</span>
+            {release.sources.map((s) => (
+              <a class="src" href={s.url} rel="noopener" target="_blank">{s.label}</a>
+            ))}
+          </td>
+          <td>
+            {series ? (
+              <a href={series.url} rel="noopener" target="_blank">
+                {rungLabel(series)}
+              </a>
+            ) : (
+              <span class="muted">{other ? `only "${other.label}" (due ${signedHours(other.slackH)} after)` : 'no market'}</span>
+            )}
+          </td>
+          {[0.5, 0.7, 0.9].map((t) => {
+            const c = lead(t);
+            return (
+              <td class="num" title={c?.heldAt ? `held from ${utcMinute(c.heldAt)}; first touch ${utcMinute(c.touchAt)}` : undefined}>
+                {c ? signedHours(c.heldLeadH) : '—'}
+                {c?.atOpen && <span class="muted" title="above the threshold from its first usable price">*</span>}
+              </td>
+            );
+          })}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">
+  OpenRouter is hours from the announcement to the model's <code>created</code> time (negative: listed first). Market leads are hours before the announcement at which the price reached the threshold and held it for two hours; negative means after. An asterisk marks a rung that was already above the threshold at its first usable price, so the lead is the rung's age, not a move.
+</p>
+<style>
+  .releases { min-width: 980px; }
+  .releases th[scope='row'] { color: #fff; white-space: nowrap; position: sticky; left: 0; z-index: 1; background: #0e0c1f; }
+  .lab { display: block; font-size: var(--fs-xs); }
+  @media (max-width: 720px) {
+    .releases th[scope='row'] { white-space: normal; min-width: 8em; max-width: 9em; }
+  }
+  .num-inline { display: block; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .src { display: block; font-size: var(--fs-xs); }
+  .ctx { display: block; font-size: var(--fs-xs); color: var(--text); margin-top: 2px; max-width: 42ch; }
+  .tag.pre-announced { color: var(--cyan); }
+  .tag.pre-leak { color: var(--yellow); }
+  .tag.pre-none { color: var(--muted); }
+  .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+</style>

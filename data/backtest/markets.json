@@ -1,0 +1,2679 @@
+{
+  "meta": {
+    "version": 1,
+    "pulledAt": "2026-09-26T00:46:05Z",
+    "rawEvents": 72,
+    "rawSeries": 705,
+    "scoredRungs": 696,
+    "scoreFrom": "2026-04-01T00:00:00Z",
+    "thresholds": [0.5, 0.7, 0.9],
+    "horizonsH": [24, 72]
+  },
+  "crossings": [
+    {
+      "id": "claude-opus-4.7",
+      "labId": "anthropic",
+      "model": "Claude Opus 4.7",
+      "precursor": "none",
+      "announcedAt": "2026-04-16T14:23:50Z",
+      "availabilityH": 0.5,
+      "day": null,
+      "by": {
+        "event": "Claude 4.7 released on...?",
+        "label": "On or prior to April 16",
+        "url": "https://polymarket.com/event/claude-4pt7-released-on",
+        "token": "107239156458950190328401863483360686618598514963173208507181865184555067389192",
+        "window": [1776262434, 1776361008],
+        "deadline": "2026-04-17T03:59:59Z",
+        "kind": "by",
+        "slackH": 13.6,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-04-15T19:00:51Z",
+            "heldLeadH": 19.4,
+            "touchAt": "2026-04-15T19:00:51Z",
+            "touchLeadH": 19.4,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-04-15T20:00:41Z",
+            "heldLeadH": 18.4,
+            "touchAt": "2026-04-15T20:00:41Z",
+            "touchLeadH": 18.4,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-04-16T15:00:46Z",
+            "heldLeadH": -0.6,
+            "touchAt": "2026-04-16T06:00:48Z",
+            "touchLeadH": 8.4,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "by"
+    },
+    {
+      "id": "gpt-5.5",
+      "labId": "openai",
+      "model": "GPT-5.5",
+      "precursor": "leak",
+      "announcedAt": "2026-04-23T18:01:39Z",
+      "availabilityH": 23.5,
+      "day": {
+        "event": "GPT-5.5 released on...?",
+        "label": "April 23",
+        "url": "https://polymarket.com/event/gpt-5pt5-released-on",
+        "token": "87952289935540692114837097878211804664212077973863529010260660266440947444929",
+        "window": [1775769495, 1776976024],
+        "deadline": "2026-04-24T03:59:59Z",
+        "kind": "day",
+        "slackH": 10,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-04-14T04:00:39Z",
+            "heldLeadH": 230,
+            "touchAt": "2026-04-14T04:00:39Z",
+            "touchLeadH": 230,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-04-14T16:00:38Z",
+            "heldLeadH": 218,
+            "touchAt": "2026-04-14T05:00:38Z",
+            "touchLeadH": 229,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-04-22T07:00:03Z",
+            "heldLeadH": 35,
+            "touchAt": "2026-04-21T23:00:42Z",
+            "touchLeadH": 43,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "GPT-5.5 released by...?",
+        "label": "April 23",
+        "url": "https://polymarket.com/event/gpt-5pt5-released-by",
+        "token": "86348733119896797941782416987073018417290985631241669530813434579933661843845",
+        "window": [1775762909, 1776976558],
+        "deadline": "2026-04-24T03:59:59Z",
+        "kind": "by",
+        "slackH": 10,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-04-09T22:00:58Z",
+            "heldLeadH": 332,
+            "touchAt": "2026-04-09T22:00:58Z",
+            "touchLeadH": 332,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-04-09T22:00:58Z",
+            "heldLeadH": 332,
+            "touchAt": "2026-04-09T22:00:58Z",
+            "touchLeadH": 332,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-04-17T03:00:52Z",
+            "heldLeadH": 159,
+            "touchAt": "2026-04-17T03:00:52Z",
+            "touchLeadH": 159,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "deepseek-v4",
+      "labId": "deepseek",
+      "model": "DeepSeek V4",
+      "precursor": "none",
+      "announcedAt": "2026-04-24T02:55:33Z",
+      "availabilityH": 0.4,
+      "day": null,
+      "by": {
+        "event": "DeepSeek V4 released by...?",
+        "label": "April 24",
+        "url": "https://polymarket.com/event/deepseek-v4-released-by-march-31",
+        "token": "27010938639710861097993717227599337561302786927192669933493142179643984216247",
+        "window": [1776951386, 1777014428],
+        "deadline": "2026-04-25T03:59:59Z",
+        "kind": "by",
+        "slackH": 25.1,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-04-23T19:00:12Z",
+            "heldLeadH": 7.9,
+            "touchAt": "2026-04-23T17:00:25Z",
+            "touchLeadH": 9.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-04-24T03:00:20Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-04-24T03:00:20Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-04-24T05:00:09Z",
+            "heldLeadH": -2.1,
+            "touchAt": "2026-04-24T03:00:20Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "by"
+    },
+    {
+      "id": "claude-opus-4.8",
+      "labId": "anthropic",
+      "model": "Claude Opus 4.8",
+      "precursor": "leak",
+      "announcedAt": "2026-05-28T16:49:14Z",
+      "availabilityH": -22.7,
+      "day": null,
+      "by": {
+        "event": "Claude 4.8 released by...?",
+        "label": "May 31",
+        "url": "https://polymarket.com/event/claude-4pt8-released-by",
+        "token": "92598370987853859780411275320541332953815859005635766635890357163584110310658",
+        "window": [1779815010, 1779994426],
+        "deadline": "2026-06-01T03:59:59Z",
+        "kind": "by",
+        "slackH": 83.2,
+        "dated": false,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-05-27T04:00:03Z",
+            "heldLeadH": 36.8,
+            "touchAt": "2026-05-27T04:00:03Z",
+            "touchLeadH": 36.8,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-05-28T00:00:11Z",
+            "heldLeadH": 16.8,
+            "touchAt": "2026-05-27T21:00:06Z",
+            "touchLeadH": 19.8,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-05-28T17:00:08Z",
+            "heldLeadH": -0.2,
+            "touchAt": "2026-05-28T00:00:11Z",
+            "touchLeadH": 16.8,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": null
+    },
+    {
+      "id": "claude-fable-5",
+      "labId": "anthropic",
+      "model": "Claude Fable 5 / Mythos 5",
+      "precursor": "leak",
+      "announcedAt": "2026-06-09T16:58:01Z",
+      "availabilityH": -4.7,
+      "day": null,
+      "by": {
+        "event": "Claude Mythos released by…?",
+        "label": "June 9",
+        "url": "https://polymarket.com/event/claude-mythos-released-by",
+        "token": "88106247845177011019778308711468102017494660294785274075912466342696127797356",
+        "window": [1780974670, 1781031955],
+        "deadline": "2026-06-10T03:59:59Z",
+        "kind": "by",
+        "slackH": 11,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-06-09T07:00:04Z",
+            "heldLeadH": 10,
+            "touchAt": "2026-06-09T05:00:04Z",
+            "touchLeadH": 12,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-06-09T15:00:22Z",
+            "heldLeadH": 2,
+            "touchAt": "2026-06-09T09:00:05Z",
+            "touchLeadH": 8,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-06-09T17:00:12Z",
+            "heldLeadH": 0,
+            "touchAt": "2026-06-09T17:00:12Z",
+            "touchLeadH": 0,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "by"
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "labId": "google",
+      "model": "Gemini 3.5 Flash",
+      "precursor": "none",
+      "announcedAt": "2026-05-19T17:25:55Z",
+      "availabilityH": -4.9,
+      "day": {
+        "event": "Gemini 3.2 released on...?",
+        "label": "May 19",
+        "url": "https://polymarket.com/event/gemini-3pt2-released-on",
+        "token": "39070403446987372391133617886481822520322875985948259607114778407911657234266",
+        "window": [1778024778, 1779222478],
+        "deadline": "2026-05-20T03:59:59Z",
+        "kind": "day",
+        "slackH": 10.6,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-05-09T04:00:06Z",
+            "heldLeadH": 253.4,
+            "touchAt": "2026-05-09T04:00:06Z",
+            "touchLeadH": 253.4,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-05-09T11:00:07Z",
+            "heldLeadH": 246.4,
+            "touchAt": "2026-05-09T11:00:07Z",
+            "touchLeadH": 246.4,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-05-13T00:00:15Z",
+            "heldLeadH": 161.4,
+            "touchAt": "2026-05-13T00:00:15Z",
+            "touchLeadH": 161.4,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "Gemini 3.2 released by...?",
+        "label": "May 19",
+        "url": "https://polymarket.com/event/gemini-3pt2-released-by",
+        "token": "23530560638108567629405974409549655489004988921731767844683193093920665410918",
+        "window": [1778859020, 1779222436],
+        "deadline": "2026-05-20T03:59:59Z",
+        "kind": "by",
+        "slackH": 10.6,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-05-15T17:00:06Z",
+            "heldLeadH": 96.4,
+            "touchAt": "2026-05-15T17:00:06Z",
+            "touchLeadH": 96.4,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-05-15T19:00:08Z",
+            "heldLeadH": 94.4,
+            "touchAt": "2026-05-15T19:00:08Z",
+            "touchLeadH": 94.4,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-05-16T16:00:08Z",
+            "heldLeadH": 73.4,
+            "touchAt": "2026-05-16T16:00:08Z",
+            "touchLeadH": 73.4,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "claude-sonnet-5",
+      "labId": "anthropic",
+      "model": "Claude Sonnet 5",
+      "precursor": "none",
+      "announcedAt": "2026-06-30T15:01:37Z",
+      "availabilityH": 3.2,
+      "day": null,
+      "by": {
+        "event": "Next Claude Sonnet released by...?",
+        "label": "June 30",
+        "url": "https://polymarket.com/event/next-claude-sonnet-released-byptptpt-20260624195227239",
+        "token": "108331249886578825829259755697726051702573184345588712533339901721880543416343",
+        "window": [1782331739, 1782849638],
+        "deadline": "2026-07-01T03:59:59Z",
+        "kind": "by",
+        "slackH": 13,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-06-25T08:00:05Z",
+            "heldLeadH": 127,
+            "touchAt": "2026-06-25T08:00:05Z",
+            "touchLeadH": 127,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-06-25T08:00:05Z",
+            "heldLeadH": 127,
+            "touchAt": "2026-06-25T08:00:05Z",
+            "touchLeadH": 127,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-06-30T18:00:06Z",
+            "heldLeadH": -3,
+            "touchAt": "2026-06-30T18:00:06Z",
+            "touchLeadH": -3,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "by"
+    },
+    {
+      "id": "grok-4.5",
+      "labId": "xai",
+      "model": "Grok 4.5",
+      "precursor": "none",
+      "announcedAt": "2026-07-08T18:00:32Z",
+      "availabilityH": -2.9,
+      "day": null,
+      "by": {
+        "event": "Grok 4.4 released by...?",
+        "label": "July 8",
+        "url": "https://polymarket.com/event/grok-4pt4-released-by",
+        "token": "65984210669669203974100407336790494074262919010994429177887066902772385635911",
+        "window": [1783473745, 1783540736],
+        "deadline": "2026-07-09T03:59:59Z",
+        "kind": "by",
+        "slackH": 10,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-07-08T13:00:26Z",
+            "heldLeadH": 5,
+            "touchAt": "2026-07-08T08:00:05Z",
+            "touchLeadH": 10,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-07-08T13:00:26Z",
+            "heldLeadH": 5,
+            "touchAt": "2026-07-08T13:00:26Z",
+            "touchLeadH": 5,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-07-08T18:00:09Z",
+            "heldLeadH": 0,
+            "touchAt": "2026-07-08T18:00:09Z",
+            "touchLeadH": 0,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 0.999
+      },
+      "primary": "by"
+    },
+    {
+      "id": "gpt-5.6",
+      "labId": "openai",
+      "model": "GPT-5.6 Sol/Terra/Luna",
+      "precursor": "announced",
+      "announcedAt": "2026-07-09T17:03:36Z",
+      "availabilityH": -7.2,
+      "day": {
+        "event": "GPT-5.6 released on...?",
+        "label": "July 9",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-onptptpt-20260623051439980",
+        "token": "100493021007625127457661690707348099033868434595114797839526642672073920111940",
+        "window": [1782331993, 1783627993],
+        "deadline": "2026-07-10T03:59:59Z",
+        "kind": "day",
+        "slackH": 10.9,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-07-05T10:00:07Z",
+            "heldLeadH": 103.1,
+            "touchAt": "2026-07-05T10:00:07Z",
+            "touchLeadH": 103.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-07-06T01:00:04Z",
+            "heldLeadH": 88.1,
+            "touchAt": "2026-07-06T01:00:04Z",
+            "touchLeadH": 88.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-07-08T05:00:05Z",
+            "heldLeadH": 36.1,
+            "touchAt": "2026-07-08T05:00:05Z",
+            "touchLeadH": 36.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "GPT-5.6 released by...?",
+        "label": "July 9",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "token": "72404812224348664892123258385010724804673466723743417749233185574725913714827",
+        "window": [1782936149, 1783627067],
+        "deadline": "2026-07-10T03:59:59Z",
+        "kind": "by",
+        "slackH": 10.9,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-07-01T22:00:05Z",
+            "heldLeadH": 187.1,
+            "touchAt": "2026-07-01T22:00:05Z",
+            "touchLeadH": 187.1,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-07-02T01:00:05Z",
+            "heldLeadH": 184.1,
+            "touchAt": "2026-07-02T01:00:05Z",
+            "touchLeadH": 184.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-07-08T05:00:05Z",
+            "heldLeadH": 36.1,
+            "touchAt": "2026-07-08T05:00:05Z",
+            "touchLeadH": 36.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "kimi-k3",
+      "labId": "moonshot",
+      "model": "Kimi K3",
+      "precursor": "none",
+      "announcedAt": "2026-07-16T14:46:05Z",
+      "availabilityH": 0.7,
+      "day": null,
+      "by": {
+        "event": "Kimi K3 released by…?",
+        "label": "July 31",
+        "url": "https://polymarket.com/event/kimi-k3-released-by",
+        "token": "100159994916616781547430546331320841035972045088236677080084771209724125921396",
+        "window": [1783004667, 1784300667],
+        "deadline": "2026-08-01T03:59:59Z",
+        "kind": "by",
+        "slackH": 373.2,
+        "dated": false,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-07-02T16:00:05Z",
+            "heldLeadH": 334.8,
+            "touchAt": "2026-07-02T16:00:05Z",
+            "touchLeadH": 334.8,
+            "censored": true,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-07-10T09:00:18Z",
+            "heldLeadH": 149.8,
+            "touchAt": "2026-07-10T09:00:18Z",
+            "touchLeadH": 149.8,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-07-12T13:00:05Z",
+            "heldLeadH": 97.8,
+            "touchAt": "2026-07-12T13:00:05Z",
+            "touchLeadH": 97.8,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": null
+    },
+    {
+      "id": "claude-opus-5",
+      "labId": "anthropic",
+      "model": "Claude Opus 5",
+      "precursor": "leak",
+      "announcedAt": "2026-07-24T16:55:26Z",
+      "availabilityH": 0.1,
+      "day": {
+        "event": "Next Claude Opus released on...?",
+        "label": "July 24",
+        "url": "https://polymarket.com/event/next-claude-opus-released-onptptpt-20260714203533730",
+        "token": "34458629736187653280592674488327125874307341069806910266466744539214119057691",
+        "window": [1784078452, 1784923816],
+        "deadline": "2026-07-25T03:59:59Z",
+        "kind": "day",
+        "slackH": 11.1,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-07-24T17:00:12Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-07-24T15:00:21Z",
+            "touchLeadH": 1.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-07-24T17:00:12Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-07-24T17:00:12Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-07-24T17:00:12Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-07-24T17:00:12Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "Next Claude Opus released by...?",
+        "label": "July 24",
+        "url": "https://polymarket.com/event/next-claude-opus-released-byptptpt-20260701204710232",
+        "token": "96728906606106688440336606663937949286677183925957865652114142287112355126160",
+        "window": [1784061088, 1784920650],
+        "deadline": "2026-07-25T03:59:59Z",
+        "kind": "by",
+        "slackH": 11.1,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-07-14T22:00:06Z",
+            "heldLeadH": 234.9,
+            "touchAt": "2026-07-14T22:00:06Z",
+            "touchLeadH": 234.9,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-07-15T01:00:09Z",
+            "heldLeadH": 231.9,
+            "touchAt": "2026-07-15T01:00:09Z",
+            "touchLeadH": 231.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-07-24T17:00:19Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-07-23T12:00:32Z",
+            "touchLeadH": 28.9,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "grok-4.6",
+      "labId": "xai",
+      "model": "Grok 4.6",
+      "precursor": "none",
+      "announcedAt": "2026-08-12T15:32:50Z",
+      "availabilityH": 0.1,
+      "day": {
+        "event": "Grok 4.6 released on...?",
+        "label": "August 12",
+        "url": "https://polymarket.com/event/grok-4pt6-released-onptptpt-20260810175903081",
+        "token": "21838458572598555489003880971363496983486640175784363198484415286978835258268",
+        "window": [1786436817, 1786574232],
+        "deadline": "2026-08-13T03:59:59Z",
+        "kind": "day",
+        "slackH": 12.5,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-12T16:00:13Z",
+            "heldLeadH": -0.5,
+            "touchAt": "2026-08-12T16:00:13Z",
+            "touchLeadH": -0.5,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-08-12T16:00:13Z",
+            "heldLeadH": -0.5,
+            "touchAt": "2026-08-12T16:00:13Z",
+            "touchLeadH": -0.5,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-08-12T16:00:13Z",
+            "heldLeadH": -0.5,
+            "touchAt": "2026-08-12T16:00:13Z",
+            "touchLeadH": -0.5,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 0.998
+      },
+      "by": {
+        "event": "Grok 4.6 released by...?",
+        "label": "August 12",
+        "url": "https://polymarket.com/event/grok-4pt6-released-byptptpt-20260804192931960",
+        "token": "68141550945912284885828071229271423430500518168549594949705356705298150020195",
+        "window": [1786371781, 1786557000],
+        "deadline": "2026-08-13T03:59:59Z",
+        "kind": "by",
+        "slackH": 12.5,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-10T16:00:27Z",
+            "heldLeadH": 47.5,
+            "touchAt": "2026-08-10T16:00:27Z",
+            "touchLeadH": 47.5,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-08-12T16:00:15Z",
+            "heldLeadH": -0.5,
+            "touchAt": "2026-08-10T23:00:13Z",
+            "touchLeadH": 40.5,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-08-12T16:00:15Z",
+            "heldLeadH": -0.5,
+            "touchAt": "2026-08-12T16:00:15Z",
+            "touchLeadH": -0.5,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "gemini-3.7-flash",
+      "labId": "google",
+      "model": "Gemini 3.7 Flash",
+      "precursor": "none",
+      "announcedAt": "2026-08-13T17:02:10Z",
+      "availabilityH": 0,
+      "day": null,
+      "by": {
+        "event": "Next Google Gemini Flash Model (3.7+) released by...?",
+        "label": "August 13",
+        "url": "https://polymarket.com/event/next-google-gemini-flash-model-3pt7-released-byptptpt",
+        "token": "36191085399782019891148165724224602761287585377803460209950854272298855187764",
+        "window": [1786631194, 1786649352],
+        "deadline": "2026-08-14T03:59:59Z",
+        "kind": "by",
+        "slackH": 11,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-13T16:00:10Z",
+            "heldLeadH": 1,
+            "touchAt": "2026-08-13T16:00:10Z",
+            "touchLeadH": 1,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-08-13T16:00:10Z",
+            "heldLeadH": 1,
+            "touchAt": "2026-08-13T16:00:10Z",
+            "touchLeadH": 1,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-08-13T18:00:18Z",
+            "heldLeadH": -1,
+            "touchAt": "2026-08-13T18:00:18Z",
+            "touchLeadH": -1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 0.996
+      },
+      "primary": "by"
+    },
+    {
+      "id": "qwen3.8-flash",
+      "labId": "qwen",
+      "model": "Qwen3.8-Flash",
+      "precursor": "announced",
+      "announcedAt": "2026-08-26T12:36:01Z",
+      "availabilityH": 7,
+      "day": null,
+      "by": {
+        "event": "Next Alibaba Qwen Flash (3.8+) released by...?",
+        "label": "September 30",
+        "url": "https://polymarket.com/event/next-alibaba-qwen-flash-3pt8-released-byptptpt",
+        "token": "46827725853585992176966075076691909078145848626006212286948457072397822884674",
+        "window": [1786744517, 1787975463],
+        "deadline": "2026-10-01T03:59:59Z",
+        "kind": "by",
+        "slackH": 855.4,
+        "dated": false,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-14T23:00:13Z",
+            "heldLeadH": 277.6,
+            "touchAt": "2026-08-14T23:00:13Z",
+            "touchLeadH": 277.6,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-08-25T13:00:15Z",
+            "heldLeadH": 23.6,
+            "touchAt": "2026-08-25T13:00:15Z",
+            "touchLeadH": 23.6,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-08-25T13:00:15Z",
+            "heldLeadH": 23.6,
+            "touchAt": "2026-08-25T13:00:15Z",
+            "touchLeadH": 23.6,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 0.997
+      },
+      "primary": null
+    },
+    {
+      "id": "claude-fable-5.1",
+      "labId": "anthropic",
+      "model": "Claude Fable 5.1 / Mythos 5.1",
+      "precursor": "none",
+      "announcedAt": "2026-09-01T17:53:32Z",
+      "availabilityH": 0.2,
+      "day": {
+        "event": "Next Mythos-Class Model released on…?",
+        "label": "September 1",
+        "url": "https://polymarket.com/event/next-mythos-class-model-released-onptptpt-20260824151506141",
+        "token": "90248408180025201857212716345802983927475526104033823777980087564405347281877",
+        "window": [1787613292, 1788293971],
+        "deadline": "2026-09-02T03:59:59Z",
+        "kind": "day",
+        "slackH": 10.1,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-31T12:00:24Z",
+            "heldLeadH": 29.9,
+            "touchAt": "2026-08-31T12:00:24Z",
+            "touchLeadH": 29.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-01T18:00:19Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-09-01T18:00:19Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-01T18:00:19Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-09-01T18:00:19Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "Next Mythos-Class Model released by…?",
+        "label": "September 1",
+        "url": "https://polymarket.com/event/next-mythos-class-model-released-by",
+        "token": "79062317949721479154711150708977050524106571106384849410396948248659347264536",
+        "window": [1787908843, 1788293925],
+        "deadline": "2026-09-02T03:59:59Z",
+        "kind": "by",
+        "slackH": 10.1,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-28T15:00:14Z",
+            "heldLeadH": 98.9,
+            "touchAt": "2026-08-28T15:00:14Z",
+            "touchLeadH": 98.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-08-28T15:00:14Z",
+            "heldLeadH": 98.9,
+            "touchAt": "2026-08-28T15:00:14Z",
+            "touchLeadH": 98.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-01T18:00:17Z",
+            "heldLeadH": -0.1,
+            "touchAt": "2026-09-01T18:00:17Z",
+            "touchLeadH": -0.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "labId": "google",
+      "model": "Gemini 3.8 Flash",
+      "precursor": "leak",
+      "announcedAt": "2026-09-02T15:12:40Z",
+      "availabilityH": 0,
+      "day": {
+        "event": "Next Gemini Flash Model (3.8+) released on...?",
+        "label": "September 2",
+        "url": "https://polymarket.com/event/next-gemini-flash-model-3pt8-released-onptptpt-20260831193056503",
+        "token": "69169514603661738706247353455888234100397497907595282402361166145914461505074",
+        "window": [1788206990, 1788371163],
+        "deadline": "2026-09-03T03:59:59Z",
+        "kind": "day",
+        "slackH": 12.8,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-01T08:00:13Z",
+            "heldLeadH": 31.2,
+            "touchAt": "2026-09-01T08:00:13Z",
+            "touchLeadH": 31.2,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-01T09:00:15Z",
+            "heldLeadH": 30.2,
+            "touchAt": "2026-09-01T09:00:15Z",
+            "touchLeadH": 30.2,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-02T08:00:10Z",
+            "heldLeadH": 7.2,
+            "touchAt": "2026-09-02T08:00:10Z",
+            "touchLeadH": 7.2,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "Next Google Gemini Flash Model (3.8+) released by...?",
+        "label": "September 2",
+        "url": "https://polymarket.com/event/next-google-gemini-flash-model-3pt8-released-byptptpt",
+        "token": "54573156394017117853809752310710055798717605967684667896028376018413436357630",
+        "window": [1788204451, 1788371134],
+        "deadline": "2026-09-03T03:59:59Z",
+        "kind": "by",
+        "slackH": 12.8,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-01T08:00:11Z",
+            "heldLeadH": 31.2,
+            "touchAt": "2026-09-01T08:00:11Z",
+            "touchLeadH": 31.2,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-01T10:00:16Z",
+            "heldLeadH": 29.2,
+            "touchAt": "2026-09-01T10:00:16Z",
+            "touchLeadH": 29.2,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-02T08:00:08Z",
+            "heldLeadH": 7.2,
+            "touchAt": "2026-09-02T08:00:08Z",
+            "touchLeadH": 7.2,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "gpt-6-astra",
+      "labId": "openai",
+      "model": "GPT-6 Astra",
+      "precursor": "announced",
+      "announcedAt": "2026-09-03T15:03:40Z",
+      "availabilityH": 29.2,
+      "day": {
+        "event": "OpenAI's Astra released on...?",
+        "label": "September 4",
+        "url": "https://polymarket.com/event/openais-astra-released-onptptpt-20260901080122046",
+        "token": "96413546966330134196909132513275220087587194221800703127256598585240061406455",
+        "window": [1788276897, 1788561241],
+        "deadline": "2026-09-05T03:59:59Z",
+        "kind": "day",
+        "slackH": 36.9,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-04T19:00:32Z",
+            "heldLeadH": -27.9,
+            "touchAt": "2026-09-04T19:00:32Z",
+            "touchLeadH": -27.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-04T19:00:32Z",
+            "heldLeadH": -27.9,
+            "touchAt": "2026-09-04T19:00:32Z",
+            "touchLeadH": -27.9,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-04T20:00:19Z",
+            "heldLeadH": -28.9,
+            "touchAt": "2026-09-04T20:00:19Z",
+            "touchLeadH": -28.9,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "OpenAI’s Astra released by…?",
+        "label": "September 4",
+        "url": "https://polymarket.com/event/openais-astra-released-by-20260801214557729",
+        "token": "74898862376329480999637061332477612717768323717905303499786340242679167686795",
+        "window": [1788248695, 1788557536],
+        "deadline": "2026-09-05T03:59:59Z",
+        "kind": "by",
+        "slackH": 36.9,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-01T21:00:18Z",
+            "heldLeadH": 42.1,
+            "touchAt": "2026-09-01T21:00:18Z",
+            "touchLeadH": 42.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-02T01:00:14Z",
+            "heldLeadH": 38.1,
+            "touchAt": "2026-09-02T01:00:14Z",
+            "touchLeadH": 38.1,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-03T10:00:15Z",
+            "heldLeadH": 5.1,
+            "touchAt": "2026-09-02T14:00:14Z",
+            "touchLeadH": 25.1,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 0.999
+      },
+      "primary": "day"
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "labId": "deepseek",
+      "model": "DeepSeek V4.1 Flash",
+      "precursor": "leak",
+      "announcedAt": "2026-09-10T05:57:51Z",
+      "availabilityH": 0.4,
+      "day": null,
+      "by": {
+        "event": "Next DeepSeek Flash released by...?",
+        "label": "September 30",
+        "url": "https://polymarket.com/event/next-deepseek-flash-released-byptptpt",
+        "token": "27356179079808088135180279856612991670390998687535364364537907659590521301295",
+        "window": [1787735785, 1789031785],
+        "deadline": "2026-10-01T03:59:59Z",
+        "kind": "by",
+        "slackH": 502,
+        "dated": false,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-08-26T10:00:16Z",
+            "heldLeadH": 356,
+            "touchAt": "2026-08-26T10:00:16Z",
+            "touchLeadH": 356,
+            "censored": true,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-02T13:00:19Z",
+            "heldLeadH": 185,
+            "touchAt": "2026-09-02T13:00:19Z",
+            "touchLeadH": 185,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-04T06:00:21Z",
+            "heldLeadH": 144,
+            "touchAt": "2026-09-04T06:00:21Z",
+            "touchLeadH": 144,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": null
+    },
+    {
+      "id": "grok-4.7",
+      "labId": "xai",
+      "model": "Grok 4.7",
+      "precursor": "leak",
+      "announcedAt": "2026-09-21T15:50:15Z",
+      "availabilityH": 0.5,
+      "day": {
+        "event": "Next Grok Model (4.7+) released on...?",
+        "label": "September 21",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-onptptpt",
+        "token": "1816108647583377271119343924700853406529832794910688807903694395675227036042",
+        "window": [1788718813, 1790014813],
+        "deadline": "2026-09-22T03:59:59Z",
+        "kind": "day",
+        "slackH": 12.2,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-21T15:00:14Z",
+            "heldLeadH": 0.8,
+            "touchAt": "2026-09-21T15:00:14Z",
+            "touchLeadH": 0.8,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-21T16:00:14Z",
+            "heldLeadH": -0.2,
+            "touchAt": "2026-09-21T16:00:14Z",
+            "touchLeadH": -0.2,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-21T16:00:14Z",
+            "heldLeadH": -0.2,
+            "touchAt": "2026-09-21T16:00:14Z",
+            "touchLeadH": -0.2,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": null,
+      "primary": "day"
+    },
+    {
+      "id": "claude-opus-5.5",
+      "labId": "anthropic",
+      "model": "Claude Opus 5.5",
+      "precursor": "leak",
+      "announcedAt": "2026-09-22T16:27:30Z",
+      "availabilityH": 0.1,
+      "day": {
+        "event": "Next Claude Opus released on...?",
+        "label": "September 22",
+        "url": "https://polymarket.com/event/next-claude-opus-released-onptptpt-20260915",
+        "token": "109495115084615347788619140162263908414615168053426928181800069578275691598743",
+        "window": [1789597495, 1790102053],
+        "deadline": "2026-09-23T03:59:59Z",
+        "kind": "day",
+        "slackH": 11.5,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-21T16:00:16Z",
+            "heldLeadH": 24.5,
+            "touchAt": "2026-09-19T20:00:19Z",
+            "touchLeadH": 68.5,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-21T19:00:14Z",
+            "heldLeadH": 21.5,
+            "touchAt": "2026-09-21T16:00:16Z",
+            "touchLeadH": 24.5,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-22T16:00:13Z",
+            "heldLeadH": 0.5,
+            "touchAt": "2026-09-22T16:00:13Z",
+            "touchLeadH": 0.5,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "by": {
+        "event": "Next Claude Opus released by...?",
+        "label": "September 22",
+        "url": "https://polymarket.com/event/next-claude-opus-released-byptptpt-20260727142323912",
+        "token": "14317057541547335792299864789176330054257718779555792536687087279958168394938",
+        "window": [1790015340, 1790102233],
+        "deadline": "2026-09-23T03:59:59Z",
+        "kind": "by",
+        "slackH": 11.5,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-21T23:00:17Z",
+            "heldLeadH": 17.5,
+            "touchAt": "2026-09-21T20:00:18Z",
+            "touchLeadH": 20.5,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-22T01:00:15Z",
+            "heldLeadH": 15.5,
+            "touchAt": "2026-09-21T20:00:18Z",
+            "touchLeadH": 20.5,
+            "censored": false,
+            "atOpen": true
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-22T16:00:13Z",
+            "heldLeadH": 0.5,
+            "touchAt": "2026-09-22T16:00:13Z",
+            "touchLeadH": 0.5,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "day"
+    },
+    {
+      "id": "gpt-6-sol-luna",
+      "labId": "openai",
+      "model": "GPT-6 Sol/Luna",
+      "precursor": "leak",
+      "announcedAt": "2026-09-22T17:58:57Z",
+      "availabilityH": 0.2,
+      "day": null,
+      "by": {
+        "event": "Next GPT Sol Model (5.7+) released on...?",
+        "label": "On or prior to September 22",
+        "url": "https://polymarket.com/event/next-gpt-sol-model-5pt7-released-onptptpt-20260921193139678",
+        "token": "93608093618152508937098808627046199022536098472195348688022262464167400172970",
+        "window": [1790024531, 1790109131],
+        "deadline": "2026-09-23T03:59:59Z",
+        "kind": "by",
+        "slackH": 10,
+        "dated": true,
+        "crossings": [
+          {
+            "threshold": 0.5,
+            "heldAt": "2026-09-22T11:00:17Z",
+            "heldLeadH": 7,
+            "touchAt": "2026-09-22T11:00:17Z",
+            "touchLeadH": 7,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.7,
+            "heldAt": "2026-09-22T12:00:20Z",
+            "heldLeadH": 6,
+            "touchAt": "2026-09-22T12:00:20Z",
+            "touchLeadH": 6,
+            "censored": false,
+            "atOpen": false
+          },
+          {
+            "threshold": 0.9,
+            "heldAt": "2026-09-22T18:00:17Z",
+            "heldLeadH": 0,
+            "touchAt": "2026-09-22T18:00:17Z",
+            "touchLeadH": 0,
+            "censored": false,
+            "atOpen": false
+          }
+        ],
+        "peak": 1
+      },
+      "primary": "by"
+    }
+  ],
+  "splits": {
+    "byLab": [
+      {
+        "group": "Anthropic",
+        "events": 6,
+        "undated": 1,
+        "ahead50": 5,
+        "ahead90": 1,
+        "medianLead50H": 22
+      },
+      {
+        "group": "OpenAI",
+        "events": 4,
+        "undated": 0,
+        "ahead50": 3,
+        "ahead90": 2,
+        "medianLead50H": 55.1
+      },
+      {
+        "group": "DeepSeek",
+        "events": 1,
+        "undated": 1,
+        "ahead50": 1,
+        "ahead90": 0,
+        "medianLead50H": 7.9
+      },
+      {
+        "group": "Google DeepMind",
+        "events": 3,
+        "undated": 0,
+        "ahead50": 3,
+        "ahead90": 2,
+        "medianLead50H": 31.2
+      },
+      {
+        "group": "xAI",
+        "events": 3,
+        "undated": 0,
+        "ahead50": 2,
+        "ahead90": 0,
+        "medianLead50H": 0.8
+      },
+      {
+        "group": "Moonshot Kimi",
+        "events": 0,
+        "undated": 1,
+        "ahead50": 0,
+        "ahead90": 0,
+        "medianLead50H": null
+      },
+      {
+        "group": "Alibaba Qwen",
+        "events": 0,
+        "undated": 1,
+        "ahead50": 0,
+        "ahead90": 0,
+        "medianLead50H": null
+      }
+    ],
+    "byPrecursor": [
+      {
+        "group": "announced",
+        "events": 2,
+        "undated": 1,
+        "ahead50": 1,
+        "ahead90": 1,
+        "medianLead50H": 37.6
+      },
+      {
+        "group": "leak",
+        "events": 7,
+        "undated": 2,
+        "ahead50": 6,
+        "ahead90": 3,
+        "medianLead50H": 10
+      },
+      {
+        "group": "none",
+        "events": 8,
+        "undated": 1,
+        "ahead50": 7,
+        "ahead90": 1,
+        "medianLead50H": 13.7
+      }
+    ]
+  },
+  "falseAlarms": {
+    "summary": [
+      {
+        "kind": "by",
+        "threshold": 0.5,
+        "noCrossed": 37,
+        "noTotal": 126,
+        "noMarketDays": 1399,
+        "perMarketDay": 0.0265,
+        "yesCrossed": 129,
+        "yesTotal": 134,
+        "precision": 0.777
+      },
+      {
+        "kind": "by",
+        "threshold": 0.7,
+        "noCrossed": 16,
+        "noTotal": 126,
+        "noMarketDays": 1399,
+        "perMarketDay": 0.0114,
+        "yesCrossed": 127,
+        "yesTotal": 134,
+        "precision": 0.888
+      },
+      {
+        "kind": "by",
+        "threshold": 0.9,
+        "noCrossed": 4,
+        "noTotal": 126,
+        "noMarketDays": 1399,
+        "perMarketDay": 0.0029,
+        "yesCrossed": 105,
+        "yesTotal": 134,
+        "precision": 0.963
+      },
+      {
+        "kind": "day",
+        "threshold": 0.5,
+        "noCrossed": 17,
+        "noTotal": 426,
+        "noMarketDays": 3270,
+        "perMarketDay": 0.0052,
+        "yesCrossed": 8,
+        "yesTotal": 10,
+        "precision": 0.32
+      },
+      {
+        "kind": "day",
+        "threshold": 0.7,
+        "noCrossed": 6,
+        "noTotal": 426,
+        "noMarketDays": 3270,
+        "perMarketDay": 0.0018,
+        "yesCrossed": 5,
+        "yesTotal": 10,
+        "precision": 0.455
+      },
+      {
+        "kind": "day",
+        "threshold": 0.9,
+        "noCrossed": 1,
+        "noTotal": 426,
+        "noMarketDays": 3270,
+        "perMarketDay": 0.0003,
+        "yesCrossed": 5,
+        "yesTotal": 10,
+        "precision": 0.833
+      }
+    ],
+    "worst": [
+      {
+        "event": "OpenAI's Astra released on...?",
+        "label": "September 3",
+        "url": "https://polymarket.com/event/openais-astra-released-onptptpt-20260901080122046",
+        "kind": "day",
+        "labId": "openai",
+        "deadline": "2026-09-04T03:59:59Z",
+        "peak": 0.966,
+        "peakAt": "2026-09-03T16:00:20Z",
+        "slipDays": 1
+      },
+      {
+        "event": "OpenAI’s Astra released by…?",
+        "label": "September 3",
+        "url": "https://polymarket.com/event/openais-astra-released-by-20260801214557729",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-09-04T03:59:59Z",
+        "peak": 0.964,
+        "peakAt": "2026-09-03T16:00:21Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Next Claude Opus released by...?",
+        "label": "July 23",
+        "url": "https://polymarket.com/event/next-claude-opus-released-byptptpt-20260701204710232",
+        "kind": "by",
+        "labId": "anthropic",
+        "deadline": "2026-07-24T03:59:59Z",
+        "peak": 0.92,
+        "peakAt": "2026-07-23T13:00:10Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "August 14",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-08-15T03:59:59Z",
+        "peak": 0.915,
+        "peakAt": "2026-08-03T18:00:08Z",
+        "slipDays": null
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "June 30",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-07-01T03:59:59Z",
+        "peak": 0.9,
+        "peakAt": "2026-06-19T19:00:05Z",
+        "slipDays": 9
+      },
+      {
+        "event": "New Gemini reasoning flagship released by...?",
+        "label": "May 22",
+        "url": "https://polymarket.com/event/new-gemini-reasoning-flagship-released-by",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-05-23T03:59:59Z",
+        "peak": 0.895,
+        "peakAt": "2026-05-11T19:00:08Z",
+        "slipDays": null
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "July 8",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-07-09T03:59:59Z",
+        "peak": 0.89,
+        "peakAt": "2026-07-03T05:00:06Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Next Claude Opus released on...?",
+        "label": "July 23",
+        "url": "https://polymarket.com/event/next-claude-opus-released-onptptpt-20260714203533730",
+        "kind": "day",
+        "labId": "anthropic",
+        "deadline": "2026-07-24T03:59:59Z",
+        "peak": 0.89,
+        "peakAt": "2026-07-23T13:00:08Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "August 7",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-08-08T03:59:59Z",
+        "peak": 0.885,
+        "peakAt": "2026-07-24T15:00:13Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Grok Model (4.7+) released by...?",
+        "label": "September 18",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-by",
+        "kind": "by",
+        "labId": "xai",
+        "deadline": "2026-09-19T03:59:59Z",
+        "peak": 0.885,
+        "peakAt": "2026-09-07T23:00:33Z",
+        "slipDays": null
+      },
+      {
+        "event": "New Gemini reasoning flagship released by...?",
+        "label": "June 30",
+        "url": "https://polymarket.com/event/new-gemini-reasoning-flagship-released-by",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-07-01T03:59:59Z",
+        "peak": 0.879,
+        "peakAt": "2026-06-16T17:00:06Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "June 30",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-07-01T03:59:59Z",
+        "peak": 0.85,
+        "peakAt": "2026-06-16T12:00:12Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released on...?",
+        "label": "August 10",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-onptptpt-20260729182045875",
+        "kind": "day",
+        "labId": "google",
+        "deadline": "2026-08-11T03:59:59Z",
+        "peak": 0.841,
+        "peakAt": "2026-08-04T05:00:30Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Claude Opus released on...?",
+        "label": "September 21",
+        "url": "https://polymarket.com/event/next-claude-opus-released-onptptpt-20260915",
+        "kind": "day",
+        "labId": "anthropic",
+        "deadline": "2026-09-22T03:59:59Z",
+        "peak": 0.834,
+        "peakAt": "2026-09-21T14:00:12Z",
+        "slipDays": 1
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "July 7",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-07-08T03:59:59Z",
+        "peak": 0.805,
+        "peakAt": "2026-07-03T09:00:07Z",
+        "slipDays": 2
+      },
+      {
+        "event": "GPT-5.6 released on...?",
+        "label": "July 7",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-onptptpt-20260623051439980",
+        "kind": "day",
+        "labId": "openai",
+        "deadline": "2026-07-08T03:59:59Z",
+        "peak": 0.805,
+        "peakAt": "2026-07-03T18:00:07Z",
+        "slipDays": 2
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "June 15",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-06-16T03:59:59Z",
+        "peak": 0.785,
+        "peakAt": "2026-06-02T06:00:06Z",
+        "slipDays": 24
+      },
+      {
+        "event": "Next Grok Model (4.7+) released by...?",
+        "label": "September 14",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-by",
+        "kind": "by",
+        "labId": "xai",
+        "deadline": "2026-09-15T03:59:59Z",
+        "peak": 0.78,
+        "peakAt": "2026-09-11T17:00:32Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released on...?",
+        "label": "July 17",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-onptptpt-20260626213101460",
+        "kind": "day",
+        "labId": "google",
+        "deadline": "2026-07-18T03:59:59Z",
+        "peak": 0.725,
+        "peakAt": "2026-07-05T11:00:06Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "July 17",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-07-18T03:59:59Z",
+        "peak": 0.715,
+        "peakAt": "2026-07-05T00:00:07Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Claude Opus released by...?",
+        "label": "July 22",
+        "url": "https://polymarket.com/event/next-claude-opus-released-byptptpt-20260701204710232",
+        "kind": "by",
+        "labId": "anthropic",
+        "deadline": "2026-07-23T03:59:59Z",
+        "peak": 0.715,
+        "peakAt": "2026-07-15T18:00:10Z",
+        "slipDays": 2
+      },
+      {
+        "event": "Next Claude Opus released by...?",
+        "label": "September 20",
+        "url": "https://polymarket.com/event/next-claude-opus-released-byptptpt-20260727142323912",
+        "kind": "by",
+        "labId": "anthropic",
+        "deadline": "2026-09-21T03:59:59Z",
+        "peak": 0.715,
+        "peakAt": "2026-09-15T23:00:13Z",
+        "slipDays": 2
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "June 23",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-06-24T03:59:59Z",
+        "peak": 0.695,
+        "peakAt": "2026-06-10T22:00:05Z",
+        "slipDays": 16
+      },
+      {
+        "event": "GPT-5.5 released by...?",
+        "label": "April 15",
+        "url": "https://polymarket.com/event/gpt-5pt5-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-04-16T03:59:59Z",
+        "peak": 0.69,
+        "peakAt": "2026-04-09T08:00:52Z",
+        "slipDays": 8
+      },
+      {
+        "event": "Next Grok Model (4.7+) released by...?",
+        "label": "September 12",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-by",
+        "kind": "by",
+        "labId": "xai",
+        "deadline": "2026-09-13T03:59:59Z",
+        "peak": 0.69,
+        "peakAt": "2026-09-10T00:00:21Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released on...?",
+        "label": "June 30",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-onptptpt",
+        "kind": "day",
+        "labId": "google",
+        "deadline": "2026-07-01T03:59:59Z",
+        "peak": 0.685,
+        "peakAt": "2026-06-20T15:00:06Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "June 26",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-06-27T03:59:59Z",
+        "peak": 0.68,
+        "peakAt": "2026-06-12T07:00:09Z",
+        "slipDays": null
+      },
+      {
+        "event": "DeepSeek V4 released by...?",
+        "label": "April 15",
+        "url": "https://polymarket.com/event/deepseek-v4-released-by-march-31",
+        "kind": "by",
+        "labId": "deepseek",
+        "deadline": "2026-04-16T03:59:59Z",
+        "peak": 0.67,
+        "peakAt": "2026-04-08T02:00:40Z",
+        "slipDays": 9
+      },
+      {
+        "event": "GPT-5.5 released by...?",
+        "label": "April 19",
+        "url": "https://polymarket.com/event/gpt-5pt5-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-04-20T03:59:59Z",
+        "peak": 0.64,
+        "peakAt": "2026-04-13T17:00:56Z",
+        "slipDays": 4
+      },
+      {
+        "event": "Next Mythos-Class Model released by…?",
+        "label": "August 31",
+        "url": "https://polymarket.com/event/next-mythos-class-model-released-by",
+        "kind": "by",
+        "labId": "anthropic",
+        "deadline": "2026-09-01T03:59:59Z",
+        "peak": 0.64,
+        "peakAt": "2026-08-26T18:00:21Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Grok 4.6 released by...?",
+        "label": "August 11",
+        "url": "https://polymarket.com/event/grok-4pt6-released-byptptpt-20260804192931960",
+        "kind": "by",
+        "labId": "xai",
+        "deadline": "2026-08-12T03:59:59Z",
+        "peak": 0.615,
+        "peakAt": "2026-08-11T09:00:15Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Claude Mythos released on…?",
+        "label": "June 10",
+        "url": "https://polymarket.com/event/claude-mythos-released-on",
+        "kind": "day",
+        "labId": "anthropic",
+        "deadline": "2026-06-11T03:59:59Z",
+        "peak": 0.605,
+        "peakAt": "2026-06-09T03:00:06Z",
+        "slipDays": -1
+      },
+      {
+        "event": "Next Grok Model (4.7+) released on...?",
+        "label": "September 17",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-onptptpt",
+        "kind": "day",
+        "labId": "xai",
+        "deadline": "2026-09-18T03:59:59Z",
+        "peak": 0.596,
+        "peakAt": "2026-09-17T16:00:15Z",
+        "slipDays": 4
+      },
+      {
+        "event": "New Gemini reasoning flagship released by...?",
+        "label": "June 19",
+        "url": "https://polymarket.com/event/new-gemini-reasoning-flagship-released-by",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-06-20T03:59:59Z",
+        "peak": 0.595,
+        "peakAt": "2026-06-06T02:00:18Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Claude Opus released by...?",
+        "label": "July 17",
+        "url": "https://polymarket.com/event/next-claude-opus-released-byptptpt-20260701204710232",
+        "kind": "by",
+        "labId": "anthropic",
+        "deadline": "2026-07-18T03:59:59Z",
+        "peak": 0.575,
+        "peakAt": "2026-07-15T00:00:12Z",
+        "slipDays": 7
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "June 8",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-06-09T03:59:59Z",
+        "peak": 0.57,
+        "peakAt": "2026-05-29T10:00:05Z",
+        "slipDays": 31
+      },
+      {
+        "event": "Next Grok Model (4.7+) released on...?",
+        "label": "September 18",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-onptptpt",
+        "kind": "day",
+        "labId": "xai",
+        "deadline": "2026-09-19T03:59:59Z",
+        "peak": 0.565,
+        "peakAt": "2026-09-08T00:00:16Z",
+        "slipDays": 3
+      },
+      {
+        "event": "Next Alibaba Qwen Plus (3.8+) released by...?",
+        "label": "August 31",
+        "url": "https://polymarket.com/event/next-alibaba-qwen-plus-3pt8-released-byptptpt",
+        "kind": "by",
+        "labId": "qwen",
+        "deadline": "2026-09-01T03:59:59Z",
+        "peak": 0.55,
+        "peakAt": "2026-08-25T13:00:15Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next OpenAI GPT Terra (5.7+) released by...?",
+        "label": "August 31",
+        "url": "https://polymarket.com/event/next-openai-gpt-terra-5pt7-released-byptptpt",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-09-01T03:59:59Z",
+        "peak": 0.545,
+        "peakAt": "2026-08-18T22:00:15Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Grok Model (4.7+) released on...?",
+        "label": "September 23",
+        "url": "https://polymarket.com/event/next-grok-model-4pt7-released-onptptpt",
+        "kind": "day",
+        "labId": "xai",
+        "deadline": "2026-09-24T03:59:59Z",
+        "peak": 0.535,
+        "peakAt": "2026-09-16T23:00:16Z",
+        "slipDays": -2
+      },
+      {
+        "event": "Next Claude Opus released on...?",
+        "label": "July 31",
+        "url": "https://polymarket.com/event/next-claude-opus-released-onptptpt-20260714203533730",
+        "kind": "day",
+        "labId": "anthropic",
+        "deadline": "2026-08-01T03:59:59Z",
+        "peak": 0.525,
+        "peakAt": "2026-07-15T03:00:15Z",
+        "slipDays": -7
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "June 19",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-06-20T03:59:59Z",
+        "peak": 0.52,
+        "peakAt": "2026-06-05T07:00:04Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "July 27",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-07-28T03:59:59Z",
+        "peak": 0.515,
+        "peakAt": "2026-07-13T14:00:21Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Claude Sonnet released by...?",
+        "label": "June 29",
+        "url": "https://polymarket.com/event/next-claude-sonnet-released-byptptpt-20260624195227239",
+        "kind": "by",
+        "labId": "anthropic",
+        "deadline": "2026-06-30T03:59:59Z",
+        "peak": 0.505,
+        "peakAt": "2026-06-25T23:00:05Z",
+        "slipDays": 1
+      },
+      {
+        "event": "Next Gemini Flash Model (3.8+) released on...?",
+        "label": "September 3",
+        "url": "https://polymarket.com/event/next-gemini-flash-model-3pt8-released-onptptpt-20260831193056503",
+        "kind": "day",
+        "labId": "google",
+        "deadline": "2026-09-04T03:59:59Z",
+        "peak": 0.501,
+        "peakAt": "2026-09-01T13:00:14Z",
+        "slipDays": -1
+      },
+      {
+        "event": "GPT-5.5 released on...?",
+        "label": "April 16",
+        "url": "https://polymarket.com/event/gpt-5pt5-released-on",
+        "kind": "day",
+        "labId": "openai",
+        "deadline": "2026-04-17T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-04-13T04:00:56Z",
+        "slipDays": 7
+      },
+      {
+        "event": "DeepSeek V4 released on...?",
+        "label": "April 29",
+        "url": "https://polymarket.com/event/deepseek-v4-released-on",
+        "kind": "day",
+        "labId": "deepseek",
+        "deadline": "2026-04-30T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-04-24T01:00:12Z",
+        "slipDays": -5
+      },
+      {
+        "event": "DeepSeek V4 released on...?",
+        "label": "May 2",
+        "url": "https://polymarket.com/event/deepseek-v4-released-on",
+        "kind": "day",
+        "labId": "deepseek",
+        "deadline": "2026-05-03T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-04-24T01:00:12Z",
+        "slipDays": -8
+      },
+      {
+        "event": "New Gemini reasoning flagship released by...?",
+        "label": "May 8",
+        "url": "https://polymarket.com/event/new-gemini-reasoning-flagship-released-by",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-05-09T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-04-30T16:00:06Z",
+        "slipDays": null
+      },
+      {
+        "event": "DeepSeek V4 released on...?",
+        "label": "May 10",
+        "url": "https://polymarket.com/event/deepseek-v4-released-on",
+        "kind": "day",
+        "labId": "deepseek",
+        "deadline": "2026-05-11T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-04-24T01:00:05Z",
+        "slipDays": -16
+      },
+      {
+        "event": "Gemini 3.2 released by...?",
+        "label": "May 18",
+        "url": "https://polymarket.com/event/gemini-3pt2-released-by",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-05-19T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-05-15T17:00:05Z",
+        "slipDays": 1
+      },
+      {
+        "event": "GPT-5.6 released by...?",
+        "label": "June 5",
+        "url": "https://polymarket.com/event/gpt-5pt6-released-by",
+        "kind": "by",
+        "labId": "openai",
+        "deadline": "2026-06-06T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-05-23T04:00:06Z",
+        "slipDays": 34
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "June 5",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-06-06T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-06-02T00:00:05Z",
+        "slipDays": null
+      },
+      {
+        "event": "Next Google Gemini Pro Model released by...?",
+        "label": "June 12",
+        "url": "https://polymarket.com/event/next-google-gemini-pro-model-released-byptptpt",
+        "kind": "by",
+        "labId": "google",
+        "deadline": "2026-06-13T03:59:59Z",
+        "peak": 0.5,
+        "peakAt": "2026-06-02T00:00:08Z",
+        "slipDays": null
+      }
+    ]
+  },
+  "calibration": [
+    {
+      "horizonH": 24,
+      "samples": 4249,
+      "baseRate": 0.228,
+      "scores": [
+        {
+          "forecast": "base rate",
+          "brier": 0.1762,
+          "skill": 0
+        },
+        {
+          "forecast": "market max",
+          "brier": 0.2023,
+          "skill": -0.148
+        },
+        {
+          "forecast": "max(market, base rate)",
+          "brier": 0.1706,
+          "skill": 0.032
+        }
+      ],
+      "reliability": [
+        {
+          "from": 0,
+          "to": 0.1,
+          "n": 3522,
+          "meanForecast": 0.012,
+          "observed": 0.208
+        },
+        {
+          "from": 0.1,
+          "to": 0.2,
+          "n": 103,
+          "meanForecast": 0.131,
+          "observed": 0.243
+        },
+        {
+          "from": 0.2,
+          "to": 0.3,
+          "n": 195,
+          "meanForecast": 0.244,
+          "observed": 0.241
+        },
+        {
+          "from": 0.3,
+          "to": 0.4,
+          "n": 228,
+          "meanForecast": 0.349,
+          "observed": 0.219
+        },
+        {
+          "from": 0.4,
+          "to": 0.5,
+          "n": 60,
+          "meanForecast": 0.443,
+          "observed": 0.167
+        },
+        {
+          "from": 0.5,
+          "to": 0.6,
+          "n": 13,
+          "meanForecast": 0.556,
+          "observed": 0.692
+        },
+        {
+          "from": 0.6,
+          "to": 0.7,
+          "n": 9,
+          "meanForecast": 0.649,
+          "observed": 0.556
+        },
+        {
+          "from": 0.7,
+          "to": 0.8,
+          "n": 20,
+          "meanForecast": 0.759,
+          "observed": 0.75
+        },
+        {
+          "from": 0.8,
+          "to": 0.9,
+          "n": 50,
+          "meanForecast": 0.852,
+          "observed": 0.82
+        },
+        {
+          "from": 0.9,
+          "to": 1,
+          "n": 49,
+          "meanForecast": 0.959,
+          "observed": 0.714
+        }
+      ],
+      "byLab": [
+        {
+          "labId": "openai",
+          "baseRate": 0.034,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0368,
+            "skill": -0.124
+          },
+          "samples": 4249,
+          "hoursWithOdds": 1071
+        },
+        {
+          "labId": "anthropic",
+          "baseRate": 0.04,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0322,
+            "skill": 0.152
+          },
+          "samples": 4249,
+          "hoursWithOdds": 746
+        },
+        {
+          "labId": "google",
+          "baseRate": 0.05,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0456,
+            "skill": 0.047
+          },
+          "samples": 4249,
+          "hoursWithOdds": 3159
+        },
+        {
+          "labId": "xai",
+          "baseRate": 0.028,
+          "market": {
+            "forecast": "market",
+            "brier": 0.03,
+            "skill": -0.093
+          },
+          "samples": 4249,
+          "hoursWithOdds": 495
+        },
+        {
+          "labId": "deepseek",
+          "baseRate": 0.028,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0282,
+            "skill": -0.029
+          },
+          "samples": 4249,
+          "hoursWithOdds": 52
+        },
+        {
+          "labId": "qwen",
+          "baseRate": 0.063,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0626,
+            "skill": -0.067
+          },
+          "samples": 4249,
+          "hoursWithOdds": 48
+        },
+        {
+          "labId": "meta",
+          "baseRate": 0.028,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0285,
+            "skill": -0.03
+          },
+          "samples": 4249,
+          "hoursWithOdds": 52
+        }
+      ]
+    },
+    {
+      "horizonH": 72,
+      "samples": 4201,
+      "baseRate": 0.526,
+      "scores": [
+        {
+          "forecast": "base rate",
+          "brier": 0.2493,
+          "skill": 0
+        },
+        {
+          "forecast": "market max",
+          "brier": 0.3711,
+          "skill": -0.488
+        },
+        {
+          "forecast": "max(market, base rate)",
+          "brier": 0.235,
+          "skill": 0.058
+        }
+      ],
+      "reliability": [
+        {
+          "from": 0,
+          "to": 0.1,
+          "n": 2658,
+          "meanForecast": 0.021,
+          "observed": 0.465
+        },
+        {
+          "from": 0.1,
+          "to": 0.2,
+          "n": 248,
+          "meanForecast": 0.143,
+          "observed": 0.415
+        },
+        {
+          "from": 0.2,
+          "to": 0.3,
+          "n": 283,
+          "meanForecast": 0.246,
+          "observed": 0.562
+        },
+        {
+          "from": 0.3,
+          "to": 0.4,
+          "n": 384,
+          "meanForecast": 0.351,
+          "observed": 0.542
+        },
+        {
+          "from": 0.4,
+          "to": 0.5,
+          "n": 161,
+          "meanForecast": 0.444,
+          "observed": 0.54
+        },
+        {
+          "from": 0.5,
+          "to": 0.6,
+          "n": 56,
+          "meanForecast": 0.539,
+          "observed": 0.839
+        },
+        {
+          "from": 0.6,
+          "to": 0.7,
+          "n": 50,
+          "meanForecast": 0.645,
+          "observed": 0.58
+        },
+        {
+          "from": 0.7,
+          "to": 0.8,
+          "n": 72,
+          "meanForecast": 0.749,
+          "observed": 0.889
+        },
+        {
+          "from": 0.8,
+          "to": 0.9,
+          "n": 117,
+          "meanForecast": 0.851,
+          "observed": 0.957
+        },
+        {
+          "from": 0.9,
+          "to": 1,
+          "n": 172,
+          "meanForecast": 0.948,
+          "observed": 0.953
+        }
+      ],
+      "byLab": [
+        {
+          "labId": "openai",
+          "baseRate": 0.103,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0641,
+            "skill": 0.303
+          },
+          "samples": 4201,
+          "hoursWithOdds": 1670
+        },
+        {
+          "labId": "anthropic",
+          "baseRate": 0.12,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0711,
+            "skill": 0.326
+          },
+          "samples": 4201,
+          "hoursWithOdds": 963
+        },
+        {
+          "labId": "google",
+          "baseRate": 0.135,
+          "market": {
+            "forecast": "market",
+            "brier": 0.1083,
+            "skill": 0.072
+          },
+          "samples": 4201,
+          "hoursWithOdds": 3260
+        },
+        {
+          "labId": "xai",
+          "baseRate": 0.086,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0784,
+            "skill": -0.001
+          },
+          "samples": 4201,
+          "hoursWithOdds": 829
+        },
+        {
+          "labId": "deepseek",
+          "baseRate": 0.086,
+          "market": {
+            "forecast": "market",
+            "brier": 0.084,
+            "skill": -0.072
+          },
+          "samples": 4201,
+          "hoursWithOdds": 159
+        },
+        {
+          "labId": "qwen",
+          "baseRate": 0.168,
+          "market": {
+            "forecast": "market",
+            "brier": 0.1683,
+            "skill": -0.202
+          },
+          "samples": 4201,
+          "hoursWithOdds": 144
+        },
+        {
+          "labId": "meta",
+          "baseRate": 0.086,
+          "market": {
+            "forecast": "market",
+            "brier": 0.0858,
+            "skill": -0.092
+          },
+          "samples": 4201,
+          "hoursWithOdds": 148
+        }
+      ]
+    }
+  ],
+  "rungCalibration": [
+    {
+      "horizonH": 24,
+      "rungs": 328,
+      "yesRate": 0.073,
+      "market": {
+        "forecast": "market price",
+        "brier": 0.0375,
+        "skill": 0.447
+      },
+      "reliability": [
+        {
+          "from": 0,
+          "to": 0.2,
+          "n": 277,
+          "meanForecast": 0.02,
+          "observed": 0.007
+        },
+        {
+          "from": 0.2,
+          "to": 0.4,
+          "n": 30,
+          "meanForecast": 0.285,
+          "observed": 0.267
+        },
+        {
+          "from": 0.4,
+          "to": 0.6,
+          "n": 6,
+          "meanForecast": 0.481,
+          "observed": 0.5
+        },
+        {
+          "from": 0.6,
+          "to": 0.8,
+          "n": 2,
+          "meanForecast": 0.783,
+          "observed": 1
+        },
+        {
+          "from": 0.8,
+          "to": 1,
+          "n": 13,
+          "meanForecast": 0.885,
+          "observed": 0.692
+        }
+      ]
+    },
+    {
+      "horizonH": 72,
+      "rungs": 325,
+      "yesRate": 0.08,
+      "market": {
+        "forecast": "market price",
+        "brier": 0.036,
+        "skill": 0.512
+      },
+      "reliability": [
+        {
+          "from": 0,
+          "to": 0.2,
+          "n": 269,
+          "meanForecast": 0.026,
+          "observed": 0.011
+        },
+        {
+          "from": 0.2,
+          "to": 0.4,
+          "n": 31,
+          "meanForecast": 0.297,
+          "observed": 0.194
+        },
+        {
+          "from": 0.4,
+          "to": 0.6,
+          "n": 11,
+          "meanForecast": 0.477,
+          "observed": 0.364
+        },
+        {
+          "from": 0.6,
+          "to": 0.8,
+          "n": 8,
+          "meanForecast": 0.707,
+          "observed": 0.875
+        },
+        {
+          "from": 0.8,
+          "to": 1,
+          "n": 6,
+          "meanForecast": 0.896,
+          "observed": 1
+        }
+      ]
+    }
+  ],
+  "sevenDayClaim": {
+    "claim": {
+      "ahead": {
+        "resolvedYes": 11,
+        "fired": 24
+      },
+      "near": {
+        "resolvedYes": 33,
+        "fired": 46
+      }
+    },
+    "perRung": {
+      "ahead": {
+        "resolvedYes": 51,
+        "fired": 68,
+        "rate": 0.75
+      },
+      "near": {
+        "resolvedYes": 16,
+        "fired": 19,
+        "rate": 0.842
+      }
+    },
+    "perLadder": {
+      "ahead": {
+        "resolvedYes": 12,
+        "fired": 23,
+        "rate": 0.522
+      },
+      "near": {
+        "resolvedYes": 15,
+        "fired": 18,
+        "rate": 0.833
+      }
+    },
+    "rungs": 260,
+    "ladders": 55
+  }
+}

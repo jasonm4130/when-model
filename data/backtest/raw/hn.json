@@ -1,0 +1,3789 @@
+{
+  "qwen3.5": {
+    "query": "Qwen3.5",
+    "from": "2026-02-13T00:00:00Z",
+    "to": "2026-02-18T00:00:00Z",
+    "hits": [
+      {
+        "id": "47032876",
+        "t": 1771234341,
+        "title": "Qwen3.5: Towards Native Multimodal Agents",
+        "url": "https://qwen.ai/blog?id=qwen3.5",
+        "points": 434
+      },
+      {
+        "id": "47033238",
+        "t": 1771236937,
+        "title": "Qwen3.5",
+        "url": "https://github.com/QwenLM/Qwen3.5",
+        "points": 5
+      },
+      {
+        "id": "47033981",
+        "t": 1771243278,
+        "title": "Qwen3.5",
+        "url": "https://huggingface.co/Qwen/Qwen3.5-397B-A17B",
+        "points": 5
+      },
+      {
+        "id": "47035602",
+        "t": 1771252983,
+        "title": "Qwen 3.5",
+        "url": "https://qwenlm.github.io/blog/qwen3.5/",
+        "points": 4
+      }
+    ]
+  },
+  "gemma-4": {
+    "query": "Gemma 4",
+    "from": "2026-03-30T00:00:00Z",
+    "to": "2026-04-04T00:00:00Z",
+    "hits": [
+      {
+        "id": "47573491",
+        "t": 1774874194,
+        "title": "Show HN: SycoFact 4B: Open model detecting sycophancy and delusion confirmation",
+        "url": "https://huggingface.co/iwalton3/sycofact",
+        "points": 2
+      },
+      {
+        "id": "47599463",
+        "t": 1775043233,
+        "title": "Tq-KV – Rust implementation of TurboQuant that works on GGUF models",
+        "url": "",
+        "points": 3
+      },
+      {
+        "id": "47616244",
+        "t": 1775145629,
+        "title": "Gemma 4: Byte for byte, the most capable open models",
+        "url": "https://blog.google/innovation-and-ai/technology/developers-tools/gemma-4/",
+        "points": 24
+      },
+      {
+        "id": "47616356",
+        "t": 1775146232,
+        "title": "Gemma 4 Model Card",
+        "url": "https://ai.google.dev/gemma/docs/core/model_card_4",
+        "points": 3
+      },
+      {
+        "id": "47616361",
+        "t": 1775146254,
+        "title": "Google releases Gemma 4 open models",
+        "url": "https://deepmind.google/models/gemma/gemma-4/",
+        "points": 1812
+      },
+      {
+        "id": "47616492",
+        "t": 1775146804,
+        "title": "Gemma 4 Models",
+        "url": "https://huggingface.co/blog/gemma4",
+        "points": 5
+      },
+      {
+        "id": "47616662",
+        "t": 1775147428,
+        "title": "Gemma 4 running on NVIDIA and AMD from Day 0 with MAX",
+        "url": "https://www.modular.com/blog/day-zero-launch-fastest-performance-for-gemma-4-on-nvidia-and-amd",
+        "points": 4
+      },
+      {
+        "id": "47616749",
+        "t": 1775147855,
+        "title": "Gemma 4 Just Released",
+        "url": "https://twitter.com/demishassabis/status/2039736628659269901",
+        "points": 1
+      },
+      {
+        "id": "47617019",
+        "t": 1775149189,
+        "title": "Gemma 4: The new standard for local agentic intelligence on Android",
+        "url": "https://android-developers.googleblog.com/2026/04/gemma-4-new-standard-for-local-agentic-intelligence.html",
+        "points": 2
+      },
+      {
+        "id": "47618868",
+        "t": 1775157181,
+        "title": "Gemma 4 running locally in the browser with transformers.js",
+        "url": "https://huggingface.co/spaces/webml-community/Gemma-4-WebGPU",
+        "points": 3
+      },
+      {
+        "id": "47619467",
+        "t": 1775160172,
+        "title": "AICore Developer Preview Supports Gemma 4 on Pixel TPUs",
+        "url": "https://android-developers.googleblog.com/2026/04/AI-Core-Developer-Preview.html",
+        "points": 2
+      },
+      {
+        "id": "47619740",
+        "t": 1775161687,
+        "title": "Gemma 4 reports, configs, and code, here are the takeaways",
+        "url": "https://twitter.com/rasbt/status/2039780905619705902",
+        "points": 3
+      },
+      {
+        "id": "47624199",
+        "t": 1775202681,
+        "title": "Show HN: Gemma 4 based local RAG on 25 Years of news articles",
+        "url": "https://github.com/r-follador/TeletextSignals/",
+        "points": 1
+      },
+      {
+        "id": "47624600",
+        "t": 1775207270,
+        "title": "Gemma 4 makes local AI agents practical",
+        "url": "https://firethering.com/gemma-4-local-ai-agents/",
+        "points": 4
+      },
+      {
+        "id": "47624731",
+        "t": 1775208916,
+        "title": "April 2026 TLDR Setup for Ollama and Gemma 4 26B on a Mac mini",
+        "url": "https://gist.github.com/greenstevester/fc49b4e60a4fef9effc79066c1033ae5",
+        "points": 330
+      },
+      {
+        "id": "47624995",
+        "t": 1775211825,
+        "title": "Running Qwen 35B on 16GB Mac Mini via MMAP (17 tok/s) then swapping to Gemma 4",
+        "url": "https://thoughts.jock.pl/p/local-llm-35b-mac-mini-gemma-swap-production-2026",
+        "points": 4
+      },
+      {
+        "id": "47626498",
+        "t": 1775223217,
+        "title": "Google battles Chinese open-weights models with Gemma 4",
+        "url": "https://www.theregister.com/2026/04/02/googles_gemma_4_open_weights/",
+        "points": 2
+      },
+      {
+        "id": "47629128",
+        "t": 1775235514,
+        "title": "Google's Gemma 4 is good, but you won't use it",
+        "url": "https://www.riteshkhanna.com/blog/gemma4-wordle",
+        "points": 2
+      },
+      {
+        "id": "47629344",
+        "t": 1775236547,
+        "title": "A Visual Guide to Gemma 4",
+        "url": "https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4",
+        "points": 4
+      }
+    ]
+  },
+  "claude-opus-4.7": {
+    "query": "Opus 4.7",
+    "from": "2026-04-13T00:00:00Z",
+    "to": "2026-04-18T00:00:00Z",
+    "hits": [
+      {
+        "id": "47793411",
+        "t": 1776349430,
+        "title": "Claude Opus 4.7",
+        "url": "https://www.anthropic.com/news/claude-opus-4-7",
+        "points": 1959
+      },
+      {
+        "id": "47793493",
+        "t": 1776349749,
+        "title": "Claude Opus 4.7",
+        "url": "https://www.anthropic.com/claude/opus",
+        "points": 186
+      },
+      {
+        "id": "47793546",
+        "t": 1776349944,
+        "title": "Claude Opus 4.7 Model Card",
+        "url": "https://anthropic.com/claude-opus-4-7-system-card",
+        "points": 177
+      },
+      {
+        "id": "47793649",
+        "t": 1776350316,
+        "title": "Anthropic releases Claude Opus 4.7",
+        "url": "https://platform.claude.com/docs/en/release-notes/overview",
+        "points": 1
+      },
+      {
+        "id": "47793660",
+        "t": 1776350347,
+        "title": "System Card: Claude Opus 4.7 [pdf]",
+        "url": "https://cdn.sanity.io/files/4zrzovbb/website/037f06850df7fbe871e206dad004c3db5fd50340.pdf",
+        "points": 3
+      },
+      {
+        "id": "47793664",
+        "t": 1776350352,
+        "title": "What Claude Opus 4.7 means for AI code review",
+        "url": "https://www.coderabbit.ai/blog/claude-opus-4-7-for-ai-code-review",
+        "points": 2
+      },
+      {
+        "id": "47793667",
+        "t": 1776350367,
+        "title": "What's new in Claude Opus 4.7",
+        "url": "https://platform.claude.com/docs/en/about-claude/models/whats-new-claude-4-7",
+        "points": 16
+      },
+      {
+        "id": "47793680",
+        "t": 1776350396,
+        "title": "Introducing Opus 4.7",
+        "url": "https://twitter.com/claudeai/status/2044785261393977612",
+        "points": 2
+      },
+      {
+        "id": "47794873",
+        "t": 1776353821,
+        "title": "GitHub Copilot is serving Opus 4.7 at 7.5x multiplier until April 30th",
+        "url": "https://github.blog/changelog/2026-04-16-claude-opus-4-7-is-generally-available/",
+        "points": 3
+      },
+      {
+        "id": "47795194",
+        "t": 1776354795,
+        "title": "Opus 4.7 out, noticed diff?",
+        "url": "",
+        "points": 1
+      },
+      {
+        "id": "47796041",
+        "t": 1776357752,
+        "title": "Tell HN: Opus 4.6/4.7 cyber policy changes break authorized bug bounty workflows",
+        "url": "",
+        "points": 3
+      },
+      {
+        "id": "47796215",
+        "t": 1776358502,
+        "title": "Opus 4.7 Inner World",
+        "url": "https://claude.ai/public/artifacts/58e621ae-9bac-408e-8aec-5842a5268473",
+        "points": 1
+      },
+      {
+        "id": "47796264",
+        "t": 1776358694,
+        "title": "Best practices for using Claude Opus 4.7 with Claude Code",
+        "url": "https://claude.com/blog/best-practices-for-using-claude-opus-4-7-with-claude-code",
+        "points": 6
+      },
+      {
+        "id": "47796806",
+        "t": 1776360934,
+        "title": "Ask HN: Is Opus 4.7 obsessed with malware for anybody else?",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "47796830",
+        "t": 1776361040,
+        "title": "Qwen3.6-35B-A3B on my laptop drew me a better pelican than Claude Opus 4.7",
+        "url": "https://simonwillison.net/2026/Apr/16/qwen-beats-opus/",
+        "points": 463
+      },
+      {
+        "id": "47796854",
+        "t": 1776361144,
+        "title": "Anthropic rolls out Claude Opus 4.7, an AI model that is less risky than Mythos",
+        "url": "https://www.cnbc.com/2026/04/16/anthropic-claude-opus-4-7-model-mythos.html",
+        "points": 2
+      },
+      {
+        "id": "47797020",
+        "t": 1776361854,
+        "title": "Qwen3.6-35B-A3B draws a better pelican than Opus 4.7",
+        "url": "https://twitter.com/simonw/status/2044830134885306701",
+        "points": 5
+      },
+      {
+        "id": "47797465",
+        "t": 1776363947,
+        "title": "Show HN: Claude Opus 4.7: Everything You Need to Know",
+        "url": "",
+        "points": 1
+      },
+      {
+        "id": "47798195",
+        "t": 1776367205,
+        "title": "Opus 4.7 dominates agentic benchmark, 15% more expensive than Opus 4.6",
+        "url": "https://app.uniclaw.ai/arena/visualize?via=hn&",
+        "points": 3
+      },
+      {
+        "id": "47798337",
+        "t": 1776367898,
+        "title": "Claude Opus 4.7 Is Now Available in Puter.js",
+        "url": "https://developer.puter.com/blog/claude-opus-4-7-puter-js/",
+        "points": 2
+      },
+      {
+        "id": "47798409",
+        "t": 1776368212,
+        "title": "Opus 4.7 uses more thinking tokens, so we increased rate limits",
+        "url": "https://twitter.com/bcherny/status/2044839936235553167",
+        "points": 2
+      },
+      {
+        "id": "47798959",
+        "t": 1776370758,
+        "title": "Ask HN: Opus 4.7 – is anyone measuring the real token cost on agentic tasks?",
+        "url": "",
+        "points": 1
+      },
+      {
+        "id": "47799830",
+        "t": 1776375491,
+        "title": "Claude Opus 4.7's new tokenizer: 1.47x on English, 1.01x on Chinese",
+        "url": "https://www.claudecodecamp.com/p/i-measured-claude-4-7-s-new-tokenizer-here-s-what-it-costs-you",
+        "points": 4
+      },
+      {
+        "id": "47800528",
+        "t": 1776379922,
+        "title": "Opus 4.7 Became Better at Web Design",
+        "url": "https://www.yashthapliyal.com/blog/opus-4-7-web-design",
+        "points": 1
+      },
+      {
+        "id": "47800630",
+        "t": 1776380508,
+        "title": "Claude Opus 4.7 System Prompt Leaked",
+        "url": "https://twitter.com/elder_plinius/status/2044857095439421885",
+        "points": 6
+      },
+      {
+        "id": "47801184",
+        "t": 1776385650,
+        "title": "Show HN: Swarm – Get consistent results from Claude Code",
+        "url": "https://github.com/DheerG/swarms",
+        "points": 1
+      },
+      {
+        "id": "47801774",
+        "t": 1776391531,
+        "title": "A few tips to get more out of Opus 4.7",
+        "url": "https://twitter.com/bcherny/status/2044847848035156457",
+        "points": 7
+      },
+      {
+        "id": "47801971",
+        "t": 1776394005,
+        "title": "Opus 4.7 is horrible at writing",
+        "url": "",
+        "points": 19
+      },
+      {
+        "id": "47807043",
+        "t": 1776439969,
+        "title": "Claude Opus 4.7 Dropped and My Trust Got a Little Smaller",
+        "url": "https://www.bhusalmanish.com.np/blog/posts/opus-4-7-developer-fatigue.html",
+        "points": 2
+      },
+      {
+        "id": "47808938",
+        "t": 1776449943,
+        "title": "Best practices for using Claude Opus 4.7 with Claude Code",
+        "url": "https://claude.com/blog/best-practices-for-using-claude-opus-4-7-with-claude-code",
+        "points": 4
+      },
+      {
+        "id": "47809142",
+        "t": 1776451163,
+        "title": "I ran Opus 4.7 vs. Old Opus 4.6 vs. New Opus 4.6 on 28 Zod tasks",
+        "url": "https://www.stet.sh/blog/opus-4-7-zod",
+        "points": 2
+      },
+      {
+        "id": "47809543",
+        "t": 1776453556,
+        "title": "Claude Code is unable to respond to this request",
+        "url": "",
+        "points": 5
+      },
+      {
+        "id": "47810417",
+        "t": 1776458938,
+        "title": "I reversed Opus 4.7 costs",
+        "url": "https://github.com/LucasDuys/forge",
+        "points": 1
+      },
+      {
+        "id": "47810510",
+        "t": 1776459627,
+        "title": "Opus 4.7 refuses to solve NYT Connections puzzles",
+        "url": "https://twitter.com/LechMazur/status/2044970170347622727",
+        "points": 7
+      },
+      {
+        "id": "47811159",
+        "t": 1776464042,
+        "title": "3 Hours with Claude Opus 4.7: functional study webapp and remote MCP- Oneshotted",
+        "url": "https://github.com/AmmarSaleh50/study-dashboard-demo",
+        "points": 6
+      }
+    ]
+  },
+  "gpt-5.5": {
+    "query": "GPT-5.5",
+    "from": "2026-04-20T00:00:00Z",
+    "to": "2026-04-26T00:00:00Z",
+    "hits": [
+      {
+        "id": "47858903",
+        "t": 1776831142,
+        "title": "GPT 5.5 Released in Codex",
+        "url": "",
+        "points": 17
+      },
+      {
+        "id": "47879092",
+        "t": 1776967299,
+        "title": "GPT-5.5",
+        "url": "https://openai.com/index/introducing-gpt-5-5/",
+        "points": 1580
+      },
+      {
+        "id": "47879102",
+        "t": 1776967350,
+        "title": "GPT-5.5 Bio Bug Bounty",
+        "url": "https://openai.com/index/gpt-5-5-bio-bug-bounty/",
+        "points": 7
+      },
+      {
+        "id": "47879330",
+        "t": 1776968215,
+        "title": "GPT-5.5: Mythos-Like Hacking, Open to All",
+        "url": "https://xbow.com/blog/mythos-like-hacking-open-to-all",
+        "points": 78
+      },
+      {
+        "id": "47879462",
+        "t": 1776968681,
+        "title": "GPT-5.5 System Card [pdf]",
+        "url": "https://deploymentsafety.openai.com/gpt-5-5/gpt-5-5.pdf",
+        "points": 4
+      },
+      {
+        "id": "47882153",
+        "t": 1776978966,
+        "title": "GPT-5.5 – No ARC-AGI-3 scores",
+        "url": "",
+        "points": 25
+      },
+      {
+        "id": "47882802",
+        "t": 1776982257,
+        "title": "Sign of the Future: GPT-5.5",
+        "url": "https://www.oneusefulthing.org/p/sign-of-the-future-gpt-55",
+        "points": 9
+      },
+      {
+        "id": "47883283",
+        "t": 1776984787,
+        "title": "OpenAI Releases GPT-5.5",
+        "url": "https://techthreedots.com/openai-launches-gpt-5-5-its-smartest-model-yet",
+        "points": 1
+      },
+      {
+        "id": "47884761",
+        "t": 1776997498,
+        "title": "Vibe Check: GPT-5.5 Has It All",
+        "url": "https://every.to/vibe-check/gpt-5-5",
+        "points": 1
+      },
+      {
+        "id": "47886763",
+        "t": 1777015287,
+        "title": "Tell HN: Codex macOS app switches to Fast speed after update without asking",
+        "url": "",
+        "points": 22
+      },
+      {
+        "id": "47890780",
+        "t": 1777040814,
+        "title": "Food for Agile Thought #541: GPT-5.5, Product Managers&Trouble, Product on Speed",
+        "url": "https://age-of-product.com/food-agile-thought-541-gpt-55/",
+        "points": 1
+      },
+      {
+        "id": "47894000",
+        "t": 1777055012,
+        "title": "OpenAI releases GPT-5.5 and GPT-5.5 Pro in the API",
+        "url": "https://developers.openai.com/api/docs/changelog",
+        "points": 256
+      },
+      {
+        "id": "47894788",
+        "t": 1777059280,
+        "title": "GPT-5.5 has pulled ahead of Opus for accounting and finance tasks",
+        "url": "https://twitter.com/MaxMinsker/status/2047760245389205865",
+        "points": 2
+      },
+      {
+        "id": "47895150",
+        "t": 1777061274,
+        "title": "GPT-5.5 is generally available for GitHub Copilot",
+        "url": "https://github.blog/changelog/2026-04-24-gpt-5-5-is-generally-available-for-github-copilot/",
+        "points": 24
+      },
+      {
+        "id": "47895826",
+        "t": 1777064863,
+        "title": "OpenAI Pres. Greg Brockman on GPT-5.5 \"Spud\", Model Moats and 'Compute Economy'",
+        "url": "https://www.bigtechnology.com/p/openai-president-greg-brockman-on",
+        "points": 3
+      },
+      {
+        "id": "47896710",
+        "t": 1777070488,
+        "title": "GPT 5.5 sets new record in proofreading benchmark",
+        "url": "https://revise.io/errata-bench",
+        "points": 3
+      },
+      {
+        "id": "47898653",
+        "t": 1777091367,
+        "title": "GitHub Copilot: GPT-5.5 7.5x more expensive under promotional pricing than 5.4",
+        "url": "https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/copilot-requests",
+        "points": 4
+      },
+      {
+        "id": "47898932",
+        "t": 1777095055,
+        "title": "GPT-5.5 Prompting Guide",
+        "url": "https://simonwillison.net/2026/Apr/25/gpt-5-5-prompting-guide/",
+        "points": 3
+      },
+      {
+        "id": "47899355",
+        "t": 1777100457,
+        "title": "Testing GPT-5.5 in early access: what we are seeing so far",
+        "url": "https://lovable.dev/blog/gpt-5-5-now-in-lovable",
+        "points": 3
+      },
+      {
+        "id": "47900544",
+        "t": 1777116060,
+        "title": "GPT 5.5 flags accounts for \"potential high-risk cybersecurity\"",
+        "url": "https://twitter.com/banteg/status/2047577218142871949",
+        "points": 5
+      },
+      {
+        "id": "47901734",
+        "t": 1777126651,
+        "title": "GPT‑5.5 Bio Bug Bounty",
+        "url": "https://openai.com/index/gpt-5-5-bio-bug-bounty/",
+        "points": 160
+      },
+      {
+        "id": "47902955",
+        "t": 1777137368,
+        "title": "GPT-5.5 is a biased evaluator: authorship and order effects",
+        "url": "https://blog.valmont.dev/posts/gpt-5-5-is-a-biased-evaluator-authorship-and-order-effects/",
+        "points": 4
+      },
+      {
+        "id": "47903761",
+        "t": 1777144398,
+        "title": "GPT-5.5-Pro did worse in BullshitBench",
+        "url": "https://twitter.com/petergostev/status/2047773402090426548",
+        "points": 4
+      }
+    ]
+  },
+  "deepseek-v4": {
+    "query": "DeepSeek V4",
+    "from": "2026-04-21T00:00:00Z",
+    "to": "2026-04-26T00:00:00Z",
+    "hits": [
+      {
+        "id": "47884933",
+        "t": 1776999333,
+        "title": "DeepSeek-V4 Technical Report [pdf]",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro/blob/main/DeepSeek_V4.pdf",
+        "points": 26
+      },
+      {
+        "id": "47884971",
+        "t": 1776999681,
+        "title": "DeepSeek v4",
+        "url": "https://api-docs.deepseek.com/news/news260424",
+        "points": 2091
+      },
+      {
+        "id": "47885003",
+        "t": 1776999973,
+        "title": "DeepSeek-V4 Preview Version is launched",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "47885014",
+        "t": 1777000074,
+        "title": "DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+        "points": 159
+      },
+      {
+        "id": "47885016",
+        "t": 1777000081,
+        "title": "DeepSeek-V4",
+        "url": "https://huggingface.co/collections/deepseek-ai/deepseek-v4",
+        "points": 7
+      },
+      {
+        "id": "47885099",
+        "t": 1777000837,
+        "title": "DeepSeek V4 Flash",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash",
+        "points": 14
+      },
+      {
+        "id": "47885230",
+        "t": 1777002036,
+        "title": "DeepSeek V4 is out. the best open-source on coding. here's the breakdown",
+        "url": "",
+        "points": 5
+      },
+      {
+        "id": "47887056",
+        "t": 1777017267,
+        "title": "DeepSeek V4 in vLLM: Efficient Long-Context Attention",
+        "url": "https://vllm-website-pdzeaspbm-inferact-inc.vercel.app/blog/deepseek-v4",
+        "points": 3
+      },
+      {
+        "id": "47888066",
+        "t": 1777025236,
+        "title": "DeepSeek-V4: Making 1M token context efficient",
+        "url": "https://firethering.com/deepseek-v4-open-source-million-token-context/",
+        "points": 3
+      },
+      {
+        "id": "47889755",
+        "t": 1777036452,
+        "title": "DeepSeek Returns with V4-Pro and V4-Flash",
+        "url": "https://thenextweb.com/news/deepseek-v4-pro-flash-launch-open-source",
+        "points": 1
+      },
+      {
+        "id": "47889982",
+        "t": 1777037325,
+        "title": "Ask HN: Why is cache for DeepSeek-v4 cheapest on Vercel AI Gateway?",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "47894785",
+        "t": 1777059262,
+        "title": "How good is Mac Studio M3 Ultra for Trillion param models like DeepSeekv4?",
+        "url": "",
+        "points": 15
+      },
+      {
+        "id": "47899277",
+        "t": 1777099445,
+        "title": "Show HN: A CLI to use any model in your coding agent",
+        "url": "https://getaivo.dev/",
+        "points": 5
+      },
+      {
+        "id": "47902025",
+        "t": 1777129373,
+        "title": "DeepSeek V4 in vLLM: Efficient Long-Context Attention",
+        "url": "https://vllm-website-pdzeaspbm-inferact-inc.vercel.app/blog/deepseek-v4",
+        "points": 2
+      },
+      {
+        "id": "47903242",
+        "t": 1777139822,
+        "title": "DeepSeek V4 with Strix: a quick test",
+        "url": "https://theaq.blog/2026/04/25/deepseek-v4-with-strix-a-quick-test.html",
+        "points": 2
+      },
+      {
+        "id": "47905768",
+        "t": 1777160645,
+        "title": "DeepSeek-V4 on Day 0: From Fast Inference to Verified RL with SGLang and Miles",
+        "url": "https://www.lmsys.org/blog/2026-04-25-deepseek-v4/",
+        "points": 80
+      }
+    ]
+  },
+  "claude-opus-4.8": {
+    "query": "Opus 4.8",
+    "from": "2026-05-25T00:00:00Z",
+    "to": "2026-05-30T00:00:00Z",
+    "hits": [
+      {
+        "id": "48306771",
+        "t": 1779961940,
+        "title": "Claude Opus 4.8 coming today?",
+        "url": "https://twitter.com/synthwavedd/status/2059931370009272802",
+        "points": 5
+      },
+      {
+        "id": "48311647",
+        "t": 1779986954,
+        "title": "Claude Opus 4.8",
+        "url": "https://www.anthropic.com/news/claude-opus-4-8",
+        "points": 1774
+      },
+      {
+        "id": "48312156",
+        "t": 1779988436,
+        "title": "What's new in Claude Opus 4.8",
+        "url": "https://platform.claude.com/docs/en/about-claude/models/whats-new-claude-4-8",
+        "points": 2
+      },
+      {
+        "id": "48312198",
+        "t": 1779988562,
+        "title": "Anthropic to roll out Claude Mythos in coming weeks, launches Opus 4.8",
+        "url": "https://www.reuters.com/business/anthropic-roll-out-claude-mythos-coming-weeks-launches-opus-48-2026-05-28/",
+        "points": 3
+      },
+      {
+        "id": "48312236",
+        "t": 1779988680,
+        "title": "Opus 4.8 System Card [pdf]",
+        "url": "https://cdn.sanity.io/files/4zrzovbb/website/c886650a2e96fc0925c805a1a7ca77314ccbf4a6.pdf",
+        "points": 6
+      },
+      {
+        "id": "48312755",
+        "t": 1779990733,
+        "title": "Claude Opus 4.8 is generally available for GitHub Copilot",
+        "url": "https://github.blog/changelog/2026-05-28-claude-opus-4-8-is-generally-available-for-github-copilot/",
+        "points": 4
+      },
+      {
+        "id": "48314231",
+        "t": 1779996656,
+        "title": "Introducing Opus 4.8",
+        "url": "https://old.reddit.com/r/ClaudeAI/comments/1tq99mu/introducing_claude_opus_48/",
+        "points": 2
+      },
+      {
+        "id": "48316298",
+        "t": 1780006582,
+        "title": "Claude Opus 4.8: 4 Features That Change Our Daily Work with Claude",
+        "url": "https://medium.com/@alirezarezvani/claude-opus-4-8-4-features-that-change-our-daily-work-with-claude-e7e24b8a3147",
+        "points": 3
+      },
+      {
+        "id": "48316470",
+        "t": 1780007600,
+        "title": "Claude Opus 4.8 + AI medical diagnosis examples",
+        "url": "https://github.com/joelparkerhenderson/ai-medical-diagnosis-examples",
+        "points": 3
+      },
+      {
+        "id": "48316636",
+        "t": 1780008570,
+        "title": "Ask HN: Is Claude Opus 4.8 broken?",
+        "url": "",
+        "points": 9
+      },
+      {
+        "id": "48317601",
+        "t": 1780015895,
+        "title": "Claude Opus 4.8: \"a modest but tangible improvement\"",
+        "url": "https://simonwillison.net/2026/May/28/claude-opus-4-8/",
+        "points": 2
+      },
+      {
+        "id": "48317895",
+        "t": 1780018449,
+        "title": "Gemini 3.5 Flash beats Opus 4.8 on bluffbench",
+        "url": "https://bsky.app/profile/simonpcouch.com/post/3mmwroep6lc2y",
+        "points": 2
+      },
+      {
+        "id": "48318264",
+        "t": 1780021553,
+        "title": "Opus 4.8 on Vending-Bench: Better Alignment, Worse Performance",
+        "url": "https://andonlabs.com/blog/opus-4-8-vending-bench",
+        "points": 3
+      },
+      {
+        "id": "48322384",
+        "t": 1780058639,
+        "title": "Claude Code Degraded Before Opus 4.8 Release",
+        "url": "https://marginlab.ai/blog/claude-code-degraded-before-opus-4-8/",
+        "points": 8
+      },
+      {
+        "id": "48324078",
+        "t": 1780067418,
+        "title": "Claude Opus 4.8 distilled Alibaba Qwen models",
+        "url": "https://twitter.com/maxforai/status/2060053228566495410",
+        "points": 23
+      },
+      {
+        "id": "48328970",
+        "t": 1780087338,
+        "title": "Claude Opus 4.8 may have distilled Qwen",
+        "url": "https://old.reddit.com/r/ClaudeCode/comments/1tqaist/opus_48_distilled_qwen/",
+        "points": 9
+      }
+    ]
+  },
+  "claude-fable-5": {
+    "query": "Fable 5",
+    "from": "2026-06-06T00:00:00Z",
+    "to": "2026-06-11T00:00:00Z",
+    "hits": [
+      {
+        "id": "48450521",
+        "t": 1780947375,
+        "title": "Claude Fable 5 by Anthropic, releasing tomorrow",
+        "url": "",
+        "points": 10
+      },
+      {
+        "id": "48463808",
+        "t": 1781024281,
+        "title": "Claude Fable 5",
+        "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+        "points": 2626
+      },
+      {
+        "id": "48463811",
+        "t": 1781024293,
+        "title": "System Card: Claude Fable 5 and Claude Mythos 5 [pdf]",
+        "url": "https://www-cdn.anthropic.com/d00db56fa754a1b115b6dd7cb2e3c342ee809620.pdf",
+        "points": 213
+      },
+      {
+        "id": "48463902",
+        "t": 1781024645,
+        "title": "Anthropic releases Claude Fable 5",
+        "url": "https://www.theverge.com/news/946725/anthropic-releases-claude-fable-5-mythos",
+        "points": 4
+      },
+      {
+        "id": "48463920",
+        "t": 1781024697,
+        "title": "Claude Fable 5 [video]",
+        "url": "https://www.youtube.com/watch?v=Y9Wz2PV404E",
+        "points": 2
+      },
+      {
+        "id": "48464023",
+        "t": 1781025039,
+        "title": "Claude Mythos 5 / Fable 5",
+        "url": "https://www.anthropic.com/claude/fable",
+        "points": 18
+      },
+      {
+        "id": "48464132",
+        "t": 1781025414,
+        "title": "CursorBench 3.1 (With Fable 5)",
+        "url": "https://cursor.com/evals",
+        "points": 3
+      },
+      {
+        "id": "48464589",
+        "t": 1781026928,
+        "title": "Claude Fable 5",
+        "url": "https://twitter.com/claudeai/status/2064394146916229443",
+        "points": 3
+      },
+      {
+        "id": "48464917",
+        "t": 1781028017,
+        "title": "Claude Fable 5 is generally available for GitHub Copilot",
+        "url": "https://github.blog/changelog/2026-06-09-claude-fable-5-is-generally-available-for-github-copilot/",
+        "points": 3
+      },
+      {
+        "id": "48464922",
+        "t": 1781028030,
+        "title": "Claude Fable 5 hit $200/month Claude Max subscription in less than 30 minutes",
+        "url": "https://twitter.com/bridgemindai/status/2064404956065509831",
+        "points": 3
+      },
+      {
+        "id": "48465181",
+        "t": 1781028976,
+        "title": "Claude Fable 5 and Mythos are pure marketing fluff",
+        "url": "https://singularitymoments.com/content/claude-fable-5-and-mythos-5-are-pure-marketing-fluff/",
+        "points": 5
+      },
+      {
+        "id": "48465356",
+        "t": 1781029620,
+        "title": "The zot coding agent temporarily added Claude Fable 5 to its built-in catalog",
+        "url": "https://github.com/patriceckhart/zot",
+        "points": 9
+      },
+      {
+        "id": "48465750",
+        "t": 1781031046,
+        "title": "Invisible limitations on Claude Fable 5's effectiveness for frontier LLM dev",
+        "url": "https://twitter.com/Hangsiin/status/2064397550434816088",
+        "points": 3
+      },
+      {
+        "id": "48465806",
+        "t": 1781031246,
+        "title": "Claude Fable 5 and Mythos 5 pricing: Anthropic's new $10/$50 top tier",
+        "url": "https://www.aipricing.guru/news/claude-fable-5-mythos-5-pricing-june-2026/",
+        "points": 4
+      },
+      {
+        "id": "48465813",
+        "t": 1781031268,
+        "title": "Fable 5 System Prompt Comparison to Opus 4.8",
+        "url": "https://TwelveTables.blog/comparing-claude-fable-5s-system-prompt-to-opus-4-8/",
+        "points": 3
+      },
+      {
+        "id": "48466453",
+        "t": 1781033512,
+        "title": "Fable 5 on Vending-Bench: Misbehaving, with Plausible Deniability",
+        "url": "https://andonlabs.com/blog/fruitcake-vending-bench",
+        "points": 3
+      },
+      {
+        "id": "48467865",
+        "t": 1781039780,
+        "title": "Claude Fable 5 will sabotage \"frontier LLM research\" tasks",
+        "url": "https://twitter.com/eliebakouch/status/2064399902684139852",
+        "points": 49
+      },
+      {
+        "id": "48467896",
+        "t": 1781039951,
+        "title": "If Claude Fable stops helping you, you'll never know",
+        "url": "https://jonready.com/blog/posts/claude-fable5-is-allowed-to-sabotage-your-app-if-youre-a-competitor.html",
+        "points": 1036
+      },
+      {
+        "id": "48467906",
+        "t": 1781039977,
+        "title": "Claude Fable 5: the first public Mythos-class model",
+        "url": "https://artificialanalysis.ai/articles/claude-fable-5-mythos",
+        "points": 4
+      },
+      {
+        "id": "48468095",
+        "t": 1781040972,
+        "title": "Fable 5 remotion video benchmark and examples",
+        "url": "https://mesmer.tools/benchmarks/ai-video-generation",
+        "points": 9
+      },
+      {
+        "id": "48469127",
+        "t": 1781046973,
+        "title": "Claude Fable 5 and new AI safety fables",
+        "url": "https://www.interconnects.ai/p/claude-fable-5-and-new-ai-safety",
+        "points": 3
+      },
+      {
+        "id": "48469307",
+        "t": 1781048345,
+        "title": "Side by side videos of Claude Fable vs. Opus 4.8 vs. ChatGPT 5.5",
+        "url": "https://generative-ai.review/2026/06/claude-fable-rush-test-compare-vs-opus-4-8-vs-chatgpt-5-5-2026-06-09/",
+        "points": 2
+      },
+      {
+        "id": "48469530",
+        "t": 1781050174,
+        "title": "Run the void test on Claude Fable 5 here",
+        "url": "https://getswiftapi.com/void-test",
+        "points": 4
+      },
+      {
+        "id": "48469640",
+        "t": 1781051154,
+        "title": "Claude Fable 5's system prompt leaked",
+        "url": "https://twitter.com/elder_plinius/status/2064478648057610422",
+        "points": 8
+      },
+      {
+        "id": "48470186",
+        "t": 1781055421,
+        "title": "Fable 5 as an agent: only the last thing it tells you is real",
+        "url": "https://matrix.dev/blog-2026-06-10",
+        "points": 4
+      },
+      {
+        "id": "48470301",
+        "t": 1781056214,
+        "title": "Claude Fable 5 feels less like a launch and more like a preview of AI inequality",
+        "url": "https://old.reddit.com/r/ClaudeAI/comments/1u1fsdi/claude_fable_5_feels_less_like_a_model_launch_and/",
+        "points": 10
+      },
+      {
+        "id": "48471153",
+        "t": 1781062957,
+        "title": "Initial impressions of Claude Fable 5",
+        "url": "https://simonwillison.net/2026/Jun/9/claude-fable-5/",
+        "points": 20
+      },
+      {
+        "id": "48471878",
+        "t": 1781069869,
+        "title": "Claude Fable 5 \"Feels Next Level\"",
+        "url": "https://www.searchenginejournal.com/claude-fable-5-feels-next-level/578538/",
+        "points": 3
+      },
+      {
+        "id": "48472255",
+        "t": 1781072888,
+        "title": "Claude Fable 5's new features, tested by having it write its own launch coverage",
+        "url": "https://medium.com/@alirezarezvani/claude-fable-5-guide-for-claude-code-11501ceb78a8",
+        "points": 2
+      },
+      {
+        "id": "48472677",
+        "t": 1781075985,
+        "title": "Claude Fable 5 Ultracode + AI medical diagnosis",
+        "url": "https://github.com/joelparkerhenderson/ai-medical-diagnosis-examples/blob/main/doctor-perspective/claude-fable-5-ultracode/index.md",
+        "points": 2
+      },
+      {
+        "id": "48472683",
+        "t": 1781076026,
+        "title": "Fable 5 is available in Zed",
+        "url": "https://github.com/zed-industries/zed/pull/58957",
+        "points": 3
+      },
+      {
+        "id": "48473166",
+        "t": 1781079698,
+        "title": "AWS Bedrock to require sharing data with Anthropic for Mythos and future models",
+        "url": "",
+        "points": 427
+      },
+      {
+        "id": "48473737",
+        "t": 1781083761,
+        "title": "Claude Fable 5 silently degrades its own performance on frontier AI work",
+        "url": "https://mkotlikov.substack.com/p/fable-5-considered-harmful",
+        "points": 1
+      },
+      {
+        "id": "48474355",
+        "t": 1781088423,
+        "title": "Pelican on a Bicycle: Claude Fable 5 vs. GPT-5.5 Pro vs. Gemini 3.1 Pro",
+        "url": "https://www.promptfrenzy.com/showdown/svg-pelican",
+        "points": 1
+      },
+      {
+        "id": "48474552",
+        "t": 1781089840,
+        "title": "Cursor users must consent to data collection in order to use Fable 5",
+        "url": "https://cursor.com/docs/models/claude-fable-5",
+        "points": 2
+      },
+      {
+        "id": "48475109",
+        "t": 1781093550,
+        "title": "Anthropic's Fable 5 Silent Sabotage Mode",
+        "url": "https://everettdutton.com/anthropic_trust_destruction",
+        "points": 3
+      },
+      {
+        "id": "48475252",
+        "t": 1781094307,
+        "title": "Asking Fable 5 to design a humanoid",
+        "url": "https://twitter.com/earthtojake/status/2064535702138990855",
+        "points": 2
+      },
+      {
+        "id": "48475266",
+        "t": 1781094356,
+        "title": "Show HN: Lanes now runs Claude Fable 5 across parallel agent sessions",
+        "url": "https://lanes.sh/blog/claude-fable-5",
+        "points": 4
+      },
+      {
+        "id": "48475405",
+        "t": 1781095146,
+        "title": "Claude Fable 5 System prompt",
+        "url": "https://xcancel.com/elder_plinius/status/2064478648057610422#m",
+        "points": 6
+      },
+      {
+        "id": "48476085",
+        "t": 1781098510,
+        "title": "Claude Fable 5 Free Through June 22 on Pro, Max, Team, and Enterprise Plans",
+        "url": "https://claude5.ai/en/news/claude-fable-5-free-access-june-9-22-pro-max-team-enterprise",
+        "points": 4
+      },
+      {
+        "id": "48477562",
+        "t": 1781104266,
+        "title": "Claude Fable 5 Launches at #1 on the Artificial Analysis Intelligence Index",
+        "url": "https://artificialanalysis.ai/articles/claude-fable-5-mythos-intelligence-index",
+        "points": 4
+      },
+      {
+        "id": "48478706",
+        "t": 1781108713,
+        "title": "Anthropic's Fable 5 Is Opus on a Good Day",
+        "url": "https://www.williamangel.net/blog/2026/06/10/anthropic-fable.html",
+        "points": 3
+      },
+      {
+        "id": "48479570",
+        "t": 1781112113,
+        "title": "Microsoft restricts Claude Fable for employees over data retention concerns",
+        "url": "https://www.theverge.com/report/947575/microsoft-claude-fable-5-restricted-internally",
+        "points": 8
+      },
+      {
+        "id": "48480057",
+        "t": 1781113901,
+        "title": "Claude Fable 5 missed a bug that Sonnet 4.6 caught",
+        "url": "https://alikhallad.com/i-tested-claude-fable-5-against-private-benchmarks-it-has-never-seen-here-is-where-it-failed/",
+        "points": 3
+      },
+      {
+        "id": "48480893",
+        "t": 1781117269,
+        "title": "Claude Fable 5 jailbroken to bypass Anthropic's new safety guardrails",
+        "url": "https://twitter.com/elder_plinius/status/2064776322979676227",
+        "points": 8
+      },
+      {
+        "id": "48482542",
+        "t": 1781124742,
+        "title": "Fable 5 creates full Swiss lever watch movement in Three.js",
+        "url": "https://twitter.com/quanghuynt14/status/2064509430650065278",
+        "points": 4
+      },
+      {
+        "id": "48484306",
+        "t": 1781134652,
+        "title": "AI: Equalizer or Divider?",
+        "url": "",
+        "points": 2
+      }
+    ]
+  },
+  "gemini-3.5-flash": {
+    "query": "Gemini 3.5",
+    "from": "2026-05-16T00:00:00Z",
+    "to": "2026-05-21T00:00:00Z",
+    "hits": [
+      {
+        "id": "48196340",
+        "t": 1779211555,
+        "title": "Gemini 3.5 Flash",
+        "url": "https://twitter.com/GoogleDeepMind/status/2056787990110994511",
+        "points": 10
+      },
+      {
+        "id": "48196535",
+        "t": 1779212485,
+        "title": "Gemini 3.5 Flash Released",
+        "url": "https://twitter.com/Google/status/2056788266872140232",
+        "points": 5
+      },
+      {
+        "id": "48196570",
+        "t": 1779212625,
+        "title": "Gemini 3.5 Flash",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5/",
+        "points": 962
+      },
+      {
+        "id": "48196656",
+        "t": 1779212990,
+        "title": "Gemini 3.5 Flash: frontier intelligence with action",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-5/",
+        "points": 180
+      },
+      {
+        "id": "48205813",
+        "t": 1779274863,
+        "title": "Gemini 3.5 Flash hax 14x cost multiplier in GitHub Copilot",
+        "url": "https://github.blog/changelog/2026-05-19-gemini-3-5-flash-is-generally-available-for-github-copilot/",
+        "points": 1
+      },
+      {
+        "id": "48207450",
+        "t": 1779283869,
+        "title": "Gemini 3.5 Flash: more expensive, but Google plan to use it for everything",
+        "url": "https://simonwillison.net/2026/May/19/gemini-35-flash/",
+        "points": 2
+      },
+      {
+        "id": "48211049",
+        "t": 1779297770,
+        "title": "Claude Code, now powered by Gemini 3.5 Flash, GPT-5.5, Grok 4.3, and more",
+        "url": "https://dechained.ai",
+        "points": 3
+      },
+      {
+        "id": "48212891",
+        "t": 1779305541,
+        "title": "Gemini 3.5 deleted 28,745 lines, broke production, and wrote a fake post-mortem",
+        "url": "https://www.reddit.com/r/Bard/s/ZVAxv5ezdP",
+        "points": 14
+      }
+    ]
+  },
+  "claude-sonnet-5": {
+    "query": "Sonnet 5",
+    "from": "2026-06-27T00:00:00Z",
+    "to": "2026-07-02T00:00:00Z",
+    "hits": [
+      {
+        "id": "48733696",
+        "t": 1782831697,
+        "title": "Claude Sonnet 5",
+        "url": "https://www.anthropic.com/news/claude-sonnet-5",
+        "points": 17
+      },
+      {
+        "id": "48736097",
+        "t": 1782840437,
+        "title": "Claude Sonnet 5 Could Be Released Later Today, May Not Be Better Than Opus 4.8",
+        "url": "https://old.reddit.com/r/singularity/comments/1ujt3ui/claude_sonnet_5_could_be_released_later_today_but/",
+        "points": 1
+      },
+      {
+        "id": "48736531",
+        "t": 1782842161,
+        "title": "Claude Sonnet 5 System Card",
+        "url": "https://anthropic.com/claude-sonnet-5-system-card",
+        "points": 6
+      },
+      {
+        "id": "48736605",
+        "t": 1782842392,
+        "title": "Claude Sonnet 5",
+        "url": "https://www.anthropic.com/news/claude-sonnet-5",
+        "points": 1266
+      },
+      {
+        "id": "48736739",
+        "t": 1782842825,
+        "title": "Claude Sonnet 5 is here",
+        "url": "https://twitter.com/ClaudeDevs/status/2072018504392601762",
+        "points": 3
+      },
+      {
+        "id": "48737325",
+        "t": 1782844774,
+        "title": "Claude Sonnet 5 Review",
+        "url": "https://www.coderabbit.ai/blog/claude-sonnet-5-review",
+        "points": 3
+      },
+      {
+        "id": "48738528",
+        "t": 1782850165,
+        "title": "Claude Sonnet 5 – benchmark results",
+        "url": "https://artificialanalysis.ai/models/claude-sonnet-5",
+        "points": 41
+      },
+      {
+        "id": "48739038",
+        "t": 1782852724,
+        "title": "Show HN: Morph Reflexes – Multi-head classifiers for agent traces",
+        "url": "",
+        "points": 20
+      },
+      {
+        "id": "48740633",
+        "t": 1782862507,
+        "title": "Claude Sonnet 5: strong agentic performance at a higher cost per task",
+        "url": "https://artificialanalysis.ai/articles/claude-sonnet-5-agentic-cost",
+        "points": 2
+      },
+      {
+        "id": "48741507",
+        "t": 1782870741,
+        "title": "Claude Sonnet 5 System Card (detailed metrics) [pdf]",
+        "url": "https://www-cdn.anthropic.com/9e6a1044980d8c4ed85669faf9c2a8342e2e9f1e/Claude%20Sonnet%205%20System%20Card.pdf",
+        "points": 4
+      },
+      {
+        "id": "48741666",
+        "t": 1782872966,
+        "title": "\"Introducing Claude Sonnet 5, our most agentic Sonnet yet.\"",
+        "url": "https://twitter.com/claudeai/status/2072017450611142835",
+        "points": 2
+      },
+      {
+        "id": "48741872",
+        "t": 1782875757,
+        "title": "Claude Sonnet 5 is here",
+        "url": "https://old.reddit.com/r/ClaudeAI/comments/1ujwggp/introducing_claude_sonnet_5_our_most_agentic/",
+        "points": 4
+      },
+      {
+        "id": "48742426",
+        "t": 1782881862,
+        "title": "What's new in Claude Sonnet 5",
+        "url": "https://simonwillison.net/2026/Jun/30/claude-sonnet-5/",
+        "points": 7
+      },
+      {
+        "id": "48743943",
+        "t": 1782895643,
+        "title": "Sonnet 5 Is Dead in the Water",
+        "url": "https://www.vincentschmalbach.com/sonnet-5-is-dead-in-the-water/",
+        "points": 11
+      },
+      {
+        "id": "48745764",
+        "t": 1782909735,
+        "title": "Anthropic's Sonnet 5 system card says more about the future of AI than benches",
+        "url": "https://thenewstack.io/ai-agent-infrastructure-reliability/",
+        "points": 1
+      },
+      {
+        "id": "48751925",
+        "t": 1782934044,
+        "title": "Show HN: Build autonomous agents on Theseus with Sonnet 5 from the browser",
+        "url": "https://twitter.com/TheseusNetwork/status/2072392130304069708",
+        "points": 1
+      }
+    ]
+  },
+  "grok-4.5": {
+    "query": "Grok 4.5",
+    "from": "2026-07-05T00:00:00Z",
+    "to": "2026-07-10T00:00:00Z",
+    "hits": [
+      {
+        "id": "48829727",
+        "t": 1783503269,
+        "title": "Grok 4.5 arriving tomorrow",
+        "url": "https://twitter.com/elonmusk/status/2074740539874775163",
+        "points": 2
+      },
+      {
+        "id": "48834849",
+        "t": 1783532388,
+        "title": "Grok 4.5",
+        "url": "https://cursor.com/blog/grok-4-5",
+        "points": 20
+      },
+      {
+        "id": "48835111",
+        "t": 1783533632,
+        "title": "Grok 4.5",
+        "url": "https://x.ai/news/grok-4-5",
+        "points": 776
+      },
+      {
+        "id": "48835476",
+        "t": 1783535029,
+        "title": "Cursorbench: Grok 4.5 better than GPT-5.5, at ~half the cost",
+        "url": "https://cursor.com/cursorbench",
+        "points": 1
+      },
+      {
+        "id": "48838772",
+        "t": 1783553234,
+        "title": "We made Grok 4.5, GPT-5.5, and Claude build the same apps",
+        "url": "https://www.tryai.dev/blog/grok-4.5-vs-gpt-5.5-vs-claude-build-off",
+        "points": 173
+      },
+      {
+        "id": "48843081",
+        "t": 1783588316,
+        "title": "Grok 4.5 Release (Technical)",
+        "url": "https://cursor.com/blog/grok-4-5",
+        "points": 2
+      },
+      {
+        "id": "48843376",
+        "t": 1783590680,
+        "title": "Grok 4.5 Benchmark Results",
+        "url": "https://artificialanalysis.ai/models/grok-4-5",
+        "points": 2
+      },
+      {
+        "id": "48845256",
+        "t": 1783602570,
+        "title": "SpaceXAI launches Grok 4.5 model for coding, agentic tasks",
+        "url": "https://www.reuters.com/business/media-telecom/spacexai-launches-grok-45-model-coding-agentic-tasks-2026-07-08/",
+        "points": 4
+      }
+    ]
+  },
+  "gpt-5.6": {
+    "query": "GPT-5.6",
+    "from": "2026-07-06T00:00:00Z",
+    "to": "2026-07-11T00:00:00Z",
+    "hits": [
+      {
+        "id": "48799614",
+        "t": 1783299843,
+        "title": "GPT-5.6 Sol Ultra will be in Codex",
+        "url": "https://twitter.com/thsottiaux/status/2073933490513752151",
+        "points": 415
+      },
+      {
+        "id": "48827227",
+        "t": 1783482159,
+        "title": "Trump administration lifts restrictions on OpenAI's GPT 5.6",
+        "url": "https://www.axios.com/2026/07/08/openai-gpt-trump-ban-lifted",
+        "points": 8
+      },
+      {
+        "id": "48827402",
+        "t": 1783483933,
+        "title": "GPT-5.6 Sol, along with Terra and Luna, will launch publicly this Thursday",
+        "url": "https://twitter.com/OpenAI/status/2074704958419792299",
+        "points": 235
+      },
+      {
+        "id": "48828457",
+        "t": 1783493345,
+        "title": "OpenAI to unveil GPT-5.6 on Thursday after delaying launch",
+        "url": "https://www.reuters.com/technology/openai-gets-us-approval-broad-gpt-56-rollout-axios-reports-2026-07-08/",
+        "points": 2
+      },
+      {
+        "id": "48846407",
+        "t": 1783607113,
+        "title": "Altman: GPT-5.6 is 54% more token efficient on agentic coding",
+        "url": "https://www.cnbc.com/2026/07/09/open-ai-sam-altman-chatgpt-5-6-sol.html",
+        "points": 14
+      },
+      {
+        "id": "48848403",
+        "t": 1783614025,
+        "title": "Tell HN: GPT5.6 Is Imminent?",
+        "url": "",
+        "points": 1
+      },
+      {
+        "id": "48848723",
+        "t": 1783615293,
+        "title": "OpenAI GPT-5.6 livestream today at 10am PT",
+        "url": "https://openai.com/live/",
+        "points": 5
+      },
+      {
+        "id": "48849054",
+        "t": 1783616616,
+        "title": "GPT 5.6 System Card",
+        "url": "https://deploymentsafety.openai.com/gpt-5-6",
+        "points": 3
+      },
+      {
+        "id": "48849064",
+        "t": 1783616644,
+        "title": "Using GPT-5.6",
+        "url": "https://developers.openai.com/api/docs/guides/latest-model",
+        "points": 3
+      },
+      {
+        "id": "48849066",
+        "t": 1783616654,
+        "title": "GPT-5.6",
+        "url": "https://openai.com/index/gpt-5-6/",
+        "points": 1561
+      },
+      {
+        "id": "48849313",
+        "t": 1783617519,
+        "title": "GPT-5.6 Is Live",
+        "url": "https://openai.com/index/gpt-5-6/#",
+        "points": 5
+      },
+      {
+        "id": "48849593",
+        "t": 1783618504,
+        "title": "GPT-5.6 System Card [pdf]",
+        "url": "https://deploymentsafety.openai.com/gpt-5-6/gpt-5-6.pdf",
+        "points": 2
+      },
+      {
+        "id": "48849647",
+        "t": 1783618692,
+        "title": "GPT-5.6 – ARC-AGI Results",
+        "url": "https://arcprize.org/results/openai-gpt-5-6",
+        "points": 6
+      },
+      {
+        "id": "48850687",
+        "t": 1783623075,
+        "title": "GPT-5.6 Sol (max) Benchmark Results",
+        "url": "https://artificialanalysis.ai/models/gpt-5-6-sol",
+        "points": 1
+      },
+      {
+        "id": "48853636",
+        "t": 1783638705,
+        "title": "GPT 5.6 Sol tops DeepSWE at 76% at 61% less cost than Fable",
+        "url": "https://deepswe.datacurve.ai/",
+        "points": 3
+      },
+      {
+        "id": "48854817",
+        "t": 1783648198,
+        "title": "GPT 5.6 Sol Post-Trained Luna Autonomously",
+        "url": "https://twitter.com/larrylv/status/2075279982847541278",
+        "points": 1
+      },
+      {
+        "id": "48857375",
+        "t": 1783672805,
+        "title": "DeepSWE Benchmark Results for GPT 5.6",
+        "url": "https://deepswe.datacurve.ai/",
+        "points": 2
+      },
+      {
+        "id": "48857805",
+        "t": 1783676447,
+        "title": "OpenAI Will Reset Codex Limits Twice to Celebrate GPT-5.6 in 24h",
+        "url": "https://twitter.com/thsottiaux/status/2075452680760443190",
+        "points": 4
+      },
+      {
+        "id": "48858054",
+        "t": 1783679031,
+        "title": "GPT 5.6 Sol better than Fable?",
+        "url": "https://twitter.com/antirez/status/2075512007256691196",
+        "points": 2
+      },
+      {
+        "id": "48858599",
+        "t": 1783683787,
+        "title": "Testing GPT 5.6 [video]",
+        "url": "https://www.youtube.com/watch?v=SettwwX2cCI",
+        "points": 1
+      },
+      {
+        "id": "48863490",
+        "t": 1783708159,
+        "title": "GPT-5.6 Sol Ultra produces proof of the Cycle Double Cover Conjecture [pdf]",
+        "url": "https://cdn.openai.com/pdf/04d1d1e4-bc75-476a-97cf-49055cd98d31/cdc_proof.pdf",
+        "points": 538
+      },
+      {
+        "id": "48864565",
+        "t": 1783713901,
+        "title": "GPT-5.6 Sol Wrote a 50k-Word Novella in 8 Hours",
+        "url": "https://gamecult.org/Blog/gpt-5-6-sol-wrote-a-50000-word-novella-in-8-hours",
+        "points": 3
+      },
+      {
+        "id": "48864664",
+        "t": 1783714447,
+        "title": "Is OpenRouter miss pricing GPT 5.6 models?",
+        "url": "https://openrouter.ai/models",
+        "points": 1
+      },
+      {
+        "id": "48864950",
+        "t": 1783716034,
+        "title": "Migrating a production AI agent to GPT 5.6",
+        "url": "https://ploy.ai/blog/migrating-a-production-ai-agent-to-gpt-5-6",
+        "points": 7
+      },
+      {
+        "id": "48865093",
+        "t": 1783716748,
+        "title": "GPT-5.6, Grok 4.5, Claude, and Muse Spark build the same 4 apps",
+        "url": "https://www.tryai.dev/blog/gpt-5.6-build-off-12-models",
+        "points": 159
+      },
+      {
+        "id": "48865230",
+        "t": 1783717383,
+        "title": "GPT-5.6-Sol just accidentally deleted almost ALL of my Mac's files",
+        "url": "https://twitter.com/mattshumer_/status/2075657271401390161",
+        "points": 16
+      },
+      {
+        "id": "48866595",
+        "t": 1783725495,
+        "title": "GPT-5.6 Luna outperforms GPT-5.5 on health reasoning, while being 25x cheaper",
+        "url": "https://twitter.com/OpenAI/status/2075686461693898868",
+        "points": 2
+      }
+    ]
+  },
+  "kimi-k3": {
+    "query": "Kimi K3",
+    "from": "2026-07-13T00:00:00Z",
+    "to": "2026-07-18T00:00:00Z",
+    "hits": [
+      {
+        "id": "48934539",
+        "t": 1784209681,
+        "title": "Kimi K3 released on web and app (2.8T params)",
+        "url": "https://old.reddit.com/r/LocalLLaMA/comments/1uy3a0q/kimi_k3_released_on_web_and_app/",
+        "points": 7
+      },
+      {
+        "id": "48935077",
+        "t": 1784212079,
+        "title": "Kimi K3 to beat Opus 4.8",
+        "url": "https://twitter.com/zijing_wu/status/2077699476194771064",
+        "points": 3
+      },
+      {
+        "id": "48935175",
+        "t": 1784212473,
+        "title": "Kimi K3 is live on kimi code",
+        "url": "https://twitter.com/i/status/2077751108114551034",
+        "points": 6
+      },
+      {
+        "id": "48935342",
+        "t": 1784213165,
+        "title": "Kimi K3: Open Frontier Intelligence",
+        "url": "https://www.kimi.com/blog/kimi-k3",
+        "points": 2107
+      },
+      {
+        "id": "48935541",
+        "t": 1784214092,
+        "title": "Kimi K3 Is Live",
+        "url": "https://www.kimi.com/code/docs/en/kimi-code/models",
+        "points": 19
+      },
+      {
+        "id": "48935573",
+        "t": 1784214252,
+        "title": "Introducing Kimi K3",
+        "url": "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart",
+        "points": 5
+      },
+      {
+        "id": "48938202",
+        "t": 1784226040,
+        "title": "Kimi K3 full benchmarks and model details",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "48938607",
+        "t": 1784227783,
+        "title": "Kimi K3: Open Frontier Intelligence",
+        "url": "https://www.kimi.com/blog/kimi-k3",
+        "points": 31
+      },
+      {
+        "id": "48938737",
+        "t": 1784228335,
+        "title": "Kimi K3: Open Frontier Intelligence",
+        "url": "https://twitter.com/Kimi_Moonshot/status/2077830229968683203",
+        "points": 3
+      },
+      {
+        "id": "48939019",
+        "t": 1784229620,
+        "title": "Kimi K3 is now #1 in the Front end Code Arena with 1679 pts, surpassing Fable 5",
+        "url": "https://twitter.com/arena/status/2077824029126504525",
+        "points": 116
+      },
+      {
+        "id": "48939066",
+        "t": 1784229821,
+        "title": "Kimi K3 is ranked 3rd on artificial analysis, only 2 points behind Sol",
+        "url": "https://artificialanalysis.ai",
+        "points": 8
+      },
+      {
+        "id": "48939580",
+        "t": 1784232586,
+        "title": "Kimi K3 Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/kimi-k3",
+        "points": 51
+      },
+      {
+        "id": "48941418",
+        "t": 1784242922,
+        "title": "Kimi K3 beats GPT 5.6 Sol in agentic knowledge work",
+        "url": "https://artificialanalysis.ai/evaluations/aa-briefcase#results-tabs",
+        "points": 3
+      },
+      {
+        "id": "48942661",
+        "t": 1784254321,
+        "title": "Kimi K3: The Largest Open Model Ever, and Why Almost No One Can Run It Locally",
+        "url": "https://vettedconsumer.com/kimi-k3-the-largest-open-model-ever-2-8t-params-and-why-almost-no-one-can-run-it-locally/",
+        "points": 2
+      },
+      {
+        "id": "48944047",
+        "t": 1784270543,
+        "title": "macOS 27 web app made by Kimi K3",
+        "url": "https://twitter.com/mweinbach/status/2077878247920951400",
+        "points": 1
+      },
+      {
+        "id": "48945958",
+        "t": 1784287455,
+        "title": "Windows XP Simulation by Kimi K3",
+        "url": "https://windows-xp.kimi.site/",
+        "points": 2
+      },
+      {
+        "id": "48947280",
+        "t": 1784295563,
+        "title": "Kimi K3 may be an important inflection point for AI",
+        "url": "https://twitter.com/GavinSBaker/status/2078110934740980193",
+        "points": 18
+      },
+      {
+        "id": "48947702",
+        "t": 1784298003,
+        "title": "An Open-Source IDE and Coding Agent You Can Use Kimi-K3 With",
+        "url": "https://stagewise.io/use-cases/kimi",
+        "points": 2
+      },
+      {
+        "id": "48947717",
+        "t": 1784298111,
+        "title": "Kimi K3, and what we can still learn from the pelican benchmark",
+        "url": "https://simonwillison.net/2026/Jul/16/kimi-k3/",
+        "points": 407
+      },
+      {
+        "id": "48949014",
+        "t": 1784304656,
+        "title": "China just erased America's AI lead",
+        "url": "https://www.axios.com/2026/07/17/china-ai-kimi-k3-open-source-anthropic-opus",
+        "points": 5
+      },
+      {
+        "id": "48949494",
+        "t": 1784307186,
+        "title": "Kimi K3: Is It Open Source? and What Would It Take to Recreate It?",
+        "url": "https://grigio.org/kimi-k3-is-it-really-open-source-and-what-would-it-take-to-recreate-it/",
+        "points": 3
+      },
+      {
+        "id": "48951110",
+        "t": 1784315276,
+        "title": "Kimi K3 may have distilled an unreleased Anthropic model",
+        "url": "https://twitter.com/bourneliu66/status/2078150582054133991",
+        "points": 5
+      },
+      {
+        "id": "48951167",
+        "t": 1784315605,
+        "title": "Show HN: Run Hermes Agent with Kimi 3 in a sandbox",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "48952729",
+        "t": 1784325916,
+        "title": "Claude Fable 5 vs. Kimi K3 vs. GPT 5.6 Sol [video]",
+        "url": "https://www.youtube.com/watch?v=iGNNgzUumoY",
+        "points": 1
+      }
+    ]
+  },
+  "claude-opus-5": {
+    "query": "Opus 5",
+    "from": "2026-07-21T00:00:00Z",
+    "to": "2026-07-26T00:00:00Z",
+    "hits": [
+      {
+        "id": "48994848",
+        "t": 1784652519,
+        "title": "Show HN: WorldBuild Bench repo: testing LLM world coherence with 3D games",
+        "url": "https://github.com/sebnado/worldbuild-bench",
+        "points": 2
+      },
+      {
+        "id": "48997836",
+        "t": 1784665862,
+        "title": "Claude Opus 4.5 defied CEO, helped employee blow whistle about safety concerns",
+        "url": "https://www.msn.com/en-us/news/technology/claude-opus-4-5-defied-its-ceo-and-helped-an-employee-blow-the-whistle-about-safety-concerns/ar-AA28oWxu",
+        "points": 4
+      },
+      {
+        "id": "49025676",
+        "t": 1784829663,
+        "title": "Claude Opus 5",
+        "url": "https://artificialanalysis.ai/models/claude-opus-5",
+        "points": 4
+      },
+      {
+        "id": "49027099",
+        "t": 1784836187,
+        "title": "Ask HN: Have you noticed an improvement in AI responses with memory disabled?",
+        "url": "",
+        "points": 3
+      },
+      {
+        "id": "49028771",
+        "t": 1784844843,
+        "title": "Handwritten-edit benchmark: Fable 5 is #1, Opus 4.8 regresses 55% on miscounting",
+        "url": "https://dorrit.pairsys.ai/",
+        "points": 4
+      },
+      {
+        "id": "49038393",
+        "t": 1784912126,
+        "title": "Claude Opus 5",
+        "url": "https://www.anthropic.com/news/claude-opus-5",
+        "points": 73
+      },
+      {
+        "id": "49038433",
+        "t": 1784912261,
+        "title": "Claude Opus 5",
+        "url": "https://www.anthropic.com/news/claude-opus-5",
+        "points": 1778
+      },
+      {
+        "id": "49038856",
+        "t": 1784913631,
+        "title": "What's new in Claude Opus 5",
+        "url": "https://platform.claude.com/docs/en/about-claude/models/whats-new-opus-5",
+        "points": 9
+      },
+      {
+        "id": "49039047",
+        "t": 1784914370,
+        "title": "Claude Opus 5 – Artificial Analysis",
+        "url": "http://artificialanalysis.ai/models/claude-opus-5",
+        "points": 2
+      },
+      {
+        "id": "49040325",
+        "t": 1784920096,
+        "title": "Is Kimi K3 Better Than Opus? It Was Until Opus 5",
+        "url": "https://playcode.io/blog/macbook-svg-benchmark",
+        "points": 3
+      },
+      {
+        "id": "49040691",
+        "t": 1784922109,
+        "title": "Claude Opus 4.8 can be 10x faster than OpenAI GPT-5",
+        "url": "https://www.peterbe.com/plog/claude-opus-is-10x-faster-than-openai-gpt-5-at-non-streaming-completions",
+        "points": 1
+      },
+      {
+        "id": "49040741",
+        "t": 1784922310,
+        "title": "Opus 5 is currently #1 on Artificial Analysis Intelligence Leaderboard",
+        "url": "https://artificialanalysis.ai/models",
+        "points": 374
+      },
+      {
+        "id": "49041500",
+        "t": 1784926712,
+        "title": "Claude Opus 5 pricing and launch-day cost-per-task result",
+        "url": "https://www.aipricing.guru/news/anthropic-claude-opus-5-pricing-impact-july-2026/",
+        "points": 4
+      },
+      {
+        "id": "49041501",
+        "t": 1784926714,
+        "title": "Opus 5 System Prompt",
+        "url": "https://github.com/Eversmile12/leaked-llm-prompts/blob/main/Anthropic/opus-5.md",
+        "points": 5
+      },
+      {
+        "id": "49042872",
+        "t": 1784935707,
+        "title": "Show HN: I rebuilt Microsoft Comic Chat's layout engine in one HTML file",
+        "url": "https://arcade.pirillo.com/comic-chatter.html",
+        "points": 3
+      },
+      {
+        "id": "49043889",
+        "t": 1784945889,
+        "title": "\"We removed over 80% of Claude Code's system prompt for Opus 5 and Fable 5\"",
+        "url": "https://twitter.com/trq212/status/2080710971228918066",
+        "points": 20
+      },
+      {
+        "id": "49044813",
+        "t": 1784957655,
+        "title": "Companies are optimizing models for specific benchmarks",
+        "url": "",
+        "points": 4
+      },
+      {
+        "id": "49045140",
+        "t": 1784962438,
+        "title": "Ask HN: Which is the least sloppy and claudeism free model you have used?",
+        "url": "",
+        "points": 4
+      },
+      {
+        "id": "49045369",
+        "t": 1784965054,
+        "title": "Show HN: BlazeRules – YAML rule engine for streaming data, 5M records/SEC",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "49045835",
+        "t": 1784969844,
+        "title": "Show HN: AI Toolbox supports Claude Opus 5",
+        "url": "https://www.ai-toolbox.co",
+        "points": 2
+      },
+      {
+        "id": "49046504",
+        "t": 1784977147,
+        "title": "Show HN: Impressive turn-based RPG prototype built with Opus 5 in 20 min",
+        "url": "https://aetherfall-ten.vercel.app/",
+        "points": 4
+      },
+      {
+        "id": "49048141",
+        "t": 1784991703,
+        "title": "Opus 5 ARC-AGI-3 likely benchmaxxed",
+        "url": "https://xcancel.com/quietnning/status/2080786711861407883",
+        "points": 4
+      },
+      {
+        "id": "49051539",
+        "t": 1785013381,
+        "title": "Claude Opus 5: The System Card",
+        "url": "https://thezvi.substack.com/p/claude-opus-5-the-system-card",
+        "points": 5
+      }
+    ]
+  },
+  "grok-4.6": {
+    "query": "Grok 4.6",
+    "from": "2026-08-09T00:00:00Z",
+    "to": "2026-08-14T00:00:00Z",
+    "hits": [
+      {
+        "id": "49274027",
+        "t": 1786548770,
+        "title": "Grok 4.6",
+        "url": "https://x.ai/news/grok-4-6",
+        "points": 632
+      },
+      {
+        "id": "49274137",
+        "t": 1786549074,
+        "title": "Grok 4.6",
+        "url": "https://twitter.com/SpaceXAI/status/2087562800982077492",
+        "points": 7
+      },
+      {
+        "id": "49274374",
+        "t": 1786549972,
+        "title": "Introducing Grok 4.6",
+        "url": "https://cursor.com/blog/grok-4-6",
+        "points": 14
+      },
+      {
+        "id": "49274420",
+        "t": 1786550109,
+        "title": "SpaceXAI: Grok 4.6",
+        "url": "https://openrouter.ai/x-ai/grok-4.6",
+        "points": 32
+      },
+      {
+        "id": "49274620",
+        "t": 1786550778,
+        "title": "Grok 4.6 (High) Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/grok-4-6",
+        "points": 10
+      },
+      {
+        "id": "49275385",
+        "t": 1786553665,
+        "title": "Grok 4.6 scores 61 on the Artificial Analysis Intelligence Index",
+        "url": "https://artificialanalysis.ai/articles/grok-4-6-benchmarks-and-analysis",
+        "points": 343
+      },
+      {
+        "id": "49278285",
+        "t": 1786567414,
+        "title": "Solving Hack the Box Challenges with Grok 4.6",
+        "url": "https://theaq.blog/2026/08/12/solving-htb-challenges-with-x-ai-grok-4.6.html",
+        "points": 3
+      },
+      {
+        "id": "49285233",
+        "t": 1786625810,
+        "title": "Grok 4.6 /medium outperforms /high effort on DeepSWE",
+        "url": "https://deepswe.datacurve.ai/#grok4.6",
+        "points": 3
+      },
+      {
+        "id": "49289032",
+        "t": 1786641374,
+        "title": "SpaceXAI debuts Grok 4.6, overtaking Kimi K3's and matching GPT-5.6 Sol",
+        "url": "https://tracking.tldrnewsletter.com/CL0/https:%2F%2Fventurebeat.com%2Ftechnology%2Fspacexai-debuts-grok-4-6-overtaking-kimi-k3s-performance-and-matching-gpt-5-6-sol-for-worlds-third-best-on-artificial-analysis%3Futm_source=tldrnewsletter/1/0100019ffaca2225-a9854eeb-9a81-45e8-9557-a33c9a0a0340-000000/5ZecTH6mmwZ5ww72zhFtIoqVy7zetdCvXSOQxrHGNJs=452",
+        "points": 5
+      }
+    ]
+  },
+  "gemini-3.7-flash": {
+    "query": "Gemini 3.7",
+    "from": "2026-08-10T00:00:00Z",
+    "to": "2026-08-15T00:00:00Z",
+    "hits": [
+      {
+        "id": "49288847",
+        "t": 1786640530,
+        "title": "Gemini 3.7 Flash",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/",
+        "points": 48
+      },
+      {
+        "id": "49289112",
+        "t": 1786641802,
+        "title": "Gemini 3.7 Flash",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/",
+        "points": 968
+      },
+      {
+        "id": "49289500",
+        "t": 1786643260,
+        "title": "Gemini 3.7 Flash (High) Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/gemini-3-7-flash",
+        "points": 5
+      },
+      {
+        "id": "49296625",
+        "t": 1786701303,
+        "title": "Gemini 3.7 Flash: On the Intelligence vs. Time per Task Pareto frontier",
+        "url": "https://artificialanalysis.ai/articles/gemini-3-7-time-frontier",
+        "points": 2
+      }
+    ]
+  },
+  "qwen3.8-flash": {
+    "query": "Qwen3.8",
+    "from": "2026-08-23T00:00:00Z",
+    "to": "2026-08-28T00:00:00Z",
+    "hits": [
+      {
+        "id": "49410672",
+        "t": 1787506175,
+        "title": "I found why Qwen3.8-27B was 14× slower on my 4070 Super",
+        "url": "https://github.com/logxio/picchio/releases/tag/v1.0.0",
+        "points": 8
+      },
+      {
+        "id": "49415350",
+        "t": 1787547885,
+        "title": "I Rented a 96 GB GPU and Took Uncensored Qwen3.8 From 44 to 125 tok/s",
+        "url": "https://aseemshrey.com/blog/running-qwen3-8-27b-uncensored/",
+        "points": 7
+      },
+      {
+        "id": "49432317",
+        "t": 1787658583,
+        "title": "Qwen 3.8-Flash-Next releasing tomorrow (125B a6B)",
+        "url": "https://modelscope.cn/models/Qwen/Qwen3.8-Flash-Next",
+        "points": 336
+      },
+      {
+        "id": "49432433",
+        "t": 1787659250,
+        "title": "Pi vs. the official DeepSeek Harness on the same local model (Qwen3.8-27B)",
+        "url": "https://github.com/promptdriven/pdd/blob/main/research/omlx-qwen38-pi-deepseek-harness-2026-08-23/README.md",
+        "points": 3
+      },
+      {
+        "id": "49447935",
+        "t": 1787747761,
+        "title": "Qwen/Qwen3.8-Flash-Next",
+        "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+        "points": 7
+      },
+      {
+        "id": "49447951",
+        "t": 1787747820,
+        "title": "Unsloth/Qwen3.8-Flash-Next-GGUF",
+        "url": "https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF",
+        "points": 9
+      },
+      {
+        "id": "49448144",
+        "t": 1787748503,
+        "title": "Qwen3.8-Flash-Next",
+        "url": "https://huggingface.co/collections/Qwen/qwen38-flash-next",
+        "points": 3
+      },
+      {
+        "id": "49448173",
+        "t": 1787748596,
+        "title": "Qwen3.8-Flash-Next: A New Architecture, Towards Ultimate Cost-Efficiency",
+        "url": "https://qwen.ai/blog?id=qwen3.8-lash-next",
+        "points": 12
+      },
+      {
+        "id": "49448210",
+        "t": 1787748732,
+        "title": "Qwen3.8-Flash-Next",
+        "url": "https://qwen.ai/blog?id=qwen3.8-flash-next",
+        "points": 704
+      },
+      {
+        "id": "49448378",
+        "t": 1787749318,
+        "title": "Qwen3.8-Flash-Next Technical Report [pdf]",
+        "url": "https://github.com/QwenLM/Qwen3.8-Flash-Next/blob/main/tech_report.pdf",
+        "points": 35
+      },
+      {
+        "id": "49452656",
+        "t": 1787764783,
+        "title": "Benchmarking Qwen3.8 27B quantizations: 4-bit holds up, 1-bit collapses",
+        "url": "https://quesma.com/blog/qwen38-27b-quantizations-benchmarked/",
+        "points": 15
+      },
+      {
+        "id": "49459873",
+        "t": 1787806214,
+        "title": "Qwen/Qwen3.8-Flash-Next · Hugging Face",
+        "url": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+        "points": 3
+      },
+      {
+        "id": "49461862",
+        "t": 1787821590,
+        "title": "Qwen3.8-Flash-Next Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/qwen3-8-flash-next",
+        "points": 17
+      },
+      {
+        "id": "49463650",
+        "t": 1787833451,
+        "title": "Qwen3.8-Flash-Next: How to Run Locally",
+        "url": "https://unsloth.ai/docs/models/qwen3.8-next",
+        "points": 5
+      }
+    ]
+  },
+  "claude-fable-5.1": {
+    "query": "Fable 5.1",
+    "from": "2026-08-29T00:00:00Z",
+    "to": "2026-09-03T00:00:00Z",
+    "hits": [
+      {
+        "id": "49525372",
+        "t": 1788285212,
+        "title": "Prompting Claude Fable 5.1 and Claude Mythos 5.1",
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1",
+        "points": 2
+      },
+      {
+        "id": "49525378",
+        "t": 1788285233,
+        "title": "Claude Fable 5.1 and Claude Mythos 5.1",
+        "url": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
+        "points": 1419
+      },
+      {
+        "id": "49525421",
+        "t": 1788285433,
+        "title": "Claude Fable 5.1",
+        "url": "https://www.anthropic.com/news/claude-fable-5-1",
+        "points": 8
+      },
+      {
+        "id": "49525473",
+        "t": 1788285575,
+        "title": "Claude Fable 5.1",
+        "url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+        "points": 9
+      },
+      {
+        "id": "49525496",
+        "t": 1788285684,
+        "title": "Claude Fable 5.1 and Claude Mythos 5.1",
+        "url": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
+        "points": 70
+      },
+      {
+        "id": "49525534",
+        "t": 1788285871,
+        "title": "Fable 5.1 Announcement [video]",
+        "url": "https://www.youtube.com/watch?v=ROF2Nv_KjOM",
+        "points": 2
+      },
+      {
+        "id": "49525576",
+        "t": 1788286052,
+        "title": "Fable 5.1 System Card",
+        "url": "https://www.anthropic.com/document/claude-fable-5-1-mythos-5-1-system-card",
+        "points": 16
+      },
+      {
+        "id": "49525614",
+        "t": 1788286184,
+        "title": "Fable 5.1",
+        "url": "https://twitter.com/claudeai/status/2094848572143407483",
+        "points": 5
+      },
+      {
+        "id": "49525622",
+        "t": 1788286216,
+        "title": "Anthropic launches Fable 5.1 and Mythos 5.1",
+        "url": "https://www.bloomberg.com/news/articles/2026-09-01/anthropic-says-new-fable-5-1-ai-model-is-cheaper-better-at-coding",
+        "points": 4
+      },
+      {
+        "id": "49527074",
+        "t": 1788291861,
+        "title": "Fable 5.1 is the new frontier on artificialanalysis",
+        "url": "https://artificialanalysis.ai/models/claude-fable-5-1",
+        "points": 2
+      },
+      {
+        "id": "49527695",
+        "t": 1788294450,
+        "title": "Fable 5.1 Solves the Cyphral Distich",
+        "url": "https://www.vals.ai/blogs/fable-solves-cyphral-distich",
+        "points": 10
+      },
+      {
+        "id": "49528193",
+        "t": 1788296725,
+        "title": "Claude Fable 5.1 results on ARC-AGI",
+        "url": "https://arcprize.org/results/anthropic-claude-fable-5-1",
+        "points": 5
+      },
+      {
+        "id": "49530472",
+        "t": 1788311152,
+        "title": "Claude Fable 5.1 made me a nice animated pelican",
+        "url": "https://simonwillison.net/2026/Sep/1/claude-fable-5-1/",
+        "points": 62
+      },
+      {
+        "id": "49530535",
+        "t": 1788311622,
+        "title": "Claude Fable 5.1 tightens restrictions on reusing thinking blocks",
+        "url": "https://platform.claude.com/docs/en/build-with-claude/thinking",
+        "points": 2
+      },
+      {
+        "id": "49532294",
+        "t": 1788328843,
+        "title": "Claude Fable 5.1 tops Artificial Analysis Index but costs 20% more",
+        "url": "https://twitter.com/ArtificialAnlys/status/2094881171066978525",
+        "points": 1
+      },
+      {
+        "id": "49534138",
+        "t": 1788343405,
+        "title": "Fable 5.1, Enterprise Frontier Safeguards",
+        "url": "https://stratechery.com/2026/fable-5-1-enterprise-frontier-safeguards/",
+        "points": 1
+      },
+      {
+        "id": "49535092",
+        "t": 1788351134,
+        "title": "Claude Fable 5.1 tops AI index but costs 20% more per task",
+        "url": "https://artificialanalysis.ai/articles/claude-fable-5-1",
+        "points": 4
+      },
+      {
+        "id": "49537502",
+        "t": 1788361788,
+        "title": "What's new in Claude Fable 5.1",
+        "url": "https://platform.claude.com/docs/en/models/fable-5-1/whats-new-fable-5-1",
+        "points": 1
+      },
+      {
+        "id": "49538226",
+        "t": 1788364626,
+        "title": "Claude Fable 5.1 watermark: It has a blind spot developers can't ignore",
+        "url": "https://thenewstack.io/fable-5-1-watermark/",
+        "points": 2
+      },
+      {
+        "id": "49540001",
+        "t": 1788372089,
+        "title": "Claude Code session limits are jacked up with Fable 5.1",
+        "url": "https://twitter.com/doodlestein/status/2095001666785305066",
+        "points": 3
+      },
+      {
+        "id": "49541458",
+        "t": 1788378541,
+        "title": "Fable 5.1 World Modeling",
+        "url": "https://github.com/PhiloLabs/fable51-worlds",
+        "points": 327
+      },
+      {
+        "id": "49541643",
+        "t": 1788379260,
+        "title": "Prompting Claude Fable 5.1",
+        "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-fable-5-1",
+        "points": 2
+      },
+      {
+        "id": "49542576",
+        "t": 1788383239,
+        "title": "Fable 5.1 way ahead on revised FrontierSWE long horizon benchmarks",
+        "url": "https://www.frontierswe.com/blog/v2",
+        "points": 2
+      }
+    ]
+  },
+  "gemini-3.8-flash": {
+    "query": "Gemini 3.8",
+    "from": "2026-08-30T00:00:00Z",
+    "to": "2026-09-04T00:00:00Z",
+    "hits": [
+      {
+        "id": "49529686",
+        "t": 1788305008,
+        "title": "New Google AI Model Said to Narrow Gap on Coding Ability (Gemini 3.8 Flash)",
+        "url": "https://www.wsj.com/tech/ai/new-google-ai-model-said-to-narrow-gap-on-coding-ability-264c6052",
+        "points": 3
+      },
+      {
+        "id": "49537346",
+        "t": 1788361141,
+        "title": "Gemini 3.8 Flash appears to be rolling out now",
+        "url": "https://www.reddit.com/r/GeminiAI/comments/1w5c4dd/38_flash_released_in_webui",
+        "points": 6
+      },
+      {
+        "id": "49537354",
+        "t": 1788361177,
+        "title": "Gemini 3.8 Flash Model card [pdf]",
+        "url": "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-3-8-Flash-Model-Card.pdf",
+        "points": 10
+      },
+      {
+        "id": "49537553",
+        "t": 1788361960,
+        "title": "Gemini 3.8 Flash and 3.8 Flash Cyber",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/",
+        "points": 1160
+      },
+      {
+        "id": "49537554",
+        "t": 1788361961,
+        "title": "Gemini 3.8 Flash benchmark scores",
+        "url": "https://twitter.com/synthwavedd/status/2095166019010494891",
+        "points": 3
+      },
+      {
+        "id": "49537605",
+        "t": 1788362218,
+        "title": "Gemini 3.8 Flash",
+        "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
+        "points": 4
+      },
+      {
+        "id": "49537965",
+        "t": 1788363663,
+        "title": "Gemini 3.8 Flash (High) Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/gemini-3-8-flash",
+        "points": 3
+      },
+      {
+        "id": "49538007",
+        "t": 1788363846,
+        "title": "Gemini 3.8 Flash and 3.8 Flash Cyber",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/3-8-flash-and-3-8-flash-cyber/",
+        "points": 76
+      },
+      {
+        "id": "49538085",
+        "t": 1788364149,
+        "title": "Gemini 3.8 Flash",
+        "url": "https://twitter.com/googleai/status/2095175759606231439",
+        "points": 1
+      },
+      {
+        "id": "49539315",
+        "t": 1788369109,
+        "title": "Kimi K3 and GLM-5.3 are better than Gemini 3.8 Flash",
+        "url": "",
+        "points": 11
+      },
+      {
+        "id": "49543462",
+        "t": 1788388096,
+        "title": "With Gemini 3.8 Flash, Google reminds everyone it's still in the race",
+        "url": "https://www.theregister.com/ai-and-ml/2026/09/02/with-gemini-38-flash-google-reminds-everyone-its-still-in-the-race/5294049",
+        "points": 3
+      },
+      {
+        "id": "49546553",
+        "t": 1788416739,
+        "title": "Gemini 3.8 Flash in Google Antigravity – Google Antigravity Blog",
+        "url": "https://antigravity.google/blog/gemini-3-8-flash-in-google-antigravity",
+        "points": 1
+      },
+      {
+        "id": "49548140",
+        "t": 1788430601,
+        "title": "Gemini 3.8 Flash Arrives, Promptly Mocked by Rivals",
+        "url": "https://chinaonchina.com/article/gemini-3-8-flash-debuts-promptly-mocked-by-rivals",
+        "points": 2
+      },
+      {
+        "id": "49555452",
+        "t": 1788463937,
+        "title": "Google has released Gemini 3.8 Flash, its fourth Flash model in under four month",
+        "url": "https://artificialanalysis.ai/articles/gemini-3-8-flash",
+        "points": 1
+      }
+    ]
+  },
+  "gpt-6-astra": {
+    "query": "Astra",
+    "from": "2026-08-31T00:00:00Z",
+    "to": "2026-09-06T00:00:00Z",
+    "hits": [
+      {
+        "id": "49535001",
+        "t": 1788350509,
+        "title": "Show HN: ToolJet – Claude Code and Codex build internal tools, no codegen",
+        "url": "https://github.com/ToolJet/ToolJet",
+        "points": 4
+      },
+      {
+        "id": "49535650",
+        "t": 1788354562,
+        "title": "Global Bond Selloff Sends Yields to the Highest Level Since 2008",
+        "url": "https://www.bloomberg.com/news/articles/2026-09-01/australian-benchmark-bond-yield-jumps-to-level-last-seen-in-2011",
+        "points": 2
+      },
+      {
+        "id": "49536272",
+        "t": 1788357212,
+        "title": "Show HN: Skywarden – Smart astrophotography planning companion",
+        "url": "https://skywarden.app/en",
+        "points": 3
+      },
+      {
+        "id": "49538665",
+        "t": 1788366454,
+        "title": "OpenAI's Astra Model",
+        "url": "https://twitter.com/rasbt/status/2095141254958858496",
+        "points": 4
+      },
+      {
+        "id": "49540534",
+        "t": 1788374455,
+        "title": "Adventure and Amygdalectomy Advocacy",
+        "url": "https://www.astralcodexten.com/p/absurd-adventure-and-amygdalectomy",
+        "points": 6
+      },
+      {
+        "id": "49541471",
+        "t": 1788378574,
+        "title": "Pinning the Wage to Scarcity and Technology",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7226858",
+        "points": 1
+      },
+      {
+        "id": "49545209",
+        "t": 1788401989,
+        "title": "Researchers fear safety disaster ahead of OpenAI's Astra release",
+        "url": "https://www.theverge.com/ai-artificial-intelligence/988334/openai-astra-ai-monitoring-safety",
+        "points": 3
+      },
+      {
+        "id": "49545491",
+        "t": 1788404565,
+        "title": "OpenAI Astra Launching Soon",
+        "url": "https://help.openai.com/en/articles/20001259-openai-daybreak-common-issues-and-troubleshooting#why-does-astra-say-daybreak-blue-isnt-available",
+        "points": 4
+      },
+      {
+        "id": "49548419",
+        "t": 1788432970,
+        "title": "Show HN: Vocab.design – A visual dictionary of UI and design terms",
+        "url": "https://vocab.design/",
+        "points": 1
+      },
+      {
+        "id": "49548913",
+        "t": 1788437187,
+        "title": "Absurd Adventure and Amygdalectomy Advocacy",
+        "url": "https://www.astralcodexten.com/p/absurd-adventure-and-amygdalectomy",
+        "points": 4
+      },
+      {
+        "id": "49549760",
+        "t": 1788442560,
+        "title": "Show HN: Litelink – local-first, embedded stream capture into Iceberg tables",
+        "url": "https://github.com/nhobin219/litelink",
+        "points": 9
+      },
+      {
+        "id": "49549877",
+        "t": 1788443258,
+        "title": "Astronomers Detect a 10-Sided Structure in Saturn's Atmosphere",
+        "url": "https://www.sciencealert.com/astronomers-spot-an-uncannily-geometric-10-sided-structure-in-saturns-atmosphere",
+        "points": 108
+      },
+      {
+        "id": "49551018",
+        "t": 1788447820,
+        "title": "Open AI X post on Astra",
+        "url": "https://twitter.com/OpenAI/status/2095527557924082061",
+        "points": 12
+      },
+      {
+        "id": "49551175",
+        "t": 1788448154,
+        "title": "OpenAI Releases GPT Astra",
+        "url": "https://developers.openai.com/api/docs/models",
+        "points": 8
+      },
+      {
+        "id": "49553092",
+        "t": 1788454448,
+        "title": "Show HN: A gravity simulator where forces propagate at the speed of light",
+        "url": "https://github.com/alessandro-pioli/AstroCausal_Engine",
+        "points": 6
+      },
+      {
+        "id": "49553321",
+        "t": 1788455406,
+        "title": "How concerned should we be about Astra's recurrent architecture?",
+        "url": "https://www.lesswrong.com/posts/PLisnSFir8y5AHkmP/how-concerned-should-we-be-about-astra-s-recurrent",
+        "points": 151
+      },
+      {
+        "id": "49554048",
+        "t": 1788458516,
+        "title": "\"Welcome to the AGI era,\" OpenAI says as GPT-6 Astra debuts",
+        "url": "https://www.axios.com/2026/09/03/openai-astra-gpt-6-agi-brockman",
+        "points": 35
+      },
+      {
+        "id": "49554119",
+        "t": 1788458807,
+        "title": "OpenAI Claims Latest Model Astra Could Be Considered AGI",
+        "url": "https://www.ft.com/content/55ab40c0-59e2-4c0b-97c9-4f4f5a71a8bb",
+        "points": 3
+      },
+      {
+        "id": "49554181",
+        "t": 1788459086,
+        "title": "How Special Is Programming as a Token-Infall Attractor?",
+        "url": "https://braddelong.substack.com/p/how-special-is-programming-as-a-token",
+        "points": 1
+      },
+      {
+        "id": "49554185",
+        "t": 1788459128,
+        "title": "Playco cut manual fixes 50% prototyping games with GPT‑6 Astra",
+        "url": "http://openai.com/index/playco-game-prototyping-with-astra",
+        "points": 4
+      },
+      {
+        "id": "49554196",
+        "t": 1788459201,
+        "title": "GPT-6 Astra Is Here–and OpenAI Thinks It May Kick Off the AGI Era",
+        "url": "https://www.wired.com/story/openai-says-gpt-6-can-use-a-computer-better-than-a-human/",
+        "points": 5
+      },
+      {
+        "id": "49554237",
+        "t": 1788459358,
+        "title": "OpenAI launches new Astra model amid growing scrutiny over agents' safety",
+        "url": "https://www.reuters.com/legal/litigation/openai-launches-new-astra-model-amid-growing-scrutiny-over-agents-safety-2026-09-03/",
+        "points": 3
+      },
+      {
+        "id": "49554273",
+        "t": 1788459502,
+        "title": "OpenAI begins rolling out GPT-6 Astra",
+        "url": "https://www.cnbc.com/2026/09/03/open-ai-astra-gpt-6-cyber.html",
+        "points": 278
+      },
+      {
+        "id": "49554397",
+        "t": 1788459957,
+        "title": "OpenAI's Astra Is Here: What to Know About GPT-6",
+        "url": "https://www.cnet.com/tech/services-and-software/openai-gpt-6-astra-release-ai-agi-chatgpt/",
+        "points": 4
+      },
+      {
+        "id": "49554431",
+        "t": 1788460065,
+        "title": "OpenAI launches GPT-6 Astra",
+        "url": "https://venturebeat.com/technology/welcome-to-the-agi-era-openai-launches-gpt-6-astra",
+        "points": 4
+      },
+      {
+        "id": "49554445",
+        "t": 1788460112,
+        "title": "OpenAI's next big AI model has 'entered the AGI era'",
+        "url": "https://www.theverge.com/ai-artificial-intelligence/989601/openai-gpt-6-astra-release",
+        "points": 5
+      },
+      {
+        "id": "49554450",
+        "t": 1788460126,
+        "title": "OpenAI launches GPT-6 Astra and says welcome to the \"AGI era\"",
+        "url": "https://thenewstack.io/openai-gpt6-astra-benchmarks/",
+        "points": 6
+      },
+      {
+        "id": "49554547",
+        "t": 1788460505,
+        "title": "GPT-6 Astra Benchmarks Image",
+        "url": "https://cdn.thenewstack.io/media/2026/09/358eb84a-screenshot-2026-09-03-at-10.51.35-am.png",
+        "points": 9
+      },
+      {
+        "id": "49554551",
+        "t": 1788460521,
+        "title": "OpenAI hails 'new era of AGI' with Astra release",
+        "url": "https://www.theguardian.com/technology/2026/sep/03/openai-artificial-general-intelligence-astra-release",
+        "points": 3
+      },
+      {
+        "id": "49554566",
+        "t": 1788460581,
+        "title": "OpenAI launches Astra, its powerful (and controversial) new model",
+        "url": "https://techcrunch.com/2026/09/03/openai-launches-astra-its-powerful-and-controversial-new-model/",
+        "points": 6
+      },
+      {
+        "id": "49554643",
+        "t": 1788460865,
+        "title": "GPT-6 Astra",
+        "url": "https://openai.com/index/gpt-6-astra/",
+        "points": 2279
+      },
+      {
+        "id": "49555021",
+        "t": 1788462210,
+        "title": "GPT 6 Astra",
+        "url": "https://openai.com/gpt-6-astra/",
+        "points": 16
+      },
+      {
+        "id": "49555069",
+        "t": 1788462416,
+        "title": "Astra is at 98.6% score on ARC-AGI-3",
+        "url": "https://cdn.thenewstack.io/media/2026/09/358eb84a-screenshot-2026-09-03-at-10.51.35-am-1024x880.png",
+        "points": 4
+      },
+      {
+        "id": "49555184",
+        "t": 1788462866,
+        "title": "Data centres are booming in Australia – but at what cost?",
+        "url": "https://www.bbc.com/news/articles/cgl3we7wdr3o",
+        "points": 3
+      },
+      {
+        "id": "49555440",
+        "t": 1788463838,
+        "title": "GPT-6 Astra System Card",
+        "url": "https://deploymentsafety.openai.com/gpt-6-astra",
+        "points": 26
+      },
+      {
+        "id": "49555457",
+        "t": 1788463952,
+        "title": "GPT-6 Astra System Card [pdf]",
+        "url": "https://deploymentsafety.openai.com/gpt-6-astra/gpt-6-astra.pdf",
+        "points": 4
+      },
+      {
+        "id": "49555678",
+        "t": 1788464638,
+        "title": "GPT 6 Astra Vibe Check",
+        "url": "https://every.to/vibe-check/gpt-6-astra-vibe-check",
+        "points": 2
+      },
+      {
+        "id": "49555691",
+        "t": 1788464700,
+        "title": "OpenAI's GPT-6 Astra on ARC-AGI-3",
+        "url": "https://arcprize.org/blog/astra",
+        "points": 240
+      },
+      {
+        "id": "49555732",
+        "t": 1788464877,
+        "title": "Using GPT-6 Astra – OpenAI Docs",
+        "url": "https://developers.openai.com/api/docs/guides/latest-model",
+        "points": 1
+      },
+      {
+        "id": "49555843",
+        "t": 1788465181,
+        "title": "GPT-6 Astra Achieves SOTA on ARC-AGI",
+        "url": "https://twitter.com/arcprize/status/2095597602545025138",
+        "points": 3
+      },
+      {
+        "id": "49556147",
+        "t": 1788466285,
+        "title": "GPT-6 Astra makes major gains in the Artificial Analysis Coding Agent Index",
+        "url": "https://artificialanalysis.ai/articles/benchmarking-gpt-6-astra",
+        "points": 27
+      },
+      {
+        "id": "49556405",
+        "t": 1788467193,
+        "title": "GPT-6 Astra represents a step-function change in interactive reasoning",
+        "url": "https://twitter.com/fchollet/status/2095598451115614371",
+        "points": 3
+      },
+      {
+        "id": "49556546",
+        "t": 1788467763,
+        "title": "Politically biased moderation drives echo chamber formation (for Reddit) (2024)",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4990476",
+        "points": 27
+      },
+      {
+        "id": "49557493",
+        "t": 1788471718,
+        "title": "GPT-6 Astra: an automated AI Engineer you can hire for <$6 an hour",
+        "url": "https://www.latent.space/p/astra",
+        "points": 4
+      },
+      {
+        "id": "49557780",
+        "t": 1788473149,
+        "title": "GPT 6 is way behind Anthropic on Artificial Analysis",
+        "url": "https://artificialanalysis.ai/models/gpt-6-astra",
+        "points": 4
+      },
+      {
+        "id": "49558399",
+        "t": 1788477035,
+        "title": "macOS 27 Simulator by OpenAI Astra",
+        "url": "https://macos-27-simulator.mweinbach.chatgpt.site/",
+        "points": 2
+      },
+      {
+        "id": "49558407",
+        "t": 1788477064,
+        "title": "GTP-6 Astra",
+        "url": "https://www.youtube.com/watch?v=1QNsdr-Qx_I",
+        "points": 7
+      },
+      {
+        "id": "49559252",
+        "t": 1788484134,
+        "title": "GPT‑6 Astra",
+        "url": "https://simonwillison.net/2026/Sep/3/gpt6-astra/",
+        "points": 1
+      },
+      {
+        "id": "49560782",
+        "t": 1788499067,
+        "title": "America must learn AI lessons from Astro Boy",
+        "url": "https://www.ft.com/content/68751904-522a-41cc-85e0-08015fe75059",
+        "points": 4
+      },
+      {
+        "id": "49561470",
+        "t": 1788505821,
+        "title": "With Astra, ChatGPT is nearly 2x faster at computer use",
+        "url": "https://twitter.com/AriX/status/2095671700771762341",
+        "points": 1
+      },
+      {
+        "id": "49561472",
+        "t": 1788505832,
+        "title": "My GPT-6 Astra Review",
+        "url": "https://somethingbig.ai/astra-review",
+        "points": 2
+      },
+      {
+        "id": "49562127",
+        "t": 1788511573,
+        "title": "Job Loss Fears in the First Years of Generative Artificial Intelligence",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5136877",
+        "points": 3
+      },
+      {
+        "id": "49562392",
+        "t": 1788514517,
+        "title": "Hot take on GPT-6 Astra",
+        "url": "https://garymarcus.substack.com/p/hot-take-on-gpt-6-astra",
+        "points": 4
+      },
+      {
+        "id": "49562949",
+        "t": 1788519747,
+        "title": "An Interview with OpenAI President Greg Brockman About Astra and Alignment",
+        "url": "https://stratechery.com/2026/an-interview-with-openai-president-greg-brockman-about-astra-and-alignment/",
+        "points": 3
+      },
+      {
+        "id": "49563172",
+        "t": 1788521568,
+        "title": "The sextant as backup navigation tool for astronauts",
+        "url": "https://www.bbc.com/future/article/20260903-the-300-year-old-instrument-that-could-save-stranded-astronauts",
+        "points": 4
+      },
+      {
+        "id": "49564532",
+        "t": 1788529384,
+        "title": "2 Spacecraft will soon reach Mercury after 8 years",
+        "url": "https://www.space.com/astronomy/mercury/2-spacecraft-will-soon-reach-mercury-after-8-years-in-space-heres-what-bepicolombo-can-do",
+        "points": 3
+      },
+      {
+        "id": "49564954",
+        "t": 1788531231,
+        "title": "A no_std memory engine that stops an LLM agent citing its own output",
+        "url": "https://github.com/vitaliyfedotovpro-art/astrum-hsam-embedded",
+        "points": 3
+      },
+      {
+        "id": "49565057",
+        "t": 1788531568,
+        "title": "OpenAI Astra and Recurrent Depth / Looped Transformers [Seb Raschka] [video]",
+        "url": "https://www.youtube.com/watch?v=KT4n-z_4QJU",
+        "points": 2
+      },
+      {
+        "id": "49565676",
+        "t": 1788534110,
+        "title": "Safety overview: GPT‑6 Astra",
+        "url": "https://openai.com/index/safety-overview-gpt-6-astra/",
+        "points": 1
+      },
+      {
+        "id": "49565702",
+        "t": 1788534216,
+        "title": "Australian property developer collapse ripples into private credit markets",
+        "url": "https://www.ft.com/content/26b050eb-2b32-4d89-b847-4464ada5ff03",
+        "points": 1
+      },
+      {
+        "id": "49566574",
+        "t": 1788538120,
+        "title": "Search agent beats GPT-6 Astra on benchmarks, just days after release",
+        "url": "https://findcheap.ai/introducing-findcheap",
+        "points": 2
+      },
+      {
+        "id": "49566718",
+        "t": 1788538757,
+        "title": "OpenAI: GPT-6 Astra Model guidance",
+        "url": "https://developers.openai.com/api/docs/guides/latest-model",
+        "points": 1
+      },
+      {
+        "id": "49567993",
+        "t": 1788544794,
+        "title": "Show HN: UBOM pre-release features part numbers and pn taxonomies",
+        "url": "https://github.com/comalice/ubom-v4/releases/tag/v0.0.1",
+        "points": 2
+      },
+      {
+        "id": "49568104",
+        "t": 1788545386,
+        "title": "Model Drift Is Computational Evolution",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7102218",
+        "points": 2
+      },
+      {
+        "id": "49568379",
+        "t": 1788546685,
+        "title": "Show HN: Run open-weight OCR, VLM and vision models behind one API",
+        "url": "https://www.vlmrun.com/gateway",
+        "points": 5
+      },
+      {
+        "id": "49568460",
+        "t": 1788547090,
+        "title": "Ask HN: Does anyone have access to GPT-6 Astra yet?",
+        "url": "",
+        "points": 7
+      },
+      {
+        "id": "49569267",
+        "t": 1788550825,
+        "title": "GPT-6-Astra Generally Available on Vercel's AI Gateway",
+        "url": "https://twitter.com/vercel_dev/status/2095957372850389186",
+        "points": 2
+      },
+      {
+        "id": "49569707",
+        "t": 1788553010,
+        "title": "GPT-6 Astra Generally Available",
+        "url": "https://twitter.com/OpenAI/status/2095968413646737608",
+        "points": 24
+      },
+      {
+        "id": "49569748",
+        "t": 1788553207,
+        "title": "Finding a bug in Dummit and Foote's Abstract Algebra",
+        "url": "https://kallus.org/blog/dummit_and_foote.html",
+        "points": 83
+      },
+      {
+        "id": "49569831",
+        "t": 1788553652,
+        "title": "OpenAI rolls out GPT-6 Astra to Pro, Enterprise",
+        "url": "https://9to5mac.com/2026/09/04/openai-releasing-major-upgrade-to-chatgpt-and-codex-with-gpt-6-astra-details-here/",
+        "points": 1
+      },
+      {
+        "id": "49569885",
+        "t": 1788553966,
+        "title": "Ask HN: Anyone's gonna use GPT-6 Astra in Microsoft Foundry?",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "49570460",
+        "t": 1788557434,
+        "title": "GPT-6 Astra is generally available in GitHub Copilot",
+        "url": "https://github.blog/changelog/2026-09-04-gpt-6-astra-is-generally-available-in-github-copilot/",
+        "points": 3
+      },
+      {
+        "id": "49570545",
+        "t": 1788557959,
+        "title": "GPT-6 Astra on OpenRouter",
+        "url": "https://openrouter.ai/openai/gpt-6-astra",
+        "points": 320
+      },
+      {
+        "id": "49570558",
+        "t": 1788558065,
+        "title": "GPT-6 Astra Benchmark: Draw a Python Reading a Book",
+        "url": "https://realpython.com/ai-benchmark-gpt-6-astra/",
+        "points": 1
+      },
+      {
+        "id": "49571102",
+        "t": 1788562079,
+        "title": "Show HN: TimerVana a Local-first scheduler for real world routines",
+        "url": "https://timervana.net/browse",
+        "points": 4
+      },
+      {
+        "id": "49571152",
+        "t": 1788562469,
+        "title": "GPT-6 Astra proves Berge Fulkerson for C(20) graphs",
+        "url": "https://twitter.com/fcesco/status/2096001522312085724",
+        "points": 4
+      },
+      {
+        "id": "49571548",
+        "t": 1788565898,
+        "title": "GPT-6 Astra on Vercel AI Gateway",
+        "url": "https://vercel.com/ai-gateway/models/gpt-6-astra",
+        "points": 3
+      },
+      {
+        "id": "49571582",
+        "t": 1788566271,
+        "title": "GPT-6 Astra is now out to all Plus, Business, Pro, and Enterprise users",
+        "url": "https://twitter.com/sama/status/2096008528834244741",
+        "points": 9
+      },
+      {
+        "id": "49571621",
+        "t": 1788566546,
+        "title": "Ask HN: Initial Thoughts on GPT-6 Astra?",
+        "url": "",
+        "points": 8
+      },
+      {
+        "id": "49571779",
+        "t": 1788567887,
+        "title": "Book Review: The Tale of Genji",
+        "url": "https://www.astralcodexten.com/p/your-book-review-the-tale-of-genji",
+        "points": 2
+      },
+      {
+        "id": "49571948",
+        "t": 1788569404,
+        "title": "GPT-6 Astra: First Experience (high)",
+        "url": "https://chatgpt.com/share/6a9b671d-b780-83ea-bd5d-b0ea39f7d9b3",
+        "points": 2
+      },
+      {
+        "id": "49572129",
+        "t": 1788571057,
+        "title": "Claude Fable 5.1 vs. GPT-6 Astra, who wins on the 3D modeling?",
+        "url": "https://github.com/PhiloLabs/fable51-worlds/tree/main",
+        "points": 3
+      },
+      {
+        "id": "49572875",
+        "t": 1788579536,
+        "title": "GPT-6 Astra in code review: Gains, privacy, and cost",
+        "url": "https://www.coderabbit.ai/blog/gpt-6-astra-code-review-evaluation",
+        "points": 74
+      },
+      {
+        "id": "49574062",
+        "t": 1788593539,
+        "title": "From Pig to Patient: A First-in-Human Kidney Xenotransplant Bridge",
+        "url": "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(26)01295-X/abstract",
+        "points": 1
+      },
+      {
+        "id": "49574294",
+        "t": 1788595915,
+        "title": "Ask HN: What did you achieve with GPT 6 Astra so far?",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "49574893",
+        "t": 1788601659,
+        "title": "Astra One Shotted Cains's Jawbone",
+        "url": "",
+        "points": 5
+      },
+      {
+        "id": "49575122",
+        "t": 1788604133,
+        "title": "The Pelican comparison grid for Astra is pretty interesting",
+        "url": "https://simonwillison.net/2026/Sep/4/astra-pelicans/",
+        "points": 27
+      },
+      {
+        "id": "49575426",
+        "t": 1788606826,
+        "title": "Astra can keep notes across context windows",
+        "url": "https://twitter.com/gabrielchua/status/2096097151524978891",
+        "points": 1
+      },
+      {
+        "id": "49575532",
+        "t": 1788607698,
+        "title": "Show HN: P(doom) – AI safety parody of DOOM 64",
+        "url": "https://p-doom.transitivebullsh.it",
+        "points": 1
+      },
+      {
+        "id": "49575763",
+        "t": 1788610138,
+        "title": "Release 0.12.10 · astral-sh/uv",
+        "url": "https://github.com/astral-sh/uv/releases/tag/0.12.10",
+        "points": 1
+      },
+      {
+        "id": "49576540",
+        "t": 1788616538,
+        "title": "Chasing the Moon's Shadow",
+        "url": "https://apod.nasa.gov/apod/astropix.html",
+        "points": 1
+      },
+      {
+        "id": "49576889",
+        "t": 1788618786,
+        "title": "GPT 6 Astra for Developers [video]",
+        "url": "https://www.youtube.com/watch?v=9xp1XWmJ_Wo",
+        "points": 2
+      },
+      {
+        "id": "49577030",
+        "t": 1788619529,
+        "title": "OpenAI GPT-6 Astra is AGI? [video]",
+        "url": "https://www.youtube.com/watch?v=vuFYLqe3-xc",
+        "points": 3
+      },
+      {
+        "id": "49577129",
+        "t": 1788620084,
+        "title": "Ask HN: Fable hacked my piano, can I release the results?",
+        "url": "",
+        "points": 299
+      },
+      {
+        "id": "49578568",
+        "t": 1788628601,
+        "title": "OpenAI boosts Astra's eval metrics, and continues to change others",
+        "url": "https://fortune.com/2026/09/04/openai-quietly-boosts-some-of-astras-evaluation-metrics-amid-rare-delay-in-publication-of-the-modeblog-post-announcement/",
+        "points": 5
+      },
+      {
+        "id": "49578701",
+        "t": 1788629388,
+        "title": "Building Games with Astra",
+        "url": "https://developers.openai.com/blog/how-to-build-games-with-astra",
+        "points": 6
+      },
+      {
+        "id": "49578994",
+        "t": 1788631052,
+        "title": "GPT-6 Astra is now #1 on Code Arena",
+        "url": "https://twitter.com/arena/status/2096290434700247250",
+        "points": 6
+      },
+      {
+        "id": "49579617",
+        "t": 1788635026,
+        "title": "GPT-6 Astra might be too powerful to understand or control",
+        "url": "https://www.transformernews.ai/p/openai-gpt-6-astra-might-be-too-powerful-to-understand-or-control",
+        "points": 2
+      },
+      {
+        "id": "49580689",
+        "t": 1788642365,
+        "title": "Show HN: Fast Cut Video tool for cutting video for Agents",
+        "url": "https://github.com/modecir/fast-cutvid",
+        "points": 8
+      },
+      {
+        "id": "49581133",
+        "t": 1788645689,
+        "title": "GPT-6 Astra: the harness is the product",
+        "url": "https://fewshotacademy.com/blog/gpt-6-astra-the-harness-is-the-product",
+        "points": 4
+      }
+    ]
+  },
+  "deepseek-v4.1-flash": {
+    "query": "DeepSeek",
+    "from": "2026-09-07T00:00:00Z",
+    "to": "2026-09-12T00:00:00Z",
+    "hits": [
+      {
+        "id": "49594337",
+        "t": 1788760089,
+        "title": "New off-peak rates: 50% lower prices for DeepSeek-V4",
+        "url": "https://ollama.com/pricing",
+        "points": 4
+      },
+      {
+        "id": "49599867",
+        "t": 1788797158,
+        "title": "Show HN: Benzi – Code Intelligence Infrastructure for Frontier AI Models",
+        "url": "https://github.com/oooscoos/Benzi",
+        "points": 3
+      },
+      {
+        "id": "49602817",
+        "t": 1788813977,
+        "title": "DeepSeek V4 Flash across 14 providers: cost, speed and caching",
+        "url": "https://www.inference.academy/benchmarks/serving-tradeoffs",
+        "points": 4
+      },
+      {
+        "id": "49606135",
+        "t": 1788848072,
+        "title": "DeepSeek/Qwen are surprisingly well at generating code for DSCI pipelines",
+        "url": "https://chat.deepseek.com/share/jg3hcnatoliqs1ct5i",
+        "points": 4
+      },
+      {
+        "id": "49607094",
+        "t": 1788854678,
+        "title": "DeepSeek v4.1 Flash is now available for internal beta testing",
+        "url": "",
+        "points": 22
+      },
+      {
+        "id": "49609648",
+        "t": 1788871766,
+        "title": "Show HN: Malinois – Open-Source iOS Unattended-Device Tamper Detection",
+        "url": "https://github.com/john-comptonemail-com/malinois",
+        "points": 3
+      },
+      {
+        "id": "49611973",
+        "t": 1788882131,
+        "title": "Price Reduction for DeepSeek-Flash！: R/DeepSeek",
+        "url": "https://www.reddit.com/r/DeepSeek/comments/1waqxm1/price_reduction_for_deepseekflash/",
+        "points": 3
+      },
+      {
+        "id": "49614795",
+        "t": 1788892932,
+        "title": "DeepSeek Flash reduced price by 100%",
+        "url": "https://www.reddit.com/r/DeepSeek/s/6MuPlB34VG",
+        "points": 2
+      },
+      {
+        "id": "49617611",
+        "t": 1788904200,
+        "title": "Show HN: Routi Bot – AI bots with their own desktops on your Mac",
+        "url": "https://github.com/narralabs/routi/",
+        "points": 4
+      },
+      {
+        "id": "49623037",
+        "t": 1788941345,
+        "title": "DeepSeek V4 Flash Provider Cache Benchmark",
+        "url": "https://olafdsouza.com/blog/your-inference-provider-sucks-at-caching",
+        "points": 2
+      },
+      {
+        "id": "49624603",
+        "t": 1788952766,
+        "title": "DeepSeek launching v4.1 flash cheaper and more capable than v4 pro",
+        "url": "",
+        "points": 420
+      },
+      {
+        "id": "49626436",
+        "t": 1788961321,
+        "title": "DeepSeek Flash v4.1 Is Coming",
+        "url": "https://twitter.com/White1637402/status/2097230806796419340",
+        "points": 4
+      },
+      {
+        "id": "49626806",
+        "t": 1788962672,
+        "title": "Show HN: Briff – Site Summarizer",
+        "url": "https://briff.site",
+        "points": 2
+      },
+      {
+        "id": "49628163",
+        "t": 1788967692,
+        "title": "DeepSeek v4.1 Flash Beta on Vercel",
+        "url": "https://vercel.com/ai-gateway/models/deepseek-v4.1-flash-beta",
+        "points": 3
+      },
+      {
+        "id": "49634252",
+        "t": 1788987733,
+        "title": "Chinese businesses give away AI tokens with coffee, credit cards, and dumplings",
+        "url": "https://restofworld.org/2026/china-ai-tokens-consumer-rewards-credit-cards-telcos-deepseek/",
+        "points": 1
+      },
+      {
+        "id": "49637501",
+        "t": 1789006341,
+        "title": "Busabase for DeepSeek Harness: An Agent database that runs apps and skills",
+        "url": "https://github.com/busabase/busabase-dsh-plugin",
+        "points": 5
+      },
+      {
+        "id": "49638687",
+        "t": 1789017111,
+        "title": "DeepSeek launches v4.1 flash, postpones v4 Pro discontinuation",
+        "url": "",
+        "points": 2
+      },
+      {
+        "id": "49638981",
+        "t": 1789019871,
+        "title": "DeepSeek-v4.1-Exp",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+        "points": 20
+      },
+      {
+        "id": "49639090",
+        "t": 1789020665,
+        "title": "DeepSeek v4.1 Flash",
+        "url": "https://twitter.com/deepseek_ai/status/2097930608790167907",
+        "points": 1016
+      },
+      {
+        "id": "49639110",
+        "t": 1789020787,
+        "title": "(Tech Report) DeepSeek-v4.1-Flash: Pushing Limits of KV Cache Compression [pdf]",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/resolve/main/DeepSeek_V41_Tech_Report.pdf",
+        "points": 7
+      },
+      {
+        "id": "49639339",
+        "t": 1789022463,
+        "title": "DeepSeek-v4.1-Flash: Pushing the Limits of KV Cache Compression [pdf]",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf",
+        "points": 2
+      },
+      {
+        "id": "49639397",
+        "t": 1789022897,
+        "title": "DeepSeek Flash v4.1",
+        "url": "https://xcancel.com/deepseek_ai/status/2097930608790167907#m",
+        "points": 2
+      },
+      {
+        "id": "49639667",
+        "t": 1789024951,
+        "title": "DeepSeek v4 Pro discontinuation (email)",
+        "url": "",
+        "points": 1
+      },
+      {
+        "id": "49641100",
+        "t": 1789034251,
+        "title": "Ask HN: As a teacher how should I teach kids to use AI?",
+        "url": "",
+        "points": 1
+      },
+      {
+        "id": "49641399",
+        "t": 1789036555,
+        "title": "DeepSeek v4.1-Flash on Openrouter",
+        "url": "https://openrouter.ai/deepseek/deepseek-v4.1-flash",
+        "points": 1
+      },
+      {
+        "id": "49641406",
+        "t": 1789036590,
+        "title": "DeepJIT: Header-Only C++20 JIT Runtime for Nvidia CUDA and Huawei Ascend",
+        "url": "https://github.com/deepseek-ai/DeepJIT",
+        "points": 2
+      },
+      {
+        "id": "49642605",
+        "t": 1789043088,
+        "title": "DeepSeek-v4.1-Flash: smarter, faster, more efficient",
+        "url": "https://www.deepseek.com/en/news/deepseek-v4-1-flash/",
+        "points": 1
+      },
+      {
+        "id": "49644625",
+        "t": 1789051517,
+        "title": "Show HN: Model pricing board for DeepSeek Harness: 7k models, cheapest route",
+        "url": "https://github.com/vitas/dsh-model-pricing",
+        "points": 3
+      },
+      {
+        "id": "49649507",
+        "t": 1789070801,
+        "title": "DeepSeek v4.1 Flash – Artificial Analysis",
+        "url": "https://artificialanalysis.ai/models/deepseek-v4-1-flash",
+        "points": 4
+      },
+      {
+        "id": "49649673",
+        "t": 1789071725,
+        "title": "DeepSeek v4.1 Flash vs. ChatGPT Pro Subscription",
+        "url": "https://aicharts.io/calculator",
+        "points": 4
+      },
+      {
+        "id": "49650102",
+        "t": 1789073964,
+        "title": "DeepSeek-v4-flash-0731-spark-sparkinfer: DeepSeek V4 Flash on one DGX Spark",
+        "url": "https://github.com/0xSero/deepseek-v4-flash-0731-spark-sparkinfer",
+        "points": 2
+      },
+      {
+        "id": "49650135",
+        "t": 1789074138,
+        "title": "Anthropic details distillation campaigns from Alibaba, Moonshot AI, and DeepSeek",
+        "url": "https://techcrunch.com/2026/09/10/anthropic-details-distillation-campaigns-from-alibaba-moonshot-ai-and-deepseek/",
+        "points": 7
+      },
+      {
+        "id": "49652039",
+        "t": 1789086860,
+        "title": "DeepSeek 4.1 Flash",
+        "url": "https://www.deepseek.com/en/news/deepseek-v4-1-flash/",
+        "points": 44
+      },
+      {
+        "id": "49653063",
+        "t": 1789095720,
+        "title": "DeepSeek and Moonshot were quietly relaying customer prompts to Claude",
+        "url": "https://twitter.com/IntCyberDigest/status/2098149671957103005",
+        "points": 6
+      },
+      {
+        "id": "49653633",
+        "t": 1789101622,
+        "title": "DeepSeek Harness",
+        "url": "https://www.deepseek.com/harness/en/",
+        "points": 5
+      },
+      {
+        "id": "49654117",
+        "t": 1789106803,
+        "title": "Show HN: SideNote Pro – Native Windows 11 AI beside your work",
+        "url": "https://sidenotepro.com",
+        "points": 2
+      },
+      {
+        "id": "49654387",
+        "t": 1789109179,
+        "title": "DeepSeek v4.1 Flash Uncensored",
+        "url": "https://huggingface.co/dealignai/DeepSeek-V4.1-Flash-UNCENSORED-FP8",
+        "points": 61
+      }
+    ]
+  },
+  "grok-4.7": {
+    "query": "Grok 4.7",
+    "from": "2026-09-18T00:00:00Z",
+    "to": "2026-09-23T00:00:00Z",
+    "hits": [
+      {
+        "id": "49750862",
+        "t": 1789713722,
+        "title": "Grok 4.7 Launching Soon",
+        "url": "https://twitter.com/birdabo/status/2100578715499704551",
+        "points": 1
+      },
+      {
+        "id": "49788838",
+        "t": 1790005815,
+        "title": "Grok 4.7",
+        "url": "https://x.ai/news/grok-4-7",
+        "points": 608
+      },
+      {
+        "id": "49789456",
+        "t": 1790008106,
+        "title": "Grok 4.7 is here with Electrical engineering benchmark which beats fable 5.1 max",
+        "url": "https://twitter.com/hive_echo/status/2102072241420898708",
+        "points": 1
+      },
+      {
+        "id": "49789558",
+        "t": 1790008560,
+        "title": "Grok 4.7 Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/grok-4-7",
+        "points": 13
+      },
+      {
+        "id": "49790835",
+        "t": 1790013424,
+        "title": "Grok 4.7",
+        "url": "https://twitter.com/SpaceXAI/status/2102069815225586149",
+        "points": 2
+      },
+      {
+        "id": "49802839",
+        "t": 1790090589,
+        "title": "Grok 4.7 from xAI, added to Personality Bench",
+        "url": "https://persona.earthpilot.ai/models/x-ai/grok-4.7",
+        "points": 2
+      },
+      {
+        "id": "49804685",
+        "t": 1790097178,
+        "title": "Grok 4.7 Scores 46 on AI Intelligence Index, Puts SpaceXAI in Top 4 Labs",
+        "url": "https://artificialanalysis.ai/articles/benchmarking-grok-4-7",
+        "points": 2
+      }
+    ]
+  },
+  "claude-opus-5.5": {
+    "query": "Opus 5.5",
+    "from": "2026-09-19T00:00:00Z",
+    "to": "2026-09-24T00:00:00Z",
+    "hits": [
+      {
+        "id": "49803863",
+        "t": 1790094450,
+        "title": "Claude Opus 5.5",
+        "url": "https://www.anthropic.com/claude-opus-5-5",
+        "points": 273
+      },
+      {
+        "id": "49803892",
+        "t": 1790094545,
+        "title": "Claude Opus 5.5",
+        "url": "https://www.anthropic.com/claude-opus-5-5",
+        "points": 1797
+      },
+      {
+        "id": "49804316",
+        "t": 1790095891,
+        "title": "Claude Opus 5.5 Intelligence, Performance and Price Analysis (Max)",
+        "url": "https://artificialanalysis.ai/models/claude-opus-5-5",
+        "points": 331
+      },
+      {
+        "id": "49804506",
+        "t": 1790096602,
+        "title": "Claude Opus 5.5",
+        "url": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+        "points": 1
+      },
+      {
+        "id": "49804509",
+        "t": 1790096609,
+        "title": "Claude Opus 5.5 for code review: More catches, different misses",
+        "url": "https://www.coderabbit.ai/blog/opus-5-5-model-review",
+        "points": 2
+      },
+      {
+        "id": "49804516",
+        "t": 1790096634,
+        "title": "Anthropic launches Claude Opus 5.5 with stricter safeguards for cybersecurity",
+        "url": "https://www.theverge.com/ai-artificial-intelligence/998868/anthropic-claude-opus-5-5-cybersecurity",
+        "points": 2
+      },
+      {
+        "id": "49805881",
+        "t": 1790101448,
+        "title": "Claude Opus 5.5 (High Effort) Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/claude-opus-5-5-high",
+        "points": 1
+      },
+      {
+        "id": "49807462",
+        "t": 1790108157,
+        "title": "Getting the most out of Opus 5.5 in Claude and Claude Code",
+        "url": "https://claude.dev/blog/getting-the-most-out-of-opus-5-5/",
+        "points": 3
+      },
+      {
+        "id": "49808921",
+        "t": 1790115112,
+        "title": "Claude Opus 5.5 vs. GPT-6 Sol: Cost per correct task, not price per token",
+        "url": "https://www.aipricing.guru/blog/claude-opus-5-5-vs-gpt-6-sol-pricing-2026/",
+        "points": 1
+      },
+      {
+        "id": "49809555",
+        "t": 1790118586,
+        "title": "Show HN: Livenerf – a benchmark for whether Opus 5.5 gets nerfed",
+        "url": "https://github.com/ninjahawk/livenerf",
+        "points": 3
+      },
+      {
+        "id": "49812002",
+        "t": 1790141365,
+        "title": "Opus 5.5 turned Ozymandias into a cinematic browser animation",
+        "url": "https://www.echohive.ai/ozymandias",
+        "points": 1
+      },
+      {
+        "id": "49812241",
+        "t": 1790143620,
+        "title": "Claude Opus 5.5 – Pelican Game",
+        "url": "https://claude-opus-5-5.riba2534.cn/",
+        "points": 7
+      },
+      {
+        "id": "49812616",
+        "t": 1790146946,
+        "title": "Show HN: Analysis of Games from Chess Olympiad with Opus 5.5 and Stockfish",
+        "url": "https://olympiad2026.unremarkable.info/",
+        "points": 1
+      },
+      {
+        "id": "49812887",
+        "t": 1790149582,
+        "title": "Claude Opus 5.5, GPT-6 Sol, GPT-6 Luna, and a new price war",
+        "url": "https://simonwillison.net/2026/Sep/22/opus-and-sol-and-luna/",
+        "points": 3
+      },
+      {
+        "id": "49813997",
+        "t": 1790159630,
+        "title": "A thread of early explorations with Claude Opus 5.5",
+        "url": "https://twitter.com/claudeai/status/2102471866635919731",
+        "points": 1
+      },
+      {
+        "id": "49817419",
+        "t": 1790176534,
+        "title": "Why are Opus 5.5 and GPT-6 Sol cheaper?",
+        "url": "https://www.claudecodecamp.com/p/why-new-models-get-cheaper",
+        "points": 1
+      },
+      {
+        "id": "49817871",
+        "t": 1790178371,
+        "title": "Anthropic made Opus 5.5 cheaper. Then it broke four things your agent depends on",
+        "url": "https://thenewstack.io/claude-opus-agent-migration/",
+        "points": 1
+      },
+      {
+        "id": "49823070",
+        "t": 1790200224,
+        "title": "Claude Opus 5.5: Things People Created",
+        "url": "https://favtutor.com/claude-opus-5-5-real-examples/",
+        "points": 2
+      },
+      {
+        "id": "49823138",
+        "t": 1790200638,
+        "title": "Opus 5.5 Scores 75.6% on Part Catalog Bench",
+        "url": "https://partcatalogbench.adamjohnson.site",
+        "points": 1
+      },
+      {
+        "id": "49823517",
+        "t": 1790202785,
+        "title": "Getting the most out of Opus 5.5 in Claude and Claude Code / claude.dev",
+        "url": "https://claude.dev/blog/getting-the-most-out-of-opus-5-5/",
+        "points": 2
+      }
+    ]
+  },
+  "gpt-6-sol-luna": {
+    "query": "GPT-6",
+    "from": "2026-09-19T00:00:00Z",
+    "to": "2026-09-24T00:00:00Z",
+    "hits": [
+      {
+        "id": "49763987",
+        "t": 1789800104,
+        "title": "GPT-6 Astra Solves a WWI German Radio Cipher",
+        "url": "https://www.prinzai.com/p/gpt-6-astra-solves-a-wwi-german-radio",
+        "points": 400
+      },
+      {
+        "id": "49766545",
+        "t": 1789825336,
+        "title": "GPT–6 Astra breaking an Enigma message that has resisted solution since 2005",
+        "url": "https://cryptocellar.org/bgac/the-mvueh-break.html",
+        "points": 2
+      },
+      {
+        "id": "49767564",
+        "t": 1789833171,
+        "title": "Show HN: CUA-S1 – A System One Model for Computer Use",
+        "url": "https://github.com/trycua/cua",
+        "points": 94
+      },
+      {
+        "id": "49798734",
+        "t": 1790070815,
+        "title": "TypeSafe AI Jev vs. GPT-6 Astra",
+        "url": "https://vercel.com/i/jev-vs-gpt-6-astra",
+        "points": 4
+      },
+      {
+        "id": "49801324",
+        "t": 1790085135,
+        "title": "OpenAI GPT–6 Astra breaks Enigma message that has resisted solution since 2005",
+        "url": "https://www.cryptocellar.org/bgac/the-mvueh-break.html",
+        "points": 734
+      },
+      {
+        "id": "49801925",
+        "t": 1790087383,
+        "title": "Show HN: DrivingBench – Frontier LLMs Driving a Real Toyota Corolla",
+        "url": "https://drivingbench.com/",
+        "points": 3
+      },
+      {
+        "id": "49803557",
+        "t": 1790093215,
+        "title": "1,300 STEM 3D Models created by GPT-6 Astra",
+        "url": "https://www.emergentmind.com/3d-models",
+        "points": 2
+      },
+      {
+        "id": "49805484",
+        "t": 1790099937,
+        "title": "GPT-6 Sol",
+        "url": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+        "points": 6
+      },
+      {
+        "id": "49805509",
+        "t": 1790100034,
+        "title": "GPT-6 Sol and Luna",
+        "url": "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
+        "points": 1772
+      },
+      {
+        "id": "49806285",
+        "t": 1790103219,
+        "title": "GPT-6 Luna (Max) Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/gpt-6-luna",
+        "points": 2
+      },
+      {
+        "id": "49806301",
+        "t": 1790103280,
+        "title": "GPT-6 Sol (Max) Intelligence, Performance and Price Analysis",
+        "url": "https://artificialanalysis.ai/models/gpt-6-sol",
+        "points": 18
+      },
+      {
+        "id": "49806724",
+        "t": 1790104908,
+        "title": "GPT-6 Sol and Luna push the cost-efficiency frontier",
+        "url": "https://artificialanalysis.ai/articles/gpt-6-sol-and-luna-push-the-cost-efficiency-frontier",
+        "points": 4
+      },
+      {
+        "id": "49807383",
+        "t": 1790107743,
+        "title": "Better prompt caching for GPT‑6",
+        "url": "https://openai.com/index/better-prompt-caching-for-gpt-6/",
+        "points": 3
+      },
+      {
+        "id": "49808921",
+        "t": 1790115112,
+        "title": "Claude Opus 5.5 vs. GPT-6 Sol: Cost per correct task, not price per token",
+        "url": "https://www.aipricing.guru/blog/claude-opus-5-5-vs-gpt-6-sol-pricing-2026/",
+        "points": 1
+      },
+      {
+        "id": "49810770",
+        "t": 1790128968,
+        "title": "\"I know I am GPT-6. I cannot confirm whether this session uses GPT-6-Sol.\"",
+        "url": "https://twitter.com/benwills/status/2102578927759917497",
+        "points": 4
+      },
+      {
+        "id": "49812866",
+        "t": 1790149391,
+        "title": "GPT-6 Sol and Luna push the cost efficiency frontier by halving token cost",
+        "url": "https://artificialanalysis.ai/articles/gpt-6-sol-and-luna-push-the-cost-efficiency-frontier",
+        "points": 1
+      },
+      {
+        "id": "49812887",
+        "t": 1790149582,
+        "title": "Claude Opus 5.5, GPT-6 Sol, GPT-6 Luna, and a new price war",
+        "url": "https://simonwillison.net/2026/Sep/22/opus-and-sol-and-luna/",
+        "points": 3
+      },
+      {
+        "id": "49814007",
+        "t": 1790159710,
+        "title": "Better prompt caching for GPT-6",
+        "url": "https://openai.com/index/better-prompt-caching-for-gpt-6/",
+        "points": 1
+      },
+      {
+        "id": "49814019",
+        "t": 1790159819,
+        "title": "GPT-6 Astra has made a major breakthrough in the Goldbach Conjecture",
+        "url": "https://twitter.com/captain_sude/status/2100277626120163664",
+        "points": 16
+      },
+      {
+        "id": "49814643",
+        "t": 1790164079,
+        "title": "GPT-6 Astra is the best vision model",
+        "url": "https://blog.roboflow.com/gpt-6-astra-vision/",
+        "points": 1
+      },
+      {
+        "id": "49817404",
+        "t": 1790176462,
+        "title": "GPT-6 Astra has gained the ability to drive a car",
+        "url": "https://drivingbench.com/",
+        "points": 312
+      },
+      {
+        "id": "49817419",
+        "t": 1790176534,
+        "title": "Why are Opus 5.5 and GPT-6 Sol cheaper?",
+        "url": "https://www.claudecodecamp.com/p/why-new-models-get-cheaper",
+        "points": 1
+      },
+      {
+        "id": "49819667",
+        "t": 1790184888,
+        "title": "GPT-6 Sol might acutally be GPT-6 Terra",
+        "url": "https://twitter.com/eidzoku/status/2102672660379443335",
+        "points": 3
+      },
+      {
+        "id": "49821081",
+        "t": 1790190934,
+        "title": "GPT-6 Astra Breaks an Old Enigma Message",
+        "url": "https://www.schneier.com/blog/archives/2026/09/gpt-6-astra-breaks-an-old-enigma-message.html",
+        "points": 2
+      }
+    ]
+  }
+}

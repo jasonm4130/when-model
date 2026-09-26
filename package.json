@@ -21,7 +21,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "lint": "oxlint && oxfmt --check",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "backtest": "tsx scripts/backtest/run.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.2",
@@ -33,6 +34,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "oxfmt": "^0.68.0",
     "oxlint": "^1.83.0",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1",
     "wrangler": "^4.134.0"

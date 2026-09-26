@@ -1,0 +1,34 @@
+---
+import type { TrapRow } from '../../scripts/backtest/build';
+import { signedHours } from '../../scripts/backtest/view';
+
+interface Props {
+  traps: readonly TrapRow[];
+}
+const { traps } = Astro.props;
+---
+<div class="table-scroll">
+  <table>
+    <caption class="sr-only">Timestamps that fake a lead, with an example of each and the fix.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Trap</th>
+        <th scope="col">Example</th>
+        <th scope="col" class="num">Fake lead</th>
+        <th scope="col">Fix</th>
+      </tr>
+    </thead>
+    <tbody>
+      {traps.map((t) => (
+        <tr id={`trap-${t.id}`}>
+          <th scope="row">{t.trap}</th>
+          <td>{t.example} <a class="small" href={t.source.url} rel="noopener" target="_blank">{t.source.label}</a></td>
+          <td class="num">{signedHours(t.fakeLeadH)}</td>
+          <td>{t.fix}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<style>
+</style>

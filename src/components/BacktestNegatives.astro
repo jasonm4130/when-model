@@ -1,0 +1,39 @@
+---
+import type { NegativeResult } from '../../scripts/backtest/curated';
+
+interface Props {
+  results: readonly NegativeResult[];
+  provenance: string;
+}
+const { results, provenance } = Astro.props;
+---
+<div class="table-scroll">
+  <table>
+    <caption class="sr-only">Signals that were tested and did not lead a launch.</caption>
+    <thead>
+      <tr>
+        <th scope="col">Signal and verdict</th>
+        <th scope="col">Finding</th>
+      </tr>
+    </thead>
+    <tbody>
+      {results.map((r) => (
+        <tr>
+          <th scope="row">
+            {r.signal}
+            <span class="verdict"><span class="tag">{r.verdict}</span></span>
+          </th>
+          <td>{r.finding} <a class="small" href={r.source.url} rel="noopener" target="_blank">{r.source.label}</a></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+<p class="muted note">{provenance}</p>
+<style>
+  /* The verdict sits under the signal so a phone keeps the finding column readable. */
+  th[scope='row'] { width: 28%; }
+  .verdict { display: block; margin-top: 6px; }
+  .tag { color: var(--muted); line-height: 1.5; }
+  .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
+</style>
