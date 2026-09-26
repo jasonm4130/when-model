@@ -26,19 +26,19 @@
     "backtest:replay": "tsx scripts/backtest/replay.ts"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.2",
-    "astro": "^7.3.3"
+    "@astrojs/cloudflare": "^14.3.3",
+    "astro": "^7.3.4"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@playwright/test": "^1.63.0",
     "@vitest/coverage-v8": "^5.0.1",
-    "oxfmt": "^0.68.0",
-    "oxlint": "^1.83.0",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^5.0.1",
-    "wrangler": "^4.134.0"
+    "wrangler": "^4.137.0"
   },
   "engines": {
     "node": ">=22.16.0"
