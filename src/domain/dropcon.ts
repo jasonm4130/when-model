@@ -104,29 +104,46 @@ export interface Dropcon {
   notes: string[];
 }
 
-const LEVELS: Record<DropconLevel, { name: string; blurb: string }> = {
+/**
+ * Each level's name, and what the market says when 80 × P7 alone lands in that band. The blurb
+ * describes P7, not the score: the 30-day and repricing terms can lift the level above what P7
+ * says (P7 0.79 after a 30-point rise reaches level 1), so the blurb is picked by P7's own band
+ * and says what lifted the level.
+ */
+const LEVELS: Record<DropconLevel, { name: string; market: string }> = {
   5: {
     name: 'QUIET ORBIT',
-    blurb:
+    market:
       'No market prices a named frontier release as likely this week. Unannounced releases remain possible.',
   },
   4: {
     name: 'RUMOUR MILL',
-    blurb: 'A market gives a named frontier release a real but minority chance within 7 days.',
+    market: 'A market gives a named frontier release a real but minority chance within 7 days.',
   },
   3: {
     name: 'GPU FANS SPINNING',
-    blurb: 'Markets put a named frontier release at roughly even odds within 7 days.',
+    market: 'Markets put a named frontier release at roughly even odds within 7 days.',
   },
   2: {
     name: 'VAGUE-POSTING DETECTED',
-    blurb: 'Markets price a named frontier release as likely within 7 days.',
+    market: 'Markets price a named frontier release as likely within 7 days.',
   },
   1: {
     name: 'RELEASE SURGE',
-    blurb: 'Markets price a named frontier release as near-certain within 7 days. Not a launch countdown.',
+    market: 'Markets price a named frontier release as near-certain within 7 days.',
   },
 };
+
+/** The level's blurb: P7's own band in words, what else lifted the level, and level 1's caveat. */
+function levelBlurb(level: DropconLevel, provenance: readonly ProvenanceRow[]): string {
+  const band = levelForScore(provenance[0].points);
+  const lifts = [
+    provenance[1].points > 0 ? 'the 30-day odds' : '',
+    provenance[2].points > 0 ? 'a 24-hour rise in the 7-day odds' : '',
+  ].filter(Boolean);
+  const lifted = level < band && lifts.length ? ` The level is lifted by ${lifts.join(' and ')}.` : '';
+  return `${LEVELS[band].market}${lifted}${level === 1 ? ' Not a launch countdown.' : ''}`;
+}
 
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 
@@ -249,7 +266,7 @@ export function computeDropcon(i: DropconInput, forecast?: ForecastSummary): Dro
           name: 'NO SIGNAL',
           blurb: 'Polymarket and OpenRouter are both unreachable, so there is nothing to read.',
         }
-      : { ...LEVELS[level] };
+      : { name: LEVELS[level].name, blurb: levelBlurb(level, provenance) };
   if (state === 'floor')
     copy.blurb = `Prediction-market odds are offline, so every term reads 0: a floor, not a measurement.`;
 

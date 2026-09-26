@@ -152,6 +152,34 @@ describe('computeDropcon', () => {
     expect(small.headline).toBe('Polymarket prices 85% that the next Claude Sonnet ships by Sep 29');
   });
 
+  it('describes P7 in the blurb and says what lifted the level above it', () => {
+    const at = (p7: number) => ({ ...gpt6, p: p7, quote: { label: 'October 2', p: p7 } });
+    // P7 0.79 after a 30-point rise reaches level 1, but 79% is not "near-certain".
+    const surge = computeDropcon({
+      ...quiet,
+      p7: 0.79,
+      p30: 0.95,
+      p7DayAgo: 0.49,
+      top7: at(0.79),
+      top30: at(0.95),
+    });
+    expect([surge.score, surge.level]).toEqual([75, 1]);
+    expect(surge.blurb).toBe(
+      'Markets price a named frontier release as likely within 7 days. The level is lifted by the 30-day odds and a 24-hour rise in the 7-day odds. Not a launch countdown.',
+    );
+    // P7 0.36 reaches level 3 on the 30-day term alone; 36% is a minority chance, not even odds.
+    const even = computeDropcon({ ...quiet, p7: 0.36, p30: 0.95, top7: at(0.36), top30: at(0.95) });
+    expect([even.score, even.level]).toEqual([35, 3]);
+    expect(even.blurb).toBe(
+      'A market gives a named frontier release a real but minority chance within 7 days. The level is lifted by the 30-day odds.',
+    );
+    // When P7 alone sets the level, the blurb is just its band.
+    const likely = computeDropcon({ ...quiet, p7: 0.94, p30: 0.94, top7: at(0.94) });
+    expect(likely.blurb).toBe(
+      'Markets price a named frontier release as near-certain within 7 days. Not a launch countdown.',
+    );
+  });
+
   it('is a floor with the odds offline: every term reads 0 and the copy says so', () => {
     const d = computeDropcon({
       ...quiet,
