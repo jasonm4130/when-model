@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "version": 1,
+    "pulledAt": "2026-09-26T00:46:05Z",
+    "rawEvents": 72,
+    "rawSeries": 705,
+    "scoredRungs": 696
+  },
+  "provenance": "Findings from the 2026-09-26 research pass. pnpm backtest carries them with their sources; it does not recompute them.",
+  "results": [
+    {
+      "signal": "Release cadence (\"overdue\" labs)",
+      "verdict": "no better than chance",
+      "finding": "Walk-forward: labs at z ≥ 0.5 past their mean gap shipped within 7 days 11.3% of the time, against a 20% base rate. Releases are bursty (CV 0.9–1.6).",
+      "source": {
+        "label": "OpenRouter models API",
+        "url": "https://openrouter.ai/api/v1/models"
+      }
+    },
+    {
+      "signal": "Cross-lab clustering",
+      "verdict": "no better than chance",
+      "finding": "Another frontier lab shipped within 3d/7d 37.3%/66.7% of the time, against 37.3%/66.1% for a weekday-preserving shuffle (p = 0.51/0.44).",
+      "source": {
+        "label": "OpenRouter models API",
+        "url": "https://openrouter.ai/api/v1/models"
+      }
+    },
+    {
+      "signal": "SDK and OpenAPI commit feeds",
+      "verdict": "lags",
+      "finding": "Coincident at best; 5 of 7 cases lag. The Opus 5.5 SDK release went out 2 minutes before the post.",
+      "source": {
+        "label": "anthropic-sdk-python v1.8.0",
+        "url": "https://github.com/anthropics/anthropic-sdk-python/releases/tag/v1.8.0"
+      }
+    },
+    {
+      "signal": "sglang commits",
+      "verdict": "lags",
+      "finding": "Led 1 of 7 launches, and only echoed a transformers merge that came first.",
+      "source": {
+        "label": "sglang commits",
+        "url": "https://github.com/sgl-project/sglang/commits/main"
+      }
+    },
+    {
+      "signal": "litellm and vercel/ai model lists",
+      "verdict": "lags",
+      "finding": "Trail OpenRouter by 20 minutes to 1h51m; litellm mirrors OpenRouter through a bot.",
+      "source": {
+        "label": "litellm commits",
+        "url": "https://github.com/BerriAI/litellm/commits/main"
+      }
+    },
+    {
+      "signal": "Lab docs catalog pages",
+      "verdict": "coincident",
+      "finding": "Across 5 launches, no Wayback snapshot shows a docs page carrying a model before its announcement. GPT-6 Astra was still absent 6.4h after launch.",
+      "source": {
+        "label": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      }
+    },
+    {
+      "signal": "AWS What’s New",
+      "verdict": "fakes a lead",
+      "finding": "pubDate is a backdated editorial time; read at face value it fakes a lead on 13 of 15 Claude launches.",
+      "source": {
+        "label": "AWS What’s New feed",
+        "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+      }
+    },
+    {
+      "signal": "Status pages (Claude, OpenAI)",
+      "verdict": "lags",
+      "finding": "A model is first mentioned 6 hours to about 20 days after its listing. xAI’s returns 403.",
+      "source": {
+        "label": "status.claude.com",
+        "url": "https://status.claude.com/"
+      }
+    },
+    {
+      "signal": "Wikipedia infoboxes",
+      "verdict": "lags",
+      "finding": "Updated after launch in 6 of 6 cases.",
+      "source": {
+        "label": "MediaWiki API",
+        "url": "https://en.wikipedia.org/w/api.php"
+      }
+    },
+    {
+      "signal": "Hugging Face collections",
+      "verdict": "lags",
+      "finding": "Lagged or coincided in 9 of 9 releases.",
+      "source": {
+        "label": "Hugging Face API",
+        "url": "https://huggingface.co/api/collections"
+      }
+    },
+    {
+      "signal": "Vertex AI release notes",
+      "verdict": "lags",
+      "finding": "The legacy feed has been stale since March; its successor has day-level dates and lags.",
+      "source": {
+        "label": "Vertex AI release notes",
+        "url": "https://cloud.google.com/vertex-ai/generative-ai/docs/release-notes"
+      }
+    },
+    {
+      "signal": "Design Arena codenames",
+      "verdict": "lags",
+      "finding": "The public registry purged its anonymous codenames in June 2026, and every entry since appeared after launch. One anecdote survives: \"Radon\" was Muse Spark, 6d14h early.",
+      "source": {
+        "label": "Design Arena",
+        "url": "https://www.designarena.ai/"
+      }
+    },
+    {
+      "signal": "Manifold",
+      "verdict": "not independent",
+      "finding": "Pegged to Polymarket, 30 minutes to 3 hours behind it, on thin books.",
+      "source": {
+        "label": "Manifold API",
+        "url": "https://api.manifold.markets/v0/search-markets"
+      }
+    },
+    {
+      "signal": "Kalshi",
+      "verdict": "not independent",
+      "finding": "GPT-6 moved 0.19 → 0.83 in the same hour as Polymarket (Sep 2, 15–17Z). No markets existed for Opus 5.5 or Sol/Luna.",
+      "source": {
+        "label": "Kalshi API",
+        "url": "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXGPT"
+      }
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "version": 1,
+    "pulledAt": "2026-09-26T00:46:05Z",
+    "rawEvents": 72,
+    "rawSeries": 705,
+    "scoredRungs": 696
+  },
+  "broadcasts": [
+    {
+      "model": "GPT-4.5",
+      "title": "Introduction to GPT-4.5",
+      "video": "cfRYp0nItZ8",
+      "publishedAt": "2025-02-27T17:00:15Z",
+      "startsAt": "2025-02-27T20:00:00Z",
+      "capture": "20250227192137",
+      "note": "Placeholder named the model.",
+      "url": "https://www.youtube.com/watch?v=cfRYp0nItZ8",
+      "captureUrl": "https://web.archive.org/web/20250227192137/https://www.youtube.com/watch?v=cfRYp0nItZ8",
+      "leadH": 3
+    },
+    {
+      "model": "GPT-4.1",
+      "title": "New models in the API",
+      "video": "kA-P9ood-cE",
+      "publishedAt": "2025-04-14T14:49:13Z",
+      "startsAt": "2025-04-14T17:00:00Z",
+      "capture": "20250414163537",
+      "note": "Placeholder title did not name the model.",
+      "url": "https://www.youtube.com/watch?v=kA-P9ood-cE",
+      "captureUrl": "https://web.archive.org/web/20250414163537/https://www.youtube.com/watch?v=kA-P9ood-cE",
+      "leadH": 2.2
+    },
+    {
+      "model": "o3 / o4-mini",
+      "title": "Introduction to new o-series models",
+      "video": "sq8GBPUb3rk",
+      "publishedAt": "2025-04-14T20:48:31Z",
+      "startsAt": "2025-04-16T17:00:00Z",
+      "capture": "20250416161005",
+      "note": "The longest lead: scheduled two days out.",
+      "url": "https://www.youtube.com/watch?v=sq8GBPUb3rk",
+      "captureUrl": "https://web.archive.org/web/20250416161005/https://www.youtube.com/watch?v=sq8GBPUb3rk",
+      "leadH": 44.2
+    },
+    {
+      "model": "GPT-5",
+      "title": "Introducing GPT-5",
+      "video": "0Uu_VJeVVfo",
+      "publishedAt": "2025-08-07T12:07:57Z",
+      "startsAt": "2025-08-07T17:00:00Z",
+      "capture": "20250807160625",
+      "note": "Placeholder named the model.",
+      "url": "https://www.youtube.com/watch?v=0Uu_VJeVVfo",
+      "captureUrl": "https://web.archive.org/web/20250807160625/https://www.youtube.com/watch?v=0Uu_VJeVVfo",
+      "leadH": 4.9
+    },
+    {
+      "model": "GPT-5.6",
+      "title": "Introducing the next chapter for ChatGPT",
+      "video": "Wq45rvPGNHs",
+      "publishedAt": "2026-07-08T20:25:53Z",
+      "startsAt": "2026-07-09T16:53:22Z",
+      "capture": null,
+      "note": "Start is the actual air time; OpenRouter listed the models 13.5 hours after the placeholder.",
+      "url": "https://www.youtube.com/watch?v=Wq45rvPGNHs",
+      "captureUrl": null,
+      "leadH": 20.5
+    }
+  ],
+  "misses": [
+    {
+      "model": "GPT-5.4",
+      "note": "No scheduled stream."
+    },
+    {
+      "model": "GPT-5.5",
+      "note": "No scheduled stream."
+    },
+    {
+      "model": "GPT-6 Astra",
+      "note": "No scheduled stream."
+    },
+    {
+      "model": "GPT-6 Sol/Luna",
+      "note": "No scheduled stream."
+    },
+    {
+      "model": "Every Anthropic launch",
+      "note": "Uploads coincide with or trail the post."
+    },
+    {
+      "model": "Google DeepMind",
+      "note": "Uploads trail the launch."
+    },
+    {
+      "model": "xAI",
+      "note": "The @xai handle resolves to an unrelated channel."
+    }
+  ]
+}

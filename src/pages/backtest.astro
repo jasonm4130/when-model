@@ -1,0 +1,225 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
+import BacktestLimits from '../components/BacktestLimits.astro';
+import BacktestWaterfall from '../components/BacktestWaterfall.astro';
+import BacktestReleases from '../components/BacktestReleases.astro';
+import BacktestSplits from '../components/BacktestSplits.astro';
+import BacktestAlarms from '../components/BacktestAlarms.astro';
+import BacktestScores from '../components/BacktestScores.astro';
+import BacktestBroadcasts from '../components/BacktestBroadcasts.astro';
+import BacktestArchitecture from '../components/BacktestArchitecture.astro';
+import BacktestNegatives from '../components/BacktestNegatives.astro';
+import BacktestTraps from '../components/BacktestTraps.astro';
+import BacktestReproduce from '../components/BacktestReproduce.astro';
+import { primaryLead, type Backtest } from '../../scripts/backtest/build';
+import { RELEASES } from '../../scripts/backtest/curated';
+import releaseJson from '../../data/backtest/release-events.json';
+import marketsJson from '../../data/backtest/markets.json';
+import broadcastsJson from '../../data/backtest/broadcasts.json';
+import architectureJson from '../../data/backtest/architecture.json';
+import negativesJson from '../../data/backtest/negative-results.json';
+import trapsJson from '../../data/backtest/timestamp-traps.json';
+
+const events = releaseJson as unknown as Backtest['release-events'];
+const markets = marketsJson as unknown as Backtest['markets'];
+const broadcasts = broadcastsJson as unknown as Backtest['broadcasts'];
+const architecture = architectureJson as unknown as Backtest['architecture'];
+const negatives = negativesJson as unknown as Backtest['negative-results'];
+const traps = trapsJson as unknown as Backtest['timestamp-traps'];
+
+// The data only changes when the committed JSON does, i.e. on deploy.
+Astro.response.headers.set('cache-control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
+
+const pulledAt = events.meta.pulledAt;
+const dated = markets.crossings.filter((c) => c.primary);
+const early90 = dated.filter((c) => (primaryLead(c, 0.9) ?? 0) > 0);
+const early50 = dated.filter((c) => (primaryLead(c, 0.5) ?? 0) > 0);
+const skill = (h: number, name: string) =>
+  markets.calibration.find((c) => c.horizonH === h)?.scores.find((s) => s.forecast === name)?.skill ?? 0;
+const signed = (n: number) => (n > 0 ? `+${n.toFixed(2)}` : n < 0 ? `−${Math.abs(n).toFixed(2)}` : '0');
+const firstDay = events.releases.map((r) => r.announcedAt).filter(Boolean).sort()[0] ?? '';
+const example = (() => {
+  const row = markets.crossings.find((c) => c.id === 'claude-opus-5.5');
+  const curated = RELEASES.find((r) => r.id === 'claude-opus-5.5');
+  const series = row?.day ?? row?.by;
+  return row && curated && series
+    ? { model: row.model, series, hn: curated.hn, openrouter: curated.openrouter[0] }
+    : null;
+})();
+const toc = [
+  ['leads', 'Lead times'],
+  ['splits', 'Splits'],
+  ['false-alarms', 'False alarms'],
+  ['calibration', 'Calibration'],
+  ['stealth', 'Stealth'],
+  ['broadcasts', 'Broadcasts'],
+  ['architecture', 'Architecture'],
+  ['negative-results', "Didn't lead"],
+  ['timestamp-traps', 'Timestamp traps'],
+  ['reproduce', 'Reproduce'],
+];
+---
+<Layout
+  title="Backtest · whenmodel"
+  description={`Does whenmodel see frontier model launches coming? ${events.releases.length} launches, Polymarket price histories, OpenRouter listings and every signal that didn't lead, with the data and code to reproduce it.`}
+>
+  <header class="bt-hero wrap">
+    <a class="tiny home" href="/">&#9664; WHENMODEL DASHBOARD</a>
+    <h1 class="glow-m">BACKTEST</h1>
+    <p class="lede">
+      Can free public signals see a frontier model launch coming? This page replays {events.releases.length} launches from {firstDay.slice(0, 10)} to the last pull: when each was announced, when it became available, and what the prediction markets and other signals said beforehand. Most of the answer is no, and the page says where.
+    </p>
+    <div class="metrics">
+      <div>
+        <div class="metric-label">Launches</div>
+        <div class="metric-value glow-c">{events.releases.length}</div>
+        <div class="metric-note">{dated.length} with a dated market</div>
+      </div>
+      <div>
+        <div class="metric-label">Market held 0.9 first</div>
+        <div class="metric-value glow-c">{early90.length} / {dated.length}</div>
+        <div class="metric-note">0.5 first: {early50.length} / {dated.length}</div>
+      </div>
+      <div>
+        <div class="metric-label">Skill vs base rate, 72h</div>
+        <div class="metric-value glow-y">{signed(skill(72, 'market max'))}</div>
+        <div class="metric-note">max(market, base): {signed(skill(72, 'max(market, base rate)'))}</div>
+      </div>
+      <div>
+        <div class="metric-label">Arch merges that led</div>
+        <div class="metric-value glow-c">{architecture.summary.leads} / {architecture.summary.leads + architecture.summary.coincident + architecture.summary.lags}</div>
+        <div class="metric-note">{architecture.summary.pending} pending</div>
+      </div>
+    </div>
+    <nav class="toc" aria-label="Sections">
+      {toc.map(([id, label]) => <a class="pill" href={`#${id}`}>{label}</a>)}
+    </nav>
+  </header>
+
+  <main id="main">
+    <div class="section wrap">
+      <BacktestLimits
+        releases={events.releases.length}
+        dated={dated.length}
+        medianAvailabilityLagH={events.summary.medianAvailabilityLagH}
+        early90={early90.length}
+        early90Prompted={early90.filter((c) => c.precursor !== 'none').length}
+        marketSkill72={skill(72, 'market max')}
+      />
+    </div>
+
+    <section id="leads" class="section wrap" aria-labelledby="leads-title">
+      <div class="section-head"><h2 id="leads-title"><span>&#9656;</span>LEAD TIMES</h2></div>
+      <div class="panel">
+        <p class="intro">
+          The announcement is the first Hacker News story linking the lab's own site or official account and naming the model; teasers ("launching soon", "this Thursday") don't count, and neither do the few earlier first-party links the table marks "not the launch", each with its reason. Availability is OpenRouter's <code>created</code> time. Market crossings are measured against the announcement.
+        </p>
+        <BacktestWaterfall releases={events.releases} crossings={markets.crossings} />
+      </div>
+      <div class="panel table-panel">
+        <BacktestReleases releases={events.releases} crossings={markets.crossings} />
+      </div>
+    </section>
+
+    <section id="splits" class="section wrap" aria-labelledby="splits-title">
+      <div class="section-head"><h2 id="splits-title"><span>&#9656;</span>PRE-ANNOUNCED VS SURPRISE</h2></div>
+      <div class="panel">
+        <BacktestSplits splits={markets.splits} claim={markets.sevenDayClaim} crossings={markets.crossings} />
+      </div>
+    </section>
+
+    <section id="false-alarms" class="section wrap" aria-labelledby="alarms-title">
+      <div class="section-head"><h2 id="alarms-title"><span>&#9656;</span>FALSE ALARMS</h2></div>
+      <div class="panel">
+        <BacktestAlarms summary={markets.falseAlarms.summary} worst={markets.falseAlarms.worst} />
+      </div>
+    </section>
+
+    <section id="calibration" class="section wrap" aria-labelledby="calibration-title">
+      <div class="section-head"><h2 id="calibration-title"><span>&#9656;</span>BRIER SCORE VS BASE RATE</h2></div>
+      <div class="panel">
+        <p class="intro">
+          One event definition throughout: <em>some frontier lab lists a new model on OpenRouter within the next 24 or 72 hours</em>, scored every hour from {markets.meta.scoreFrom.slice(0, 10)}. A 7-day horizon is left out on purpose: a frontier model lands in most weeks, so a constant forecast scores well there and the comparison says nothing. Listings come from OpenRouter's model list as pulled, so a model it has since removed does not count.
+        </p>
+        <BacktestScores calibration={markets.calibration} rungCalibration={markets.rungCalibration} />
+      </div>
+    </section>
+
+    <section id="stealth" class="section wrap" aria-labelledby="stealth-title">
+      <div class="section-head"><h2 id="stealth-title"><span>&#9656;</span>STEALTH REVEALS</h2></div>
+      <div class="panel">
+        <p class="muted">The track record of OpenRouter's anonymous "stealth" slots, and which lab each turned out to be, will be published here with the stealth watch.</p>
+      </div>
+    </section>
+
+    <section id="broadcasts" class="section wrap" aria-labelledby="broadcasts-title">
+      <div class="section-head"><h2 id="broadcasts-title"><span>&#9656;</span>SCHEDULED BROADCASTS</h2></div>
+      <div class="panel">
+        <p class="intro">OpenAI sometimes publishes an upcoming-livestream page hours before a launch. These are the cases where an archived copy proves when it went up.</p>
+        <BacktestBroadcasts broadcasts={broadcasts.broadcasts} misses={broadcasts.misses} />
+      </div>
+    </section>
+
+    <section id="architecture" class="section wrap" aria-labelledby="architecture-title">
+      <div class="section-head"><h2 id="architecture-title"><span>&#9656;</span>ARCHITECTURE MERGES</h2></div>
+      <div class="panel">
+        <p class="intro">Open-weight labs often add their model code to Hugging Face <code>transformers</code> before release. The merge time comes from the pull request; the announcement is the first first-party HN story.</p>
+        <BacktestArchitecture rows={architecture.architecture} summary={architecture.summary} misses={architecture.misses} />
+      </div>
+    </section>
+
+    <section id="negative-results" class="section wrap" aria-labelledby="negatives-title">
+      <div class="section-head"><h2 id="negatives-title"><span>&#9656;</span>TESTED AND DIDN'T LEAD</h2></div>
+      <div class="panel">
+        <BacktestNegatives results={negatives.results} provenance={negatives.provenance} />
+      </div>
+    </section>
+
+    <section id="timestamp-traps" class="section wrap" aria-labelledby="traps-title">
+      <div class="section-head"><h2 id="traps-title"><span>&#9656;</span>TIMESTAMP TRAPS</h2></div>
+      <div class="panel">
+        <p class="intro">Each of these timestamps looks like an early warning and isn't. Including one this site got wrong.</p>
+        <BacktestTraps traps={traps.traps} />
+      </div>
+    </section>
+
+    <section id="reproduce" class="section wrap" aria-labelledby="reproduce-title">
+      <div class="section-head"><h2 id="reproduce-title"><span>&#9656;</span>REPRODUCE IT</h2></div>
+      <div class="panel">
+        <BacktestReproduce pulledAt={pulledAt} example={example} />
+      </div>
+    </section>
+  </main>
+  <Footer generatedAt={pulledAt} />
+</Layout>
+<style>
+  .bt-hero { padding-top: 28px; }
+  .home { display: inline-block; margin-bottom: 14px; }
+  .bt-hero h1 { font-size: clamp(26px, 6vw, 44px); margin-bottom: 12px; }
+  .lede { max-width: 80ch; font-size: var(--fs-lg); margin-bottom: 18px; }
+  .bt-hero .metrics { margin-bottom: 16px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; }
+  .intro { max-width: 90ch; margin-bottom: 12px; }
+  .table-panel { margin-top: var(--gap); }
+  code { font-family: var(--font-mono); color: var(--yellow); }
+  /* Row headers read as data, not column labels. */
+  main :global(th[scope='row']) {
+    font-family: var(--font-mono);
+    font-size: 19px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text);
+    font-weight: 400;
+    vertical-align: top;
+    border-bottom: 1px dotted var(--line-soft);
+  }
+  main :global(tr:hover th[scope='row']) { background: rgba(0, 229, 255, 0.05); }
+  /* Long column labels may wrap; on a phone the row labels keep a readable width and the table scrolls. */
+  main :global(thead th.num) { white-space: normal; }
+  @media (max-width: 720px) {
+    main :global(th[scope='row']) { min-width: 7.5em; }
+  }
+  .bt-hero .metrics { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .bt-hero .metric-note { white-space: normal; }
+</style>
