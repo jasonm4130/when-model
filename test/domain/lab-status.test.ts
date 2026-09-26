@@ -40,6 +40,15 @@ describe('computeHeat', () => {
     expect(computeHeat({ daysSince: 0, releases30d: 3 })).toEqual({ heat: 25, market: 0, recency: 25 });
   });
 
+  it("rounds each part on its own and sums them, so a card's split adds up", () => {
+    // market 6.6 + 16.4 + 8.55 = 31.55, recency 11.5 + 3.33 = 14.83: the unrounded total 46.38 would show 46.
+    expect(computeHeat({ p72: 0.33, p7: 0.41, p30: 0.57, daysSince: 7, releases30d: 1 })).toEqual({
+      heat: 47,
+      market: 32,
+      recency: 15,
+    });
+  });
+
   it('recency decays to nothing after 30 days', () => {
     expect(computeHeat({ daysSince: 30, releases30d: 0 }).heat).toBe(0);
     expect(computeHeat({ daysSince: 90, releases30d: 0 }).heat).toBe(0);
@@ -96,6 +105,9 @@ describe('launchedFamilies', () => {
   });
 
   it('holds a family out for 4 days after its model lists', () => {
+    expect(LAUNCH_SETTLE_MS).toBe(4 * 86_400_000);
+    const edge = new Date(NOW - LAUNCH_SETTLE_MS).toISOString();
+    expect(launchedFamilies([gpt6], [event(edge, 'OpenAI: GPT-6 Sol')], NOW).size).toBe(1);
     const listed = new Date(NOW - LAUNCH_SETTLE_MS + 60_000).toISOString();
     expect([...launchedFamilies([gpt6], [event(listed, 'OpenAI: GPT-6 Sol')], NOW)]).toEqual(['gpt-6']);
     const stale = new Date(NOW - LAUNCH_SETTLE_MS - 60_000).toISOString();
@@ -196,7 +208,10 @@ describe('assessLab', () => {
     expect(s.odds?.p7).toMatchObject({ trusted: false, interpolated: true });
     expect(s.odds?.p7.p).toBeGreaterThan(0);
     expect(trustedP(s.odds?.p7)).toBe(0);
-    expect(s.heatParts.market).toBe(Math.round(trustedP(s.odds?.p30) * 15));
+    // Nov 30 lies 72 days past the 72-hour horizon and 42 past the 30-day one: nothing is trusted.
+    expect(s.odds?.p72.trusted).toBe(false);
+    expect(s.odds?.p30.trusted).toBe(false);
+    expect(s.heatParts.market).toBe(0);
   });
 
   it('reads only frontier text families: image and video markets are left out', () => {
@@ -212,6 +227,17 @@ describe('assessLab', () => {
     expect(s.odds).toBeUndefined();
     expect(s.launchedFamilies).toEqual(['GPT-6']);
     expect(s.releases30d).toBe(1);
+  });
+
+  it('reads a family again once its listing is more than 4 days old', () => {
+    const listed = { ...drop('2026-09-14T12:00:00Z'), id: 'openai/gpt-6-sol', name: 'OpenAI: GPT-6 Sol' };
+    const s = assessLab(
+      openai,
+      { drops: [listed], markets: [market], events: releaseEvents([listed], NOW) },
+      NOW,
+    );
+    expect(s.launchedFamilies).toEqual([]);
+    expect(s.odds?.family).toBe('GPT-6');
   });
 
   it('is QUIET with no drops and no markets', () => {

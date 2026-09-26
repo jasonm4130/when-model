@@ -179,17 +179,21 @@ describe('firstSeenBatches', () => {
   });
 
   it('records nothing from a source that failed or returned a partial list', () => {
-    const batches = firstSeenBatches(
-      assembleDashboard(
-        inputs({
-          drops: { name: 'OpenRouter', ok: false, error: 'down', data: [] },
-          broadcasts: { name: 'YouTube broadcasts', ok: false, error: 'Anthropic feed failed', data: [] },
-          architectures: { name: 'transformers registry', ok: false, error: 'down', data: [] },
-          leaks: [{ name: 'HN leaks', ok: false, error: 'down', source: 'hn', data: [] }],
-        }),
-        NOW,
-      ),
+    // Each failed source still carries items, as a partial poll does: only the ok gate keeps them out.
+    const full = inputs();
+    const d = assembleDashboard(
+      inputs({
+        drops: { ...full.drops, ok: false, error: 'down' },
+        broadcasts: { ...full.broadcasts!, ok: false, error: 'Anthropic feed failed' },
+        architectures: { ...full.architectures!, ok: false, error: 'down' },
+        leaks: [{ ...full.leaks![0], ok: false, error: 'down' }, full.leaks![1]],
+      }),
+      NOW,
     );
-    expect(batches.map((b) => b.kind)).toEqual(['feed-day:anthropic']);
+    expect(d.earlyWarnings.stealth.items.map((s) => s.id)).toEqual(['stealth/ox-alpha']);
+    expect(d.earlyWarnings.broadcasts.items.map((b) => b.videoId)).toEqual(['v1']);
+    expect(d.earlyWarnings.architectures.items.map((a) => a.module)).toEqual(['qwen9_next']);
+    expect(d.earlyWarnings.leaks.items.map((l) => l.url)).toEqual(['https://hn.test/1']);
+    expect(firstSeenBatches(d).map((b) => b.kind)).toEqual(['feed-day:anthropic']);
   });
 });

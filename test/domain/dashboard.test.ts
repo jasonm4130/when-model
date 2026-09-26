@@ -217,6 +217,44 @@ describe('assembleDashboard', () => {
     });
   });
 
+  it('scores nothing, and forecasts nothing, off a lone rung 73 days out', () => {
+    const far = ladder('anthropic', 'Next Claude Sonnet released by...?', [
+      ['November 30', '2026-12-01T04:59:59Z', 0.6],
+    ]);
+    const d = assembleDashboard({ ...empty(), markets: ok('Polymarket', [far]) }, NOW);
+    const sonnet = d.labs.find((l) => l.id === 'anthropic')!;
+    expect(sonnet.odds?.p30.p).toBeGreaterThan(0);
+    expect(d.measurement.inputs).toMatchObject({ p7: 0, p30: 0 });
+    expect(d.dropcon.score).toBe(0);
+    expect(d.forecast.p).toBe(assembleDashboard(empty(), NOW).forecast.p);
+  });
+
+  it('with the ledger down, neither confirms broadcasts nor prices repricing', () => {
+    const d = assembleDashboard(
+      {
+        ...empty(),
+        ledger: failed('First-seen ledger', {
+          ...EMPTY_LEDGER,
+          headlineDayAgo: { p: 0.1, observedAt: '2026-09-18T12:00:00.000Z' },
+        }),
+        broadcasts: ok('YouTube broadcasts', [
+          {
+            videoId: 'v1',
+            channel: 'OpenAI',
+            labId: 'openai',
+            title: 'Live',
+            url: 'u',
+            publishedAt: '2026-09-19T00:00:00.000Z',
+            views: 0,
+          },
+        ]),
+      },
+      NOW,
+    );
+    expect(d.earlyWarnings.broadcasts.items[0].confirmed).toBeUndefined();
+    expect(d.measurement.inputs.p7DayAgo).toBeNull();
+  });
+
   it('never scores landed activity: frontier listings and hot HN stories leave the level alone', () => {
     const inputs: DashboardInputs = {
       ...empty(),

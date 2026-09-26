@@ -169,6 +169,10 @@ describe('computeDropcon', () => {
       top30: sonnet,
     });
     expect(small.headline).toBe('Polymarket prices 85% that the next Claude Sonnet ships by Sep 29');
+    const rise = (dayAgo: number) =>
+      computeDropcon({ ...quiet, p7: 0.5, p30: 0.6, p7DayAgo: dayAgo, top7: { ...sonnet, p: 0.5 } }).headline;
+    expect(rise(0.44)).toContain(', up 6 pts in 24 hours');
+    expect(rise(0.46)).not.toContain('in 24 hours');
   });
 
   it('describes P7 in the blurb and says what lifted the level above it', () => {

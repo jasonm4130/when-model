@@ -160,6 +160,48 @@ describe('buildEarlyWarnings', () => {
     );
   });
 
+  it("keeps the first source's row for a URL both sources carry, and lists leaks newest first", () => {
+    const shared = (source: LeakItem['source']) => leak(source, 'GPT-7 Astra spotted', ['gpt-7']);
+    const older = leak('hn', 'Gemini 4 Ultra spotted', ['gemini-4-ultra'], '2026-09-24T00:00:00.000Z');
+    const w = buildEarlyWarnings(
+      {
+        drops: ok([]),
+        leaks: [
+          { ...ok([older, shared('hn')]), source: 'hn' },
+          { ...ok([shared('testingcatalog')]), source: 'testingcatalog' },
+        ],
+      },
+      NOW,
+    );
+    expect(w.leaks.items.map((l) => [l.title, l.sourceName])).toEqual([
+      ['GPT-7 Astra spotted', 'Hacker News'],
+      ['Gemini 4 Ultra spotted', 'Hacker News'],
+    ]);
+  });
+
+  it('confirms a broadcast only once its first sighting is at least 15 minutes old', () => {
+    const seenAgo = (minutes: number) =>
+      buildEarlyWarnings(
+        {
+          drops: ok([]),
+          leaks: [],
+          broadcasts: ok([broadcast]),
+          ledger: ledgerFromRows([
+            {
+              kind: 'broadcast',
+              key: 'v1',
+              firstSeenAt: new Date(NOW - minutes * 60_000).toISOString(),
+              seeded: false,
+            },
+          ]),
+        },
+        NOW,
+      ).broadcasts.items[0].confirmed;
+    expect(seenAgo(10)).toBe(false);
+    expect(seenAgo(15)).toBe(true);
+    expect(seenAgo(20)).toBe(true);
+  });
+
   it('says when a leak source is down or listings could not be checked', () => {
     const w = buildEarlyWarnings(
       {
