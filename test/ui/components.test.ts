@@ -135,7 +135,7 @@ describe('components', async () => {
     expect(pts).toEqual([...d.dropcon.provenance.map((r) => r.points), d.dropcon.score]);
     expect(pts.slice(0, -1).reduce((a, b) => a + b, 0)).toBe(d.dropcon.score);
     expect(html).toContain('href="https://polymarket.com/event/gpt-6"');
-    expect(html).toContain('Context, not the level');
+    expect(html).toContain('Is this a forecast?');
     expect(html).toContain(d.labs[0].name);
     // A frontier listing under 48 hours old raises the banner, which is never scored.
     expect(html).toContain('MODELS JUST LANDED');
