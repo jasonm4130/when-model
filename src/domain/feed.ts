@@ -374,11 +374,13 @@ export function isListed(modelId: string, listings: readonly Listing[]): boolean
 }
 
 /**
- * Keep the leaks that still point at something unreleased: at least one named model has no
- * listing yet. The listing shape is structural so any catalog (OpenRouter today) can feed it.
+ * Keep the leaks that still point at something unreleased: none of the models they name has a
+ * listing yet. A leak resolves when any of its models lists, as the track record counts it
+ * ("Anthropic tests Fable 5.2 and Opus 5.5" resolved when Opus 5.5 listed), so it must leave the
+ * board then too. The listing shape is structural so any catalog (OpenRouter today) can feed it.
  */
 export function unlistedLeaks(leaks: readonly LeakItem[], listings: readonly Listing[]): LeakItem[] {
-  return leaks.filter((leak) => leak.modelIds.some((id) => !isListed(id, listings)));
+  return leaks.filter((leak) => leak.modelIds.every((id) => !isListed(id, listings)));
 }
 
 // ─── Cross-source dedup ──────────────────────────────────────────────────────

@@ -418,7 +418,7 @@ describe('leak listings', () => {
     expect(isListed(id, [{ ...qwenFlash, aliases: ['Qwen/Qwen3.8-Flash-Next'] }])).toBe(true);
   });
 
-  it('unlistedLeaks keeps a leak while any of its models is still unlisted', () => {
+  it('unlistedLeaks drops a leak once any of its models lists, as the track record resolves it', () => {
     const leak = (modelIds: string[]): LeakItem => ({
       source: 'testingcatalog',
       title: modelIds.join(' and '),
@@ -430,7 +430,9 @@ describe('leak listings', () => {
     const both = leak(['fable-5.2', 'opus-5.5']);
     const shipped = leak(['opus-5.5']);
     const sol = leak(['gpt-6-sol']);
-    expect(unlistedLeaks([both, shipped, sol], listings)).toEqual([both, sol]);
+    const fable = leak(['fable-5.2']);
+    // Opus 5.5 listed, so the Fable/Opus leak is resolved (a hit in LEAK_OUTCOMES), not pending.
+    expect(unlistedLeaks([both, shipped, sol, fable], listings)).toEqual([sol, fable]);
     expect(LEAK_SOURCE_NAMES).toEqual({ hn: 'Hacker News', testingcatalog: 'TestingCatalog' });
   });
 });
