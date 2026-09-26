@@ -55,15 +55,48 @@ describe('huggingface mappers', () => {
   });
 });
 
+describe('languageTrending', () => {
+  it('keeps chat, vision-language and any-to-any models in trending order', async () => {
+    const { LANGUAGE_PIPELINES, languageTrending } = await import('../../src/adapters/huggingface');
+    expect([...LANGUAGE_PIPELINES]).toEqual(['text-generation', 'image-text-to-text', 'any-to-any']);
+    const models = [
+      { id: 'deepseek-ai/DeepSeek-V4.1-Flash', pipeline_tag: 'image-text-to-text' },
+      { id: 'black-forest-labs/FLUX.3', pipeline_tag: 'text-to-image' },
+      { id: 'Qwen/Qwen3.8-27B', pipeline_tag: 'text-generation' },
+      { id: 'untagged/model' },
+      { pipeline_tag: 'text-generation' },
+      { id: 'google/gemma-4-omni', pipeline_tag: 'any-to-any' },
+    ];
+    expect(languageTrending(models, 12).map((r) => r.id)).toEqual([
+      'deepseek-ai/DeepSeek-V4.1-Flash',
+      'Qwen/Qwen3.8-27B',
+      'google/gemma-4-omni',
+    ]);
+    expect(languageTrending(models, 2)).toHaveLength(2);
+  });
+});
+
 describe('fetchers', () => {
-  it('pass limit through and tolerate null bodies', async () => {
+  it('fetch an unfiltered pool of 60, filter locally, and tolerate null bodies', async () => {
     const calls = mockUpstream({
-      'https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=3': [{ id: 'a/b' }, {}],
+      'https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=60': [
+        { id: 'a/b', pipeline_tag: 'text-generation' },
+        { id: 'c/d', pipeline_tag: 'text-to-speech' },
+        { id: 'e/f', pipeline_tag: 'image-text-to-text' },
+        {},
+      ],
       'https://huggingface.co/api/daily_papers?limit=2': null,
     });
     const { fetchPapers, fetchTrending } = await import('../../src/adapters/huggingface');
-    expect((await fetchTrending(3)).map((t) => t.id)).toEqual(['a/b']);
+    expect((await fetchTrending(3)).map((t) => t.id)).toEqual(['a/b', 'e/f']);
+    expect((await fetchTrending(1)).map((t) => t.id)).toEqual(['a/b']);
     expect(await fetchPapers(2)).toEqual([]);
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(3);
+  });
+
+  it('treat a null trending body as empty', async () => {
+    mockUpstream({ 'https://huggingface.co/api/models': null });
+    const { fetchTrending } = await import('../../src/adapters/huggingface');
+    expect(await fetchTrending()).toEqual([]);
   });
 });

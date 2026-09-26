@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:github.com,2008:https://github.com/openai/openai-python/releases</id>
+  <link type="text/html" rel="alternate" href="https://github.com/openai/openai-python/releases"/>
+  <link type="application/atom+xml" rel="self" href="https://github.com/openai/openai-python/releases.atom"/>
+  <!-- First 4 of 10 entries of https://github.com/openai/openai-python/releases.atom fetched 2026-09-26, each entry copied verbatim. -->
+  <title>Release notes from openai-python</title>
+  <updated>2026-09-24T00:00:28Z</updated>
+  <entry>
+    <id>tag:github.com,2008:Repository/307213173/v3.19.2</id>
+    <updated>2026-09-24T00:05:23Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/openai/openai-python/releases/tag/v3.19.2"/>
+    <title>v3.19.2</title>
+    <content type="html">&lt;h2&gt;&lt;a href=&quot;https://github.com/openai/openai-python/compare/v3.19.1...v3.19.2&quot;&gt;3.19.2&lt;/a&gt; (2026-09-23)&lt;/h2&gt;
+&lt;h3&gt;Bug Fixes&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;preserve single files for fallback extraction paths (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3875&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3875/hovercard&quot;&gt;#3875&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/bfd3680c8d3b715bb3175b82cd0fa1c1fb53162f&quot;&gt;bfd3680&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Chores&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; clarify approximate web search location defaults (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3953&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3953/hovercard&quot;&gt;#3953&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/a95c95ed372476168e9893723ff694ead5db8586&quot;&gt;a95c95e&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; clarify Realtime modality array definitions (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3954&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3954/hovercard&quot;&gt;#3954&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/e79cf53878b1d8580fac3a46e375eb98d9ca161d&quot;&gt;e79cf53&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; correct fine-tuning bounds and Realtime response reference (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3949&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3949/hovercard&quot;&gt;#3949&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/325a948a545add0201e082e778ca11b90ddb9426&quot;&gt;325a948&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>openai-sdks[bot]</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/in/3705508?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/307213173/v3.19.1</id>
+    <updated>2026-09-23T19:15:40Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/openai/openai-python/releases/tag/v3.19.1"/>
+    <title>v3.19.1</title>
+    <content type="html">&lt;h2&gt;&lt;a href=&quot;https://github.com/openai/openai-python/compare/v3.19.0...v3.19.1&quot;&gt;3.19.1&lt;/a&gt; (2026-09-23)&lt;/h2&gt;
+&lt;h3&gt;Bug Fixes&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;chat:&lt;/strong&gt; preserve single-pass tool iterables (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3770&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3770/hovercard&quot;&gt;#3770&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/33ffa1f9fa4f49553ab0287b9359283be818fe40&quot;&gt;33ffa1f&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; merge HTTP headers case-insensitively (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3486&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3486/hovercard&quot;&gt;#3486&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/5e39766dd7ba2802c97f5305721a621098cf0e38&quot;&gt;5e39766&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Chores&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; clarify Chat Completions seed limits (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3945&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3945/hovercard&quot;&gt;#3945&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/be9d66628ad7377bd36fe5a76ae6d735843f0e76&quot;&gt;be9d666&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Documentation&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;clarify collaborator-only pull request policy (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3948&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3948/hovercard&quot;&gt;#3948&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/ead1fa2473257ba5d7be08484aca4349649e6245&quot;&gt;ead1fa2&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>openai-sdks[bot]</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/in/3705508?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/307213173/v3.19.0</id>
+    <updated>2026-09-23T00:08:02Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/openai/openai-python/releases/tag/v3.19.0"/>
+    <title>v3.19.0</title>
+    <content type="html">&lt;h2&gt;&lt;a href=&quot;https://github.com/openai/openai-python/compare/v3.18.0...v3.19.0&quot;&gt;3.19.0&lt;/a&gt; (2026-09-22)&lt;/h2&gt;
+&lt;h3&gt;Features&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; add GCP external storage support (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3943&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3943/hovercard&quot;&gt;#3943&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/d12d60fff9f5624f2dc50ade3d832028f4fecaa7&quot;&gt;d12d60f&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; add GPT-Rosalind research model (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3940&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3940/hovercard&quot;&gt;#3940&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/d041d736f75f03f6c87aa77f932823011691bac5&quot;&gt;d041d73&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Bug Fixes&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;_utils/_transform:&lt;/strong&gt; propagate &lt;strong&gt;api_exclude&lt;/strong&gt; in _async_transform_recursive (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3324&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3324/hovercard&quot;&gt;#3324&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/161ae65ea676a000a156ba0dacfd904532b52473&quot;&gt;161ae65&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; handle omission markers in queued WebSocket events (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3944&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3944/hovercard&quot;&gt;#3944&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/63e46169a7c6525ec90c7f2815a05d56e795cbcf&quot;&gt;63e4616&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; retry only replayable request content (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3771&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3771/hovercard&quot;&gt;#3771&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/6e0c2beeb639e42ff74f14135151d8bcb1e5b245&quot;&gt;6e0c2be&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;client:&lt;/strong&gt; tolerate older optional aiohttp installations (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3941&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3941/hovercard&quot;&gt;#3941&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/0d91efbe5084c2f572688e8e9a05c0a91c8c0319&quot;&gt;0d91efb&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;helpers:&lt;/strong&gt; use asyncio.get_running_loop() inside async methods (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3289&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3289/hovercard&quot;&gt;#3289&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/bac3545eee5a0dfd348a6766bca3e904308792dd&quot;&gt;bac3545&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>openai-sdks[bot]</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/in/3705508?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/307213173/v3.18.0</id>
+    <updated>2026-09-22T18:25:48Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/openai/openai-python/releases/tag/v3.18.0"/>
+    <title>v3.18.0</title>
+    <content type="html">&lt;h2&gt;&lt;a href=&quot;https://github.com/openai/openai-python/compare/v3.17.0...v3.18.0&quot;&gt;3.18.0&lt;/a&gt; (2026-09-22)&lt;/h2&gt;
+&lt;h3&gt;Features&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;api:&lt;/strong&gt; add GPT-6 Sol and Luna model identifiers (&lt;a href=&quot;https://github.com/openai/openai-python/issues/3935&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/openai/openai-python/pull/3935/hovercard&quot;&gt;#3935&lt;/a&gt;) (&lt;a href=&quot;https://github.com/openai/openai-python/commit/455ce1b5da067e5d7631c86a571ca3b0d03b65cd&quot;&gt;455ce1b&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>openai-sdks[bot]</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/in/3705508?s=60&amp;v=4"/>
+  </entry>
+</feed>

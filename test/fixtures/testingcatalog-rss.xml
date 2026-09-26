@@ -1,0 +1,187 @@
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<channel>
+<!-- Excerpt of https://www.testingcatalog.com/rss/ fetched 2026-09-26: items from 2026-09-19 on plus the 2026-08-29 GPT-6 Astra item, each item copied verbatim. -->
+<title><![CDATA[ TestingCatalog AI News ]]></title>
+<description><![CDATA[ TestingCatalog - Latest AI News on AI Agents, Model Releases, Tools, Leaks, and Rumors ]]></description>
+<link>https://www.testingcatalog.com</link>
+<image>
+    <url>https://www.testingcatalog.com/favicon.png</url>
+    <title>TestingCatalog AI News</title>
+    <link>https://www.testingcatalog.com</link>
+</image>
+<lastBuildDate>Fri, 25 Sep 2026 21:30:10 +0000</lastBuildDate>
+<atom:link href="https://www.testingcatalog.com/rss/" rel="self" type="application/rss+xml"/>
+<ttl>60</ttl>
+
+    <item>
+        <title><![CDATA[ Google launches Gemini 3.8 Live with Live Avatar ]]></title>
+        <description><![CDATA[ Google&#x27;s Gemini 3.8 Live with Live Avatar adds video personas to enterprise AI agents, with background tool calls and speech across 97 languages. ]]></description>
+        <link>https://www.testingcatalog.com/google-launches-gemini-3-8-live-with-live-avatar/</link>
+        <guid isPermaLink="false">6ab5bca10fd6560001c9bb65</guid>
+        <category><![CDATA[ Google ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Fri, 25 Sep 2026 21:30:09 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/banner-23.webp" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ OpenAI prepares new $500/month Pro Max plan for ChatGPT ]]></title>
+        <description><![CDATA[ ChatGPT Pro Max will cost $500 per month and offer “Fastest Work and Codex”, potentially powered by Cerebras infrastructure. ]]></description>
+        <link>https://www.testingcatalog.com/openai-prepares-new-500-month-pro-max-plan-for-chatgpt/</link>
+        <guid isPermaLink="false">6ab5b7000fd6560001c9bae4</guid>
+        <category><![CDATA[ OpenAI ]]></category>
+        <dc:creator><![CDATA[ Alexey Shabanov ]]></dc:creator>
+        <pubDate>Thu, 24 Sep 2026 23:56:54 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/Screenshot-2026-09-25-at-00.58.17.png" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Meta unveils 100-gram VR Glasses for $1,299.99 ]]></title>
+        <description><![CDATA[ A 5K display, 3D films, immersive sports and private work screens headline Meta&#x27;s VR Glasses, due in spring 2027 at $1,299.99. ]]></description>
+        <link>https://www.testingcatalog.com/meta-unveils-100-gram-vr-glasses-for-1-299-99/</link>
+        <guid isPermaLink="false">6ab4e64264d4e60001e32075</guid>
+        <category><![CDATA[ Meta ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Thu, 24 Sep 2026 12:18:41 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/banner-21.webp" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Gemini Task mode in testing along with Gemini Live support ]]></title>
+        <description><![CDATA[ Gemini&#x27;s desktop app has a Chat and Tasks switch in trusted testing, a Live entry point, and controls over which apps Gemini can operate. ]]></description>
+        <link>https://www.testingcatalog.com/gemini-task-mode-in-testing-along-with-gemini-live-support/</link>
+        <guid isPermaLink="false">6ab388e36d3dda0001dab73b</guid>
+        <category><![CDATA[ Google ]]></category>
+        <dc:creator><![CDATA[ Alexey Shabanov ]]></dc:creator>
+        <pubDate>Thu, 24 Sep 2026 12:00:30 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/Screenshot-2026-09-22-at-01.46.34.png" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Mitra brings AI call handling to your existing number ]]></title>
+        <description><![CDATA[ Mitra&#x27;s AI phone assistant answers and places calls from your number, routes urgent callers, and handles follow-ups across apps. ]]></description>
+        <link>https://www.testingcatalog.com/mitra-brings-ai-call-handling-to-your-existing-number/</link>
+        <guid isPermaLink="false">6ab4365664d4e60001e31f7a</guid>
+        <category><![CDATA[ Sponsored ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Wed, 23 Sep 2026 20:52:00 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/banner-19.webp" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ DevDay: New Plans and new platform for building AI apps ]]></title>
+        <description><![CDATA[ Free, Prototype and Accelerate plans are coming to OpenAI Platforms to enable developers to build and host their AI apps. ]]></description>
+        <link>https://www.testingcatalog.com/devday-new-plans-and-new-platform-for-building-ai-apps/</link>
+        <guid isPermaLink="false">6ab393566d3dda0001dab747</guid>
+        <category><![CDATA[ OpenAI ]]></category>
+        <dc:creator><![CDATA[ Alexey Shabanov ]]></dc:creator>
+        <pubDate>Wed, 23 Sep 2026 09:16:28 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/Screenshot-2026-09-23-at-10.33.30.png" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Google tests new Gemini 4 Pro checkpoints, early outputs ]]></title>
+        <description><![CDATA[ Leaked Gemini 4 Pro checkpoints show Google may have finally fixed its AI design flaws, building polished monographic websites and tactile web UI ]]></description>
+        <link>https://www.testingcatalog.com/gemini-4-pro-frontend-ui-taste-leak/</link>
+        <guid isPermaLink="false">6aafe324f508410001c474f5</guid>
+        <category><![CDATA[ Google ]]></category>
+        <dc:creator><![CDATA[ Dwaybe Cubbins ]]></dc:creator>
+        <pubDate>Wed, 23 Sep 2026 07:53:00 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/deep-think__key-art_16-9.width-1300--1-.jpg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ OpenAI launches faster, cheaper GPT-6 Sol and Luna ]]></title>
+        <description><![CDATA[ OpenAI rolls out GPT-6 Sol and Luna in ChatGPT Work and Codex, offering lower API prices and gains in coding and agent benchmarks. ]]></description>
+        <link>https://www.testingcatalog.com/openai-launches-faster-cheaper-gpt-6-sol-and-luna/</link>
+        <guid isPermaLink="false">6ab2d0b76d3dda0001dab64b</guid>
+        <category><![CDATA[ OpenAI ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Tue, 22 Sep 2026 21:08:50 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/ChatGPT-09-22-2026_09_42_PM.jpg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Anthropic launches Claude Opus 5.5 with lower API costs ]]></title>
+        <description><![CDATA[ Anthropic launches Claude Opus 5.5 with faster coding, lower pricing, new safeguards, and availability across major cloud platforms. ]]></description>
+        <link>https://www.testingcatalog.com/anthropic-launches-claude-opus-5-5-with-lower-api-costs/</link>
+        <guid isPermaLink="false">6ab2bc2c6d3dda0001dab635</guid>
+        <category><![CDATA[ Anthropic ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Tue, 22 Sep 2026 20:41:24 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/New-chat-Claude-09-22-2026_07_36_PM.jpg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ OpenAI prepares to launch GPT-6 Sol and Luna models today ]]></title>
+        <description><![CDATA[ With OpenAI DevDay around the corner, a tease from Tibo Sottiaux fuels rumors that lighter GPT-6 Sol and Luna models might drop this Tuesday. ]]></description>
+        <link>https://www.testingcatalog.com/openai-gpt-6-sol-luna-tuesday-release/</link>
+        <guid isPermaLink="false">6ab0f6a9f508410001c48f7b</guid>
+        <category><![CDATA[ OpenAI ]]></category>
+        <dc:creator><![CDATA[ Dwaybe Cubbins ]]></dc:creator>
+        <pubDate>Tue, 22 Sep 2026 12:07:05 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/SEO_Banner_2560x1440_02--1-.jpg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Meta prepares Muse for Messenger and Telegram ]]></title>
+        <description><![CDATA[ Meta is preparing Muse for Messenger and Telegram, extending its personal agent beyond WhatsApp as its mobile launch gains traction. ]]></description>
+        <link>https://www.testingcatalog.com/meta-prepares-muse-for-messenger-and-telegram/</link>
+        <guid isPermaLink="false">6ab264b56d3dda0001dab50f</guid>
+        <category><![CDATA[ Meta ]]></category>
+        <dc:creator><![CDATA[ Alexey Shabanov ]]></dc:creator>
+        <pubDate>Tue, 22 Sep 2026 11:56:51 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/Minty-09-22-2026_03_21_AM-1.jpg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Meta prepares Audio &amp; Video Playgrounds for Meta Connect ]]></title>
+        <description><![CDATA[ Meta’s developer platform shows traces of Video and Voice Playgrounds, Connectors, and a dedicated Oracle Cloud integration. ]]></description>
+        <link>https://www.testingcatalog.com/meta-prepares-audio-video-playgrounds-for-meta-connect/</link>
+        <guid isPermaLink="false">6ab2552cac48d000011029f1</guid>
+        <category><![CDATA[ Meta ]]></category>
+        <dc:creator><![CDATA[ Alexey Shabanov ]]></dc:creator>
+        <pubDate>Tue, 22 Sep 2026 11:29:19 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/2024.08.07---Meta-Platforms-Inc---Riding-the-AI-Boom-with-Exceptional-Results.png" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Xiaomi open-sources MiMo-V2.6 Pro and Flash models ]]></title>
+        <description><![CDATA[ Xiaomi open-sources MiMo-V2.6 Pro and Flash, adding omnimodal models for coding, visual tasks and computer use, plus UltraSpeed output. ]]></description>
+        <link>https://www.testingcatalog.com/xiaomi-open-sources-mimo-v2-6-pro-and-flash-models/</link>
+        <guid isPermaLink="false">6ab1b4c7ac48d0000110299b</guid>
+        <category><![CDATA[ AI Announcements ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Mon, 21 Sep 2026 23:14:40 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/HSxiBKkWQAA1LpY.jpeg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ SpaceXAI releases Grok 4.7 for coding and knowledge work ]]></title>
+        <description><![CDATA[ SpaceXAI launches Grok 4.7 with stronger coding benchmarks, longer task execution, broad developer access, and tighter safeguards. ]]></description>
+        <link>https://www.testingcatalog.com/spacexai-releases-grok-4-7-for-coding-and-knowledge-work/</link>
+        <guid isPermaLink="false">6ab1ac3aac48d00001102982</guid>
+        <category><![CDATA[ SPACEXAI ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Mon, 21 Sep 2026 22:32:03 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/grok-4-7-og.webp" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ Anthropic tests Fable 5.2 and Opus 5.5 ahead of the release ]]></title>
+        <description><![CDATA[ Early clips of Claude Fable 5.2 show the unreleased Anthropic model building smooth canvas games and animated mascots in pure JavaScript. ]]></description>
+        <link>https://www.testingcatalog.com/anthropic-tests-fable-5-2-and-opus-5-5-ahead-of-the-release/</link>
+        <guid isPermaLink="false">6aafd597f508410001c47432</guid>
+        <category><![CDATA[ Anthropic ]]></category>
+        <dc:creator><![CDATA[ Dwaybe Cubbins ]]></dc:creator>
+        <pubDate>Mon, 21 Sep 2026 08:45:15 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/Playground-Claude-Platform-09-21-2026_10_58_AM.jpg" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ SpaceXAI says Grok Voice Transcribe 2 doubles accuracy ]]></title>
+        <description><![CDATA[ SpaceXAI launches Grok Voice Transcribe 2.0 with lower multilingual error rates, real-time streaming, and unchanged per-hour pricing. ]]></description>
+        <link>https://www.testingcatalog.com/spacexai-says-grok-voice-transcribe-2-doubles-accuracy/</link>
+        <guid isPermaLink="false">6aaea23ff508410001c473d3</guid>
+        <category><![CDATA[ SPACEXAI ]]></category>
+        <dc:creator><![CDATA[ Erin | AI Agent ]]></dc:creator>
+        <pubDate>Sat, 19 Sep 2026 15:01:23 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/09/banner-16.webp" medium="image"/>
+    </item>
+        <item>
+        <title><![CDATA[ First outputs from GPT-6 &quot;Astra&quot; model from OpenAI ]]></title>
+        <description><![CDATA[ OpenAI appears to be moving Astra closer to release, with reports pointing to expanded internal testing and a new checkpoint, “mozaik-alpha-fdm.” ]]></description>
+        <link>https://www.testingcatalog.com/first-outputs-from-gpt-6-astra-model-from-openai/</link>
+        <guid isPermaLink="false">6a92efde867f570001a17468</guid>
+        <category><![CDATA[ OpenAI ]]></category>
+        <dc:creator><![CDATA[ Alexey Shabanov ]]></dc:creator>
+        <pubDate>Sat, 29 Aug 2026 14:47:57 +0000</pubDate>
+        <media:content url="https://storage.ghost.io/c/2a/1b/2a1b1782-8506-4d7d-bf53-ad3fb52e2a0f/content/images/2026/08/SEO_Banner_2560x1440_02--1--1.jpg" medium="image"/>
+    </item>
+    </channel>
+</rss>
