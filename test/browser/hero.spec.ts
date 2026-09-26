@@ -12,12 +12,16 @@ async function openDashboard(page: Page) {
 }
 
 /** Serve the page with its scrubber data edited, for states today's data may not show. */
-async function withScopeData(page: Page, edit: (data: Record<string, unknown>) => void) {
+async function withScopeData(
+  page: Page,
+  edit: (data: Record<string, unknown>) => void,
+  html: (body: string) => string = (body) => body,
+) {
   await page.route(
     (url) => url.pathname === '/',
     async (route) => {
       const res = await route.fetch();
-      const body = (await res.text()).replace(/data-scope="([^"]*)"/, (_, raw: string) => {
+      const body = html(await res.text()).replace(/data-scope="([^"]*)"/, (_, raw: string) => {
         const data = JSON.parse(
           raw
             .replace(/&quot;/g, '"')
@@ -33,6 +37,21 @@ async function withScopeData(page: Page, edit: (data: Record<string, unknown>) =
     },
   );
 }
+
+/**
+ * Serve the page as if the history read succeeded, whatever the Worker's D1 holds. CI's starts
+ * empty, so its page arrives with the history offline and a card over the plot.
+ */
+const withRecordedHistory = (page: Page, edit: (data: Record<string, unknown>) => void = () => {}) =>
+  withScopeData(
+    page,
+    (data) => {
+      data.history = 'ok';
+      delete data.recordFrom;
+      edit(data);
+    },
+    (body) => body.replace(/<div class="sc-empty"[^>]*>[\s\S]*?<\/div>\s*<\/div>/, ''),
+  );
 
 const bottomOf = async (page: Page, selector: string) => {
   const box = await page.locator(selector).first().boundingBox();
@@ -218,7 +237,7 @@ test('hovering a launch names it in the readout and lights its mark; leaving res
 
 test("an older version's hour reads as old scale, never as a number in the hero", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await withScopeData(page, (data) => {
+  await withRecordedHistory(page, (data) => {
     const d = data as { to: number; pts: unknown[][] };
     const h = Math.floor((d.to - 30 * 3_600_000) / 3_600_000) * 3_600_000;
     d.pts = [['o', h, h + 3_600_000, 88, 0, 0, 2], ...d.pts.filter((p) => (p[1] as number) !== h)];
@@ -355,6 +374,8 @@ for (const width of [360, 390]) {
   test(`a reload with the fonts cached still places every launch name at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
+    // With the history offline, a phone's card fills the plot and the names give way to it.
+    await withRecordedHistory(page);
     await openDashboard(page);
     await page.addInitScript(() => {
       Object.defineProperty(FontFaceSet.prototype, 'ready', { get: () => new Promise(() => {}) });
