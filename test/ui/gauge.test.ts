@@ -249,9 +249,10 @@ describe('Signals rows and pills', () => {
   it('derives each panel pill from its sources and shows one-line track records', async () => {
     const d = dashboard();
     const html = await render(Signals, { d, now: NOW });
-    // YouTube, the leak sources and the registry did not report in this dashboard: not LIVE.
+    // YouTube, the leak sources and the registry did not report in this dashboard: not LIVE. The
+    // pill is the shared `sourcePill`, so it names what answered and turns STALE on an open page.
     expect(html).toMatch(
-      /<span class="pill warn" title="Unreachable: HN leaks, TestingCatalog, YouTube broadcasts, transformers registry"[^>]*>1\/5 SOURCES</,
+      /<span class="pill warn" title="OpenRouter: ok · HN leaks: no result · TestingCatalog: no result · YouTube broadcasts: no result · transformers registry: no result" data-source-pill data-stale-at="2026-09-26T12:15:00.000Z" data-stale-text="STALE · 1\/5 SOURCES"[^>]*>PARTIAL · 1\/5 SOURCES</,
     );
     for (const line of [
       TRACK_LINES.stealth,
@@ -282,7 +283,10 @@ describe('Signals rows and pills', () => {
       earlyWarnings: { ...base.earlyWarnings, stealth: { ...base.earlyWarnings.stealth, items: [] } },
     };
     const html = await render(Signals, { d, now: NOW });
-    expect(html.match(/class="pill live"[^>]*>LIVE</g)).toHaveLength(2);
+    expect(html.match(/class="pill live"[^>]*>LIVE · \d SOURCES</g)).toEqual([
+      expect.stringContaining('>LIVE · 5 SOURCES<'),
+      expect.stringContaining('>LIVE · 6 SOURCES<'),
+    ]);
     expect(html).toContain('No anonymous slots on OpenRouter right now.');
     expect(html).toContain('No unlisted leaks in the last two weeks.');
     expect(html).toContain('No launch posts on the labs’ own feeds in the last 7 days.');

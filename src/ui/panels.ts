@@ -25,19 +25,30 @@ export const MOBILE_DROPS = 8;
 /** Below 900px the feed has no inner scroller: this many items, then an expander. */
 export const MOBILE_FEED = 12;
 
-type MarketsView = Partial<Pick<Dashboard, 'markets' | 'bestModelMarket'>>;
+type MarketsView = Partial<Pick<Dashboard, 'markets' | 'bestModelMarket' | 'generatedAt'>>;
 
-/** Release markets with at least one open outcome to show, busiest first. */
+/**
+ * The instant a panel reads "past" against: the build, never the wall clock, so the server render
+ * and the browser's fingerprint of the same body agree on which rungs are shown.
+ */
+export function asOfMs(d: { generatedAt?: string }): number | undefined {
+  const t = Date.parse(d.generatedAt ?? '');
+  return Number.isFinite(t) ? t : undefined;
+}
+
+/** Release markets with at least one open, not yet past outcome to show, busiest first. */
 export function releaseRows(d: MarketsView): Market[] {
+  const asOf = asOfMs(d);
   return (d.markets ?? [])
-    .filter((m) => m.kind === 'release' && displayOutcomes(m, PANEL_ROWS.releaseOutcomes).length > 0)
+    .filter((m) => m.kind === 'release' && displayOutcomes(m, PANEL_ROWS.releaseOutcomes, asOf).length > 0)
     .slice(0, PANEL_ROWS.releases);
 }
 
 /** Leaderboard markets other than the best-model race, then everything else model-relevant. */
 export function otherRows(d: MarketsView): Market[] {
   const markets = d.markets ?? [];
-  const shown = (m: Market) => displayOutcomes(m, PANEL_ROWS.otherOutcomes).length > 0;
+  const asOf = asOfMs(d);
+  const shown = (m: Market) => displayOutcomes(m, PANEL_ROWS.otherOutcomes, asOf).length > 0;
   const boards = markets.filter(
     (m) => m.kind === 'leaderboard' && m.slug !== d.bestModelMarket?.slug && shown(m),
   );

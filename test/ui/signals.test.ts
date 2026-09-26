@@ -10,8 +10,8 @@ import {
   daysShort,
   hoursAgo,
   leadFlags,
-  sourcesPill,
 } from '../../src/ui/signals';
+import { sourcePill } from '../../src/ui/panels';
 import { warnings } from '../fixtures/warnings';
 
 describe('lead flags', () => {
@@ -72,24 +72,26 @@ describe('track lines', () => {
   });
 });
 
-describe('panel pills from source health', () => {
+describe('signals panel pills', () => {
+  // Both panels wear the shared `sourcePill` over these lists, like every other panel.
+  const at = '2026-09-26T12:00:00Z';
+  const now = Date.parse(at);
   const all = (ok: boolean) => EARLY_WARNING_SOURCES.map((name) => ({ name, ok }));
 
   it('is LIVE only when every source behind the panel answered', () => {
-    expect(sourcesPill(all(true), EARLY_WARNING_SOURCES)).toEqual({ text: 'LIVE', tone: 'live', down: [] });
+    expect(sourcePill(all(true), EARLY_WARNING_SOURCES, at, now, 'SOURCES').text).toBe('LIVE · 5 SOURCES');
     const partial = all(true).map((s) => (s.name === SOURCE.youtube ? { ...s, ok: false } : s));
-    expect(sourcesPill(partial, EARLY_WARNING_SOURCES)).toEqual({
-      text: '4/5 SOURCES',
-      tone: 'warn',
-      down: [SOURCE.youtube],
-    });
-    expect(sourcesPill(all(false), EARLY_WARNING_SOURCES).text).toBe('OFFLINE');
+    const pill = sourcePill(partial, EARLY_WARNING_SOURCES, at, now, 'SOURCES');
+    expect([pill.text, pill.tone]).toEqual(['PARTIAL · 4/5 SOURCES', 'warn']);
+    expect(pill.title).toContain(`${SOURCE.youtube}: down`);
+    expect(sourcePill(all(false), EARLY_WARNING_SOURCES, at, now, 'SOURCES').text).toBe('DOWN · 5 SOURCES');
     // A source the health list never mentions is down, not quietly live.
-    expect(sourcesPill(all(true).slice(1), EARLY_WARNING_SOURCES).text).toBe('4/5 SOURCES');
-    expect(sourcesPill([], LANDED_SOURCES)).toEqual({
-      text: 'OFFLINE',
+    expect(sourcePill(all(true).slice(1), EARLY_WARNING_SOURCES, at, now, 'SOURCES').text).toBe(
+      'PARTIAL · 4/5 SOURCES',
+    );
+    expect(sourcePill([], LANDED_SOURCES, at, now, 'SOURCES')).toMatchObject({
+      text: 'DOWN · 6 SOURCES',
       tone: 'err',
-      down: [...LANDED_SOURCES],
     });
   });
 });

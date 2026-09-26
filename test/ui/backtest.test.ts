@@ -11,7 +11,9 @@ import BacktestFormulas from '../../src/components/BacktestFormulas.astro';
 import BacktestLimits from '../../src/components/BacktestLimits.astro';
 import BacktestReplay from '../../src/components/BacktestReplay.astro';
 import BacktestStealth from '../../src/components/BacktestStealth.astro';
+import { WEIGHTS } from '../../src/domain/dropcon';
 import { FORECAST_CONSTANTS, LEAD_INPUT_SKILL_7D } from '../../src/domain/forecast';
+import { TRUSTED_BRACKET_DAYS } from '../../src/domain/market';
 import { LAUNCH_SETTLE_MS } from '../../src/domain/lab-status';
 import { REVEAL_STATS, REVEALS } from '../../src/domain/stealth';
 import BacktestNegatives from '../../src/components/BacktestNegatives.astro';
@@ -279,6 +281,12 @@ describe('backtest page', async () => {
     expect(html).not.toContain('will be published here');
     for (const anchor of ['id="trap-her"', 'id="seven-day"', 'id="negative-results"'])
       expect(html).toContain(anchor);
+    // The page wears the backtest footer: back to the dashboard, the pull time and the rebuild.
+    const footer = html.slice(html.indexOf('<footer'));
+    expect(footer).toContain('◂ DASHBOARD');
+    expect(footer).toContain(`DATA PULLED ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
+    expect(footer).toContain('href="#reproduce"');
+    expect(footer).not.toContain('EDGE-CACHED');
   });
 
   it('opens on the question, the method and the headline results, all from the replay and the shipped constants', async () => {
@@ -508,6 +516,12 @@ describe('site copy and links', async () => {
     expect(html).not.toContain('measures all of it');
     expect(html).not.toContain('How it was tested');
     expect(html).toContain('The weights are hand-set and the level itself has never been tested');
+    // The FAQ's weights and trust window are the scorer's own constants.
+    expect(html).toContain(
+      `${WEIGHTS.market7d} × the best 7-day probability, plus ${WEIGHTS.market30dIncrement} × whatever the 30-day probability adds, plus up to ${WEIGHTS.repricing} when`,
+    );
+    expect(html).toContain(`more than ${TRUSTED_BRACKET_DAYS} days out`);
+    expect(html).toContain(`the input behind ${WEIGHTS.market7d} of the 100 points`);
     expect(html).toContain('(Brier skill −1.48 (95% interval −3.36 to −0.28))');
     // The auto-refresh answer belongs to WP-8 (polled refresh) and stays as that package wrote it.
     expect(html).toContain('The open page checks for new data every 5 minutes and offers a one-click reload');

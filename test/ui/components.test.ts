@@ -10,6 +10,7 @@ import Signals from '../../src/components/Signals.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
+import { STALE_AFTER_MS } from '../../src/ui/panels';
 
 const NOW = Date.parse('2026-09-19T12:00:00Z');
 
@@ -124,10 +125,17 @@ describe('components', async () => {
   const d = dashboard();
 
   it('Dropcon shows the level, the headline, a provenance that adds up and the hottest lab', async () => {
-    const html = await container.renderToString(Dropcon, { props: { d } });
+    const html = await container.renderToString(Dropcon, { props: { d, now: Date.parse(d.generatedAt) } });
     expect(html).toContain(`DROPCON LEVEL`);
     expect(html).toContain(`>${d.dropcon.level}<`);
-    expect(html).toContain('LIVE');
+    // A reading wears the markets panel's Polymarket pill, which ages to STALE on an open page.
+    expect(html).toMatch(
+      /data-source-pill data-stale-at="[^"]+" data-stale-text="STALE · POLYMARKET"[^>]*>LIVE · POLYMARKET</,
+    );
+    const later = await container.renderToString(Dropcon, {
+      props: { d, now: Date.parse(d.generatedAt) + STALE_AFTER_MS },
+    });
+    expect(later).toContain('>STALE · POLYMARKET<');
     expect(html).not.toContain('ODDS OFFLINE');
     expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by Sep 24');
     expect(html).toContain(d.dropcon.headline);

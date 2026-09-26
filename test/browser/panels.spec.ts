@@ -187,7 +187,8 @@ test.describe('panels on a desktop', () => {
     await openDashboard(page);
     const live = page.locator('[data-source-pill].live');
     test.skip((await live.count()) === 0, 'no source is live');
-    const count = await live.count();
+    // Every pill that can age does: LIVE ones and PARTIAL ones (a signals panel with one feed down).
+    const count = await page.locator('[data-source-pill][data-stale-at]').count();
     await page.clock.fastForward(16 * 60_000);
     await expect(page.locator('[data-source-pill].live')).toHaveCount(0);
     await expect(page.locator('[data-source-pill].warn', { hasText: /^STALE · / })).toHaveCount(count);

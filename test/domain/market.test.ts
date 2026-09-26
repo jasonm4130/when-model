@@ -951,6 +951,25 @@ describe('displayOutcomes with parsed deadlines', () => {
     });
     expect(displayOutcomes(m, 2).map((o) => o.label)).toEqual(['October 9', 'October 15']);
   });
+
+  it('drops a rung whose deadline is behind the build, before Polymarket closes it', () => {
+    // Live 2026-09-26 05:15Z: Sonnet's "September 25" rung, due 03:59:59Z, was still open at "0–0¢".
+    const m = market({
+      outcomes: [
+        outcome({ label: 'September 25', yes: 0.001, deadline: '2026-09-26T03:59:59.000Z' }),
+        outcome({ label: 'September 27', yes: 0.01, deadline: '2026-09-28T03:59:59.000Z' }),
+        // No parsed deadline: the Gamma endDate runs late, so it never hides a rung by itself.
+        outcome({ label: 'Some day', yes: 0.2, endDate: '2026-09-20T00:00:00Z' }),
+      ],
+    });
+    const at = Date.parse('2026-09-26T05:15:00Z');
+    expect(displayOutcomes(m, 4, at).map((o) => o.label)).toEqual(['Some day', 'September 27']);
+    expect(displayOutcomes(m, 4).map((o) => o.label)).toEqual(['Some day', 'September 25', 'September 27']);
+    // At the deadline itself the rung still stands.
+    expect(displayOutcomes(m, 4, Date.parse('2026-09-26T03:59:59.000Z')).map((o) => o.label)).toContain(
+      'September 25',
+    );
+  });
 });
 
 describe('isTrustedRead', () => {

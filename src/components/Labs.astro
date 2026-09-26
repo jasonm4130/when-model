@@ -18,7 +18,7 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
 ---
 <section class="section wrap reveal">
   <div class="section-head">
-    <h2><span aria-hidden="true">▦</span>LAB WATCH <span class="sub">RELEASE TEMPO · ODDS · LAST DROP</span></h2>
+    <h2><span aria-hidden="true">▦</span>LAB WATCH <span class="sub"><span class="sub-tempo">RELEASE TEMPO · </span>ODDS · LAST DROP</span></h2>
     <div class="pills">
       {stealth > 0 && <a class="pill warn" href="#ew-stealth" title="Stealth slots are anonymous, so no lab card carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
       <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
@@ -74,7 +74,7 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
           </div>
           <div class="bar heat"><i style={`width:${l.heat}%`}></i></div>
           <div class="lab-foot">
-            <span class="tiny muted" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}>HEAT {l.heat} · {l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'} / 30D</span>
+            <span class="tiny muted heat-line" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}><span>HEAT {l.heat} ·</span> <span>{l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'}/30D</span></span>
             <span class="x">{l.xHandles.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</span>
           </div>
           {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener"><span aria-hidden="true">▸</span> {l.odds.family} on Polymarket</a>}
@@ -85,6 +85,8 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
 </section>
 <style>
   .section-head .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* The subtitle wraps as one piece, so a line never starts with its separator. */
+  .section-head .sub { display: inline-block; white-space: nowrap; }
   .lab { scroll-margin-top: 16px; }
   .lab::before, .lab::after { border-color: var(--lab); }
   .lab:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 0 0 1px rgba(0,0,0,0.6), 0 0 28px color-mix(in srgb, var(--lab) 18%, transparent), 0 14px 44px rgba(0,0,0,0.55); }
@@ -110,12 +112,21 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
   .latest a { outline-offset: -2px; }
   .heat { margin-top: 10px; }
   .heat > i { background: linear-gradient(90deg, var(--lab), var(--magenta)); }
-  .lab-foot { display: flex; justify-content: space-between; gap: 6px; margin-top: 6px; font-size: var(--fs-xs); }
+  /* The heat line breaks only between its two phrases, and the handle drops under it when the
+     card is narrow, so no card splits "2 LAUNCHES/30D" across lines. */
+  .lab-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 6px; margin-top: 6px; font-size: var(--fs-xs); }
+  .heat-line > span { white-space: nowrap; }
+  .x { margin-left: auto; }
   .x a { margin-left: 8px; color: var(--muted); }
   .x a:hover { color: #fff; }
   .extrap { opacity: 0.55; }
   .odds-note { margin-top: 6px; font-size: var(--fs-xs); }
   .mkt { display: block; margin-top: 8px; font-size: var(--fs-xs); color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
+  /* Ten labs divide into rows of five or two, never three or four: below five columns a
+     three-up grid left one card alone on its last row. */
+  @media (min-width: 641px) and (max-width: 1359px) {
+    .labs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   /* UI-17: five columns where they fit, so ten labs fill two rows with no orphans. */
   @media (min-width: 1360px) {
     .labs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -125,7 +136,7 @@ const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'ex
   /* UI-10: a compact card on phones. The histogram, tempo, X handles and market link are the
      desktop's detail; the reads, flags, last drop and heat stay. */
   @media (max-width: 480px) {
-    .lab .tempo, .lab .hist, .lab .mkt, .lab .x { display: none; }
+    .lab .tempo, .lab .hist, .lab .mkt, .lab .x, .sub-tempo { display: none; }
     .lab { padding-block: 12px; }
     .lab-head { margin-bottom: 6px; }
     .reads, .reads-fam { margin-top: 4px; }

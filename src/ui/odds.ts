@@ -56,13 +56,15 @@ export function readNote(read: LabOddsRead | undefined): string {
 
 /**
  * An outcome's price as the markets panel shows it. A thin book (spread over 10¢ or one-sided) is
- * never a single number: it shows its bid–ask range in cents, e.g. "27–84¢", and is muted.
+ * never a single number: it shows its bid–ask range in cents, e.g. "27–84¢", and is muted. A range
+ * whose ends round to the same cent (no bid, an ask under half a cent) reads "<1¢", never "0–0¢".
  */
 export function outcomeOdds(outcome: Outcome): { text: string; thin: boolean } {
   const range = oddsRange(outcome);
   if (!range) return { text: pct(outcome.yes), thin: false };
-  const cents = (p: number) => Math.round(p * 100);
-  return { text: `${cents(range[0])}–${cents(range[1])}¢`, thin: true };
+  const [lo, hi] = range.map((p) => Math.round(p * 100));
+  if (hi <= lo) return { text: hi <= 0 ? '<1¢' : `${hi}¢`, thin: true };
+  return { text: `${lo}–${hi}¢`, thin: true };
 }
 
 /** A read's horizon label and whether it is scored, e.g. "trusted" or "extrapolated". */

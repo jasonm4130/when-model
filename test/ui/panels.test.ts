@@ -17,6 +17,7 @@ import {
   MOBILE_MARKETS,
   PANEL_ROWS,
   STALE_AFTER_MS,
+  asOfMs,
   dropPrice,
   feedColour,
   otherRows,
@@ -170,6 +171,31 @@ describe('panel selections', () => {
     expect(releaseRows(d).map((m) => m.slug)).not.toContain('release-99');
     expect(releaseRows(d)).toHaveLength(PANEL_ROWS.releases);
     expect(otherRows({ markets: Array.from({ length: 20 }, (_, n) => other(n)) })).toHaveLength(10);
+  });
+
+  it('reads past deadlines against the build, so a ladder whose rungs have all passed drops out', () => {
+    const due = release(1).outcomes[0].deadline!;
+    const before = new Date(Date.parse(due) - 60_000).toISOString();
+    const after = new Date(Date.parse(due) + 60_000).toISOString();
+    const d = { markets: [release(1), release(2)] };
+    expect(asOfMs({ generatedAt: 'not a date' })).toBeUndefined();
+    expect(releaseRows({ ...d, generatedAt: before })).toHaveLength(2);
+    expect(releaseRows({ ...d, generatedAt: after })).toEqual([]);
+    expect(releaseRows(d)).toHaveLength(2);
+  });
+
+  it('never renders a rung whose deadline passed before the build', async () => {
+    const base = dashboard();
+    const rungs: Market = release(7, {
+      outcomes: [
+        { ...release(0).outcomes[0], label: 'September 18', deadline: '2026-09-19T03:59:59.000Z' },
+        release(0).outcomes[0],
+      ],
+    });
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(Markets, { props: { d: { ...base, markets: [rungs] } } });
+    expect(html).toContain('September 30');
+    expect(html).not.toContain('September 18');
   });
 
   it('flags stealth slots from the listing itself and from early warnings', () => {

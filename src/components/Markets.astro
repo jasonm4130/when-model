@@ -2,10 +2,11 @@
 import type { Dashboard } from '../domain/dashboard';
 import { SOURCE } from '../domain/sources';
 import { pct, usd } from '../ui/format';
-import { MOBILE_MARKETS, PANEL_ROWS, otherRows, raceRows, releaseRows, sourceOk, sourcePill } from '../ui/panels';
+import { MOBILE_MARKETS, PANEL_ROWS, asOfMs, otherRows, raceRows, releaseRows, sourceOk, sourcePill } from '../ui/panels';
 import MarketRow from './MarketRow.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
+const asOf = asOfMs(d);
 const releases = releaseRows(d);
 const others = otherRows(d);
 const best = d.bestModelMarket;
@@ -24,11 +25,11 @@ const labColor = (id?: string) => d.labs.find((l) => l.id === id)?.color;
       </div>
       {releases.length ? (
         <div class="mlist">
-          {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} limit={PANEL_ROWS.releaseOutcomes} color={labColor(m.labId)} i={i} />)}
+          {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} color={labColor(m.labId)} i={i} />)}
           {releases.length > MOBILE_MARKETS && (
             <details class="fold fold-480">
               <summary class="fold-summary tiny">{releases.length - MOBILE_MARKETS} MORE RELEASE MARKETS</summary>
-              {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} limit={PANEL_ROWS.releaseOutcomes} color={labColor(m.labId)} i={i + MOBILE_MARKETS} />)}
+              {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} color={labColor(m.labId)} i={i + MOBILE_MARKETS} />)}
             </details>
           )}
         </div>
@@ -61,11 +62,11 @@ const labColor = (id?: string) => d.labs.find((l) => l.id === id)?.color;
         <div class="panel-head"><h2><span aria-hidden="true">◈</span>BENCHMARK & OTHER MARKETS</h2></div>
         {others.length ? (
           <div class="mlist">
-            {others.slice(0, MOBILE_MARKETS).map((m) => <MarketRow m={m} limit={PANEL_ROWS.otherOutcomes} compact />)}
+            {others.slice(0, MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
             {others.length > MOBILE_MARKETS && (
               <details class="fold fold-480">
                 <summary class="fold-summary tiny">{others.length - MOBILE_MARKETS} MORE MARKETS</summary>
-                {others.slice(MOBILE_MARKETS).map((m) => <MarketRow m={m} limit={PANEL_ROWS.otherOutcomes} compact />)}
+                {others.slice(MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
               </details>
             )}
           </div>

@@ -1,6 +1,7 @@
 /**
  * Presentation of the lead signals: per-lab flags, one-sentence track records built from the
- * measured constants, and panel pills from source health. Pure; safe to unit test.
+ * measured constants, and the sources each panel's pill reads (`sourcePill` in `panels.ts` builds
+ * the pill). Pure; safe to unit test.
  */
 import {
   ARCHITECTURE_TRACK,
@@ -86,28 +87,6 @@ export function leadFlags(w: EarlyWarnings, labId: LabId): LeadFlag[] {
     });
   }
   return flags;
-}
-
-export interface SourcePill {
-  text: string;
-  tone: 'live' | 'warn' | 'err';
-  /** The sources behind it that failed, for the hover title. */
-  down: string[];
-}
-
-/**
- * A panel's health pill from its sources' `ok`: LIVE, "3/5 SOURCES", or OFFLINE. Never assumed live:
- * a source missing from the health list counts as down.
- */
-export function sourcesPill(
-  sources: readonly { name: string; ok: boolean }[],
-  names: readonly string[],
-): SourcePill {
-  const down = names.filter((name) => !sources.some((s) => s.name === name && s.ok));
-  const up = names.length - down.length;
-  if (up === 0) return { text: 'OFFLINE', tone: 'err', down };
-  if (down.length === 0) return { text: 'LIVE', tone: 'live', down };
-  return { text: `${up}/${names.length} SOURCES`, tone: 'warn', down };
 }
 
 /** The sources each signals panel reads. */

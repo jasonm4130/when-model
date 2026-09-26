@@ -9,6 +9,8 @@ import {
   forecastAnswer,
   topReadText,
 } from '../ui/odds';
+import { SOURCE } from '../domain/sources';
+import { sourcePill } from '../ui/panels';
 import HistoryStrip from './HistoryStrip.astro';
 interface Props {
   d: Dashboard;
@@ -21,7 +23,9 @@ const c = d.dropcon;
 const colors: Record<number, string> = { 1: 'var(--red)', 2: 'var(--orange)', 3: 'var(--yellow)', 4: 'var(--cyan)', 5: 'var(--green)' };
 // A floor or no signal is not a level reading: the number is muted, never a level's colour.
 const color = c.state === 'ok' ? colors[c.level] : 'var(--muted)';
-const pill = dropconPill(c);
+// A reading wears the markets panel's own Polymarket pill, so it turns STALE with the rest of the
+// page; a floor or no signal says why there is no reading instead.
+const pill = c.state === 'ok' ? sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now ?? Date.now()) : dropconPill(c);
 const hottest = d.labs[0];
 const noLabData = c.state === 'no-signal';
 const scaleLabel =
@@ -43,7 +47,9 @@ const segClass = (n: number) => {
         <h2><span aria-hidden="true">▣</span>DROPCON LEVEL</h2>
         <div class="pills">
           {d.landed.banner && <span class="pill warn" title={d.landed.bannerText}>MODELS JUST LANDED</span>}
-          <span class={`pill ${pill.tone}`}>{pill.text}</span>
+          {'state' in pill ? (
+            <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
+          ) : <span class={`pill ${pill.tone}`}>{pill.text}</span>}
         </div>
       </div>
       <div class="dc-body">

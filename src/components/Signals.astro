@@ -2,23 +2,17 @@
 import type { Dashboard } from '../domain/dashboard';
 import { LABS } from '../domain/lab';
 import { ago } from '../ui/format';
-import {
-  EARLY_WARNING_SOURCES,
-  LANDED_SOURCES,
-  TRACK_LINES,
-  daysShort,
-  hoursAgo,
-  sourcesPill,
-} from '../ui/signals';
+import { sourcePill } from '../ui/panels';
+import { EARLY_WARNING_SOURCES, LANDED_SOURCES, TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
 interface Props { d: Dashboard; now?: number }
 const { d, now = Date.now() } = Astro.props;
 const w = d.earlyWarnings;
 const l = d.landed;
 const labName = (id?: string) => LABS.find((x) => x.id === id)?.short ?? id ?? '';
 const LIMIT = 5;
-const ewPill = sourcesPill(d.sources, EARLY_WARNING_SOURCES);
-const landedPill = sourcesPill(d.sources, LANDED_SOURCES);
-const downTitle = (down: string[]) => (down.length ? `Unreachable: ${down.join(', ')}` : 'Every source answered');
+// The same pill every panel wears: LIVE, PARTIAL or DOWN from these sources, STALE once the data ages.
+const ewPill = sourcePill(d.sources, EARLY_WARNING_SOURCES, d.generatedAt, now, 'SOURCES');
+const landedPill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');
 const leaksDown = w.leaks.sources.filter((s) => !s.ok).length > 0;
 const openrouterDown = !w.stealth.ok;
 const labFeeds: readonly string[] = LANDED_SOURCES.slice(2);
@@ -33,7 +27,7 @@ const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time'
       <div class="panel-head">
         <h2><span aria-hidden="true">◬</span>EARLY WARNINGS</h2>
         <div class="pills">
-          <span class={`pill ${ewPill.tone}`} title={downTitle(ewPill.down)}>{ewPill.text}</span>
+          <span class={`pill ${ewPill.tone}`} title={ewPill.title} data-source-pill data-stale-at={ewPill.staleAt} data-stale-text={ewPill.staleText}>{ewPill.text}</span>
           <span class="pill">NOT SCORED</span>
         </div>
       </div>
@@ -113,7 +107,7 @@ const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time'
         <h2><span aria-hidden="true">◆</span>LANDED</h2>
         <div class="pills">
           {l.banner && <span class="pill warn">MODELS JUST LANDED</span>}
-          <span class={`pill ${landedPill.tone}`} title={downTitle(landedPill.down)}>{landedPill.text}</span>
+          <span class={`pill ${landedPill.tone}`} title={landedPill.title} data-source-pill data-stale-at={landedPill.staleAt} data-stale-text={landedPill.staleText}>{landedPill.text}</span>
           <span class="pill">NOT SCORED</span>
         </div>
       </div>

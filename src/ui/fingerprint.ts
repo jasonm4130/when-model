@@ -6,7 +6,8 @@
  * headline, market prices as the panels render them ("66%", "27–84¢"), lab reads, listing ids and
  * prices, feed, trending and early-warning ids. It leaves out everything that moves with the clock
  * alone: `generatedAt`, raw probabilities (a curve read drifts as its horizon slides), days in
- * stealth, hours ago, timings. Hashing the whole payload offered NEW DATA on every rebuild. The
+ * stealth, hours ago, timings. `generatedAt` only decides which release rungs are past, as it does
+ * on the page. Hashing the whole payload offered NEW DATA on every rebuild. The
  * rendered page carries its own fingerprint, so a tab opened in the background and read later still
  * notices the data it has never shown.
  */
@@ -14,7 +15,7 @@ import type { Dashboard } from '../domain/dashboard';
 import { displayOutcomes, type Market } from '../domain/market';
 import { pct } from './format';
 import { outcomeOdds, readValue } from './odds';
-import { PANEL_ROWS, dropPrice, otherRows, raceRows, releaseRows } from './panels';
+import { PANEL_ROWS, asOfMs, dropPrice, otherRows, raceRows, releaseRows } from './panels';
 
 type Visible = Partial<Dashboard>;
 
@@ -24,9 +25,11 @@ const list = <T>(value: readonly T[] | undefined): readonly T[] => (Array.isArra
 export function visibleContent(d: Visible): unknown {
   const c = d.dropcon;
   const w = d.earlyWarnings;
+  // Which rungs show depends on the build time (a past deadline drops out), as it does on the page.
+  const asOf = asOfMs(d);
   const prices = (limit: number) => (m: Market) => [
     m.slug,
-    displayOutcomes(m, limit).map((o) => [o.label, outcomeOdds(o).text]),
+    displayOutcomes(m, limit, asOf).map((o) => [o.label, outcomeOdds(o).text]),
   ];
   return {
     dropcon: c && [c.level, c.name, c.state, c.score, c.headline, list(c.provenance).map((r) => r.points)],

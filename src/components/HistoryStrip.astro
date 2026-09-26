@@ -38,13 +38,14 @@ const pill =
     ? { text: 'OFFLINE', tone: 'err' }
     : strip.state === 'empty'
       ? { text: 'NO READINGS YET', tone: 'warn' }
-      : { text: 'HOURLY · LAST 30 DAYS', tone: 'live' };
+      : // A description, not a source status: the page's LIVE pills are the sources'.
+        { text: 'HOURLY · LAST 30 DAYS', tone: undefined };
 const nowValue = d.dropcon.state === 'ok' ? `${d.dropcon.score}` : d.dropcon.state === 'floor' ? 'FLOOR' : '?';
 ---
 <div class="panel hpanel">
   <div class="panel-head">
     <h2><span aria-hidden="true">▤</span>DROPCON HISTORY</h2>
-    <span class={`pill ${pill.tone}`}>{pill.text}</span>
+    <span class:list={['pill', pill.tone]}>{pill.text}</span>
   </div>
   <div class="hstrip" role="img" aria-label={strip.summary} data-state={strip.state}>
     <div class="hplot">

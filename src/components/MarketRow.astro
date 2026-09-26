@@ -10,15 +10,17 @@ interface Props {
   compact?: boolean;
   color?: string;
   i?: number;
+  /** The build time: a release rung whose deadline is behind it is not shown (`asOfMs`). */
+  asOf?: number;
 }
-const { m, limit, compact = false, color = 'var(--cyan)', i = 0 } = Astro.props;
+const { m, limit, compact = false, color = 'var(--cyan)', i = 0, asOf } = Astro.props;
 const THIN = 'Thin book: bid–ask range, not odds';
 const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--yellow)' : 'var(--muted)');
 ---
 <a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener" style={`--lab:${color}; --i:${i}`}>
   <div class="mtitle">{!compact && <span class="mdot" aria-hidden="true"></span>}<span class="mname">{m.title}</span><span class="muted vol">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
   <div class="outs">
-    {displayOutcomes(m, limit).map((o) => {
+    {displayOutcomes(m, limit, asOf).map((o) => {
       const odds = outcomeOdds(o);
       if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {o.label}</span>;
       return compact

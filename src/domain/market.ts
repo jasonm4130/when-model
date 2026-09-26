@@ -97,13 +97,19 @@ export function isPlaceholderOutcome(outcome: Outcome): boolean {
   return outcome.label === 'Other' || (outcome.yes === 0.5 && outcome.vol24 === 0);
 }
 
-/** Open outcomes worth showing: releases in deadline order, everything else by probability. */
-export function displayOutcomes(market: Market, limit: number): Outcome[] {
+/**
+ * Open outcomes worth showing: releases in deadline order, everything else by probability. Given
+ * `asOf` (the build time), a release rung whose parsed deadline is already behind it is left out:
+ * Polymarket can take hours to close it, and until then it sits at the head of the ladder as "0¢".
+ */
+export function displayOutcomes(market: Market, limit: number, asOf?: number): Outcome[] {
   const live = market.outcomes.filter((o) => !o.closed && !isPlaceholderOutcome(o));
   if (market.kind === 'release') {
     const due = (o: Outcome) => Date.parse(o.deadline ?? o.endDate ?? '');
+    const past = (o: Outcome) =>
+      asOf !== undefined && o.deadline !== undefined && Date.parse(o.deadline) < asOf;
     return live
-      .filter((o) => o.deadline ?? o.endDate)
+      .filter((o) => (o.deadline ?? o.endDate) && !past(o))
       .sort((a, b) => due(a) - due(b))
       .slice(0, limit);
   }

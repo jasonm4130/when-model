@@ -126,6 +126,16 @@ describe('dashboardFingerprint covers only what the reader sees (UI-11)', () => 
     expect(dashboardFingerprint(nudged)).toBe(dashboardFingerprint(base));
   });
 
+  it('offers new data when a rung passes its deadline, because the page stops showing it', () => {
+    const first = assembleDashboard(live, LIVE_AT);
+    // Same body, built after the Sep 25 rungs' 03:59:59Z deadline: those rungs leave the panel.
+    const later = { ...first, generatedAt: '2026-09-26T04:10:00.000Z' };
+    const labels = (d: object) => JSON.stringify((visibleContent(d) as { releases: unknown }).releases);
+    expect(labels(first)).toContain('September 25');
+    expect(labels(later)).not.toContain('September 25');
+    expect(dashboardFingerprint(later)).not.toBe(dashboardFingerprint(first));
+  });
+
   it('changes when the level, the headline, a listing or a feed item changes', () => {
     const base = assembleDashboard(live, LIVE_AT);
     const fp = dashboardFingerprint(base);
