@@ -67,86 +67,57 @@ test('an extrapolated lab read is muted at full opacity, with AA contrast', asyn
   expect(read.ratio).toBeGreaterThanOrEqual(4.5);
 });
 
-test('the history strip strokes its edge lines and never fills them', async ({ page }) => {
+test('the instrument strokes its trace and never fills it', async ({ page }) => {
   await openDashboard(page);
-  const edges = await page.locator('.hstrip svg').evaluate((svg) => {
-    const cid = [...svg.querySelector('rect.hband')!.attributes].find((a) =>
-      a.name.startsWith('data-astro-cid'),
-    )!;
-    return [1, 2, 3, 4, 5].map((level) => {
-      const edge = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      edge.setAttribute('class', `hedge l${level}`);
-      edge.setAttribute(cid.name, '');
-      edge.setAttribute('d', 'M0 90 L500 20 L1000 60');
-      svg.append(edge);
-      const s = getComputedStyle(edge);
-      return { level, fill: s.fill, stroke: s.stroke };
-    });
+  const lines = await page.locator('.sc-ink svg').evaluate((svg) => {
+    const cid = [...svg.attributes].find((a) => a.name.startsWith('data-astro-cid'))!;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('class', 'sc-line');
+    line.setAttribute(cid.name, '');
+    line.setAttribute('d', 'M0 90H500V20H1000V60');
+    svg.append(line);
+    const s = getComputedStyle(line);
+    return { fill: s.fill, stroke: s.stroke };
   });
-  for (const e of edges) {
-    expect(e.fill, `hedge l${e.level}`).toBe('none');
-    expect(e.stroke, `hedge l${e.level}`).toMatch(/^rgb/);
-  }
+  expect(lines.fill).toBe('none');
+  expect(lines.stroke).toMatch(/url\("?#sc-level-ink"?\)/);
 });
 
 for (const width of [390, 1024, 1440]) {
-  test(`an old version's strip label never runs under the current one at ${width}px`, async ({ page }) => {
+  test(`launch labels and the scrubber chip stay inside the plot at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await openDashboard(page);
-    // v2 fills the first 8 of 30 days, as on the reviewer's seeded strip; v3 starts where it ends.
-    const labels = await page.locator('.hstrip .hlevels').evaluate((levels) => {
-      const plot = levels.parentElement!;
-      const cid = [...levels.attributes].find((a) => a.name.startsWith('data-astro-cid'))!.name;
-      const tag = (el: Element) => {
-        el.setAttribute(cid, '');
-        for (const child of el.children) tag(child);
-        return el;
-      };
-      const make = (html: string) => {
-        const box = document.createElement('div');
-        box.innerHTML = html;
-        return tag(box.firstElementChild!) as HTMLElement;
-      };
-      // The parts on the label's one visible line; anything that wrapped sits below it, clipped.
-      const shown = (label: HTMLElement) => {
-        const box = label.getBoundingClientRect();
-        return [...label.querySelectorAll('span')]
-          .filter((s) => s.getBoundingClientRect().top < box.bottom - 1)
-          .map((s) => ({
-            text: s.textContent,
-            right: s.getBoundingClientRect().right,
-            cut: s.getBoundingClientRect().right > box.right + 0.5,
-          }));
-      };
-      const old = (maxWidth: string) =>
-        make(
-          `<span class="hver old" style="left:0%; max-width:${maxWidth}"><i></i><span>v2</span><span> · OLD SCORING</span></span>`,
-        );
-      const narrow = old('calc(26.667% - 6px)');
-      const current = make('<span class="hver" style="left:26.667%">v3</span>');
-      const wide = old('calc(80% - 6px)');
-      // Narrower than "v2" itself, and a sliver as v2 ages out of the window.
-      const tiny = old('14px');
-      const sliver = old('calc(1% - 6px)');
-      plot.append(narrow, current, wide, tiny, sliver);
+    const plot = page.locator('.sc-plot');
+    const box = (await plot.boundingBox())!;
+    // A launch label at the NOW edge reads leftward, so it never runs past it.
+    const flag = await plot.evaluate((el) => {
+      const cid = [...el.attributes].find((a) => a.name.startsWith('data-astro-cid'))!.name;
+      const f = document.createElement('span');
+      f.setAttribute(cid, '');
+      f.className = 'sc-flag flip';
+      f.style.cssText = 'left:99%; --row:0; --lab:#ff7a1a';
+      f.textContent = '✱ A very long frontier launch name';
+      el.append(f);
+      const r = f.getBoundingClientRect();
+      const p = el.getBoundingClientRect();
       return {
-        narrow: shown(narrow),
-        currentLeft: current.getBoundingClientRect().left,
-        wide: shown(wide)
-          .map((s) => s.text)
-          .join(''),
-        tiny: shown(tiny).map((s) => s.text),
-        sliver: shown(sliver).map((s) => s.text),
+        display: getComputedStyle(f).display,
+        right: r.right,
+        plotRight: p.right,
+        left: r.left,
+        plotLeft: p.left,
       };
     });
-    for (const part of labels.narrow) {
-      expect(part.right, part.text!).toBeLessThanOrEqual(labels.currentLeft);
-      expect(part.cut, part.text!).toBe(false);
+    if (flag.display !== 'none') {
+      expect(flag.right).toBeLessThanOrEqual(flag.plotRight);
+      expect(flag.left).toBeGreaterThanOrEqual(flag.plotLeft);
     }
-    expect(labels.narrow[0]?.text).toBe('v2');
-    expect(labels.wide).toBe('v2 · OLD SCORING');
-    expect(labels.tiny).toEqual([]);
-    expect(labels.sliver).toEqual([]);
+    // The chip flips left of the cursor near the NOW edge.
+    await page.mouse.move(box.x + box.width - 4, box.y + box.height / 2);
+    const chip = (await page.locator('[data-chip]').boundingBox())!;
+    expect(chip.x + chip.width).toBeLessThanOrEqual(box.x + box.width + 0.5);
+    expect(chip.x).toBeGreaterThanOrEqual(box.x - 0.5);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }
 

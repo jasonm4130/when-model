@@ -1,0 +1,610 @@
+---
+/**
+ * The DROPCON instrument: the 5-level scale is the vertical axis, the lead score's week runs left to
+ * right across it, and the line ends in the big level number at the NOW edge. Server-rendered SVG
+ * and HTML; the scrubber in the script below is an enhancement over the table and summary.
+ */
+import type { HistoryResponseBody } from '../app/load-dashboard';
+import type { Dashboard } from '../domain/dashboard';
+import { LEVEL_BANDS, type DropconLevel } from '../domain/dropcon';
+import { INSTRUMENT_WIDTH, LAUNCH_NEAR_MS, buildInstrument, type ScrubPoint } from '../domain/instrument';
+import { stripDay, stripHour } from '../domain/history';
+import { dropconNumber } from '../ui/odds';
+interface Props {
+  d: Dashboard;
+  history?: HistoryResponseBody;
+  now?: number;
+}
+const { d, history, now = Date.now() } = Astro.props;
+const c = d.dropcon;
+const inst = buildInstrument({
+  points: history?.points ?? [],
+  ok: history?.ok ?? false,
+  now,
+  currentVersion: d.measurement.algorithmVersion,
+  live: { state: c.state, score: c.score, level: c.level, at: d.generatedAt },
+  launches: d.landed.releases.map((r) => ({ at: r.firstListedAt, labId: r.labId, lab: r.lab, name: r.name })),
+});
+const NAMES: Record<DropconLevel, string> = {
+  1: 'RELEASE SURGE',
+  2: 'MARKETS SMELL A DROP',
+  3: 'GPU FANS SPINNING',
+  4: 'RUMOUR MILL',
+  5: 'QUIET ORBIT',
+};
+// Band edges top to bottom: 100–75 is level 1, …, 15–0 is level 5.
+const edges = [100, ...LEVEL_BANDS, 0];
+const bands = edges.slice(0, -1).map((top, i) => ({ level: (i + 1) as DropconLevel, top, bottom: edges[i + 1] }));
+const pct = (x: number) => `${(x / INSTRUMENT_WIDTH) * 100}%`;
+const ok = c.state === 'ok';
+const segClass = (n: number) => {
+  if (c.state === 'no-signal') return 'seg dim';
+  if (c.state === 'floor') return `seg dim${n === c.level ? ' floor' : ''}`;
+  return `seg${n === c.level ? ' on' : ''}`;
+};
+const scaleLabel =
+  c.state === 'no-signal'
+    ? 'DROPCON: no signal'
+    : c.state === 'floor'
+      ? `DROPCON floor: ${c.level} of 5 with the odds offline`
+      : `DROPCON ${c.level} of 5`;
+const scoreText = ok ? `${c.score}` : c.state === 'floor' ? 'FLOOR' : 'NO SIGNAL';
+const bandRange = (b: { top: number; bottom: number }) =>
+  b.top === 100 ? `${b.bottom}+` : b.bottom === 0 ? `below ${b.top}` : `${b.bottom}–${b.top - 1}`;
+const firstZoneLabel = (z: (typeof inst.zones)[number]) =>
+  z.kind === 'old'
+    ? { head: `v${z.version} · OLD SCALE`, sub: 'another formula, not comparable' }
+    : z.kind === 'outage'
+      ? { head: 'ODDS OFFLINE', sub: 'level held, not measured' }
+      : { head: 'NO RECORD', sub: z.x === 0 ? `captures start ${stripDay(z.to)}` : 'no captures' };
+// Compact scrubber data: [kind, hour start, hour end, score, level (0: none), held, version].
+const K: Record<ScrubPoint['kind'], string> = { current: 'c', old: 'o', outage: 'x', live: 'l' };
+const data = JSON.stringify({
+  from: inst.from,
+  to: inst.to,
+  near: LAUNCH_NEAR_MS,
+  pts: inst.scrub.map((p) => [K[p.kind], p.h, p.e, p.score, p.level ?? 0, p.held ? 1 : 0, p.version]),
+  launches: inst.launches.map((l) => [Date.parse(l.at), l.name, l.lab, l.glyph, l.color]),
+});
+const rows = inst.scrub.filter((p) => p.kind !== 'live').reverse();
+// Where the current version's line starts, while it is too short to explain itself.
+const firstCurrent = inst.scrub.find((p) => p.kind === 'current');
+const v3x = firstCurrent ? ((firstCurrent.h - inst.from) / (inst.to - inst.from)) * INSTRUMENT_WIDTH : undefined;
+const v3Start =
+  v3x !== undefined && v3x > INSTRUMENT_WIDTH * 0.75
+    ? { x: v3x, flip: true, text: `v${inst.currentVersion} SCALE FROM ${stripHour(new Date(firstCurrent!.h).toISOString()).toUpperCase()}` }
+    : v3x !== undefined && v3x > INSTRUMENT_WIDTH * 0.03
+      ? { x: v3x, flip: false, text: `v${inst.currentVersion} SCALE` }
+      : undefined;
+---
+<div
+  class:list={['scope', c.state, `hist-${inst.state}`]}
+  data-scope={data}
+  style={`--y:${inst.now.y}`}
+>
+  <div class="sc-grid">
+    <span class="sc-cap sc-cap-level tiny" aria-hidden="true">LEVEL</span>
+    <span class="sc-cap sc-cap-plot tiny" aria-hidden="true">LEAD SCORE <span class="muted">0–100 · HOURLY · LAST 7 DAYS</span></span>
+    <span class="sc-cap sc-cap-now tiny" aria-hidden="true" data-now-label>NOW</span>
+
+    <div class="dc-scale" role="img" aria-label={scaleLabel}>
+      {bands.map((b, i) => (
+        <div class={`${segClass(b.level)} l${b.level}`} style={`--c:${ok ? `var(--l${b.level})` : 'var(--muted)'}; --h:${b.top - b.bottom}; --i:${i}`} title={`DROPCON ${b.level} · ${NAMES[b.level]} · score ${bandRange(b)}`}>
+          <span>{b.level}</span>
+        </div>
+      ))}
+    </div>
+    <div class="sc-ticks" aria-hidden="true">
+      {edges.map((v) => <span class:list={[{ end: v === 100 || v === 0 }]} style={`top:${100 - v}%`}>{v}</span>)}
+    </div>
+
+    <div class="sc-plot" data-plot role="img" aria-label={inst.summary}>
+      <svg class="sc-bg" viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        {bands.map((b) => (
+          <rect class:list={['sc-band', `l${b.level}`, { on: ok && b.level === c.level }]} x="0" y={100 - b.top} width={INSTRUMENT_WIDTH} height={b.top - b.bottom} />
+        ))}
+        {LEVEL_BANDS.map((edge) => <line class="sc-guide" x1="0" x2={INSTRUMENT_WIDTH} y1={100 - edge} y2={100 - edge} />)}
+        {inst.ticks.map((t) => <line class="sc-day" x1={t.x} x2={t.x} y1="0" y2="100" />)}
+      </svg>
+      {inst.zones.map((z) => {
+        const label = firstZoneLabel(z);
+        return (
+          <div class={`sc-zone ${z.kind}`} style={`left:${pct(z.x)}; width:${pct(z.w)}`} aria-hidden="true">
+            <span class:list={['sc-zlabel', { narrow: z.w < INSTRUMENT_WIDTH * 0.2 }]}><b>{label.head}</b><span>{label.sub}</span></span>
+          </div>
+        );
+      })}
+      {/* Launch names and the v3 start sit under the ink, so a high or low trace is never hidden. */}
+      {inst.launches.filter((l) => l.row !== undefined).map((l) => (
+        <span class:list={['sc-flag', { flip: l.flip }]} style={`left:${pct(l.x)}; --row:${l.row}; --lab:${l.color}`} aria-hidden="true">
+          <i>{l.glyph}</i> {l.name}
+        </span>
+      ))}
+      {v3Start && (
+        <span class:list={['sc-v3', { flip: v3Start.flip }]} style={`left:${pct(v3Start.x)}`} aria-hidden="true">{v3Start.text}</span>
+      )}
+      <div class="sc-ink" aria-hidden="true">
+        <svg viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" focusable="false">
+          <defs>
+            <linearGradient id="sc-level-ink" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">
+              {bands.flatMap((b) => [
+                <stop class={`l${b.level}`} offset={`${100 - b.top}%`} />,
+                <stop class={`l${b.level}`} offset={`${100 - b.bottom}%`} />,
+              ])}
+            </linearGradient>
+          </defs>
+          {inst.launches.map((l) => (
+            <line class="sc-launch" x1={l.x} x2={l.x} y1="0" y2="100" style={`stroke:${l.color}`} />
+          ))}
+          {inst.traces.map((t) => <path class="sc-area" d={t.area} />)}
+          {inst.traces.map((t) => <path class="sc-glow" d={t.line} />)}
+          {inst.traces.map((t) => <path class="sc-line" d={t.line} />)}
+        </svg>
+      </div>
+      <span class="sc-nowline" aria-hidden="true"></span>
+      <span class="sc-sweep" aria-hidden="true"></span>
+      <div class="sc-cursor" data-cursor hidden aria-hidden="true">
+        <span class="sc-probe" data-probe></span>
+        <div class="sc-chip" data-chip><b data-chip-time></b><ul data-chip-launches></ul></div>
+      </div>
+      {inst.state !== 'ok' && (
+        <div class="sc-empty" aria-hidden="true">
+          <b class="head">{inst.state === 'empty' ? 'NO READINGS YET' : 'HISTORY OFFLINE'}</b>
+          <span>{inst.state === 'empty'
+            ? `v${inst.currentVersion} history starts ${stripDay(now)}: the 15-minute capture writes the first point.`
+            : 'The score series could not be read. The level shown is live.'}</span>
+        </div>
+      )}
+    </div>
+
+    <div class="sc-needle-col">
+      {c.state !== 'no-signal' && <span class:list={['sc-dot', { joined: inst.now.joined }]} aria-hidden="true"></span>}
+      <div class="sc-needle" data-needle>
+        <div class="dc-num head" data-num>{dropconNumber(c)}</div>
+        <div class="sc-score" data-score-line>{ok ? <><b data-score>{scoreText}</b><span class="muted">/100 SCORE</span></> : <b data-score>{scoreText}</b>}</div>
+      </div>
+    </div>
+
+    <div class="sc-rail" aria-hidden="true">
+      {inst.launches.map((l) => (
+        <span class="sc-mark" style={`left:${pct(l.x)}; color:${l.color}`} title={`${l.name} · ${l.lab} · ${stripHour(l.at)}`}>{l.glyph}</span>
+      ))}
+    </div>
+    <div class="sc-days" aria-hidden="true">
+      {inst.ticks.map((t) => {
+        const [day, mon] = t.label.split(' ');
+        return <span style={`left:${pct(t.x)}`}>{day}<span class="mon"> {mon}</span></span>;
+      })}
+    </div>
+  </div>
+
+  <p class="dc-key">
+    <span class="k-item"><i class="k-line" aria-hidden="true"></i>the lead score, hourly: the band it sits in is the level</span>
+    <span class="k-item"><i class="k-launch" aria-hidden="true">▲</i>frontier launch</span>
+    <span class="k-item"><i class="k-hatch" aria-hidden="true"></i>not on this scale</span>
+    <span class="k-honest"><b>NOT A FORECAST.</b> Hand-weighted Polymarket odds; launch marks are context, not predictions. <a href="#dc-adds">How it adds up</a> · <a href="/backtest">/backtest</a></span>
+  </p>
+
+  <details class="sc-table">
+    <summary class="tiny">THE WEEK AS A TABLE</summary>
+    <div class="table-scroll" role="region" tabindex="0" aria-label="DROPCON readings and launches, last 7 days">
+      <table>
+        <caption class="sr-only">DROPCON hourly readings, newest first, and frontier launches in the same 7 days</caption>
+        <thead><tr><th scope="col">HOUR (UTC)</th><th scope="col">SCORE</th><th scope="col">LEVEL</th></tr></thead>
+        <tbody>
+          {ok && <tr><td>NOW · {stripHour(d.generatedAt)}</td><td>{c.score}</td><td>{c.level}</td></tr>}
+          {rows.map((p) => (
+            <tr class:list={[{ old: p.kind === 'old' }]}>
+              <td>{stripHour(new Date(p.h).toISOString())}</td>
+              <td>{p.kind === 'outage' ? 'odds offline' : p.kind === 'old' ? `${p.score} (v${p.version}, old scale)` : p.score}</td>
+              <td>{p.kind === 'old' ? '—' : `${p.level}${p.held ? ' (held)' : ''}`}</td>
+            </tr>
+          ))}
+          {!rows.length && <tr><td colspan="3">No readings recorded in these 7 days.</td></tr>}
+        </tbody>
+      </table>
+      {inst.launches.length > 0 && (
+        <table>
+          <caption class="sr-only">Frontier launches listed on OpenRouter in the same 7 days</caption>
+          <thead><tr><th scope="col">LISTED (UTC)</th><th scope="col">LAUNCH</th><th scope="col">LAB</th></tr></thead>
+          <tbody>
+            {[...inst.launches].reverse().map((l) => <tr><td>{stripHour(l.at)}</td><td>{l.name}</td><td>{l.lab}</td></tr>)}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </details>
+</div>
+
+<style>
+  .scope {
+    --l1: var(--red);
+    --l2: var(--orange);
+    --l3: var(--yellow);
+    --l4: var(--cyan);
+    --l5: var(--green);
+    --plot-h: 236px;
+    --needle-w: 212px;
+    --num: 120px;
+    --sweep: 1500ms;
+    position: relative;
+  }
+  .l1 { --lc: var(--l1); }
+  .l2 { --lc: var(--l2); }
+  .l3 { --lc: var(--l3); }
+  .l4 { --lc: var(--l4); }
+  .l5 { --lc: var(--l5); }
+
+  .sc-grid {
+    display: grid;
+    grid-template-columns: 30px 28px minmax(0, 1fr) var(--needle-w);
+    grid-template-rows: auto var(--plot-h) 26px auto;
+    column-gap: 6px;
+  }
+  .sc-cap { grid-row: 1; padding-bottom: 8px; color: var(--text); white-space: nowrap; overflow: hidden; }
+  .sc-cap-level { grid-column: 1 / span 2; color: var(--muted); }
+  .sc-cap-plot { grid-column: 3; }
+  .sc-cap-now { grid-column: 4; padding-left: 18px; color: var(--lvl); }
+
+  /* The DROPCON scale, standing up: each level's segment is as tall as its score band. */
+  .dc-scale { grid-column: 1; grid-row: 2; display: grid; grid-template-rows: 25fr 20fr 20fr 20fr 15fr; gap: 2px; }
+  .seg { display: grid; place-items: center; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease); }
+  .seg:hover { border-color: var(--c); }
+  .seg.on { background: var(--c); border-color: var(--c); color: #000; box-shadow: 0 0 10px var(--c), 0 0 2px var(--c); }
+  .seg.dim { border-style: dashed; background: transparent; }
+  .seg.floor { border: 2px solid var(--muted); }
+
+  .sc-ticks { grid-column: 2; grid-row: 2; position: relative; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  .sc-ticks span { position: absolute; right: 0; transform: translateY(-50%); line-height: 1; }
+
+  .sc-plot { grid-column: 3; grid-row: 2; position: relative; border: 1px solid var(--line2); background: rgba(5, 4, 12, 0.6); box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 18px color-mix(in srgb, var(--lvl) 10%, transparent); overflow: hidden; touch-action: pan-y; }
+  .sc-plot:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+  .sc-plot svg, .sc-ink { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .sc-band { fill: var(--lc); opacity: 0.045; }
+  .sc-band.on { opacity: 0.12; }
+  .sc-guide { stroke: var(--line2); stroke-width: 1; stroke-dasharray: 2 5; vector-effect: non-scaling-stroke; }
+  .sc-day { stroke: rgba(138, 132, 184, 0.14); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  #sc-level-ink stop { stop-color: var(--lc); }
+  .sc-area { fill: url(#sc-level-ink); opacity: 0.16; shape-rendering: crispEdges; }
+  .sc-glow { fill: none; stroke: url(#sc-level-ink); stroke-width: 7; opacity: 0.4; filter: blur(3px); vector-effect: non-scaling-stroke; }
+  .sc-line { fill: none; stroke: url(#sc-level-ink); stroke-width: 2.5; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+  .sc-launch { stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.55; vector-effect: non-scaling-stroke; }
+
+  /* Stretches with no line on this axis: hatched, with the bands behind them dimmed. */
+  .sc-zone { position: absolute; top: 0; bottom: 0; overflow: hidden; border-right: 1px dashed rgba(138, 132, 184, 0.45); }
+  .sc-zone.unrecorded { background: rgba(7, 6, 15, 0.72); }
+  .sc-zone.old { background: repeating-linear-gradient(135deg, rgba(138, 132, 184, 0.16) 0 2px, transparent 2px 8px), rgba(7, 6, 15, 0.6); }
+  .sc-zone.outage { background: repeating-linear-gradient(45deg, rgba(255, 51, 85, 0.16) 0 2px, transparent 2px 8px), rgba(7, 6, 15, 0.5); }
+  .sc-zlabel { position: absolute; left: 6px; right: 6px; bottom: 6px; display: grid; gap: 4px; }
+  .sc-zlabel > * { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+  .sc-zlabel.narrow { display: none; }
+  .sc-zlabel b { font-family: var(--font-head); font-size: var(--fs-tiny); font-weight: 400; letter-spacing: 0.06em; color: var(--muted); }
+  .sc-zlabel span { font-size: var(--fs-xs); color: var(--muted); }
+
+  /* Launch names, stacked in rows at the top of the plot, each on its own dashed line. */
+  .sc-flag { position: absolute; top: calc(6px + var(--row) * 22px); margin-left: 4px; padding: 1px 5px; font-size: var(--fs-xs); line-height: 1.1; color: var(--text); white-space: nowrap; background: rgba(7, 6, 15, 0.82); border-left: 2px solid var(--lab); }
+  .sc-flag i { font-style: normal; color: var(--lab); }
+  .sc-flag.flip { margin-left: 0; transform: translateX(calc(-100% - 4px)); border-left: 0; border-right: 2px solid var(--lab); }
+  .sc-v3 { position: absolute; bottom: 6px; margin-left: 0; padding: 3px 5px; border-left: 2px solid var(--lvl); font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: var(--lvl); white-space: nowrap; background: rgba(7, 6, 15, 0.88); }
+  .sc-v3.flip { transform: translateX(-100%); border-left: 0; border-right: 2px solid var(--lvl); }
+
+  /* NOW: the right edge, a pulsing dot at the live score, and a leader into the number. */
+  .sc-nowline { position: absolute; top: 0; bottom: 0; right: 0; width: 0; border-right: 1px dashed color-mix(in srgb, var(--lvl) 55%, transparent); }
+  .sc-dot { position: absolute; z-index: 2; left: -11px; top: calc(var(--y) * 1%); width: 10px; height: 10px; margin-top: -5px; background: var(--lvl); box-shadow: 0 0 10px var(--lvl), 0 0 2px #fff; }
+  .scope:not(.ok) .sc-dot { background: transparent; border: 2px dashed var(--muted); box-shadow: none; }
+  .sc-dot::after { content: ''; position: absolute; inset: -2px; border: 2px solid var(--lvl); opacity: 0; }
+
+  .sc-needle-col { grid-column: 4; grid-row: 2; position: relative; }
+  .sc-needle-col::before { content: ''; position: absolute; left: -6px; width: 22px; height: 2px; top: calc(var(--y) * 1%); margin-top: -1px; background: var(--lvl); box-shadow: 0 0 6px var(--lvl); }
+  .scope.no-signal .sc-needle-col::before { display: none; }
+  .scope:not(.ok) .sc-needle-col::before { background: none; border-top: 2px dashed var(--muted); box-shadow: none; }
+  .sc-needle { position: absolute; left: 18px; right: 0; display: grid; gap: 6px; top: clamp(0px, calc(var(--y) * 1% - var(--num) * 0.5), calc(100% - var(--num) - 26px)); transition: top 220ms var(--ease); }
+  .scope.no-signal .sc-needle { top: calc(50% - var(--num) * 0.5); }
+  .dc-num { font-size: var(--num); line-height: 1; height: var(--num); color: var(--lvl); text-shadow: 0 0 8px currentColor, 0 0 2px currentColor; }
+  .scope:not(.ok) .dc-num { text-shadow: none; }
+  .sc-score { font-size: var(--fs-lg); line-height: 1; white-space: nowrap; }
+  .sc-score b { font-weight: 400; color: #fff; font-size: var(--fs-metric); }
+  .sc-score .muted { margin-left: 2px; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; }
+  .scope:not(.ok) .sc-score b { color: var(--muted); font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; }
+  /* While scrubbing, the needle shows the reading under the cursor; with no reading there, no number. */
+  .scope.void .dc-num { display: none; }
+  .scope.void .sc-needle { top: calc(50% - 24px); }
+  .scope.void .sc-needle-col::before, .scope.void .sc-dot { opacity: 0.25; }
+  .scope.void .sc-score { white-space: normal; line-height: 1.2; }
+  .scope.void .sc-score b { color: var(--muted); }
+  .scope.void .sc-score .muted { display: block; margin: 6px 0 0; line-height: 1.6; }
+  .scope.scrubbing .sc-cap-now { color: var(--yellow); }
+
+  .sc-rail { grid-column: 3; grid-row: 3; position: relative; border-bottom: 1px solid var(--line2); }
+  .sc-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 16px; line-height: 1; text-shadow: 0 0 6px currentColor; }
+  .sc-mark::before { content: ''; position: absolute; left: 50%; top: -5px; height: 5px; border-left: 1px solid currentColor; }
+  .sc-days { grid-column: 3; grid-row: 4; position: relative; height: 16px; margin-top: 4px; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  .sc-days > span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+
+  /* Scrubber: a hairline, a probe on the reading, and a chip with the time and nearby launches. */
+  .sc-cursor { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+  .sc-cursor[hidden] { display: none; }
+  .sc-cursor::before { content: ''; position: absolute; top: 0; bottom: 0; left: var(--cx); border-left: 1px solid rgba(255, 255, 255, 0.75); box-shadow: 0 0 6px rgba(255, 255, 255, 0.5); }
+  .sc-probe { position: absolute; left: var(--cx); top: calc(var(--cy) * 1%); width: 8px; height: 8px; margin: -4px 0 0 -4px; background: var(--probe, #fff); box-shadow: 0 0 8px var(--probe, #fff); }
+  .sc-probe[hidden] { display: none; }
+  .sc-chip { position: absolute; z-index: 2; top: 6px; left: var(--cx); margin-left: 8px; max-width: min(300px, 70%); padding: 6px 8px; background: #07060f; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6); border: 1px solid var(--line2); display: grid; gap: 4px; }
+  .sc-chip.flip { margin-left: 0; transform: translateX(calc(-100% - 8px)); }
+  .sc-chip b { font-family: var(--font-head); font-size: var(--fs-tiny); font-weight: 400; letter-spacing: 0.06em; color: #fff; white-space: nowrap; }
+  .sc-chip ul { display: grid; gap: 2px; font-size: var(--fs-xs); color: var(--text); }
+  .sc-chip ul:empty { display: none; }
+  .sc-chip li i { font-style: normal; }
+
+  .sc-empty { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; padding: 12px; text-align: center; background: rgba(7, 6, 15, 0.55); z-index: 1; }
+  .sc-empty b { font-size: var(--fs-tiny); letter-spacing: 0.08em; color: var(--yellow); }
+  .sc-empty span { font-size: var(--fs-xs); color: var(--text); max-width: 34ch; }
+
+  .sc-sweep { display: none; }
+
+  .dc-key { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin: 12px 0 0 64px; font-size: var(--fs-sm); color: var(--muted); }
+  .k-item { white-space: nowrap; }
+  .k-item i { display: inline-block; margin-right: 6px; font-style: normal; }
+  .k-line { width: 18px; height: 3px; vertical-align: 4px; background: linear-gradient(90deg, var(--l5), var(--l4), var(--l3), var(--l2), var(--l1)); box-shadow: 0 0 4px rgba(255, 226, 28, 0.6); }
+  .k-launch { color: var(--text); }
+  .k-hatch { width: 16px; height: 12px; vertical-align: -1px; border: 1px dashed rgba(138, 132, 184, 0.6); background: repeating-linear-gradient(135deg, rgba(138, 132, 184, 0.4) 0 2px, transparent 2px 5px); }
+  .k-honest { flex: 1 1 100%; }
+  .k-honest b { font-weight: 400; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: var(--yellow); margin-right: 4px; }
+  .sc-table { margin: 6px 0 0 64px; }
+  .sc-table summary { color: var(--cyan); padding: 6px 0; display: inline-block; }
+  .sc-table summary::before { content: '+ '; }
+  .sc-table[open] summary::before { content: '- '; }
+  .sc-table .table-scroll { max-height: 280px; overflow: auto; margin-top: 6px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+  .sc-table tr.old td { color: var(--muted); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* The oscilloscope sweep: the beam crosses the plot once and the trace is inked behind it. */
+    .sc-sweep { display: block; position: absolute; top: 0; bottom: 0; left: 0; width: 2px; z-index: 2; background: var(--lvl, #fff); box-shadow: 0 0 12px var(--lvl, #fff), 0 0 3px #fff; opacity: 0; animation: sc-sweep var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 200ms both; }
+    .sc-sweep::before { content: ''; position: absolute; top: 0; bottom: 0; right: 2px; width: 80px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--lvl, #fff) 18%, transparent)); }
+    .sc-ink { animation: sc-ink var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 200ms both; }
+    .sc-dot { animation: sc-pop 260ms var(--ease) calc(var(--sweep) + 120ms) both; }
+    .scope.ok .sc-dot::after { animation: sc-pulse 1800ms ease-out calc(var(--sweep) + 400ms) infinite; }
+    .scope.ok .seg.on { animation: sc-breathe 2800ms ease-in-out calc(var(--sweep) + 400ms) infinite; }
+    .sc-needle-col::before { animation: sc-leader 300ms var(--ease) calc(var(--sweep) + 60ms) both; transform-origin: left center; }
+    /* When the beam reaches NOW the number flares, like a phosphor struck again, then settles. */
+    .scope.ok .dc-num { animation: sc-flare 520ms steps(6, end) calc(var(--sweep) + 120ms) both; }
+    @keyframes sc-sweep {
+      0% { left: 0; opacity: 0; }
+      8% { opacity: 1; }
+      92% { opacity: 1; }
+      100% { left: 100%; opacity: 0; }
+    }
+    @keyframes sc-ink {
+      from { clip-path: inset(0 100% 0 0); }
+      to { clip-path: inset(0 0 0 0); }
+    }
+    @keyframes sc-pop {
+      from { transform: scale(0); }
+      to { transform: none; }
+    }
+    @keyframes sc-pulse {
+      0% { transform: scale(1); opacity: 0.9; }
+      100% { transform: scale(3.2); opacity: 0; }
+    }
+    @keyframes sc-breathe {
+      0%, 100% { box-shadow: 0 0 10px var(--c), 0 0 2px var(--c); }
+      50% { box-shadow: 0 0 20px var(--c), 0 0 4px var(--c); }
+    }
+    @keyframes sc-flare {
+      0% { text-shadow: 0 0 8px currentColor, 0 0 2px currentColor; }
+      30% { text-shadow: 0 0 22px currentColor, 0 0 6px #fff; opacity: 0.75; }
+      60% { opacity: 1; }
+      100% { text-shadow: 0 0 8px currentColor, 0 0 2px currentColor; }
+    }
+    @keyframes sc-leader {
+      from { transform: scaleX(0); }
+      to { transform: none; }
+    }
+  }
+
+  @media (max-width: 640px) {
+    .scope { --plot-h: 196px; --needle-w: 92px; --num: 64px; }
+    .sc-grid { grid-template-columns: 22px 20px minmax(0, 1fr) var(--needle-w); column-gap: 4px; }
+    .sc-ticks span.end { display: none; }
+    .sc-cap-plot .muted { display: none; }
+    .sc-cap-now { padding-left: 12px; }
+    .sc-needle { left: 12px; }
+    .sc-needle-col::before { width: 16px; }
+    .sc-score b { font-size: var(--fs-lg); }
+    .sc-score .muted { display: block; margin: 4px 0 0; }
+    .sc-dot { left: -9px; }
+    .dc-key, .sc-table { margin-left: 0; font-size: var(--fs-xs); }
+    .sc-days .mon { display: none; }
+    .k-item { white-space: normal; }
+    .sc-flag, .sc-v3 { display: none; }
+    .sc-zlabel span { display: none; }
+  }
+</style>
+
+<script>
+  import { MONTHS } from '../domain/dates';
+
+  type Point = [kind: 'c' | 'o' | 'x' | 'l', h: number, e: number, score: number, level: number, held: number, version: number];
+  type Launch = [t: number, name: string, lab: string, glyph: string, color: string];
+  interface Data { from: number; to: number; near: number; pts: Point[]; launches: Launch[] }
+
+  const HOUR = 3_600_000;
+  const COLORS = ['', 'var(--l1)', 'var(--l2)', 'var(--l3)', 'var(--l4)', 'var(--l5)'];
+  const when = (t: number) => {
+    const d = new Date(t);
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()].toUpperCase()} ${hh}:${mm}Z`;
+  };
+
+  for (const scope of document.querySelectorAll<HTMLElement>('[data-scope]')) {
+    let data: Data;
+    try {
+      data = JSON.parse(scope.dataset.scope ?? '');
+    } catch {
+      continue;
+    }
+    const plot = scope.querySelector<HTMLElement>('[data-plot]')!;
+    const cursor = scope.querySelector<HTMLElement>('[data-cursor]')!;
+    const probe = scope.querySelector<HTMLElement>('[data-probe]')!;
+    const chip = scope.querySelector<HTMLElement>('[data-chip]')!;
+    const chipTime = scope.querySelector<HTMLElement>('[data-chip-time]')!;
+    const chipLaunches = scope.querySelector<HTMLElement>('[data-chip-launches]')!;
+    const num = scope.querySelector<HTMLElement>('[data-num]')!;
+    const scoreLine = scope.querySelector<HTMLElement>('[data-score-line]')!;
+    const nowLabel = scope.querySelector<HTMLElement>('[data-now-label]')!;
+    const span = data.to - data.from;
+    // Elements made here carry the component's scoped-style attribute, as the rendered ones do.
+    const cid = [...scope.attributes].find((a) => a.name.startsWith('data-astro-cid'))?.name;
+    const make = <K extends keyof HTMLElementTagNameMap>(tag: K, text: string, className = '') => {
+      const el = document.createElement(tag);
+      if (cid) el.setAttribute(cid, '');
+      if (className) el.className = className;
+      el.textContent = text;
+      return el;
+    };
+    // The live reading is the zero-width point at the end: measured ('l') or a floor ('x').
+    const live = data.pts.find((p) => p[1] === p[2]);
+    // What the needle shows at rest, restored when the scrubber lets go.
+    const rest = { num: num.textContent, score: scoreLine.innerHTML, label: nowLabel.textContent, y: scope.style.getPropertyValue('--y'), lvl: scope.style.getPropertyValue('--lvl') };
+    const summary = plot.getAttribute('aria-label') ?? '';
+    let t: number | null = null;
+
+    // Enhance the static picture into a slider: the summary stays as its description.
+    const described = document.createElement('p');
+    described.id = `sc-summary-${Math.random().toString(36).slice(2, 8)}`;
+    described.className = 'sr-only';
+    described.textContent = summary;
+    plot.after(described);
+    plot.setAttribute('role', 'slider');
+    plot.setAttribute('tabindex', '0');
+    plot.setAttribute('aria-label', 'DROPCON history: move through the last 7 days with the arrow keys');
+    plot.setAttribute('aria-describedby', described.id);
+    plot.setAttribute('aria-valuemin', '0');
+    plot.setAttribute('aria-valuemax', String(Math.round(span / HOUR)));
+    plot.setAttribute('aria-valuenow', String(Math.round(span / HOUR)));
+
+    const reading = (at: number): Point | undefined => {
+      if (live && at >= data.to - span * 0.006) return live;
+      return data.pts.find((p) => at >= p[1] && at < p[2]);
+    };
+    const near = (at: number) =>
+      data.launches.filter((l) => Math.abs(l[0] - at) <= data.near).sort((a, b) => Math.abs(a[0] - at) - Math.abs(b[0] - at)).slice(0, 3);
+
+    const show = (at: number) => {
+      t = Math.min(data.to, Math.max(data.from, at));
+      const x = ((t - data.from) / span) * 100;
+      const p = reading(t);
+      const launches = near(t);
+      scope.classList.add('scrubbing');
+      cursor.hidden = false;
+      cursor.style.setProperty('--cx', `${x}%`);
+      chip.classList.toggle('flip', x > 58);
+      const atNow = !!p && p === live;
+      chipTime.textContent = atNow ? `NOW · ${when(t)}` : when(t);
+      chipLaunches.replaceChildren(
+        ...launches.map((l) => {
+          const li = make('li', '');
+          const glyph = make('i', `${l[3]} `);
+          glyph.style.color = l[4];
+          const sameDay = new Date(l[0]).getUTCDate() === new Date(at).getUTCDate();
+          li.append(glyph, `${l[1]} · ${l[2]} · ${sameDay ? when(l[0]).slice(-6) : when(l[0])}`);
+          return li;
+        }),
+      );
+      let text: string;
+      const measured = p && (p[0] === 'c' || p[0] === 'l');
+      if (measured) {
+        const [, , , score, level, held] = p;
+        probe.hidden = false;
+        cursor.style.setProperty('--cy', String(100 - score));
+        probe.style.setProperty('--probe', COLORS[level]);
+        scope.style.setProperty('--y', String(100 - score));
+        scope.style.setProperty('--lvl', COLORS[level]);
+        num.textContent = String(level);
+        scope.classList.remove('void');
+        scoreLine.replaceChildren(make('b', String(score)), make('span', held ? '/100 · LEVEL HELD' : '/100 SCORE', 'muted'));
+        text = `level ${level}, score ${score}${held ? ' (level held by hysteresis)' : ''}`;
+      } else {
+        probe.hidden = true;
+        scope.classList.add('void');
+        const b = make('b', '');
+        const why = make('span', '', 'muted');
+        if (p?.[0] === 'o') {
+          b.textContent = String(p[3]);
+          why.textContent = ` v${p[6]} · OLD SCALE, NOT COMPARABLE`;
+          text = `v${p[6]} score ${p[3]} on the old scale, not comparable`;
+        } else if (p?.[0] === 'x') {
+          b.textContent = atNow ? 'FLOOR' : 'OFFLINE';
+          why.textContent = atNow ? ' ODDS OFFLINE' : ' ODDS DOWN, LEVEL HELD';
+          text = atNow ? 'a floor, the odds are offline' : 'odds offline, level held';
+        } else {
+          b.textContent = '—';
+          why.textContent = ' NO READING';
+          text = 'no reading';
+        }
+        scoreLine.replaceChildren(b, why);
+      }
+      nowLabel.textContent = atNow ? 'NOW' : when(t);
+      const said = launches.length ? `. Launch: ${launches.map((l) => `${l[1]} (${l[2]})`).join(', ')}` : '';
+      plot.setAttribute('aria-valuenow', String(Math.round((t - data.from) / HOUR)));
+      plot.setAttribute('aria-valuetext', `${when(t)}: ${text}${said}`);
+    };
+
+    const reset = () => {
+      t = null;
+      scope.classList.remove('scrubbing', 'void');
+      cursor.hidden = true;
+      num.textContent = rest.num;
+      scoreLine.innerHTML = rest.score;
+      nowLabel.textContent = rest.label;
+      scope.style.setProperty('--y', rest.y);
+      if (rest.lvl) scope.style.setProperty('--lvl', rest.lvl);
+      else scope.style.removeProperty('--lvl');
+      plot.setAttribute('aria-valuenow', String(Math.round(span / HOUR)));
+      plot.removeAttribute('aria-valuetext');
+    };
+
+    const fromPointer = (e: PointerEvent) => {
+      const box = plot.getBoundingClientRect();
+      const px = Math.min(box.width, Math.max(0, e.clientX - box.left));
+      let at = data.from + (px / box.width) * span;
+      // Snap to a launch within 8px, so its mark is easy to land on.
+      const snap = data.launches.find((l) => Math.abs(((l[0] - data.from) / span) * box.width - px) <= 8);
+      if (snap) at = snap[0];
+      show(at);
+    };
+    plot.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse' || e.buttons) fromPointer(e);
+    });
+    plot.addEventListener('pointerdown', fromPointer);
+    plot.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' && document.activeElement !== plot) reset();
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (t !== null && !plot.contains(e.target as Node)) reset();
+    });
+    plot.addEventListener('focus', () => show(t ?? data.to));
+    plot.addEventListener('blur', reset);
+    plot.addEventListener('keydown', (e) => {
+      const at = t ?? data.to;
+      const step = e.shiftKey ? 24 * HOUR : HOUR;
+      const moves: Record<string, number> = {
+        ArrowLeft: at - step,
+        ArrowDown: at - step,
+        ArrowRight: at + step,
+        ArrowUp: at + step,
+        PageDown: at - 24 * HOUR,
+        PageUp: at + 24 * HOUR,
+        Home: data.from,
+        End: data.to,
+      };
+      if (e.key === 'Escape') {
+        show(data.to);
+        e.preventDefault();
+        return;
+      }
+      if (!(e.key in moves)) return;
+      e.preventDefault();
+      show(moves[e.key]);
+    });
+  }
+</script>

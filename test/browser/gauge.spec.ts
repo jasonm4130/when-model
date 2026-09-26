@@ -23,7 +23,7 @@ for (const viewport of [
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize(viewport);
     await openDashboard(page);
-    for (const part of ['.dc-num', '.dc-name', '.dc-headline', '.dc-scale']) {
+    for (const part of ['.dc-num', '.dc-name', '.dc-headline', '.dc-scale', '.sc-plot', '.dc-key']) {
       await expect(page.locator(part)).toBeVisible();
       expect(await bottom(page, part), `${part} on the first screen`).toBeLessThanOrEqual(viewport.height);
     }
@@ -36,11 +36,12 @@ test('has no horizontal overflow at 390px', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
-test('gives the DROPCON history strip an accessible name that summarises the series', async ({ page }) => {
+test('makes the history a keyboard slider whose description summarises the series', async ({ page }) => {
   await openDashboard(page);
-  const strip = page.locator('.hstrip');
-  await expect(strip).toHaveAttribute('role', 'img');
-  await expect(strip).toHaveAccessibleName(/^DROPCON history/);
+  const plot = page.locator('.sc-plot');
+  await expect(plot).toHaveAttribute('role', 'slider');
+  await expect(plot).toHaveAccessibleName(/^DROPCON history/);
+  await expect(plot).toHaveAccessibleDescription(/^DROPCON history, the lead score over the last 7 days/);
   // The hottest-lab line under the level links to that lab's card.
   const hot = page.locator('a.dc-hot');
   if (await hot.count()) {

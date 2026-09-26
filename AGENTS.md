@@ -17,9 +17,12 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   `first_seen`), `bindings.ts` (`HISTORY_DB`), `text.ts` (safe parsing helpers).
 - `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
   the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
-  shared by `/api/history.json` and the page's history strip; `loadHistoryForPage` adds the
+  shared by `/api/history.json` and the page's DROPCON instrument; `loadHistoryForPage` adds the
   page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes.
+- `src/domain/instrument.ts` draws the hero: `buildInstrument` turns the history, the live level
+  and LANDED's launches into the 7-day trace, zones and scrubber data `DropconScope.astro` renders.
+  Only the current algorithm version is inked on the level axis; an older one is a hatched zone.
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
@@ -75,7 +78,7 @@ Rules of the house:
   Restart a running `wrangler dev` after `pnpm build`: its reload can keep serving the old server
   bundle (seen as HTML linking an `/_astro/*.css` that 404s), and the tests then pass or fail on old code.
   A browser test for a state today's data may not show (a failed source, an extrapolated read, a
-  filled history strip) writes that state into the page with the component's `data-astro-cid-*`
+  long launch label on the instrument) writes that state into the page with the component's `data-astro-cid-*`
   attribute, as `test/browser/robustness.spec.ts` does, so it does not depend on the day's data.
 - Month names come from `src/domain/dates.ts` ("SEP", never ICU's en-GB "Sept"); do not format
   months with `toLocaleDateString`.
