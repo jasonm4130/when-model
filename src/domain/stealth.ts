@@ -100,9 +100,10 @@ export interface StealthSlot {
  * Live stealth slots, newest first.
  *
  * OpenRouter's `created` is not fixed: space-bunny-alpha was first seen with `created`
- * 2026-09-22T10:58Z and later reported 2026-09-23T14:48:04Z, so the slot looked about 28h younger
- * than it was. Pass `firstSeen` (id to ISO time, e.g. from a first-seen ledger) when you have it;
- * the earlier of the two times wins.
+ * 2026-09-22T10:58Z and later reported 2026-09-23T14:48:04Z, 28h later; which one marks the public
+ * start is unknown. Ages here use `created` as it reads now, the same field the `REVEALS` medians
+ * rest on. Pass `firstSeen` (id to the ISO time whenmodel first saw the slot, e.g. from a first-seen
+ * ledger) to cover a `created` that later moves past a sighting; the earlier of the two times wins.
  */
 export function stealthSlots(
   models: readonly StealthCandidate[],
@@ -163,7 +164,8 @@ export interface StealthReveal {
 /**
  * Resolved stealth slots, hand-curated because the `/endpoints` description is cut off at about 210
  * characters, usually before the identity. Every timestamp is OpenRouter `created`, re-read from
- * `/api/v1/models/{id}/endpoints` on 2026-09-26 (retired slugs still answer there). Slots that carry no
+ * `/api/v1/models/{id}/endpoints` on 2026-09-26 (retired slugs still answer there): values as they
+ * read now, which may not be what the listing first said (see `stealthSlots`). Slots that carry no
  * identity on OpenRouter (Cypher Alpha 2025-07-01, Aurora Alpha 2026-02-09) are left out, so the
  * medians describe slots that were revealed, not every slot.
  */
@@ -320,7 +322,7 @@ export const REVEALS: readonly StealthReveal[] = [
     attribution: 'third-party',
     source: 'https://www.longcatai.org/news/owl-alpha-openrouter',
     verified: false,
-    note: 'No notice on the OpenRouter page. Third-party reports date the reveal to the LongCat-2.0 open-weights release on 2026-06-30, about 62 days in; the OpenRouter listing came 83 days in.',
+    note: 'No notice on the OpenRouter page. longcatai.org says the LongCat team confirmed it after about two months; the official OpenRouter listing came 83 days in.',
   },
 ];
 
