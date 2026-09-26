@@ -12,7 +12,8 @@ const ticker = [
   ...(d.landed.bannerText ? [d.landed.bannerText] : []),
   ...d.labs
     .filter((l) => l.odds?.p7.trusted && l.odds.p7.p > 0)
-    .map((l) => `${l.name.toUpperCase()}: ${pct(l.odds!.p7.p)} ODDS ${familyPhrase(l.odds!.family).toUpperCase()} SHIPS WITHIN 7 DAYS`),
+    // A floor or a ceiling is not a point estimate, so the ticker says which it is.
+    .map((l) => `${l.name.toUpperCase()}: ${l.odds!.p7.upperBound ? 'AT MOST ' : l.odds!.p7.lowerBound ? 'AT LEAST ' : ''}${pct(l.odds!.p7.p)} ODDS ${familyPhrase(l.odds!.family).toUpperCase()} SHIPS WITHIN 7 DAYS`),
   ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${x.lab.toUpperCase()})`),
   ...d.feed.filter((f) => f.alert).slice(0, 6).map((f) => `${f.source.toUpperCase()}: ${f.title.toUpperCase()}`),
 ];

@@ -423,8 +423,13 @@ export interface CurvePoint {
   deadline: string;
   /** P(released by deadline) after the monotone fit. */
   p: number;
-  /** The quote before the fit: the mid, or 1 − mid for "No release by". */
+  /**
+   * The heaviest quote at this deadline, as its own market shows it: the mid, or 1 − mid for
+   * "No release by". `label` and `url` are that market's; the headline cites this number.
+   */
   quoted: number;
+  /** Every quote at this deadline, weighted by liquidity: the fit's input. */
+  pooled: number;
   label: string;
   url: string;
   /** Widest spread among the quotes pooled into this point. */
@@ -437,6 +442,22 @@ export interface BucketFloor {
   steps: { deadline: string; p: number }[];
 }
 
+/** One open date bucket's span and best ask, for the no-arbitrage ceiling. */
+export interface BucketAsk {
+  /** First instant of the bucket; absent for an open-ended "on or prior to" bucket. */
+  start?: string;
+  /** Last instant of the bucket. */
+  deadline: string;
+  /** Absent when nobody is offering Yes, which leaves every horizon from here on uncapped. */
+  ask?: number;
+}
+
+/** One bucket event's open buckets in start order: their asks cap P(released by deadline). */
+export interface BucketCeiling {
+  url: string;
+  buckets: BucketAsk[];
+}
+
 export interface FamilyCurve {
   labId: LabId;
   /** Display name, e.g. "Next Claude Sonnet". */
@@ -445,6 +466,7 @@ export interface FamilyCurve {
   /** Monotone cumulative points after now, in deadline order. */
   points: CurvePoint[];
   floors: BucketFloor[];
+  ceilings: BucketCeiling[];
   /** Open cumulative outcomes left out because their book was thin. */
   thinExcluded: number;
   /** Widest spread among the quotes on the curve. */
@@ -463,6 +485,11 @@ export interface CurveBracket {
   interpolated: boolean;
   /** A floor, not an estimate: past the last deadline, or set by day-bucket best bids. */
   lowerBound: boolean;
+  /**
+   * A ceiling, not an estimate: the curve read more than the day buckets' asks allow, so it was
+   * cut to their sum (`bucketCeiling`).
+   */
+  upperBound: boolean;
   source: 'curve' | 'buckets';
   /** The market the number came from. */
   url: string;
@@ -493,12 +520,17 @@ export interface ReleaseCurve {
   marketUrl: string;
 }
 
-/** How far a read may sit from the rung that brackets it before it stops being trusted. */
+/**
+ * How far past a read the rung it runs towards may lie. A constant-hazard stretch to a rung
+ * further out is never used: between rungs the read holds the rung before it (a floor, see
+ * `readPoints`), and from now to a far first rung it is shown but not trusted.
+ */
 export const TRUSTED_BRACKET_DAYS = 14;
 
 /**
- * A read is trusted when it sits at a quoted rung, between two rungs, on a day-bucket floor (real
- * bids), or past the last rung (a floor), or when the rung it is extrapolated from lies within
+ * A read is trusted when it sits at a quoted rung, between two rungs no more than
+ * `TRUSTED_BRACKET_DAYS` past it, on a day-bucket floor (real bids) or ask ceiling, or is held at
+ * a rung (a floor), or when the first rung it is extrapolated towards lies within
  * `TRUSTED_BRACKET_DAYS` of the horizon. What fails is the constant-hazard stretch from now to a
  * distant first rung: "Next Gemini Flash" read 25.7% at 7 days off a lone Nov 30 rung (WP-1).
  */
@@ -555,20 +587,22 @@ function fitCurve(quotes: Quote[]): CurvePoint[] {
       return {
         t,
         weight,
-        quoted: group.reduce((sum, q) => sum + q.p * q.weight, 0) / weight,
+        pooled: group.reduce((sum, q) => sum + q.p * q.weight, 0) / weight,
+        quoted: heaviest.p,
         label: heaviest.label,
         url: heaviest.url,
         spread: Math.max(...group.map((q) => q.spread)),
       };
     });
   const fitted = poolAdjacentViolators(
-    merged.map((m) => m.quoted),
+    merged.map((m) => m.pooled),
     merged.map((m) => m.weight),
   );
   return merged.map((m, i) => ({
     deadline: new Date(m.t).toISOString(),
     p: fitted[i],
     quoted: m.quoted,
+    pooled: m.pooled,
     label: m.label,
     url: m.url,
     spread: m.spread,
@@ -587,18 +621,57 @@ function bucketFloor(url: string, buckets: { t: number; bid: number }[]): Bucket
   return { url, steps };
 }
 
+const startOf = (b: BucketAsk) => (b.start ? Date.parse(b.start) : Number.NEGATIVE_INFINITY);
+const byStart = (a: BucketAsk, b: BucketAsk) =>
+  startOf(a) - startOf(b) || Date.parse(a.deadline) - Date.parse(b.deadline);
+
+/** Day buckets end at 23:59:59 and the next starts at 00:00:00: a second apart is no gap. */
+const BUCKET_GAP_MS = 1000;
+
+/**
+ * The no-arbitrage ceiling one bucket event puts on P(released by `at`): buying Yes on every open
+ * bucket that could hold a release by `at` costs the sum of their asks and pays 1 if it happens,
+ * so no read above that sum is consistent with the book. Only defined when the open buckets cover
+ * now..`at` without a gap and each of them has an ask; otherwise undefined (no cap).
+ * Live 2026-09-26: Muse Spark's "on or prior to October 1" (ask 0.12) and "October 2" (0.064)
+ * capped P7 at 0.184 while constant-hazard interpolation between rungs read 0.31.
+ */
+export function bucketCeiling(ceiling: BucketCeiling, at: number, now: number): number | undefined {
+  let sum = 0;
+  let reach: number | undefined;
+  for (const b of ceiling.buckets) {
+    const start = startOf(b);
+    if (start > at) break;
+    if (reach === undefined ? start > now : start > reach + BUCKET_GAP_MS) return undefined;
+    if (b.ask === undefined) return undefined;
+    sum += b.ask;
+    reach = Math.max(reach ?? Number.NEGATIVE_INFINITY, Date.parse(b.deadline));
+  }
+  if (reach === undefined || reach < at) return undefined;
+  return Math.min(1, Math.round(sum * 1e6) / 1e6);
+}
+
 function curveFor(labId: LabId, family: ModelFamily, markets: readonly Market[], now: number): FamilyCurve {
   const quotes: Quote[] = [];
   const floors: BucketFloor[] = [];
+  const ceilings: BucketCeiling[] = [];
   let thinExcluded = 0;
   for (const market of markets) {
     const buckets: { t: number; bid: number }[] = [];
+    const asks: BucketAsk[] = [];
     for (const o of market.outcomes) {
       const t = o.closed || !o.deadline || !o.deadlineKind ? Number.NaN : Date.parse(o.deadline);
       if (!Number.isFinite(t)) continue;
       if (o.deadlineKind === 'day' || o.deadlineKind === 'window') {
         // Buckets only ever add their best bid: midpoint sums ran to 1.02-2.64 on the Grok ladder.
         buckets.push({ t, bid: Math.min(1, Math.max(0, o.bestBid ?? 0)) });
+        // Any ask caps the price, thin book or not: it is an offer someone will fill.
+        const ask = o.bestAsk !== undefined && o.bestAsk >= 0 && o.bestAsk <= 1 ? o.bestAsk : undefined;
+        asks.push({
+          ...(o.windowStart ? { start: o.windowStart } : {}),
+          deadline: o.deadline!,
+          ...(ask !== undefined ? { ask } : {}),
+        });
         continue;
       }
       if (t <= now) continue;
@@ -620,6 +693,7 @@ function curveFor(labId: LabId, family: ModelFamily, markets: readonly Market[],
       });
     }
     if (buckets.length) floors.push(bucketFloor(market.url, buckets));
+    if (asks.length) ceilings.push({ url: market.url, buckets: asks.sort(byStart) });
   }
   const points = fitCurve(quotes);
   const busiest = markets.reduce((a, b) => (b.vol24 > a.vol24 ? b : a));
@@ -629,6 +703,7 @@ function curveFor(labId: LabId, family: ModelFamily, markets: readonly Market[],
     key: family.key,
     points,
     floors,
+    ceilings,
     thinExcluded,
     maxSpread: points.length ? Math.max(...points.map((p) => p.spread)) : undefined,
     marketUrl: busiest.url,
@@ -663,7 +738,7 @@ function readPoints(
   points: readonly CurvePoint[],
   at: number,
   now: number,
-): Omit<CurveRead, 'source' | 'url'> | undefined {
+): Omit<CurveRead, 'source' | 'url' | 'upperBound'> | undefined {
   if (!points.length) return undefined;
   const times = points.map((p) => Date.parse(p.deadline));
   if (at < times[0]) {
@@ -675,6 +750,11 @@ function readPoints(
     if (at === times[i])
       return { p: points[i].p, from: points[i], to: points[i], interpolated: false, lowerBound: false };
     if (i + 1 < points.length && at < times[i + 1]) {
+      // The next rung is too far past the read to interpolate towards: hold the rung before it, a
+      // floor the market quoted (a monotone curve never falls). Flash-Lite read 15.6% at 7 days
+      // across a 61-day gap from 7.5% (Sep 30) to 94.5% (Nov 30).
+      if (times[i + 1] - at > TRUSTED_BRACKET_DAYS * DAY_MS)
+        return { p: points[i].p, from: points[i], to: points[i + 1], interpolated: false, lowerBound: true };
       // Constant hazard between the two deadlines: S(t) = S1 · (S2/S1)^((t − d1)/(d2 − d1)).
       const s1 = 1 - points[i].p;
       const s2 = 1 - points[i + 1].p;
@@ -688,7 +768,8 @@ function readPoints(
 
 /**
  * P(released by `at`) on a family curve: the constant-hazard reading of the cumulative points, or
- * the best-bid floor of its date buckets, whichever is higher.
+ * the best-bid floor of its date buckets, whichever is higher, then cut to the lowest ask ceiling
+ * of its date buckets (`bucketCeiling`) when one covers the horizon.
  */
 export function readCurve(curve: FamilyCurve, at: number, now: number): CurveRead | undefined {
   const read = readPoints(curve.points, at, now);
@@ -697,18 +778,41 @@ export function readCurve(curve: FamilyCurve, at: number, now: number): CurveRea
     const p = f.steps.filter((s) => Date.parse(s.deadline) <= at).at(-1)?.p ?? 0;
     if (!floor || p > floor.p) floor = { p, url: f.url };
   }
+  let best: CurveRead | undefined;
   if (read && (!floor || read.p >= floor.p)) {
-    return { ...read, source: 'curve', url: (read.to ?? read.from)?.url ?? curve.marketUrl };
+    best = {
+      ...read,
+      upperBound: false,
+      source: 'curve',
+      url: (read.to ?? read.from)?.url ?? curve.marketUrl,
+    };
+  } else if (floor) {
+    best = {
+      p: floor.p,
+      from: read?.from,
+      to: read?.to,
+      interpolated: false,
+      lowerBound: true,
+      upperBound: false,
+      source: 'buckets',
+      url: floor.url,
+    };
   }
-  if (!floor) return undefined;
+  if (!best) return undefined;
+  let cap: { p: number; url: string } | undefined;
+  for (const c of curve.ceilings) {
+    const p = bucketCeiling(c, at, now);
+    if (p !== undefined && (!cap || p < cap.p)) cap = { p, url: c.url };
+  }
+  if (!cap || best.p <= cap.p) return best;
   return {
-    p: floor.p,
-    from: read?.from,
-    to: read?.to,
+    ...best,
+    p: cap.p,
     interpolated: false,
-    lowerBound: true,
+    lowerBound: false,
+    upperBound: true,
     source: 'buckets',
-    url: floor.url,
+    url: cap.url,
   };
 }
 

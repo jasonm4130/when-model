@@ -74,6 +74,19 @@ describe('computeDropcon', () => {
     expect(d.level).toBe(2);
   });
 
+  it('states the scored read beside the quoted rung when they round apart, and names a bucket ceiling', () => {
+    const between = { ...sonnet, p: 0.31, quote: { label: 'September 30', p: 0.14 } };
+    expect(computeDropcon({ ...quiet, p7: 0.31, p30: 0.31, top7: between }).headline).toBe(
+      'Polymarket prices 14% that the next Claude Sonnet ships by Sep 30 (31% within 7 days on its curve)',
+    );
+    const capped: MarketDriver = { ...sonnet, p: 0.184, read: 'ceiling', quote: undefined };
+    const d = computeDropcon({ ...quiet, p7: 0.184, p30: 0.184, top7: capped });
+    expect(d.headline).toBe("Polymarket's day buckets cap the next Claude Sonnet at 18% within 7 days");
+    expect(d.provenance[0].label).toBe(
+      'Next Claude Sonnet (Anthropic) · 18% within 7 days, at most, capped by day-bucket asks',
+    );
+  });
+
   it('describes a curve read without a quoted rung, and a day-bucket floor', () => {
     const curve = computeDropcon({
       ...quiet,

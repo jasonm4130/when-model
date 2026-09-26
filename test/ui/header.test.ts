@@ -107,6 +107,60 @@ describe('Header', async () => {
     });
     expect(html).toContain('STATUS: DEGRADED');
     // The release market's odds are a ticker item, so the ticker renders even with a source down.
-    expect(html).toContain('OPENAI: 50% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
+    // Past its last rung the read is held there, a floor, and the ticker says so.
+    expect(html).toContain('OPENAI: AT LEAST 50% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
+  });
+
+  it('names a read between near rungs plainly and a bucket-capped read as a ceiling', async () => {
+    const rung = (label: string, deadline: string, mid: number) => ({
+      label,
+      yes: mid,
+      closed: false,
+      vol24: 1,
+      deadline,
+      deadlineKind: 'by' as const,
+      bestBid: mid - 0.005,
+      bestAsk: mid + 0.005,
+      thin: false,
+      liquidity: 1000,
+    });
+    const ladder: Market = {
+      slug: 'gpt-6',
+      title: 'GPT-6 released by...?',
+      url: 'https://polymarket.com/event/gpt-6',
+      vol24: 1,
+      volume: 1,
+      kind: 'release',
+      labId: 'openai',
+      outcomes: [
+        rung('September 24', '2026-09-25T03:59:59.000Z', 0.5),
+        rung('October 1', '2026-10-02T03:59:59.000Z', 0.9),
+      ],
+    };
+    const plain = await container.renderToString(Header, {
+      props: { d: dashboard({ markets: { name: 'Polymarket', data: [ladder], ok: true } }) },
+    });
+    expect(plain).toMatch(/OPENAI: \d+% ODDS GPT-6 SHIPS WITHIN 7 DAYS/);
+    const day = (d: number, ask: number) => ({
+      label: `September ${d}`,
+      yes: ask / 2,
+      closed: false,
+      vol24: 1,
+      deadline: `2026-09-${d + 1}T03:59:59.000Z`,
+      deadlineKind: 'day' as const,
+      windowStart: `2026-09-${d}T04:00:00.000Z`,
+      bestBid: 0.001,
+      bestAsk: ask,
+    });
+    const buckets: Market = {
+      ...ladder,
+      slug: 'gpt-6-on',
+      title: 'GPT-6 released on...?',
+      outcomes: [19, 20, 21, 22, 23, 24, 25, 26].map((d) => day(d, 0.02)),
+    };
+    const capped = await container.renderToString(Header, {
+      props: { d: dashboard({ markets: { name: 'Polymarket', data: [ladder, buckets], ok: true } }) },
+    });
+    expect(capped).toContain('OPENAI: AT MOST 16% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
   });
 });

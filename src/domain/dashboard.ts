@@ -76,8 +76,9 @@ function driver(lab: LabStatus, read: LabOddsRead): MarketDriver {
     lab: lab.name,
     family: lab.odds!.family,
     p: read.p,
-    read:
-      read.source === 'buckets'
+    read: read.upperBound
+      ? 'ceiling'
+      : read.source === 'buckets'
         ? 'floor'
         : read.lowerBound
           ? 'held'
@@ -87,7 +88,8 @@ function driver(lab: LabStatus, read: LabOddsRead): MarketDriver {
     ...(read.from ? { from: read.from.label } : {}),
     ...(read.to ? { to: read.to.label } : {}),
     ...(quote ? { quote: { label: quote.label, p: quote.quoted } } : {}),
-    url: read.url,
+    // Link the market the headline quotes, so the number on the page is the one on the link.
+    url: quote?.url ?? read.url,
   };
 }
 

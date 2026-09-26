@@ -36,6 +36,7 @@ export function readNote(read: LabOddsRead | undefined): string {
   const to = read.to && shortRung(read.to.label);
   const from = read.from && shortRung(read.from.label);
   if (!read.trusted) return `extrapolated to ${to ?? 'a far rung'} · not scored`;
+  if (read.upperBound) return 'at most · day-bucket asks';
   if (read.source === 'buckets') return 'day-bucket floor';
   if (read.lowerBound) return `at least · held at ${from ?? 'the last rung'}`;
   if (read.interpolated) return from ? `${from} → ${to}` : `now → ${to}`;

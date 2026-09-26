@@ -41,16 +41,18 @@ export interface MarketDriver {
   family: string;
   p: number;
   /**
-   * At a quoted rung; between rungs (or from now to a near first rung); held flat past the last
-   * rung (a lower bound); or a floor of day-bucket best bids.
+   * At a quoted rung; between rungs (or from now to a near first rung); held at a rung (a lower
+   * bound: past the last rung, or short of one more than 14 days out); a floor of day-bucket best
+   * bids; or a ceiling of day-bucket asks the curve read exceeded.
    */
-  read: 'rung' | 'interpolated' | 'held' | 'floor';
+  read: 'rung' | 'interpolated' | 'held' | 'floor' | 'ceiling';
   /** The bracketing rungs' labels, e.g. "September 30" → "October 15". */
   from?: string;
   to?: string;
   /**
    * The quoted rung the headline cites: the one at or before the horizon, else the near one after
-   * it. Its price is the market's own mid (1 − mid for "No release by"), not the fitted curve.
+   * it. Its price is the heaviest market's own mid at that rung (1 − mid for "No release by"), not
+   * the fitted curve; `url` is that market.
    */
   quote?: { label: string; p: number };
   url: string;
@@ -143,17 +145,26 @@ export function shortRung(label: string): string {
   );
 }
 
+/**
+ * The market read in words. It quotes a rung the market shows, and whenever the scored read rounds
+ * to a different number it says so, so the headline never hides the number the level used.
+ */
 function marketSentence(d: MarketDriver, horizon: string): string {
   const who = familyPhrase(d.family);
   if (d.read === 'floor')
     return `Polymarket's day buckets put at least ${pct(d.p)} on ${who} shipping ${horizon}`;
-  if (d.quote) return `Polymarket prices ${pct(d.quote.p)} that ${who} ships by ${shortRung(d.quote.label)}`;
+  if (d.read === 'ceiling') return `Polymarket's day buckets cap ${who} at ${pct(d.p)} ${horizon}`;
+  if (d.quote) {
+    const quoted = `Polymarket prices ${pct(d.quote.p)} that ${who} ships by ${shortRung(d.quote.label)}`;
+    return pct(d.quote.p) === pct(d.p) ? quoted : `${quoted} (${pct(d.p)} ${horizon} on its curve)`;
+  }
   return `Polymarket's curve puts ${pct(d.p)} on ${who} shipping ${horizon}`;
 }
 
 function bracketText(d: MarketDriver): string {
   if (d.read === 'rung') return `quoted at ${d.to}`;
   if (d.read === 'floor') return 'day-bucket best bids';
+  if (d.read === 'ceiling') return 'at most, capped by day-bucket asks';
   if (d.read === 'held') return `at least, held at ${d.from}`;
   if (d.from && d.to) return `interpolated ${d.from} → ${d.to}`;
   return d.to ? `constant hazard from now to ${d.to}` : `held at ${d.from ?? 'the last rung'}`;

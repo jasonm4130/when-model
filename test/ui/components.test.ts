@@ -229,7 +229,7 @@ describe('components', async () => {
     const html = await container.renderToString(Header, { props: { d } });
     expect(html).toContain('STATUS: DEGRADED');
     expect(html).toContain('NEW ON OPENROUTER: CLAUDE FABLE 5.1');
-    expect(html).toContain('OPENAI: 66% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
+    expect(html).toContain('OPENAI: AT LEAST 66% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
     expect(html).toContain('data-ticker-toggle');
     expect(html).toContain('PAUSE TICKER');
     expect(html).toContain('aria-pressed="false"');

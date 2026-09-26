@@ -11,8 +11,10 @@ export interface RungRef {
   deadline: string;
   /** P(released by the deadline) on the monotone curve. */
   p: number;
-  /** The market's own mid before the fit (1 − mid for "No release by"). */
+  /** The heaviest market's own mid at this deadline (1 − mid for "No release by"), before the fit. */
   quoted: number;
+  /** That market. */
+  url: string;
 }
 
 /** One horizon's read off a lab's family curve. */
@@ -25,8 +27,10 @@ export interface LabOddsRead {
   trusted: boolean;
   /** Read between quoted rungs, or between now and a near first rung. */
   interpolated: boolean;
-  /** A floor: past the last rung, or set by day-bucket best bids. */
+  /** A floor: held at a rung, or set by day-bucket best bids. */
   lowerBound: boolean;
+  /** A ceiling: cut to the sum of day-bucket asks, which the curve read exceeded. */
+  upperBound: boolean;
   source: 'curve' | 'buckets';
   from?: RungRef;
   to?: RungRef;
@@ -165,12 +169,14 @@ function toRead(p: number, bracket: CurveBracket, trusted: boolean): LabOddsRead
     deadline: point.deadline,
     p: point.p,
     quoted: point.quoted,
+    url: point.url,
   });
   return {
     p,
     trusted,
     interpolated: bracket.interpolated,
     lowerBound: bracket.lowerBound,
+    upperBound: bracket.upperBound,
     source: bracket.source,
     ...(bracket.from ? { from: rung(bracket.from) } : {}),
     ...(bracket.to ? { to: rung(bracket.to) } : {}),

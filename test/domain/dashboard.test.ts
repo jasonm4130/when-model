@@ -155,10 +155,13 @@ describe('assembleDashboard', () => {
     expect(d.measurement).toMatchObject({ schema: DASHBOARD_SCHEMA, algorithmVersion: 3 });
     expect(DASHBOARD_SCHEMA).toBe(4);
     const { inputs: rec } = d.measurement;
+    // Oct 31 lies 35 days past the 7-day horizon, so the read holds the Sep 22 rung: a floor.
     expect(rec.top7).toMatchObject({
       labId: 'anthropic',
       family: 'Next Claude Sonnet',
-      read: 'interpolated',
+      read: 'held',
+      p: 0.8,
+      url: 'https://polymarket.com/event/anthropic',
     });
     expect(rec.top7?.quote).toEqual({ label: 'September 22', p: 0.8 });
     expect(rec.p7).toBe(d.labs.find((l) => l.id === 'anthropic')!.odds!.p7.p);
@@ -170,6 +173,28 @@ describe('assembleDashboard', () => {
     // The forecast reads every trusted frontier 72h read and is context only.
     expect(d.forecast.labs.map((l) => l.labId).sort()).toEqual(['anthropic', 'openai']);
     expect(d.dropcon.baseRate).toMatch(/^Context, not the level/);
+  });
+
+  it('shows the scored read beside the quoted rung when they differ, and links the quoted market', () => {
+    const early = ladder('anthropic', 'Next Claude Sonnet released by...?', [
+      ['September 22', '2026-09-23T03:59:59Z', 0.5],
+    ]);
+    const late = {
+      ...ladder('anthropic', 'Next Claude Sonnet released on...?', [
+        ['September 30', '2026-10-01T03:59:59Z', 0.9],
+      ]),
+      url: 'https://polymarket.com/event/sonnet-late',
+    };
+    const d = assembleDashboard({ ...empty(), markets: ok('Polymarket', [early, late]) }, NOW);
+    const top7 = d.measurement.inputs.top7!;
+    expect(top7).toMatchObject({ read: 'interpolated', from: 'September 22', to: 'September 30' });
+    // The level scores the interpolated read, so the headline states it next to the rung it quotes.
+    expect(top7.p).toBeGreaterThan(0.7);
+    expect(d.dropcon.headline).toBe(
+      `Polymarket prices 50% that the next Claude Sonnet ships by Sep 22 (${Math.round(top7.p * 100)}% within 7 days on its curve)`,
+    );
+    expect(top7.url).toBe('https://polymarket.com/event/anthropic');
+    expect(d.dropcon.provenance[0].url).toBe(top7.url);
   });
 
   it("prices repricing from the ledger's day-old P7", () => {

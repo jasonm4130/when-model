@@ -305,7 +305,7 @@ export function labReadsAt(
     for (const curve of curves) {
       const li = LABS.indexOf(curve.labId);
       const read = readCurve(curve, at, now);
-      const plain = readCurve({ ...curve, floors: [] }, at, now);
+      const plain = readCurve({ ...curve, floors: [], ceilings: [] }, at, now);
       // Trusted: the curve's own read (no bucket floor), only when a rung at or after the horizon brackets it.
       const trusted =
         plain?.to !== undefined && Date.parse(plain.to.deadline) - at <= TRUSTED_BRACKET_DAYS * DAY * 1000;

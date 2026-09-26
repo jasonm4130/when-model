@@ -19,6 +19,7 @@ import {
   readCurve,
   TRUSTED_BRACKET_DAYS,
   isTrustedRead,
+  bucketCeiling,
   releaseCurveForLab,
   releaseOddsForLab,
   type FamilyCurve,
@@ -488,6 +489,33 @@ describe('readCurve', () => {
     expect([r.from?.label, r.to?.label]).toEqual(['Sep 11', 'Sep 21']);
   });
 
+  it('holds the rung before a read whose next rung is more than 14 days past it', () => {
+    // Live 2026-09-26: Flash-Lite read 15.6% at 7 days across a 61-day gap, 7.5% (Sep 30) to 94.5% (Nov 30).
+    const now = at('2026-09-26T03:22:00Z');
+    const [gap] = familyCurves(
+      [
+        market({
+          labId: 'google',
+          title: 'Next Google Gemini Flash-Lite Model (3.6+) released by…?',
+          url: 'flash-lite',
+          outcomes: [
+            quote('September 30', '2026-10-01T03:59:59.000Z', 0.075),
+            quote('November 30', '2026-12-01T04:59:59.000Z', 0.945),
+          ],
+        }),
+      ],
+      now,
+    );
+    const r7 = readCurve(gap, now + 7 * DAY, now)!;
+    expect(r7).toMatchObject({ p: 0.075, interpolated: false, lowerBound: true, upperBound: false });
+    expect([r7.from?.label, r7.to?.label]).toEqual(['September 30', 'November 30']);
+    expect(isTrustedRead(r7, now + 7 * DAY)).toBe(true);
+    // 14 days short of the next rung, constant hazard is back.
+    const near = at('2026-11-17T04:59:59.000Z');
+    expect(readCurve(gap, near, now)).toMatchObject({ interpolated: true, lowerBound: false });
+    expect(readCurve(gap, near - 1000, now)).toMatchObject({ p: 0.075, lowerBound: true });
+  });
+
   it('reads a quoted deadline exactly and holds the last point as a floor beyond it', () => {
     expect(readCurve(curve, at('2026-09-21T00:00:00Z'), now)).toMatchObject({ p: 0.64, interpolated: false });
     const beyond = readCurve(curve, now + 40 * DAY, now)!;
@@ -582,6 +610,85 @@ describe('familyCurves', () => {
     expect(readCurve(bucketsOnly, now + 12 * 3_600_000, now)).toMatchObject({ p: 0, source: 'buckets' });
   });
 
+  it("caps the curve at the sum of the day buckets' asks when they cover the horizon", () => {
+    // Live 2026-09-26T03:22Z, Muse Spark: the ladder read 31% at 7 days between Sep 30 (14%) and
+    // Oct 16 (85.5%), while buying every bucket up to Oct 2 cost 0.12 + 0.064.
+    const now = at('2026-09-26T03:22:04Z');
+    const bucket = (label: string, deadline: string, bid: number, ask: number, windowStart?: string) =>
+      outcome({
+        label,
+        yes: (bid + ask) / 2,
+        bestBid: bid,
+        bestAsk: ask,
+        deadline,
+        deadlineKind: windowStart ? 'day' : 'window',
+        ...(windowStart ? { windowStart } : {}),
+      });
+    const days = market({
+      labId: 'meta',
+      title: 'Next Muse Spark Model (1.4+) released on…?',
+      url: 'muse-on',
+      outcomes: [
+        bucket('On or prior to October 1', '2026-10-02T03:59:59.000Z', 0.1, 0.12),
+        bucket('October 2', '2026-10-03T03:59:59.000Z', 0.002, 0.064, '2026-10-02T04:00:00.000Z'),
+        bucket('October 3', '2026-10-04T03:59:59.000Z', 0.002, 0.063, '2026-10-03T04:00:00.000Z'),
+      ],
+    });
+    const ladder = market({
+      labId: 'meta',
+      title: 'Next Muse Spark (1.4+) released by…?',
+      url: 'muse-by',
+      outcomes: [
+        quote('September 30', '2026-10-01T03:59:59.000Z', 0.14),
+        quote('October 9', '2026-10-10T03:59:59.000Z', 0.855),
+      ],
+    });
+    const [curve] = familyCurves([days, ladder], now);
+    expect(curve.ceilings).toHaveLength(1);
+    const at7 = now + 7 * DAY;
+    const uncapped = readCurve({ ...curve, ceilings: [] }, at7, now)!;
+    expect(uncapped.p).toBeGreaterThan(0.3);
+    const r = readCurve(curve, at7, now)!;
+    expect(r).toMatchObject({
+      p: 0.184,
+      upperBound: true,
+      lowerBound: false,
+      interpolated: false,
+      source: 'buckets',
+      url: 'muse-on',
+    });
+    expect(isTrustedRead(r, at7)).toBe(true);
+    // Below the ceiling the curve read stands.
+    expect(readCurve(curve, now + 3 * DAY, now)).toMatchObject({ upperBound: false, source: 'curve' });
+  });
+
+  it('only caps when open buckets with asks cover now through the horizon', () => {
+    const now = at('2026-09-26T12:00:00Z');
+    const day = (d: number, ask?: number) => ({
+      start: `2026-09-${d}T04:00:00.000Z`,
+      deadline: `2026-09-${d + 1}T03:59:59.000Z`,
+      ...(ask !== undefined ? { ask } : {}),
+    });
+    const ceiling = (buckets: ReturnType<typeof day>[]) => ({ url: 'u', buckets });
+    const horizon = at('2026-09-28T12:00:00Z');
+    expect(
+      bucketCeiling(ceiling([day(26, 0.1), day(27, 0.2), day(28, 0.3), day(29, 0.4)]), horizon, now),
+    ).toBe(0.6);
+    // An open-ended first bucket covers everything before its deadline.
+    const prior = { deadline: '2026-09-27T03:59:59.000Z', ask: 0.05 };
+    expect(bucketCeiling({ url: 'u', buckets: [prior, day(27, 0.2), day(28, 0.3)] }, horizon, now)).toBe(
+      0.55,
+    );
+    // A missing day, a bucket nobody offers, buckets that start after now or stop short: no cap.
+    expect(bucketCeiling(ceiling([day(26, 0.1), day(28, 0.3)]), horizon, now)).toBeUndefined();
+    expect(bucketCeiling(ceiling([day(26, 0.1), day(27), day(28, 0.3)]), horizon, now)).toBeUndefined();
+    expect(bucketCeiling(ceiling([day(27, 0.2), day(28, 0.3)]), horizon, now)).toBeUndefined();
+    expect(bucketCeiling(ceiling([day(26, 0.1), day(27, 0.2)]), horizon, now)).toBeUndefined();
+    expect(bucketCeiling(ceiling([]), horizon, now)).toBeUndefined();
+    // Asks can sum past 1; the cap never does.
+    expect(bucketCeiling(ceiling([day(26, 0.5), day(27, 0.5), day(28, 0.5)]), horizon, now)).toBe(1);
+  });
+
   it('keeps an "on or before" ladder cumulative instead of summing its rungs as buckets', () => {
     const rung = (day: number, p: number) => ({
       question: `Will GPT-6 be released on or before October ${day}, 2026?`,
@@ -600,6 +707,7 @@ describe('familyCurves', () => {
     const now = at('2026-09-28T00:00:00Z');
     const [curve] = familyCurves([ladder], now);
     expect(curve.floors).toEqual([]);
+    expect(curve.ceilings).toEqual([]);
     expect(curve.points.map((p) => p.p)).toEqual([0.3, 0.6, 0.7]);
     // Summed as buckets, the bids would have claimed a certain release by October 20.
     expect(readCurve(curve, at('2026-10-21T12:00:00Z'), now)).toMatchObject({ p: 0.7, lowerBound: true });
@@ -712,8 +820,10 @@ describe('release curves on live markets', () => {
   it('reads Google\'s live "No release by September 30" at 97.55% as 2.45% release odds', () => {
     const gemini = curve('google', 'gemini pro');
     const sep30 = gemini.points.find((p) => p.deadline === '2026-10-01T03:59:59.000Z')!;
-    // Pooled with the ladder's own Sep 30 rung (2.65%), weighted by liquidity.
-    expect(sep30.quoted).toBeCloseTo(0.0253, 4);
+    // The fit pools it with the ladder's own Sep 30 rung (2.65%), weighted by liquidity; the quote
+    // the headline cites stays the heaviest market's own mid.
+    expect(sep30.pooled).toBeCloseTo(0.0253, 4);
+    expect(sep30.quoted).toBeCloseTo(0.0245, 6);
     const noRelease = toMarket(
       releasesPage.events.find(
         (e) => e.title === 'Next Google Gemini Pro Model released on...?',
@@ -756,7 +866,18 @@ describe('release curves on live markets', () => {
     expect(qwen.family).toBe('Next Alibaba Qwen Plus (3.8+)');
     expect(qwen.p7).toBeLessThan(0.1);
 
-    expect(releaseCurveForLab(markets, 'meta', NOW)?.family).toBe('Next Muse Spark (1.4+)');
+    // At 72 hours the Sep 27 → Sep 29 interpolation read 55%; the "released on" buckets up to Sep 28
+    // cost 0.47 in all, so the read is capped there.
+    expect(sonnet.bracket72).toMatchObject({ upperBound: true, source: 'buckets' });
+    expect(sonnet.bracket72.url).toContain('next-claude-sonnet-released-on');
+    expect(sonnet.p72).toBeCloseTo(0.47, 6);
+
+    // Muse Spark's next rung after Sep 30 is Oct 16, over 14 days past the 7-day horizon: held at 14%.
+    const muse = releaseCurveForLab(markets, 'meta', NOW)!;
+    expect(muse.family).toBe('Next Muse Spark (1.4+)');
+    expect(muse.bracket7).toMatchObject({ lowerBound: true, interpolated: false });
+    expect(muse.p7).toBe(0.14);
+    expect(muse.trusted7).toBe(true);
     expect(releaseCurveForLab(markets, 'google', NOW)?.p7).toBeCloseTo(0.0368, 4);
     expect(releaseCurveForLab(markets, 'openai', NOW)).toBeUndefined();
   });
@@ -833,10 +954,18 @@ describe('displayOutcomes with parsed deadlines', () => {
 });
 
 describe('isTrustedRead', () => {
-  const to = (deadline: string) => ({ deadline, p: 0.5, quoted: 0.5, label: 'x', url: 'u', spread: 0.01 });
+  const to = (deadline: string) => ({
+    deadline,
+    p: 0.5,
+    quoted: 0.5,
+    pooled: 0.5,
+    label: 'x',
+    url: 'u',
+    spread: 0.01,
+  });
   const at7 = at('2026-09-08T00:00:00Z');
   it('distrusts only a constant-hazard stretch to a first rung more than 14 days past the horizon', () => {
-    const base = { interpolated: true, lowerBound: false, url: 'u' } as const;
+    const base = { interpolated: true, lowerBound: false, upperBound: false, url: 'u' } as const;
     expect(isTrustedRead({ ...base, source: 'curve', to: to('2026-09-22T00:00:00Z') }, at7)).toBe(true);
     expect(isTrustedRead({ ...base, source: 'curve', to: to('2026-09-22T00:00:01Z') }, at7)).toBe(false);
     expect(

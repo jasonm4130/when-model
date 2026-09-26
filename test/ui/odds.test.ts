@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { LabOddsRead } from '../../src/domain/lab-status';
 import { dropconNumber, dropconPill, dropconTitle, readNote, readValue } from '../../src/ui/odds';
 
-const rung = (label: string) => ({ label, deadline: '2026-09-30T03:59:59Z', p: 0.5, quoted: 0.5 });
+const rung = (label: string) => ({ label, deadline: '2026-09-30T03:59:59Z', p: 0.5, quoted: 0.5, url: 'u' });
 const read = (over: Partial<LabOddsRead>): LabOddsRead => ({
   p: 0.42,
   trusted: true,
   interpolated: false,
   lowerBound: false,
+  upperBound: false,
   source: 'curve',
   url: 'u',
   ...over,
@@ -43,6 +44,7 @@ describe('odds reads', () => {
     );
     expect(readNote(read({ trusted: false }))).toBe('extrapolated to a far rung · not scored');
     expect(readNote(read({ source: 'buckets', lowerBound: true }))).toBe('day-bucket floor');
+    expect(readNote(read({ source: 'buckets', upperBound: true }))).toBe('at most · day-bucket asks');
     expect(readNote(read({ lowerBound: true, from: rung('September 24') }))).toBe(
       'at least · held at Sep 24',
     );

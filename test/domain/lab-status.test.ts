@@ -161,13 +161,20 @@ describe('assessLab', () => {
     // 72h: constant hazard from now to the Sep 24 rung, 2.6 days past the horizon, so trusted.
     expect(s.odds?.p72).toMatchObject({ trusted: true, interpolated: true, to: { label: 'September 24' } });
     expect(s.odds?.p72.from).toBeUndefined();
-    // 7d and 30d sit between the two rungs.
+    // 7d: the next rung (Oct 31) lies 36 days past the horizon, so the read holds Sep 24, a floor.
     expect(s.odds?.p7).toMatchObject({
       trusted: true,
-      interpolated: true,
-      from: { label: 'September 24', quoted: 0.7 },
+      interpolated: false,
+      lowerBound: true,
+      upperBound: false,
+      from: { label: 'September 24', url: market.url },
+      to: { label: 'October 31' },
     });
-    expect(s.odds?.p7.p).toBeGreaterThan(0.7);
+    expect(s.odds?.p7.p).toBeCloseTo(0.7, 9);
+    expect(s.odds?.p7.from?.quoted).toBeCloseTo(0.7, 9);
+    // 30d sits 12.7 days short of Oct 31, close enough to interpolate.
+    expect(s.odds?.p30).toMatchObject({ trusted: true, interpolated: true, lowerBound: false });
+    expect(s.odds?.p30.p).toBeGreaterThan(0.7);
     expect(s.odds?.p30.p).toBeLessThan(0.9);
     expect(s.leaderboardOdds).toBe(0.31);
     expect(s.status).toBe('SHIPPING');
