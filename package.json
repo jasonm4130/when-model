@@ -22,7 +22,8 @@
     "test:e2e": "playwright test",
     "lint": "oxlint && oxfmt --check",
     "format": "oxfmt",
-    "backtest": "tsx scripts/backtest/run.ts"
+    "backtest": "tsx scripts/backtest/run.ts",
+    "backtest:replay": "tsx scripts/backtest/replay.ts"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.2",
