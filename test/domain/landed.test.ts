@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Drop } from '../../src/domain/drop';
 import type { FeedItem } from '../../src/domain/feed';
-import { LAUNCH_STORY_POINTS, buildLanded, canonicalUrl } from '../../src/domain/landed';
+import { FEED_DAY_MAX_LAG_MS, LAUNCH_STORY_POINTS, buildLanded, canonicalUrl } from '../../src/domain/landed';
 
 const NOW = Date.parse('2026-09-26T03:00:00Z');
 const HOUR = 3_600_000;
@@ -137,5 +137,48 @@ describe('buildLanded', () => {
       ['anthropic', '2026-09-25T17:45:00.000Z', 'day'],
     ]);
     expect(l.models.sort()).toEqual(['claude-opus-5.5', 'gpt-6-sol']);
+  });
+
+  it('ignores a sighting more than 36 hours after a dated post: that is a missed baseline, not news', () => {
+    // Live cold build: Grok 4.5's note (2026-07-08) was off the 60-item feed on the seeding
+    // capture and was first recorded months later, so it resurfaced as a fresh announcement.
+    const grok: FeedItem = {
+      source: 'xai',
+      title: 'Grok 4.5',
+      url: 'https://docs.x.ai/developers/release-notes#grok-45',
+      publishedAt: '2026-07-08T00:00:00.000Z',
+      precision: 'day',
+      alert: true,
+    };
+    const fresh: FeedItem = {
+      ...grok,
+      title: 'Grok 4.8',
+      url: `${grok.url}-8`,
+      publishedAt: '2026-09-24T00:00:00.000Z',
+    };
+    const within = new Date(Date.parse(fresh.publishedAt) + FEED_DAY_MAX_LAG_MS).toISOString();
+    const l = buildLanded(
+      {
+        drops: [],
+        feed: [grok, fresh],
+        feedDaySeen: new Map([
+          [grok.url, '2026-09-25T04:00:00.000Z'],
+          [fresh.url, within],
+        ]),
+      },
+      NOW,
+    );
+    expect(FEED_DAY_MAX_LAG_MS).toBe(36 * HOUR);
+    expect(l.announcements.map((a) => [a.title, a.seenAt])).toEqual([['Grok 4.8', within]]);
+    // One second later the sighting is too late to trust, and the printed date stands.
+    const late = buildLanded(
+      {
+        drops: [],
+        feed: [fresh],
+        feedDaySeen: new Map([[fresh.url, new Date(Date.parse(within) + 1000).toISOString()]]),
+      },
+      NOW,
+    );
+    expect(late.announcements.map((a) => a.seenAt)).toEqual([fresh.publishedAt]);
   });
 });

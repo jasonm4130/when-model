@@ -58,6 +58,12 @@ export interface Dashboard {
   trending: TrendingRepo[];
   papers: Paper[];
   feed: FeedItem[];
+  /**
+   * Every day-precision item fetched, uncapped: the first-seen ledger records these. `feed` is
+   * capped at 60, so on a busy capture an older dated post falls off it, is missing from the
+   * seeding baseline, and would later read as newly seen.
+   */
+  feedDay: Pick<FeedItem, 'source' | 'url' | 'title' | 'publishedAt'>[];
   sources: { name: string; ok: boolean; error?: string }[];
 }
 
@@ -136,6 +142,9 @@ export function assembleDashboard(inputs: DashboardInputs, now: number): Dashboa
 
   const allFeed = inputs.feeds.flatMap((f) => f.data);
   const feed = newestFirst(allFeed).slice(0, LIMITS.feed);
+  const feedDay = allFeed
+    .filter((f) => f.precision === 'day')
+    .map(({ source, url, title, publishedAt }) => ({ source, url, title, publishedAt }));
 
   const earlyWarnings = buildEarlyWarnings(
     {
@@ -182,6 +191,7 @@ export function assembleDashboard(inputs: DashboardInputs, now: number): Dashboa
     trending: inputs.trending.data,
     papers: inputs.papers.data,
     feed,
+    feedDay,
     sources,
   };
 }

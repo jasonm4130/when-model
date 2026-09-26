@@ -140,8 +140,9 @@ export function firstSeenBatches(dashboard: Dashboard): FirstSeenBatch[] {
     batches.push({
       kind: feedDayKind(source),
       source,
-      items: dashboard.feed
-        .filter((f) => f.source === source && f.precision === 'day')
+      // The uncapped list landed reads, not the 60-item display feed (review RT-1).
+      items: dashboard.feedDay
+        .filter((f) => f.source === source)
         .map((f) => ({ key: f.url, meta: { title: f.title, publishedAt: f.publishedAt } })),
     });
   }

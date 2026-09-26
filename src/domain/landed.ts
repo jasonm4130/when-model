@@ -12,6 +12,12 @@ const LAB_FEEDS: ReadonlySet<FeedSource> = new Set<FeedSource>(['openai', 'deepm
 
 /** Stories need this much traction to count as a launch event (F4). */
 export const LAUNCH_STORY_POINTS = 150;
+/**
+ * A date-only post is pinned to 00:00Z of its date, so its first sighting can trail that by a
+ * day plus time zones and the 15-minute cron. A sighting later than this is a missed baseline
+ * (a busy capture, an outage, the 90-day prune), not news, so the printed date stands.
+ */
+export const FEED_DAY_MAX_LAG_MS = 36 * 3_600_000;
 const BANNER_HOURS = 48;
 const HOUR_MS = 3_600_000;
 
@@ -132,7 +138,11 @@ export function buildLanded(input: LandedInputs, now: number): Landed {
   for (const f of input.feed) {
     if (!LAB_FEEDS.has(f.source) || !f.alert) continue;
     const precision = f.precision ?? 'instant';
-    const seenAt = (precision === 'day' ? input.feedDaySeen?.get(f.url) : undefined) ?? f.publishedAt;
+    const sighted = precision === 'day' ? input.feedDaySeen?.get(f.url) : undefined;
+    const seenAt =
+      sighted && Date.parse(sighted) - Date.parse(f.publishedAt) <= FEED_DAY_MAX_LAG_MS
+        ? sighted
+        : f.publishedAt;
     const key = canonicalUrl(f.url);
     if (!withinDays(seenAt, 7, now) || announcementUrls.has(key)) continue;
     announcementUrls.add(key);

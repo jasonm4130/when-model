@@ -148,6 +148,36 @@ describe('firstSeenBatches', () => {
     ]);
   });
 
+  it('records every dated post fetched, not just the ones inside the 60-item display feed', () => {
+    const hn = Array.from({ length: 70 }, (_, i) => ({
+      source: 'hn' as const,
+      title: `Story ${i}`,
+      url: `https://hn.test/${i}`,
+      publishedAt: new Date(NOW - (i + 1) * 60_000).toISOString(),
+      alert: false,
+    }));
+    const old = {
+      source: 'xai' as const,
+      title: 'Grok 4.5',
+      url: 'https://docs.x.ai/developers/release-notes#grok-45',
+      publishedAt: '2026-07-08T00:00:00.000Z',
+      precision: 'day' as const,
+      alert: true,
+    };
+    const d = assembleDashboard(
+      inputs({
+        feeds: [
+          { name: 'Hacker News', ok: true, data: hn },
+          { name: 'xAI news', ok: true, data: [old] },
+        ],
+      }),
+      NOW,
+    );
+    expect(d.feed.some((f) => f.url === old.url)).toBe(false);
+    const xai = firstSeenBatches(d).find((b) => b.kind === 'feed-day:xai');
+    expect(xai?.items.map((i) => i.key)).toEqual([old.url]);
+  });
+
   it('records nothing from a source that failed or returned a partial list', () => {
     const batches = firstSeenBatches(
       assembleDashboard(
