@@ -21,8 +21,9 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes.
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
-  early-warning track lines, per-lab lead flags and source-health pills). Browser code is limited to the clock,
-  refresh countdown, relative timestamps, ticker behavior and the 5-minute poll-and-offer reload.
+  early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
+  source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
+  source pills aging to STALE, ticker behavior and the 5-minute poll-and-offer reload.
 
 Rules of the house:
 
@@ -40,6 +41,10 @@ Rules of the house:
   until `pnpm backtest:replay` shows it adds out-of-sample skill. Any scoring change bumps
   `DROPCON_ALGORITHM_VERSION`: history breaks its series at a version change and the repricing
   term reads only same-version rows.
+- What the markets, drops and feed panels show comes from `src/ui/panels.ts`, and the refresh fingerprint
+  (`src/ui/fingerprint.ts`) reads the same selections. A panel that starts printing a new field adds it to
+  `visibleContent` at its displayed precision; never hash raw floats or anything that moves with the clock,
+  or every poll offers NEW DATA. A panel's status pill comes from `sourcePill`, never a literal "LIVE".
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
   deploy by up to its TTL and a new render reading an old shape streams a blank page. The
   compact D1 snapshot must stay under 32 KiB (`MAX_SNAPSHOT_BYTES`); the worst-case test in

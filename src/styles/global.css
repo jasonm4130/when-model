@@ -660,3 +660,71 @@ hr.neon {
     display: none;
   }
 }
+
+/* == wp9b == */
+/* Panel expanders (UI-10). A <details class="fold"> holds the rows past a phone's cap. `fold-480` and
+   `fold-900` are expanders only below that width: above it the summary goes and the rows flow inline, where
+   ::details-content is supported. Elsewhere the expander simply shows at every width. */
+.fold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px dashed var(--line2);
+  background: rgba(0, 229, 255, 0.04);
+  color: var(--cyan);
+  transition:
+    border-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+.fold-summary::after {
+  content: '▼';
+}
+.fold[open] > .fold-summary::after {
+  content: '▲';
+}
+.fold-summary:hover {
+  border-color: var(--cyan);
+  color: #fff;
+}
+@supports selector(::details-content) {
+  @media (min-width: 481px) {
+    .fold-480 {
+      display: contents;
+    }
+    .fold-480 > .fold-summary {
+      display: none;
+    }
+    .fold-480::details-content {
+      display: contents;
+      content-visibility: visible;
+    }
+  }
+  @media (min-width: 901px) {
+    .fold-900 {
+      display: contents;
+    }
+    .fold-900 > .fold-summary {
+      display: none;
+    }
+    .fold-900::details-content {
+      display: contents;
+      content-visibility: visible;
+    }
+  }
+}
+/* Listing badges, shared by the Fresh Drops table and its phone rows. */
+.tag.vis,
+.tag.stealth {
+  margin-left: 6px;
+}
+.tag.vis {
+  color: var(--cyan);
+}
+.tag.stealth {
+  color: var(--yellow);
+}
+/* == /wp9b == */

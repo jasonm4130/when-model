@@ -30,7 +30,7 @@ const fingerprint = dashboardFingerprint(d);
     </div>
     <div class="right">
       <span class="tiny muted sync">SYNC <span data-synced={d.generatedAt}>{d.generatedAt.slice(11, 19)}Z</span> · NEXT <span class="glow-y" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
-      <button type="button" class="tiny refresh-toggle" data-refresh-toggle aria-pressed="false">PAUSE AUTO-REFRESH</button>
+      <button type="button" class="tiny refresh-toggle" data-refresh-toggle aria-pressed="false"><span data-refresh-verb>PAUSE</span><span class="rt-noun"> AUTO-REFRESH</span></button>
       <span class="refresh-status" aria-live="polite" data-reload-status data-fingerprint={fingerprint}></span>
       <span class="clock glow-c" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
     </div>
@@ -106,7 +106,10 @@ const fingerprint = dashboardFingerprint(d);
     .statusbar .left, .statusbar .right { gap: 8px; }
     /* UI-06: on a real Safari viewport (~664px tall) the header has to leave room for DROPCON above the fold,
        so the statusbar drops everything but STATUS and the clock, and the hero drops the tag-line and brands. */
-    .counts, .sync, .refresh-toggle { display: none; }
+    .counts, .sync { display: none; }
+    /* The pause toggle stays: a 44px target that reads PAUSE, while its accessible name keeps AUTO-REFRESH. */
+    .refresh-toggle { padding: 6px 10px; min-width: 44px; }
+    .rt-noun { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
     .hero-inner { padding-block: 18px 16px; gap: 10px; }
     .logo { margin: 8px 0; }
     .tag-line { display: none; }
@@ -145,10 +148,12 @@ const fingerprint = dashboardFingerprint(d);
     }
   };
   let autoRefreshPaused = readPaused();
-  if (refreshToggle) {
-    refreshToggle.setAttribute('aria-pressed', String(autoRefreshPaused));
-    refreshToggle.textContent = autoRefreshPaused ? 'RESUME AUTO-REFRESH' : 'PAUSE AUTO-REFRESH';
-  }
+  const refreshVerb = refreshToggle?.querySelector<HTMLElement>('[data-refresh-verb]');
+  const showPaused = () => {
+    refreshToggle?.setAttribute('aria-pressed', String(autoRefreshPaused));
+    if (refreshVerb) refreshVerb.textContent = autoRefreshPaused ? 'RESUME' : 'PAUSE';
+  };
+  showPaused();
 
   // The baseline is what this page rendered, not the first poll: a tab opened in the background and read
   // twenty minutes later must still offer the data it has never shown.
@@ -234,7 +239,6 @@ const fingerprint = dashboardFingerprint(d);
   refreshToggle?.addEventListener('click', () => {
     autoRefreshPaused = !autoRefreshPaused;
     writePaused(autoRefreshPaused);
-    refreshToggle.setAttribute('aria-pressed', String(autoRefreshPaused));
-    refreshToggle.textContent = autoRefreshPaused ? 'RESUME AUTO-REFRESH' : 'PAUSE AUTO-REFRESH';
+    showPaused();
   });
 </script>

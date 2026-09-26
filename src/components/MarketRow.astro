@@ -1,0 +1,41 @@
+---
+import { displayOutcomes, type Market } from '../domain/market';
+import { usd } from '../ui/format';
+import { outcomeOdds } from '../ui/odds';
+interface Props {
+  m: Market;
+  /** Outcomes to show. */
+  limit: number;
+  /** Benchmark and other markets: no lab dot, cyan odds, bare volume. */
+  compact?: boolean;
+  color?: string;
+  i?: number;
+}
+const { m, limit, compact = false, color = 'var(--cyan)', i = 0 } = Astro.props;
+const THIN = 'Thin book: bid–ask range, not odds';
+const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--yellow)' : 'var(--muted)');
+---
+<a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener" style={`--lab:${color}; --i:${i}`}>
+  <div class="mtitle">{!compact && <span class="mdot" aria-hidden="true"></span>}<span class="mname">{m.title}</span><span class="muted vol">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
+  <div class="outs">
+    {displayOutcomes(m, limit).map((o) => {
+      const odds = outcomeOdds(o);
+      if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {o.label}</span>;
+      return compact
+        ? <span class="out"><b class="glow-c">{odds.text}</b> {o.label}</span>
+        : <span class="out"><b style={`color:${oddsColor(o.yes)}`}>{odds.text}</b> {o.label}</span>;
+    })}
+  </div>
+</a>
+<style>
+  .mrow { --accent: var(--lab, var(--cyan)); }
+  .mrow:hover { border-left-color: var(--accent); }
+  /* UI-12: a grid keeps the dot on the title's first line and the volume in its own column however the title wraps. */
+  .mtitle { font-size: var(--fs-body); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-size: var(--fs-sm); }
+  .mdot { width: 8px; height: 8px; background: var(--lab); box-shadow: 0 0 8px var(--lab); display: inline-block; align-self: start; margin-top: 0.45em; }
+  .vol { font-size: var(--fs-xs); white-space: nowrap; }
+  .outs { display: flex; gap: 2px 14px; flex-wrap: wrap; margin-top: 3px; font-size: var(--fs-sm); color: var(--muted); }
+  .out b { font-weight: 400; }
+  .out b.thin { color: var(--muted); }
+</style>

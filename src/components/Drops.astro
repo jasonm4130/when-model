@@ -1,57 +1,108 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
-import type { Drop } from '../domain/drop';
-import { ago, ctx, num, perMillion, shortDate } from '../ui/format';
+import { SOURCE } from '../domain/sources';
+import { ago, ctx, num, shortDate } from '../ui/format';
+import { MOBILE_DROPS, PANEL_ROWS, dropPrice, sourceOk, sourcePill, stealthIds } from '../ui/panels';
+import DropItem from './DropItem.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const now = Date.now();
-const drops = d.drops.slice(0, 22);
 const FRESH_MS = 3 * 86_400_000;
-function price(x: Drop) {
-  if (x.free) return 'FREE';
-  if (x.promptPerM === undefined) return '—';
-  return `${perMillion(x.promptPerM)} / ${perMillion(x.completionPerM ?? 0)}`;
-}
+const stealth = stealthIds(d);
+const rows = d.drops.slice(0, PANEL_ROWS.drops).map((x) => {
+  const lab = d.labs.find((l) => l.id === x.labId);
+  const fresh = now - Date.parse(x.createdAt) < FRESH_MS;
+  return {
+    x,
+    lab: lab ? lab.short : x.lab,
+    labColor: lab?.color ?? 'var(--muted)',
+    fresh,
+    when: fresh ? ago(x.createdAt, now) : shortDate(x.createdAt),
+    price: dropPrice(x),
+    vision: !!x.modality?.includes('image'),
+    stealth: stealth.has(x.id),
+  };
+});
+const papers = d.papers.slice(0, PANEL_ROWS.papers);
+const pills = {
+  drops: sourcePill(d.sources, [SOURCE.openrouter], d.generatedAt, now),
+  trending: sourcePill(d.sources, [SOURCE.hfTrending], d.generatedAt, now),
+  papers: sourcePill(d.sources, [SOURCE.hfPapers], d.generatedAt, now),
+};
+const papersUp = sourceOk(d.sources, SOURCE.hfPapers);
+const item = (r: (typeof rows)[number]) => ({
+  name: r.x.name,
+  url: r.x.url,
+  lab: r.lab,
+  labColor: r.labColor,
+  ctx: ctx(r.x.context),
+  price: r.price,
+  free: r.x.free,
+  vision: r.vision,
+  stealth: r.stealth,
+  fresh: r.fresh,
+  when: r.when,
+  createdAt: r.x.createdAt,
+});
 ---
 <section class="section wrap reveal">
   <div class="grid grid-2">
     <div class="panel">
-      <div class="panel-head"><h2><span>▼</span>FRESH DROPS</h2><span class="pill live">OPENROUTER · NEWEST LISTINGS</span></div>
-      {drops.length ? (
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>Landed</th><th>Model</th><th>Lab</th><th class="num">Ctx</th><th class="num">$/M in / out</th></tr></thead>
-            <tbody>
-              {drops.map((x) => {
-                const lab = d.labs.find((l) => l.id === x.labId);
-                const fresh = now - Date.parse(x.createdAt) < FRESH_MS;
-                return (
-                  <tr class={fresh ? 'fresh' : ''}>
-                    <td class="muted" title={x.createdAt}>{fresh ? <span class="glow-m">{ago(x.createdAt, now)}</span> : shortDate(x.createdAt)}</td>
-                    <td><a href={x.url} target="_blank" rel="noopener">{x.name}</a>{x.modality?.includes('image') && <span class="tag vis">VIS</span>}</td>
-                    <td style={`color:${lab?.color ?? 'var(--muted)'}`}>{lab ? lab.short : x.lab}</td>
-                    <td class="num muted">{ctx(x.context)}</td>
-                    <td class={`num ${x.free ? 'glow-g' : ''}`}>{price(x)}</td>
+      <div class="panel-head">
+        <h2><span aria-hidden="true">▼</span>FRESH DROPS</h2>
+        <span class={`pill ${pills.drops.tone}`} title={pills.drops.title} data-source-pill data-stale-at={pills.drops.staleAt} data-stale-text={pills.drops.staleText}>{pills.drops.text}</span>
+      </div>
+      {rows.length ? (
+        <>
+          <div class="table-scroll drop-table">
+            <table>
+              <caption class="sr-only">Newest OpenRouter listings</caption>
+              <thead><tr><th scope="col">Landed</th><th scope="col">Model</th><th scope="col">Lab</th><th scope="col" class="num">Ctx</th><th scope="col" class="num">$/M in / out</th></tr></thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr class={r.fresh ? 'fresh' : ''}>
+                    <td class="muted landed" title={r.x.createdAt}>{r.fresh ? <span class="glow-m" data-time={r.x.createdAt}>{r.when}</span> : r.when}</td>
+                    <td><a href={r.x.url} target="_blank" rel="noopener">{r.x.name}</a>{r.stealth && <span class="tag stealth">STEALTH</span>}{r.vision && <span class="tag vis">VIS</span>}</td>
+                    <td style={`color:${r.labColor}`}>{r.lab}</td>
+                    <td class="num muted">{ctx(r.x.context)}</td>
+                    <td class={`num ${r.x.free ? 'glow-g' : ''}`}>{r.price}</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : <p class="empty">OpenRouter unreachable.</p>}
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div class="drop-stack">
+            <ol class="drop-list">
+              {rows.slice(0, MOBILE_DROPS).map((r) => <DropItem {...item(r)} />)}
+            </ol>
+            {rows.length > MOBILE_DROPS && (
+              <details class="fold">
+                <summary class="fold-summary tiny">{rows.length - MOBILE_DROPS} MORE LISTINGS</summary>
+                <ol class="drop-list" start={MOBILE_DROPS + 1}>
+                  {rows.slice(MOBILE_DROPS).map((r) => <DropItem {...item(r)} />)}
+                </ol>
+              </details>
+            )}
+          </div>
+        </>
+      ) : <p class="empty">{sourceOk(d.sources, SOURCE.openrouter) ? 'No new listings on OpenRouter.' : 'OpenRouter unreachable. Listings return when it does.'}</p>}
     </div>
 
     <div class="panel">
-      <div class="panel-head"><h2><span>▲</span>OPEN WEIGHTS TRENDING</h2><span class="pill">HUGGING FACE · TEXT-GEN</span></div>
+      <div class="panel-head">
+        <h2><span aria-hidden="true">▲</span>OPEN WEIGHTS TRENDING</h2>
+        <span class={`pill ${pills.trending.tone}`} title={pills.trending.title} data-source-pill data-stale-at={pills.trending.staleAt} data-stale-text={pills.trending.staleText}>{pills.trending.text}</span>
+      </div>
       {d.trending.length ? (
         <div class="table-scroll">
           <table>
-            <thead><tr><th>#</th><th>Repo</th><th class="num">♥</th><th class="num">DLs</th><th class="num">Age</th></tr></thead>
+            <caption class="sr-only">Trending text-generation repos on Hugging Face</caption>
+            <thead><tr><th scope="col">#</th><th scope="col">Repo</th><th scope="col" class="num"><span aria-hidden="true">♥</span><span class="sr-only">Likes</span></th><th scope="col" class="num">DLs</th><th scope="col" class="num">Age</th></tr></thead>
             <tbody>
               {d.trending.map((t, i) => (
                 <tr>
                   <td class="muted">{i + 1}</td>
-                  <td><a href={t.url} target="_blank" rel="noopener">{t.id}</a></td>
+                  <td class="repo"><a href={t.url} target="_blank" rel="noopener">{t.id}</a></td>
                   <td class="num glow-m">{num(t.likes)}</td>
                   <td class="num muted">{num(t.downloads)}</td>
                   <td class="num muted">{ago(t.createdAt, now).replace(' ago', '')}</td>
@@ -60,19 +111,32 @@ function price(x: Drop) {
             </tbody>
           </table>
         </div>
-      ) : <p class="empty">Hugging Face unreachable.</p>}
-      {d.papers.length > 0 && (
+      ) : <p class="empty">{sourceOk(d.sources, SOURCE.hfTrending) ? 'Nothing trending right now.' : 'Hugging Face unreachable.'}</p>}
+      {(papers.length > 0 || !papersUp) && (
         <>
-          <div class="panel-head sub-head"><h2><span>§</span>PAPERS OF THE DAY</h2></div>
-          <ul class="list papers">
-            {d.papers.slice(0, 6).map((p) => <li><span class="glow-y">▲{p.upvotes}</span> <a href={p.url} target="_blank" rel="noopener">{p.title}</a></li>)}
-          </ul>
+          <div class="panel-head sub-head">
+            <h2><span aria-hidden="true">§</span>PAPERS OF THE DAY</h2>
+            <span class={`pill ${pills.papers.tone}`} title={pills.papers.title} data-source-pill data-stale-at={pills.papers.staleAt} data-stale-text={pills.papers.staleText}>{pills.papers.text}</span>
+          </div>
+          {papers.length ? (
+            <ul class="list papers">
+              {papers.map((p) => <li><span class="glow-y">▲{p.upvotes}</span> <a href={p.url} target="_blank" rel="noopener">{p.title}</a></li>)}
+            </ul>
+          ) : <p class="empty">Hugging Face papers unreachable.</p>}
         </>
       )}
     </div>
   </div>
 </section>
 <style>
-  .vis { color: var(--cyan); margin-left: 6px; }
-  .papers { font-size: 19px; }
+  .landed { white-space: nowrap; }
+  .repo { overflow-wrap: anywhere; }
+  .papers { font-size: var(--fs-md); }
+  .drop-list { list-style: none; margin: 0; padding: 0; }
+  .drop-stack { display: none; }
+  /* UI-10: on a phone the five-column table cut off its price column; stacked rows keep every field. */
+  @media (max-width: 480px) {
+    .drop-table { display: none; }
+    .drop-stack { display: block; }
+  }
 </style>

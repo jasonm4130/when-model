@@ -119,10 +119,21 @@ function bookFields(market: PolymarketMarketDto, yes: number): Partial<Outcome> 
   };
 }
 
+/**
+ * The outcome's name. A lone yes/no question is answered "Yes", including when Gamma copies the question
+ * into `groupItemTitle`; a lone outcome with a name of its own ("September 30") keeps it.
+ */
+function outcomeLabel(market: PolymarketMarketDto, single: boolean): string {
+  const own = market.groupItemTitle?.trim();
+  const echoesQuestion = !!own && own.toLowerCase() === market.question?.trim().toLowerCase();
+  if (own && !(single && echoesQuestion)) return own;
+  return single ? 'Yes' : market.question || '?';
+}
+
 function toOutcome(market: PolymarketMarketDto, context: OutcomeContext): Outcome {
   const yes = yesIndex(market);
   const outcome: Outcome = {
-    label: market.groupItemTitle || (context.single ? 'Yes' : market.question) || '?',
+    label: outcomeLabel(market, context.single),
     yes: yesPrice(market, yes),
     endDate: market.endDate,
     closed: !!market.closed,

@@ -29,7 +29,7 @@ test.describe('mobile header (UI-05, UI-06)', () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(664);
   });
 
-  test('reduces the statusbar to STATUS and the clock, and hides the tag-line and brands, at 480px and below', async ({
+  test('reduces the statusbar to STATUS, the auto-refresh pause and the clock, and hides the tag-line and brands, at 480px and below', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -40,7 +40,8 @@ test.describe('mobile header (UI-05, UI-06)', () => {
     await expect(page.locator('.counts')).toBeHidden();
     await expect(page.locator('.sync')).toBeHidden();
     await expect(page.locator('.clock')).toHaveText(/^\d{2}:\d{2}:\d{2}Z$/);
-    await expect(page.locator('.refresh-toggle')).toBeHidden();
+    // The pause stays reachable on a phone, as a 44px target (see panels.spec.ts).
+    await expect(page.locator('.refresh-toggle')).toBeVisible();
     await expect(page.locator('.tag-line')).toBeHidden();
     await expect(page.locator('.brands')).toBeHidden();
   });
@@ -207,7 +208,7 @@ test.describe('polling refresh (UI-11)', () => {
     await pollOnce(page); // new data arrives
     await expect(page.locator('[data-reload-status] .pill')).toBeVisible();
 
-    const details = page.locator('details').first();
+    const details = page.locator('details.panel').first(); // an FAQ answer: the panel folds are inline at this width
     await details.locator('summary').click();
     await expect(details).toHaveJSProperty('open', true);
 

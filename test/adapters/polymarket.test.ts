@@ -83,6 +83,13 @@ describe('toMarket', () => {
     expect(social.outcomes.map((o) => o.label)).toEqual(['Yes']);
     // A lone outcome that has its own name keeps it.
     expect(toMarket(opus)!.outcomes[0].label).toBe('September 30');
+    // Gamma sometimes copies the question into groupItemTitle; the answer is still "Yes".
+    const echoed = event('Will OpenAI release a social network in 2026?');
+    const copy = {
+      ...echoed,
+      markets: echoed.markets!.map((m) => ({ ...m, groupItemTitle: ` ${m.question} ` })),
+    };
+    expect(toMarket(copy)!.outcomes.map((o) => o.label)).toEqual(['Yes']);
   });
 });
 
