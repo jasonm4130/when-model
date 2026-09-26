@@ -36,7 +36,8 @@ Rules of the house:
   `src/domain/sources.ts` and wrap it in `collect()`; the health list is derived from the results
   automatically. The first-seen ledger records a source's sightings only when its result is `ok`,
   so a partial poll must report not ok. A YouTube channel read from its last good copy (at most
-  two hours old) counts as complete; one with neither a fresh feed nor that copy does not.
+  a day old) counts as complete; one with neither a fresh feed nor that copy does not. YouTube is
+  in `BEST_EFFORT_SOURCES`: the health list shows its outages, the header status ignores them.
 - DROPCON scores Polymarket odds only. A new signal goes into early warnings with a track record
   until `pnpm backtest:replay` shows it adds out-of-sample skill. Any scoring change bumps
   `DROPCON_ALGORITHM_VERSION`: history breaks its series at a version change and the repricing

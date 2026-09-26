@@ -115,6 +115,20 @@ describe('Header', async () => {
     expect(html).toContain('OPENAI: AT LEAST 50% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
   });
 
+  it('counts a YouTube outage but keeps the status OPERATIONAL, since the feeds are best-effort', async () => {
+    const youtubeDown = { name: 'YouTube broadcasts', data: [], ok: false, error: '404' };
+    const html = await container.renderToString(Header, {
+      props: { d: dashboard({ broadcasts: youtubeDown }) },
+    });
+    expect(html).toContain('STATUS: OPERATIONAL');
+    expect(html).toMatch(/5\/6(?:<!--[^>]*-->)?\s*SOURCES/);
+    const bothDown = dashboard({
+      broadcasts: youtubeDown,
+      drops: { name: 'OpenRouter', data: [], ok: false, error: 'down' },
+    });
+    expect(await container.renderToString(Header, { props: { d: bothDown } })).toContain('STATUS: DEGRADED');
+  });
+
   it('names a read between near rungs plainly and a bucket-capped read as a ceiling', async () => {
     const rung = (label: string, deadline: string, mid: number) => ({
       label,

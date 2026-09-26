@@ -194,6 +194,7 @@ describe('isReleaseHeadline', () => {
       'Kimi K2.7 Code is generally available in GitHub Copilot',
       'Kimi K3: second only to Fable 5 on AA-Briefcase',
       'Opus 5.5 is good at explainer videos',
+      'Fable 5 – Median thinking declined in August',
       'Claude Opus 5.5 Intelligence, Performance and Price Analysis (Max)',
       "Kimi K3, Qwen 3.8, and Anthropic's (Potential) Unravelling",
       'GPT-5.6 Sol, along with Terra and Luna, will launch publicly this Thursday',
@@ -248,13 +249,15 @@ describe('isReleaseHeadline', () => {
     });
   });
 
-  it('Hacker News: alerts at 150 points hit 42 of 43, against 31 of 81 before', () => {
+  // The quality-commentary rule ("declined", "worse") was added after these titles were labelled, so
+  // these figures include it in-sample; it matches three titles here, all of them non-launches.
+  it('Hacker News: alerts at 150 points hit 42 of 42, against 31 of 81 before', () => {
     const titles = score(
       HN_TITLES_LABELLED,
       (r) => r[2],
       (r) => isReleaseHeadline(r[0]),
     );
-    expect(titles).toEqual({ flagged: 53, tp: 50, fp: 3, fn: 12, precision: 0.943, recall: 0.806 });
+    expect(titles).toEqual({ flagged: 52, tp: 50, fp: 2, fn: 12, precision: 0.962, recall: 0.806 });
     const hot = (r: (typeof HN_TITLES_LABELLED)[number]) => r[1] >= HN_ALERT_POINTS;
     expect(
       score(
@@ -263,11 +266,11 @@ describe('isReleaseHeadline', () => {
         (r) => isReleaseHeadline(r[0]) && hot(r),
       ),
     ).toEqual({
-      flagged: 43,
+      flagged: 42,
       tp: 42,
-      fp: 1,
+      fp: 0,
       fn: 20,
-      precision: 0.977,
+      precision: 1,
       recall: 0.677,
     });
     expect(

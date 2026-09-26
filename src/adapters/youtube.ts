@@ -78,9 +78,12 @@ const FEED_TTL_S = 1800;
  * How long a channel's last good feed stands in when YouTube fails. The feed endpoint fails in
  * bursts (2026-09-26: the OpenAI feed returned 404 twice in four rounds a second apart, then 200;
  * Anthropic failed 6 of 8 in one 43-second window), and one failed channel used to mark the whole
- * source down and skip the ledger write.
+ * source down and skip the ledger write. Over 28 polls 15 minutes apart that day, every channel
+ * failed 10 or 11 times, in runs of up to an hour, and all four answered together only 10 times.
+ * Each colo keeps its own copy, so the window is a day: an old copy only adds streams, and
+ * candidates are still judged as of when it was fetched.
  */
-const STALE_TTL_S = 2 * 3600;
+const STALE_TTL_S = 24 * 3600;
 
 /** One channel's entries; `staleFrom` is set when YouTube failed and a last good copy was read. */
 export interface ChannelFeed {

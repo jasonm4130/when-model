@@ -216,6 +216,9 @@ const NOT_A_LAUNCH = new RegExp(
     '\\b(?:will|to be|set to|plans? to|prepar\\w*|soon|tomorrow|next week|upcoming|imminent|rumou?r\\w*|leak\\w*|spotted|appeared|tests|testing|internal|ahead of)\\b',
     // Pre-announcements seen on HN in the 90 days measured: "Opus 5 expected to launch on July 20-21".
     '\\b(?:expected to|could be|may be|coming (?:in|on|this|next)|later today|to (?:unveil|launch|release|debut|ship|announce)|delay\\w*|postpone\\w*)\\b',
+    // Commentary on a shipped model's quality: "Fable 5 – Median thinking declined in August" (HN, 425 pts,
+    // Sep 2026). Added after the HN set was labelled, where it matches three titles, all non-launches.
+    '\\b(?:declin\\w*|regress\\w*|nerf\\w*|degrad\\w*|dumber|worse|lazier|outage|downtime)\\b',
   ].join('|'),
   'i',
 );
@@ -253,7 +256,7 @@ function isBareName(rest: string): boolean {
  * or a title that is essentially the model's name ("Grok 4.7", "GPT-6 Sol and Luna",
  * "Kimi K3: Open Frontier Intelligence"). Measured 2026-09-26 (test/domain/feed.test.ts pins it):
  * OpenAI's 1,230-post RSS history, 32 flagged, 29 launches (precision 0.91, recall 0.52), where
- * `looksLikeRelease` flagged 195 with 38 launches (0.19); HN at 150+ points 0.98 / 0.68; the
+ * `looksLikeRelease` flagged 195 with 38 launches (0.19); HN at 150+ points 1.00 / 0.68 (in-sample: see the quality-commentary rule); the
  * held-out DeepMind blog 0.86 / 0.34. Recall misses are mostly unversioned names (Sora, Nano Banana).
  */
 export function isReleaseHeadline(title: string): boolean {

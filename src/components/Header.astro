@@ -3,10 +3,14 @@ import type { Dashboard } from '../domain/dashboard';
 import { dashboardFingerprint } from '../ui/fingerprint';
 import { familyPhrase } from '../domain/dropcon';
 import { pct } from '../ui/format';
+import { BEST_EFFORT_SOURCES } from '../domain/sources';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const okCount = d.sources.filter((s) => s.ok).length;
-const status = okCount === d.sources.length ? 'OPERATIONAL' : okCount > d.sources.length / 2 ? 'DEGRADED' : 'IMPAIRED';
+// The count covers every source; the status only those the dashboard depends on.
+const core = d.sources.filter((s) => !BEST_EFFORT_SOURCES.has(s.name));
+const coreOk = core.filter((s) => s.ok).length;
+const status = coreOk === core.length ? 'OPERATIONAL' : coreOk > core.length / 2 ? 'DEGRADED' : 'IMPAIRED';
 const statusClass = status === 'OPERATIONAL' ? 'glow-g' : status === 'DEGRADED' ? 'glow-y' : 'err';
 const ticker = [
   ...(d.landed.bannerText ? [d.landed.bannerText] : []),

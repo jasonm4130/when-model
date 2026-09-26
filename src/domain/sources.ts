@@ -23,6 +23,13 @@ export const SOURCE = {
   ledger: 'First-seen ledger',
 } as const;
 
+/**
+ * Sources whose outage the health list shows but the header status ignores. YouTube's channel
+ * feeds fail in hour-long runs (see `STALE_TTL_S` in adapters/youtube.ts), so counting them would
+ * read DEGRADED most of the day; broadcasts are an unscored early warning.
+ */
+export const BEST_EFFORT_SOURCES: ReadonlySet<string> = new Set([SOURCE.youtube]);
+
 /** Which health-list source produced a feed item. */
 export const FEED_SOURCE_NAME: Readonly<Record<FeedSource, string>> = {
   hn: SOURCE.hackerNews,
