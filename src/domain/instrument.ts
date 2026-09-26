@@ -39,7 +39,8 @@ export const YOUNG_X = 750;
 /**
  * Level-change flags mark the line's story, not every wobble: a change must hold this long (or be
  * the latest), flags sit at least this far apart in plot units (120 of 1000 is about 20 hours),
- * and there are at most this many, the latest kept first.
+ * and there are at most this many, the latest kept first. A change left out is folded into the
+ * flag after it, so every flag reads on from the one before it.
  */
 export const FLAG_HOLD_MS = 3 * HOUR_MS;
 export const FLAG_GAP = 120;
@@ -76,6 +77,8 @@ export interface InstrumentInput {
 /** A stretch of the window with no line on the level axis, and why. */
 export interface InstrumentZone {
   kind: 'unrecorded' | 'old' | 'outage';
+  /** An unrecorded zone the record begins after: nothing was ever captured before its right edge. */
+  start?: true;
   /** Left edge and width in plot coordinates. */
   x: number;
   w: number;
@@ -104,9 +107,19 @@ export interface InstrumentChange {
   y: number;
   at: string;
   level: DropconLevel;
+  /**
+   * The level before this flag: the level the previous flag left, so the flags read as one story
+   * even where a change between them was folded in (never "▲ L3" followed by "▼ L3").
+   */
   from: DropconLevel;
-  /** Up is hotter: toward level 1. */
+  /** From `from` to `level`; up is hotter, toward level 1. */
   dir: 'up' | 'down';
+  /**
+   * Which side of the step's corner the flag hangs on: where the line was not, above it for a step
+   * up the plot and below it for a step down (the step's own direction, which a folded-in change
+   * can make differ from `dir`).
+   */
+  hang: 'above' | 'below';
   /** "▲ L2 25 SEP 18:00Z". */
   text: string;
   /**
@@ -151,7 +164,10 @@ export interface Instrument {
   now: { state: DropconState; score: number; level: DropconLevel; y: number; joined: boolean };
   scrub: ScrubPoint[];
   currentVersion: number;
-  /** The current version's first reading in the record, when it has one. */
+  /**
+   * The hour the current version's record starts (its first hourly reading, which may be before
+   * the window), when it has one.
+   */
   currentSince?: string;
   /**
    * Where the current version's record starts on the plot and how many hourly readings it has;
@@ -159,8 +175,14 @@ export interface Instrument {
    * the height its line ends at.
    */
   current?: { x: number; count: number; young: boolean; y: number };
-  /** Where the record starts in the window, when readings exist: the first hour captured. */
+  /**
+   * Where the record starts, when readings exist: the first hour captured in the whole series
+   * read (30 days), which may be before the window. Before it is "no record"; a gap after it is
+   * only a gap in the captures.
+   */
   recordedFrom?: string;
+  /** The latest reading, when the record has one but none of it is in the window. */
+  lastReading?: string;
   /** One paragraph describing the instrument, for screen readers. */
   summary: string;
 }
@@ -180,24 +202,23 @@ export function buildInstrument(input: InstrumentInput): Instrument {
   const Y = (score: number) => round2(100 - clampScore(score));
   const end = (p: DisplayPoint) => Math.min(hourStart(p.observedAt) + HOUR_MS, now);
 
-  const sorted = input.ok
-    ? [...input.points]
-        .filter((p) => {
-          const t = Date.parse(p.observedAt);
-          return t <= now && t > from;
-        })
-        .sort(byTime)
-    : [];
+  // The whole record read (30 days), and the hours of it that overlap the window. The record's
+  // start and the current version's first hour come from the whole record, so a reading older
+  // than the window is never mistaken for none.
+  const record = input.ok ? input.points.filter((p) => Date.parse(p.observedAt) <= now).sort(byTime) : [];
+  const sorted = record.filter((p) => hourStart(p.observedAt) + HOUR_MS > from);
+  const recordStart = record.length ? hourStart(record[0].observedAt) : undefined;
   const kind = (p: DisplayPoint): ScrubPoint['kind'] =>
     p.algorithmVersion !== currentVersion ? 'old' : p.degraded ? 'outage' : 'current';
 
   // Zones: before the first reading, every gap, every old-version and outage stretch.
   const zones: InstrumentZone[] = [];
-  const zone = (k: InstrumentZone['kind'], a: number, b: number, version?: number) => {
+  const zone = (k: InstrumentZone['kind'], a: number, b: number, version?: number, start?: boolean) => {
     if (b <= a) return;
     const x = X(a);
     zones.push({
       kind: k,
+      ...(start ? { start: true as const } : {}),
       x,
       w: round2(X(b) - x),
       from: new Date(a).toISOString(),
@@ -205,7 +226,9 @@ export function buildInstrument(input: InstrumentInput): Instrument {
       ...(version !== undefined ? { version } : {}),
     });
   };
-  if (sorted.length) zone('unrecorded', from, hourStart(sorted[0].observedAt));
+  // Before the first hour in the window: the record's start when it begins here, else a capture gap.
+  if (sorted.length)
+    zone('unrecorded', from, hourStart(sorted[0].observedAt), undefined, sorted[0] === record[0]);
   let open: { k: ScrubPoint['kind']; v: number; a: number; b: number } | undefined;
   const closeZone = () => {
     if (open && open.k !== 'current')
@@ -220,7 +243,11 @@ export function buildInstrument(input: InstrumentInput): Instrument {
       closeZone();
       zone('unrecorded', end(prev), hourStart(p.observedAt));
     }
-    if (open && (open.k !== k || open.v !== p.algorithmVersion)) closeZone();
+    if (open && (open.k !== k || open.v !== p.algorithmVersion)) {
+      // Two versions can share the hour they changed in; the new one takes that hour.
+      open.b = Math.min(open.b, hourStart(p.observedAt));
+      closeZone();
+    }
     if (!open) open = { k, v: p.algorithmVersion, a: hourStart(p.observedAt), b: end(p) };
     else open.b = end(p);
   }
@@ -298,10 +325,11 @@ export function buildInstrument(input: InstrumentInput): Instrument {
     };
   });
   const current = sorted.filter((p) => kind(p) === 'current');
-  const firstCurrent = sorted.find((p) => p.algorithmVersion === currentVersion);
-  const currentCount = sorted.filter((p) => p.algorithmVersion === currentVersion).length;
+  const firstCurrent = record.find((p) => p.algorithmVersion === currentVersion);
+  const currentCount = record.filter((p) => p.algorithmVersion === currentVersion).length;
   const state: Instrument['state'] = !input.ok ? 'unavailable' : sorted.length ? 'ok' : 'empty';
   const currentX = firstCurrent ? X(hourStart(firstCurrent.observedAt)) : undefined;
+  const lastReading = !sorted.length ? record.at(-1)?.observedAt : undefined;
 
   return {
     state,
@@ -334,12 +362,16 @@ export function buildInstrument(input: InstrumentInput): Instrument {
           },
         }
       : {}),
-    ...(sorted.length ? { recordedFrom: new Date(hourStart(sorted[0].observedAt)).toISOString() } : {}),
+    ...(recordStart !== undefined ? { recordedFrom: new Date(recordStart).toISOString() } : {}),
+    ...(lastReading ? { lastReading } : {}),
     summary: instrumentSummary({
       state,
       from,
       now,
       sorted,
+      recordStart,
+      currentStart: firstCurrent ? hourStart(firstCurrent.observedAt) : undefined,
+      lastReading,
       current,
       launches,
       launchesOk: input.launchesOk ?? true,
@@ -351,10 +383,13 @@ export function buildInstrument(input: InstrumentInput): Instrument {
 }
 
 /**
- * The line's story: every change of displayed level on the current version's measured readings,
- * kept when the new level held `FLAG_HOLD_MS` (or is the latest); a short-lived change and its
- * return to the level before it are both dropped. Latest first wins: at most `FLAG_MAX`, none
- * within `FLAG_GAP` of a later one. Oldest first out.
+ * The line's story: every change of displayed level on the current version's measured readings
+ * (`current` holds no outage hours). A change that did not hold `FLAG_HOLD_MS` is folded into the
+ * next one, so a short excursion and its return vanish together. Then, latest first, at most
+ * `FLAG_MAX` flags at least `FLAG_GAP` apart; a change too close to the flag after it is folded
+ * into that flag, which then reads from where the folded change started (and goes when that
+ * leaves it where it began). Each flag's `from` is therefore the level the flag before it left.
+ * Oldest first out.
  */
 function levelChanges(
   current: readonly DisplayPoint[],
@@ -362,46 +397,53 @@ function levelChanges(
   X: (t: number) => number,
   Y: (score: number) => number,
 ): InstrumentChange[] {
-  const raw: (InstrumentChange & { held: number })[] = [];
+  type Step = { t: number; x: number; y: number; level: DropconLevel; from: DropconLevel; held: number };
+  const steps: Step[] = [];
   let shown: DropconLevel | undefined;
   for (const p of current) {
-    if (p.degraded) continue;
     if (shown !== undefined && p.displayLevel !== shown) {
       const t = hourStart(p.observedAt);
-      const at = new Date(t).toISOString();
-      const dir = p.displayLevel < shown ? 'up' : 'down';
-      const last = raw.at(-1);
-      if (last) last.held = t - Date.parse(last.at);
-      raw.push({
-        x: X(t),
-        y: Y(p.score),
-        at,
-        level: p.displayLevel,
-        from: shown,
-        dir,
-        text: `${dir === 'up' ? '▲' : '▼'} L${p.displayLevel} ${stripHour(at).toUpperCase()}`,
-        side: X(t) < CHANGE_RIGHT_X ? 'right' : 'left',
-        held: now - t,
-      });
+      const last = steps.at(-1);
+      if (last) last.held = t - last.t;
+      steps.push({ t, x: X(t), y: Y(p.score), level: p.displayLevel, from: shown, held: now - t });
     }
     shown = p.displayLevel;
   }
-  const beats: typeof raw = [];
-  for (let i = 0; i < raw.length; i++) {
-    const next = raw[i + 1];
-    if (next && raw[i].held < FLAG_HOLD_MS) {
-      if (next.level === raw[i].from) i++;
+  // Each step also keeps its own direction, for which side of its corner the flag hangs on.
+  const hangs = new Map(steps.map((s) => [s, s.level < s.from ? ('above' as const) : ('below' as const)]));
+  const beats: Step[] = [];
+  steps.forEach((s, i) => {
+    const next = steps[i + 1];
+    if (next && s.held < FLAG_HOLD_MS) next.from = s.from;
+    else if (s.from !== s.level) beats.push(s);
+  });
+  const kept: Step[] = [];
+  for (let i = beats.length - 1; i >= 0; i--) {
+    const s = beats[i];
+    const after = kept[0];
+    if (after && after.x - s.x < FLAG_GAP) {
+      after.from = s.from;
+      if (after.from === after.level) kept.shift();
       continue;
     }
-    beats.push(raw[i]);
+    if (kept.length >= FLAG_MAX) break;
+    kept.unshift(s);
   }
-  const out: InstrumentChange[] = [];
-  for (const { held: _held, ...c } of beats.reverse()) {
-    if (out.length >= FLAG_MAX) break;
-    if (out.length && out[0].x - c.x < FLAG_GAP) continue;
-    out.unshift(c);
-  }
-  return out;
+  return kept.map((s) => {
+    const at = new Date(s.t).toISOString();
+    const dir = s.level < s.from ? 'up' : 'down';
+    return {
+      x: s.x,
+      y: s.y,
+      at,
+      level: s.level,
+      from: s.from,
+      dir,
+      hang: hangs.get(s)!,
+      text: `${dir === 'up' ? '▲' : '▼'} L${s.level} ${stripHour(at).toUpperCase()}`,
+      side: s.x < CHANGE_RIGHT_X ? 'right' : 'left',
+    };
+  });
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -411,6 +453,9 @@ function instrumentSummary(a: {
   from: number;
   now: number;
   sorted: DisplayPoint[];
+  recordStart?: number;
+  currentStart?: number;
+  lastReading?: string;
   current: DisplayPoint[];
   launches: InstrumentLaunch[];
   launchesOk: boolean;
@@ -427,15 +472,29 @@ function instrumentSummary(a: {
         : 'Now: no signal.';
   const parts: string[] = [head];
   if (a.state === 'unavailable') parts.push('The score series could not be read; the level shown is live.');
-  else if (a.state === 'empty') parts.push(`No v${a.currentVersion} readings recorded yet.`);
+  else if (a.state === 'empty')
+    parts.push(
+      a.lastReading
+        ? `No readings in these 7 days; the last was ${stripHour(a.lastReading)}.`
+        : `No v${a.currentVersion} readings recorded yet.`,
+    );
   else {
     if (a.current.length) {
       const s = a.current.map((p) => p.score);
       const latest = a.current.at(-1)!;
+      const since =
+        a.currentStart !== undefined && a.currentStart >= a.from
+          ? `from the ${stripHour(a.currentStart)} hour`
+          : `(recorded since ${stripDay(a.currentStart ?? a.from)})`;
       parts.push(
-        `v${a.currentVersion} from ${stripHour(new Date(hourStart(a.current[0].observedAt)).toISOString())}: ${plural(a.current.length, 'hourly reading')}, ${a.current.length === 1 ? `score ${s[0]}` : `scores ${range(Math.min(...s), Math.max(...s))}`}; latest recorded level ${latest.displayLevel} (score ${latest.score}).`,
+        `v${a.currentVersion} ${since}: ${plural(a.current.length, 'hourly reading')} in these 7 days, ${a.current.length === 1 ? `score ${s[0]}` : `scores ${range(Math.min(...s), Math.max(...s))}`}; latest recorded level ${latest.displayLevel} (score ${latest.score}).`,
       );
-    } else parts.push(`No v${a.currentVersion} readings recorded yet.`);
+    } else
+      parts.push(
+        a.currentStart === undefined
+          ? `No v${a.currentVersion} readings recorded yet.`
+          : `No v${a.currentVersion} readings in these 7 days.`,
+      );
     const old = a.sorted.filter((p) => a.kind(p) === 'old');
     if (old.length) {
       const versions = [...new Set(old.map((p) => `v${p.algorithmVersion}`))].join(', ');
@@ -445,9 +504,8 @@ function instrumentSummary(a: {
     }
     const outages = a.sorted.filter((p) => a.kind(p) === 'outage').length;
     if (outages) parts.push(`${plural(outages, 'hourly reading')} had the odds offline.`);
-    parts.push(
-      `Nothing recorded before ${stripHour(new Date(hourStart(a.sorted[0].observedAt)).toISOString())}.`,
-    );
+    if (a.recordStart !== undefined && a.recordStart > a.from)
+      parts.push(`Nothing recorded before ${stripHour(a.recordStart)}.`);
   }
   parts.push(nowText);
   if (!a.launchesOk) parts.push('Launch listings could not be read, so launches are not marked.');

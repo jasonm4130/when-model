@@ -40,32 +40,32 @@ const bottomOf = async (page: Page, selector: string) => {
   return box!.y + box!.height;
 };
 
-for (const viewport of [
-  { width: 390, height: 844 },
-  { width: 1440, height: 900 },
+// What must be on the first screen. A phone says NOT A FORECAST in the paragraph above the
+// readout; wider screens stamp it on the number. Where the masthead wraps (1024x768), the plot
+// starts under the fold but the number, what it is, and the readout do not.
+const HEAD = ['.dc-num', '.dc-name', '.sc-eq', '.dc-headline', '.sc-readout'];
+for (const { width, height, parts, nf } of [
+  { width: 390, height: 844, parts: [...HEAD, '.dc-scale', '.sc-plot', '.dc-what'], nf: '.dc-what .nf' },
+  { width: 1440, height: 900, parts: [...HEAD, '.dc-scale', '.sc-plot', '.dc-what'], nf: '.sc-eq-nf' },
+  { width: 1366, height: 768, parts: [...HEAD, '.dc-scale', '.sc-plot'], nf: '.sc-eq-nf' },
+  { width: 1024, height: 768, parts: HEAD, nf: '.sc-eq-nf' },
 ]) {
-  test(`puts the number, what it is, the plot and "not a forecast" on the first screen at ${viewport.width}x${viewport.height} with reduced motion`, async ({
-    page,
-  }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.setViewportSize(viewport);
-    await openDashboard(page);
-    for (const part of [
-      '.dc-num',
-      '.dc-name',
-      '.sc-eq',
-      '.dc-headline',
-      '.sc-readout',
-      '.dc-scale',
-      '.sc-plot',
-      '.dc-what',
-      '.dc-what .nf',
-    ]) {
-      await expect(page.locator(part).first()).toBeVisible();
-      expect(await bottomOf(page, part), `${part} on the first screen`).toBeLessThanOrEqual(viewport.height);
-    }
-    await expect(page.locator('.dc-what .nf')).toHaveText('NOT A FORECAST');
-  });
+  for (const motion of ['reduce', 'no-preference'] as const) {
+    test(`puts the number, what it is${parts.includes('.sc-plot') ? ', the plot' : ''} and "not a forecast" on the first screen at ${width}x${height}, motion ${motion}`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ reducedMotion: motion });
+      await page.setViewportSize({ width, height });
+      await openDashboard(page);
+      // Let the load-in settle (the panel rises into place) before measuring.
+      await page.waitForTimeout(motion === 'reduce' ? 0 : 1200);
+      for (const part of [...parts, nf]) {
+        await expect(page.locator(part).first()).toBeVisible();
+        expect(await bottomOf(page, part), `${part} on the first screen`).toBeLessThanOrEqual(height);
+      }
+      await expect(page.locator(nf).first()).toHaveText(/NOT A FORECAST$/);
+    });
+  }
 }
 
 test('the line ends at the number: on a wide screen the number sits level with the NOW dot', async ({
@@ -86,23 +86,25 @@ test('the line ends at the number: on a wide screen the number sits level with t
   await expect(page.locator('.sc-nowtag')).toBeHidden();
 });
 
-test('on a phone the number goes above the plot, which takes the width, and a NOW tag marks the edge', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await openDashboard(page);
-  const num = (await page.locator('.dc-num').boundingBox())!;
-  const plot = (await page.locator('.sc-plot').boundingBox())!;
-  expect(num.y + num.height).toBeLessThan(plot.y);
-  expect(plot.width).toBeGreaterThan(390 * 0.7);
-  const dot = await page.locator('.sc-dot').boundingBox();
-  test.skip(!dot, 'no live reading today');
-  const tag = (await page.locator('.sc-nowtag').boundingBox())!;
-  await expect(page.locator('.sc-nowtag')).toHaveText(/^NOW \d$/);
-  expect(tag.x + tag.width).toBeLessThanOrEqual(plot.x + plot.width);
-  expect(Math.abs(tag.x + tag.width - (dot!.x + dot!.width / 2))).toBeLessThan(24);
-});
+for (const width of [390, 1024]) {
+  test(`below 1230px the number goes above the plot, which takes the width, and a NOW tag marks the edge (${width}px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openDashboard(page);
+    const num = (await page.locator('.dc-num').boundingBox())!;
+    const plot = (await page.locator('.sc-plot').boundingBox())!;
+    expect(num.y + num.height).toBeLessThan(plot.y);
+    expect(plot.width).toBeGreaterThan(width * 0.7);
+    const dot = await page.locator('.sc-dot').boundingBox();
+    test.skip(!dot, 'no live reading today');
+    const tag = (await page.locator('.sc-nowtag').boundingBox())!;
+    await expect(page.locator('.sc-nowtag')).toHaveText(/^NOW \d$/);
+    expect(tag.x + tag.width).toBeLessThanOrEqual(plot.x + plot.width);
+    expect(Math.abs(tag.x + tag.width - (dot!.x + dot!.width / 2))).toBeLessThan(24);
+  });
+}
 
 test('scrubs with the keys, reads each hour into the readout, and never touches the number', async ({
   page,
@@ -265,7 +267,58 @@ test('with reduced motion the sweep is gone and nothing on the instrument animat
   ).toBe('none');
 });
 
-for (const width of [360, 390, 1024, 1440]) {
+/** Every label on the plot inside it and clear of the others, and the day axis clear of itself. */
+async function labelReport(page: Page) {
+  return page.locator('.sc-plot').evaluate((plot) => {
+    const P = plot.getBoundingClientRect();
+    const visible = (el: Element) => {
+      const s = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0;
+    };
+    // Zone labels: the variant shown fits its zone whole.
+    const zones = [...plot.querySelectorAll('.sc-zone')].flatMap((z) => {
+      const zr = z.getBoundingClientRect();
+      return [...z.querySelectorAll('.sc-zlabel > *')]
+        .filter(visible)
+        .map((l) => ({ text: l.textContent, over: l.getBoundingClientRect().right - zr.right }));
+    });
+    // Every label on the plot: inside it, and clear of the others.
+    const labels = [...plot.querySelectorAll('[data-label="fixed"], [data-label="flag"], .sc-zlabel > *')]
+      .filter(visible)
+      .map((el) => ({ text: el.textContent!.trim(), r: el.getBoundingClientRect() }));
+    const tag = document.querySelector('.sc-nowtag');
+    if (tag && visible(tag)) labels.push({ text: 'NOW tag', r: tag.getBoundingClientRect() });
+    const outside = labels
+      .filter(
+        (l) =>
+          l.r.left < P.left - 1 ||
+          l.r.right > P.right + 1 ||
+          l.r.top < P.top - 1 ||
+          l.r.bottom > P.bottom + 1,
+      )
+      .map((l) => l.text);
+    const clash: string[] = [];
+    const clashes = (list: { text: string; r: DOMRect }[]) => {
+      for (let i = 0; i < list.length; i++)
+        for (let j = i + 1; j < list.length; j++) {
+          const a = list[i].r;
+          const b = list[j].r;
+          if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom)
+            clash.push(`${list[i].text} × ${list[j].text}`);
+        }
+    };
+    clashes(labels);
+    const days = [...document.querySelectorAll('.sc-daylabel')]
+      .filter(visible)
+      .map((el) => ({ text: el.textContent!.trim(), r: el.getBoundingClientRect() }));
+    clashes(days);
+    const flags = [...plot.querySelectorAll('[data-label="flag"]')].filter(visible).length;
+    return { zones, outside, clash, plotWidth: P.width, days: days.length, flags };
+  });
+}
+
+for (const width of [360, 390, 700, 768, 1024, 1440]) {
   test(`fits the instrument at ${width}px: no page scroll, no label clipped or overlapping`, async ({
     page,
   }) => {
@@ -273,45 +326,7 @@ for (const width of [360, 390, 1024, 1440]) {
     await openDashboard(page);
     await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    const report = await page.locator('.sc-plot').evaluate((plot) => {
-      const P = plot.getBoundingClientRect();
-      const visible = (el: Element) => {
-        const s = getComputedStyle(el);
-        const r = el.getBoundingClientRect();
-        return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0;
-      };
-      // Zone labels: the variant shown fits its zone whole.
-      const zones = [...plot.querySelectorAll('.sc-zone')].flatMap((z) => {
-        const zr = z.getBoundingClientRect();
-        return [...z.querySelectorAll('.sc-zlabel > *')]
-          .filter(visible)
-          .map((l) => ({ text: l.textContent, over: l.getBoundingClientRect().right - zr.right }));
-      });
-      // Every label on the plot: inside it, and clear of the others.
-      const labels = [...plot.querySelectorAll('[data-label="fixed"], [data-label="flag"], .sc-zlabel > *')]
-        .filter(visible)
-        .map((el) => ({ text: el.textContent!.trim(), r: el.getBoundingClientRect() }));
-      const tag = document.querySelector('.sc-nowtag');
-      if (tag && visible(tag)) labels.push({ text: 'NOW tag', r: tag.getBoundingClientRect() });
-      const outside = labels
-        .filter(
-          (l) =>
-            l.r.left < P.left - 1 ||
-            l.r.right > P.right + 1 ||
-            l.r.top < P.top - 1 ||
-            l.r.bottom > P.bottom + 1,
-        )
-        .map((l) => l.text);
-      const clash: string[] = [];
-      for (let i = 0; i < labels.length; i++)
-        for (let j = i + 1; j < labels.length; j++) {
-          const a = labels[i].r;
-          const b = labels[j].r;
-          if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom)
-            clash.push(`${labels[i].text} × ${labels[j].text}`);
-        }
-      return { zones, outside, clash, plotWidth: P.width };
-    });
+    const report = await labelReport(page);
     for (const z of report.zones)
       expect(z.over, `zone label "${z.text}" fits its zone`).toBeLessThanOrEqual(0.5);
     expect(report.outside).toEqual([]);
@@ -319,3 +334,78 @@ for (const width of [360, 390, 1024, 1440]) {
     if (width <= 390) expect(report.plotWidth).toBeGreaterThan(width * 0.7);
   });
 }
+
+test.describe('at 200% zoom (1440x900 is 720x450 CSS pixels)', () => {
+  test.use({ viewport: { width: 720, height: 450 }, deviceScaleFactor: 2 });
+  test('the day axis and the plot labels do not collide, and the reading is whole', async ({ page }) => {
+    await openDashboard(page);
+    await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
+    const report = await labelReport(page);
+    expect(report.clash).toEqual([]);
+    expect(report.days).toBeGreaterThanOrEqual(6);
+    const what = page.locator('.sc-what');
+    expect(await what.evaluate((e) => e.scrollWidth - e.clientWidth)).toBeLessThanOrEqual(1);
+  });
+});
+
+// The Header reloads the page every 5 minutes; by then the fonts are cached, the ResizeObserver and
+// document.fonts.ready land in one frame, and the label fitting runs once, not twice. Hold
+// fonts.ready so that one fit is all there is, then reload with the fonts warm.
+for (const width of [360, 390]) {
+  test(`a reload with the fonts cached still places every launch name at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openDashboard(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(FontFaceSet.prototype, 'ready', { get: () => new Promise(() => {}) });
+    });
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
+    await page.waitForTimeout(300);
+    const report = await labelReport(page);
+    expect(report.clash).toEqual([]);
+    expect(report.outside).toEqual([]);
+    // Placed, not merely hidden: with launches in the week, at least one name fits on the plot.
+    const launches = await page
+      .locator('[data-scope]')
+      .evaluate(
+        (el) => (JSON.parse((el as HTMLElement).dataset.scope!) as { launches: unknown[] }).launches.length,
+      );
+    test.skip(!launches, 'no frontier launch in the last 7 days');
+    expect(report.flags).toBeGreaterThan(0);
+  });
+}
+
+for (const width of [768, 1024, 1280]) {
+  test(`the readout shows the reading whole at ${width}px; the hint gives way`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await openDashboard(page);
+    const what = page.locator('.sc-what');
+    const clipped = () => what.evaluate((e) => e.scrollWidth - e.clientWidth);
+    expect(await clipped()).toBeLessThanOrEqual(1);
+    // The hint shows whole or not at all: never cut mid-word.
+    const hint = await page.locator('[data-hint]').evaluate((h) => {
+      const r1 = h.parentElement!.getBoundingClientRect();
+      const b = h.getBoundingClientRect();
+      return { onRow: b.top < r1.bottom - 1, whole: b.right <= r1.right + 1 };
+    });
+    if (hint.onRow) expect(hint.whole).toBe(true);
+    await page.locator('.sc-plot').focus();
+    for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowLeft');
+    expect(await clipped()).toBeLessThanOrEqual(1);
+  });
+}
+
+test.describe('on a touch phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test('the readout carries a tap hint, gone after the first tap', async ({ page }) => {
+    await openDashboard(page);
+    const hint = page.locator('[data-hint]');
+    await expect(hint).toBeVisible();
+    await expect(hint).toHaveText(/TAP OR DRAG/);
+    const box = (await page.locator('.sc-plot').boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width * 0.5, box.y + box.height * 0.5);
+    await expect(page.locator('[data-r-when]')).not.toHaveText(/^NOW/);
+    await expect(hint).toBeHidden();
+  });
+});

@@ -22,8 +22,10 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   snapshot, score rollup and first-seen writes.
 - `src/domain/instrument.ts` draws the hero: `buildInstrument` turns the history, the live level
   and LANDED's launches into the 7-day trace, zones, level-change flags and scrubber data
-  `DropconScope.astro` renders. Only the current algorithm version is inked on the level axis; an
-  older one is a hatched zone. Level names live in `src/domain/levels.ts`. `src/ui/readout.ts`
+  `DropconScope.astro` renders. It draws the last 7 days but reads the record's start, the current
+  version's first hour and the last reading from the whole 30-day series it is given, so never
+  filter the input to the window first. Only the current algorithm version is inked on the level
+  axis; an older one is a hatched zone. Level names live in `src/domain/levels.ts`. `src/ui/readout.ts`
   (the scrubber's readout text) and `src/ui/labels.ts` (whole-or-nothing label placement) are pure
   and run both in the server render and in the component's browser script. The readout never
   gives a past hour the live reading, and scrubbing never changes the big number.

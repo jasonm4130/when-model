@@ -57,7 +57,7 @@ const zoneText = (z: (typeof inst.zones)[number]) =>
     ? { head: `v${z.version} · OLD SCALE`, sub: 'another formula, not comparable', min: `v${z.version}` }
     : z.kind === 'outage'
       ? { head: 'ODDS OFFLINE', sub: 'level held, not measured', min: '✕' }
-      : { head: 'NO RECORD', sub: z.x === 0 ? `captures start ${stripDay(z.to)}` : 'no captures', min: '' };
+      : { head: 'NO RECORD', sub: z.start ? `captures start ${stripDay(z.to)}` : 'no captures', min: '' };
 
 // The scrubber's data and the readout it starts from (the same functions the browser runs).
 const K: Record<ScrubPoint['kind'], ScrubKind> = { current: 'c', old: 'o', outage: 'x' };
@@ -68,6 +68,7 @@ const data: ScrubData = {
   history: inst.state,
   launchesOk: inst.launchesOk,
   ...(inst.recordedFrom ? { recordFrom: Date.parse(inst.recordedFrom) } : {}),
+  ...(inst.lastReading ? { last: Date.parse(inst.lastReading) } : {}),
   near: LAUNCH_NEAR_MS,
   pts: inst.scrub.map((p) => [K[p.kind], p.h, p.e, p.score, p.level ?? 0, p.held ? 1 : 0, p.version]),
   launches: inst.launches.map((l) => [Date.parse(l.at), l.name, l.lab, l.glyph, l.color]),
@@ -81,6 +82,7 @@ const cur = inst.current;
 const v3 = cur && cur.x > INSTRUMENT_WIDTH * 0.03 ? cur : undefined;
 const readings = cur ? `${cur.count} hourly reading${cur.count === 1 ? '' : 's'}` : '';
 const youngBelow = (cur?.y ?? inst.now.y) < 58;
+// The series is hourly, and the hour a version changed in holds both: its start is an hour, not a minute.
 const hhmm = inst.currentSince ? stripHour(inst.currentSince).slice(-6) : '';
 
 // First paint places launch names on a reference 1000 x 236 px plot with estimated widths; the
@@ -92,7 +94,7 @@ const changeBoxes: Box[] = inst.changes.map((ch) => {
   const w = ch.text.length * 8 + 12;
   const y = (ch.y / 100) * REF.bottom;
   const left = ch.side === 'left' ? ch.x - w : ch.x;
-  return ch.dir === 'up'
+  return ch.hang === 'above'
     ? { left, right: left + w, top: y - 28, bottom: y - 8 }
     : { left, right: left + w, top: y + 8, bottom: y + 28 };
 });
@@ -122,6 +124,7 @@ const tableRows = inst.scrub.slice().reverse();
           <>
             <span class="sc-eq-score"><b>{c.score}</b><span class="of">/100</span> LEAD SCORE</span>
             <span class="sc-eq-level"><span aria-hidden="true">→ </span><span class="sr-only">sets </span>LEVEL {c.level} OF 5</span>
+            <span class="sc-eq-nf"><span class="sr-only">, </span>NOT A FORECAST</span>
           </>
         ) : c.state === 'floor' ? (
           <>
@@ -137,9 +140,11 @@ const tableRows = inst.scrub.slice().reverse();
 
   <div class="sc-readout" data-readout data-tone={rest.tone} style={rest.tone === 'ok' && rest.level ? `--rl:var(--l${rest.level})` : undefined}>
     <p class="sc-r1">
-      <b class="sc-when" data-r-when>{rest.when}</b>
-      <span class="sc-what"><span data-r-what>{rest.what}</span><span class="sc-rname" data-r-name>{rest.name ? ` · ${rest.name}` : ''}</span></span>
-      <span class="sc-hint tiny" data-hint hidden aria-hidden="true">◀ ▶ HOVER, DRAG OR ARROW KEYS</span>
+      <span class="sc-rw">
+        <b class="sc-when" data-r-when>{rest.when}</b>
+        <span class="sc-what"><span data-r-what>{rest.what}</span><span class="sc-rname" data-r-name>{rest.name ? ` · ${rest.name}` : ''}</span></span>
+      </span>
+      <span class="sc-hint tiny" data-hint hidden aria-hidden="true"><span class="h-long">◀ ▶ HOVER, DRAG OR ARROW KEYS</span><span class="h-short">◀ TAP<span class="h-drag"> OR DRAG</span> ▶</span></span>
     </p>
     <p class="sc-r2" data-r-near>{restNear}</p>
   </div>
@@ -195,7 +200,7 @@ const tableRows = inst.scrub.slice().reverse();
       {v3 && <span class="sc-vline" style={`left:${pct(v3.x)}`} aria-hidden="true"></span>}
       {v3 && (v3.young ? (
         <span class:list={['sc-v3 young', youngBelow ? 'below' : 'above']} style={`left:${pct(v3.x)}; --vy:${v3.y}`} data-label="fixed" aria-hidden="true">
-          <b><span class="yl-long">v{inst.currentVersion} SCALE FROM {stripHour(inst.currentSince!).toUpperCase()}</span><span class="yl-short">v{inst.currentVersion} FROM {hhmm}</span></b>
+          <b><span class="yl-long">v{inst.currentVersion} SCALE FROM THE {stripHour(inst.currentSince!).toUpperCase()} HOUR</span><span class="yl-short">v{inst.currentVersion} FROM {hhmm} HOUR</span></b>
           <span>{readings} so far{inst.now.joined && <span class="yl-long"> · updates every 15 min</span>}</span>
         </span>
       ) : (
@@ -226,8 +231,8 @@ const tableRows = inst.scrub.slice().reverse();
           <span
             class:list={['sc-change', `l${ch.level}`, ch.side]}
             style={`left:${pct(ch.x)}; top:${ch.y}%`}
-            data-side={ch.dir === 'up' ? 'above' : 'below'}
-            data-side0={ch.dir === 'up' ? 'above' : 'below'}
+            data-side={ch.hang}
+            data-side0={ch.hang}
             data-label="fixed"
             aria-hidden="true"
           ><span class="cf-dir">{words.slice(0, 2).join(' ')}</span><span class="cf-when"> {words.slice(2).join(' ')}</span></span>
@@ -240,10 +245,14 @@ const tableRows = inst.scrub.slice().reverse();
       </div>
       {inst.state !== 'ok' && (
         <div class="sc-empty" aria-hidden="true">
-          <b class="head">{inst.state === 'empty' ? 'NO READINGS YET' : 'HISTORY OFFLINE'}</b>
-          <span>{inst.state === 'empty'
-            ? `v${inst.currentVersion} history starts ${stripDay(now)}: the 15-minute capture writes the first point.`
-            : 'The score series could not be read. The level shown is live.'}</span>
+          <div class="sc-veil" data-veil>
+            <b class="head">{inst.state === 'unavailable' ? 'HISTORY OFFLINE' : inst.lastReading ? 'NO RECENT READINGS' : 'NO READINGS YET'}</b>
+            <span>{inst.state === 'unavailable'
+              ? 'The score series could not be read.'
+              : inst.lastReading
+                ? `Nothing captured in these 7 days; the last reading was ${stripHour(inst.lastReading)}.`
+                : `v${inst.currentVersion} history starts ${stripDay(now)}: the 15-minute capture writes the first point.`}{inst.state === 'empty' && !inst.lastReading ? '' : <span class="v-live"> The level shown is live.</span>}</span>
+          </div>
         </div>
       )}
     </div>
@@ -268,9 +277,10 @@ const tableRows = inst.scrub.slice().reverse();
   </div>
 
 <p class="dc-what">
-  <b class="tiny">WHAT IS THIS?</b> DROPCON reads Polymarket's odds on frontier model releases into a
-  0–100 lead score. The score's band sets the level, 5 (quiet) to 1 (release surge); the line is that
-  score over time. It is a lead score, <b class="nf">NOT A FORECAST</b>. <a href="#dc-adds">How it adds up</a> · <a href="/backtest">/backtest</a>
+  <b class="tiny">WHAT IS THIS?</b> <span class="w-long">DROPCON reads Polymarket's odds on frontier model
+  releases into a 0–100 lead score. The score's band sets the level, 5 (quiet) to 1 (release surge); the
+  line is that score over time.</span><span class="w-short">The line is the 0–100 lead score over time;
+  its band sets the level, 5 quiet to 1 surge.</span> It is a lead score, <b class="nf">NOT A FORECAST</b>. <a href="#dc-adds">How it adds up</a> · <a href="/backtest">/backtest</a>
 </p>
 <p class="dc-key">
   <span class="k-item"><i class="k-line" aria-hidden="true"></i>lead score, coloured by its level</span>
@@ -321,7 +331,8 @@ const tableRows = inst.scrub.slice().reverse();
     --plot-h: 236px;
     --needle-w: 212px;
     --num: 120px;
-    --eq-h: 52px;
+    /* The equation's height: score, level and the NOT A FORECAST stamp. */
+    --eq-h: 70px;
     --sweep: 1500ms;
     position: relative;
     display: grid;
@@ -356,7 +367,10 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-readout[data-tone='old'], .sc-readout[data-tone='none'] { --rl: var(--muted); }
   .sc-readout[data-tone='outage'] { --rl: var(--red); }
   .sc-readout.is-scrub { border-color: rgba(255, 255, 255, 0.35); border-left-color: var(--rl); }
-  .sc-r1 { display: flex; align-items: baseline; gap: 12px; min-width: 0; white-space: nowrap; overflow: hidden; }
+  /* The reading comes first: when it and the hint do not both fit, the hint wraps onto a second
+     line the row clips, so it shows whole or not at all and never squeezes the reading. */
+  .sc-r1 { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: baseline; column-gap: 12px; min-width: 0; height: 22px; white-space: nowrap; overflow: hidden; }
+  .sc-rw { display: flex; flex: 0 1 auto; align-items: baseline; gap: 12px; min-width: 0; }
   .sc-when { flex: none; font-family: var(--font-head); font-size: var(--fs-tiny); font-weight: 400; letter-spacing: 0.06em; color: var(--rl); }
   .sc-readout.is-scrub .sc-when { color: #fff; }
   .sc-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-md); color: #fff; }
@@ -365,6 +379,7 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-what::after { content: ''; display: inline-block; width: 0.5em; height: 0.9em; margin-left: 4px; vertical-align: -1px; background: var(--rl); opacity: 0; }
   .sc-hint { margin-left: auto; flex: none; color: var(--muted); }
   .sc-hint[hidden] { display: none; }
+  .sc-hint .h-short { display: none; }
   .sc-r2 { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-xs); color: var(--muted); }
 
   .sc-cap { padding-bottom: 8px; color: var(--text); white-space: nowrap; overflow: hidden; }
@@ -419,6 +434,10 @@ const tableRows = inst.scrub.slice().reverse();
   @container zone (min-width: 40px) and (max-width: 139.98px) {
     .sc-zlabel > .zl-min { display: block; }
   }
+  /* The script may pick a shorter variant than the zone's width allows, when the longer one meets a label. */
+  .sc-zlabel[data-pick] > * { display: none; }
+  .sc-zlabel[data-pick='full'] > .zl-full { display: grid; }
+  .sc-zlabel[data-pick='head'] > .zl-head, .sc-zlabel[data-pick='min'] > .zl-min { display: block; }
 
   /* Which way is hot, at the plot's top and bottom edges. */
   .sc-dir { position: absolute; left: 6px; padding: 3px 5px; color: var(--lc); background: rgba(7, 6, 15, 0.82); white-space: nowrap; }
@@ -476,13 +495,20 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-eq b.word { font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: var(--text); margin-right: 6px; }
   .sc-eq-level { color: var(--lvl); }
   .scope:not(.ok) .sc-eq-level { color: var(--muted); }
+  /* Stamped on the number itself, so wherever the number is on screen, so is what it is not. */
+  .sc-eq-nf { justify-self: start; margin-top: 2px; padding: 3px 5px 2px; line-height: 1; color: var(--yellow); border: 1px dashed color-mix(in srgb, var(--yellow) 65%, transparent); background: color-mix(in srgb, var(--yellow) 6%, transparent); }
 
   .sc-rail { grid-area: marks; position: relative; border-bottom: 1px solid var(--line2); }
   .sc-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 16px; line-height: 1; text-shadow: 0 0 6px currentColor; transition: transform var(--fast) var(--ease); }
   .sc-mark::before { content: ''; position: absolute; left: 50%; top: -5px; height: 5px; border-left: 1px solid currentColor; }
   .sc-mark.is-near { transform: translateX(-50%) scale(1.35); text-shadow: 0 0 10px currentColor, 0 0 2px #fff; }
   .sc-rail-note { position: absolute; left: 6px; top: 8px; color: var(--muted); }
-  .sc-days { grid-area: days; position: relative; height: 16px; margin-top: 4px; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  .sc-days { grid-area: days; container: days / inline-size; position: relative; height: 16px; margin-top: 4px; font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
+  /* A day is about a seventh of the axis: under about 80px a day, "25 SEP" meets "26 SEP" (the script
+     drops any label that still meets its neighbour). */
+  @container days (max-width: 559.98px) {
+    .sc-days .mon { display: none; }
+  }
   .sc-days > span { position: absolute; top: 0; white-space: nowrap; }
   .sc-daylabel { transform: translateX(-50%); }
   .sc-daylabel.late { transform: translateX(-100%); }
@@ -496,15 +522,20 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-probe { position: absolute; left: var(--cx); top: calc(var(--cy) * 1%); width: 8px; height: 8px; margin: -4px 0 0 -4px; background: var(--probe, #fff); box-shadow: 0 0 8px var(--probe, #fff); }
   .sc-probe[hidden] { display: none; }
 
-  .sc-empty { position: absolute; inset: 0; display: grid; place-content: center; gap: 8px; padding: 12px; text-align: center; background: rgba(7, 6, 15, 0.55); z-index: 1; }
-  .sc-empty b { font-size: var(--fs-tiny); letter-spacing: 0.08em; color: var(--yellow); }
-  .sc-empty span { font-size: var(--fs-xs); color: var(--text); max-width: 34ch; }
+  /* No series: the plot dims under a card. Launch names and the direction labels do not depend on
+     the series, so they stay above the dimming at full contrast (the script keeps them off the card). */
+  .sc-empty { position: absolute; inset: 0; display: grid; place-content: center; padding: 12px; background: rgba(7, 6, 15, 0.55); z-index: 1; }
+  .sc-veil { display: grid; justify-items: center; gap: 6px; max-width: 38ch; padding: 8px 12px; text-align: center; background: rgba(7, 6, 15, 0.94); border: 1px dashed var(--line2); }
+  .sc-veil b { font-size: var(--fs-tiny); letter-spacing: 0.08em; color: var(--yellow); }
+  .sc-veil span { font-size: var(--fs-xs); line-height: 1.1; color: var(--text); }
+  .scope:not(.hist-ok) .sc-flag, .scope:not(.hist-ok) .sc-dir { z-index: 2; }
 
   .sc-sweep { display: none; }
 
   /* What the reader is looking at, in one plain paragraph under the instrument. */
   .dc-what { grid-area: what; margin: 12px 0 0; font-size: var(--fs-sm); line-height: 1.3; color: var(--text); }
   .dc-what .tiny { margin-right: 6px; color: var(--cyan); }
+  .dc-what .w-short { display: none; }
   .dc-what .nf { font-weight: 400; font-family: var(--font-head); font-size: var(--fs-tiny); letter-spacing: 0.06em; color: var(--yellow); }
   .dc-key { grid-area: key; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--muted); }
   .k-item i { display: inline-block; margin-right: 6px; font-style: normal; }
@@ -574,7 +605,55 @@ const tableRows = inst.scrub.slice().reverse();
     }
   }
 
-  /* Phones: the number goes above the plot, which takes the full width; a NOW tag marks the edge. */
+  /* Below 1230px the number goes above the plot, which takes the full width, and a NOW tag marks the
+     plot's edge. The masthead wraps below 1230px, and beside the plot, level with the NOW dot, the
+     number then sat under the fold of a 768px-tall laptop (1024x768, 1180x768). */
+  @media (max-width: 1229.98px) {
+    .scope {
+      --plot-h: 200px;
+      --num: 96px;
+      grid-template-columns: 30px 28px auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto auto auto var(--plot-h) 26px auto auto auto auto;
+      grid-template-areas:
+        'num num num name'
+        'num num num eq'
+        'head head head head'
+        'read read read read'
+        'lcap lcap pcap pcap'
+        'rail ticks stage stage'
+        '. . marks marks'
+        '. . days days'
+        'what what what what'
+        'key key key key'
+        'table table table table';
+    }
+    .dc-lede, .sc-needle-col, .sc-needle { display: contents; }
+    .sc-needle-col::before { content: none; }
+    .dc-num { grid-area: num; align-self: center; margin-right: 14px; }
+    .dc-name { grid-area: name; align-self: end; }
+    .sc-eq { grid-area: eq; min-height: 0; margin-top: 6px; }
+    .dc-headline { grid-area: head; margin: 10px 0 12px; }
+    .sc-cap-now { display: none; }
+    .sc-dot { right: -4px; }
+    .sc-nowtag { display: block; position: absolute; z-index: 4; right: 10px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 3px 5px; color: var(--lvl); background: rgba(7, 6, 15, 0.9); border: 1px solid var(--lvl); pointer-events: none; }
+    .sc-nowtag b { font-weight: 400; }
+    .scope:not(.ok) .sc-nowtag { color: var(--muted); border-style: dashed; border-color: var(--muted); }
+    /* The NOW tag sits above the dot unless the dot is near the top; the young callout keeps clear of it. */
+    .scope.high .sc-nowtag { transform: translateY(6px); }
+    .scope.high .sc-v3.young.below, .sc-v3.young.above { --off: 36px; }
+  }
+
+  /* Touch screens cannot hover: the hint says tap. */
+  @media (max-width: 640px), (hover: none) {
+    .sc-hint .h-long { display: none; }
+    .sc-hint .h-short { display: inline; }
+    .scope.scrubbed .sc-hint { display: none; }
+  }
+  @media (max-width: 379.98px) {
+    .sc-hint .h-drag { display: none; }
+  }
+
+  /* Phones: a smaller number and plot, and what the number is before the readout. */
   @media (max-width: 640px) {
     .scope {
       --plot-h: 140px;
@@ -594,36 +673,35 @@ const tableRows = inst.scrub.slice().reverse();
         'table table table table';
       column-gap: 4px;
     }
-    .dc-lede, .sc-needle-col, .sc-needle { display: contents; }
-    .sc-needle-col::before { content: none; }
-    .dc-num { grid-area: num; align-self: center; margin-right: 8px; }
-    .dc-name { grid-area: name; align-self: end; }
-    .sc-eq { grid-area: eq; min-height: 0; margin-top: 6px; gap: 2px; }
+    .dc-num { margin-right: 8px; }
+    .sc-eq { gap: 2px; }
     .sc-eq b { font-size: var(--fs-lg); }
     .sc-eq .of { font-size: var(--fs-sm); margin-right: 4px; }
-    .dc-headline { grid-area: head; margin: 8px 0 0; font-size: var(--fs-sm); }
+    /* The paragraph above the readout says NOT A FORECAST here. */
+    .sc-eq-nf { display: none; }
+    .dc-headline { margin: 8px 0 0; font-size: var(--fs-sm); }
+    /* Above the readout here, so it is the short form: the headline above it varies in length. */
     .dc-what { margin: 8px 0 10px; font-size: var(--fs-xs); line-height: 1.2; }
-    /* Three fixed rows (time, reading, launches) so a long line never moves the plot under a finger. */
-    .sc-readout { height: 74px; grid-template-rows: 12px 20px 32px; gap: 2px; margin-bottom: 8px; padding: 0 8px; }
-    .sc-r1 { display: contents; }
-    .sc-rname, .sc-hint { display: none; }
-    .sc-what { white-space: nowrap; }
-    .sc-r2 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; }
+    .dc-what .w-long { display: none; }
+    /* The readout above already reads the live level; the card keeps to what is missing. */
+    .sc-veil { gap: 3px; padding: 5px 8px; }
+    .sc-veil .v-live { display: none; }
+    .dc-what .w-short { display: inline; }
+    /* Three fixed rows (time and hint, reading, launches) so a long line never moves the plot under a finger. */
+    .sc-readout { height: 74px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 12px 20px 32px; gap: 2px 8px; margin-bottom: 8px; padding: 0 8px; }
+    .sc-r1, .sc-rw { display: contents; }
+    .sc-when { grid-area: 1 / 1; min-width: 0; overflow: hidden; }
+    .sc-hint { grid-area: 1 / 2; margin-left: 0; align-self: center; }
+    .sc-what { grid-area: 2 / 1 / 3 / -1; white-space: nowrap; }
+    .sc-rname { display: none; }
+    .sc-r2 { grid-column: 1 / -1; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; }
     .sc-cap { display: none; }
     .sc-ticks span.end { display: none; }
-    .sc-dot { right: -4px; }
-    .sc-nowtag { display: block; position: absolute; z-index: 4; right: 10px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 3px 5px; color: var(--lvl); background: rgba(7, 6, 15, 0.9); border: 1px solid var(--lvl); pointer-events: none; }
-    .sc-nowtag b { font-weight: 400; }
-    .scope:not(.ok) .sc-nowtag { color: var(--muted); border-style: dashed; border-color: var(--muted); }
-    .sc-days .mon { display: none; }
     .sc-dir.top, .sc-dir.bottom { left: 4px; }
     .scope:not(.fitted) .sc-flag { display: none; }
     .dc-key { gap: 2px 12px; margin-top: 10px; }
     .sc-v3 .yl-long, .sc-change .cf-when { display: none; }
     .sc-v3 .yl-short { display: inline; }
-    /* The NOW tag sits above the dot unless the dot is near the top; the young callout keeps clear of it. */
-    .scope.high .sc-nowtag { transform: translateY(6px); }
-    .scope.high .sc-v3.young.below, .sc-v3.young.above { --off: 36px; }
   }
 </style>
 
@@ -708,6 +786,7 @@ const tableRows = inst.scrub.slice().reverse();
     };
 
     const show = (at: number) => {
+      scope.classList.add('scrubbed');
       t = Math.min(data.to, Math.max(data.from, at));
       const r = readout(data, t);
       paint(r, ((t - data.from) / span) * 100);
@@ -766,25 +845,47 @@ const tableRows = inst.scrub.slice().reverse();
     const fit = () => {
       const P = plot.getBoundingClientRect();
       if (!P.width) return;
+      // Lift the pre-fit hiding before measuring. A flag still display: none has no box, so it would
+      // be skipped here and then shown unplaced; with the fonts cached (the 5-minute reload) this
+      // runs once, not twice, and nothing would repair it.
+      scope.classList.add('fitted');
       const rel = (el: Element): Box => {
         const r = el.getBoundingClientRect();
         return { left: r.left - P.left, top: r.top - P.top, right: r.right - P.left, bottom: r.bottom - P.top };
       };
       const shown = (el: HTMLElement) => getComputedStyle(el).display !== 'none';
       const labels = all('[data-label]');
-      for (const el of labels) el.classList.remove('is-cut');
+      const dayLabels = all('.sc-daylabel');
+      for (const el of [...labels, ...dayLabels]) el.classList.remove('is-cut');
       for (const el of all('[data-side0]')) el.dataset.side = el.dataset.side0;
       const flags = all('[data-label="flag"]');
       for (const f of flags) f.style.setProperty('--row', '0');
       const nowTag = scope.querySelector<HTMLElement>('.sc-nowtag');
-      const taken = nowTag && shown(nowTag) ? [rel(nowTag)] : [];
+      const veil = scope.querySelector<HTMLElement>('[data-veil]');
+      const taken = [nowTag, veil].filter((el): el is HTMLElement => !!el && shown(el)).map(rel);
       // Fixed labels (direction, the current scale, level changes: latest first), launch names, zones.
       const fixed = all('[data-label="fixed"]');
       const changes = fixed.filter((el) => el.classList.contains('sc-change')).reverse();
       const order = [...fixed.filter((el) => !el.classList.contains('sc-change')), ...changes];
-      const zones = all('[data-label="zone"]')
-        .map((z) => [...z.children].find((c) => shown(c as HTMLElement)) as HTMLElement | undefined)
-        .filter((z): z is HTMLElement => !!z);
+      // A zone label offers the variant its zone's width shows and each shorter one after it.
+      const VARIANTS = ['full', 'head', 'min'] as const;
+      const zoneLabels = all('[data-label="zone"]');
+      for (const z of zoneLabels) delete z.dataset.pick;
+      const zones = zoneLabels.flatMap((z) => {
+        const variant = (k: (typeof VARIANTS)[number]) => z.querySelector<HTMLElement>(`.zl-${k}`);
+        const first = VARIANTS.findIndex((k) => {
+          const v = variant(k);
+          return !!v && shown(v);
+        });
+        if (first === -1) return [];
+        const picks = VARIANTS.slice(first).filter((k) => variant(k));
+        const boxes = picks.map((k) => {
+          z.dataset.pick = k;
+          return rel(variant(k)!);
+        });
+        delete z.dataset.pick;
+        return [{ el: z, boxes, picks }];
+      });
       // A level-change flag may take the other side of its step when its own side is taken.
       const mirrored = (b: Box, below: boolean): Box => {
         const h = b.bottom - b.top;
@@ -792,7 +893,7 @@ const tableRows = inst.scrub.slice().reverse();
           ? { ...b, bottom: b.top - 16, top: b.top - 16 - h }
           : { ...b, top: b.bottom + 16, bottom: b.bottom + 16 + h };
       };
-      const items: { el: HTMLElement; boxes: Box[]; flag?: boolean }[] = [
+      const items: { el: HTMLElement; boxes: Box[]; flag?: boolean; picks?: readonly string[] }[] = [
         ...order.filter(shown).map((el) => {
           const b = rel(el);
           return { el, boxes: el.dataset.side0 ? [b, mirrored(b, el.dataset.side0 === 'below')] : [b] };
@@ -805,7 +906,7 @@ const tableRows = inst.scrub.slice().reverse();
             boxes: [0, 1, 2].map((row) => ({ ...b, top: b.top + row * FLAG_PITCH, bottom: b.bottom + row * FLAG_PITCH })),
           };
         }),
-        ...zones.map((el) => ({ el, boxes: [rel(el)] })),
+        ...zones,
       ];
       const bounds: Box = { left: 0, top: 0, right: P.width, bottom: P.height };
       const choice = placeLabels(
@@ -817,9 +918,22 @@ const tableRows = inst.scrub.slice().reverse();
         const c = choice[i];
         if (c === undefined) item.el.classList.add('is-cut');
         else if (item.flag) item.el.style.setProperty('--row', String(c));
+        else if (item.picks) {
+          if (c > 0) item.el.dataset.pick = item.picks[c];
+        }
         else if (c === 1) item.el.dataset.side = item.el.dataset.side0 === 'below' ? 'above' : 'below';
       });
-      scope.classList.add('fitted');
+      // A flag that could not be measured is never shown unplaced.
+      for (const f of flags) if (!shown(f)) f.classList.add('is-cut');
+      // The day axis: the latest day first, each label whole or not at all.
+      const days = dayLabels.filter(shown).reverse();
+      const anywhere = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+      placeLabels(
+        days.map((d) => [rel(d)]),
+        anywhere,
+      ).forEach((c, i) => {
+        if (c === undefined) days[i].classList.add('is-cut');
+      });
       if (t !== null) show(t);
     };
     let queued = 0;

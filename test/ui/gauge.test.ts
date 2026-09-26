@@ -149,14 +149,18 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(html).toContain('class="sc-dot joined"');
     // v3 has 12 hours, so its start is a callout with an honest count.
     expect(inst.current).toMatchObject({ count: 12, young: true });
-    expect(html).toContain('v3 SCALE FROM 26 SEP 00:00Z');
+    // The series is hourly and a version's first hour can hold the old one too: the start is an hour.
+    expect(html).toContain('v3 SCALE FROM THE 26 SEP 00:00Z HOUR');
+    expect(html).toContain('v3 FROM 00:00Z HOUR');
     expect(html).toContain('12 hourly readings so far');
     expect(html).toContain('updates every 15 min');
-    // It stepped from level 2 to level 4 at 06:00, and held: a flag on the line.
-    // The time is its own span, so a phone can show just "▼ L4".
+    // It stepped from level 2 to level 4 at 06:00, and held: a flag on the line, hung below the
+    // corner of a step down. The time is its own span, so a phone can show just "▼ L4".
     expect(html).toMatch(
-      /class="sc-change l4 left"[^>]*><span class="cf-dir"[^>]*>▼ L4<\/span><span class="cf-when"[^>]*> 26 SEP 06:00Z</,
+      /class="sc-change l4 left"[^>]*data-side="below" data-side0="below"[^>]*><span class="cf-dir"[^>]*>▼ L4<\/span><span class="cf-when"[^>]*> 26 SEP 06:00Z</,
     );
+    // v2 starts inside the window: the dark stretch before it is the record's start.
+    expect(html).toContain('captures start 23 Sep');
     expect(html).toContain(`aria-label="${inst.summary}"`);
     // Which way is hot, at the plot's top and bottom.
     expect(html).toContain('▲ 1 · RELEASE SURGE');
@@ -217,6 +221,42 @@ describe('DropconScope: the level and its week as one instrument', () => {
       ),
     );
     expect(html).toContain(`LEVEL ${d.dropcon.level} OF 5</span>`);
+    // Stamped on the number itself, so the first screen says it wherever the number is.
+    expect(html).toMatch(/class="sc-eq-nf"[^>]*><span class="sr-only"[^>]*>, <\/span>NOT A FORECAST<\/span>/);
+    for (const inputs of [floorInputs, darkInputs]) {
+      const off = await render(DropconScope, { d: dashboard(inputs), now: NOW });
+      expect(off).not.toContain('class="sc-eq-nf"');
+    }
+  });
+
+  it('offers a hover hint and a tap hint; the stylesheet shows the one that fits the screen', async () => {
+    const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
+    expect(html).toMatch(/class="h-long"[^>]*>◀ ▶ HOVER, DRAG OR ARROW KEYS</);
+    expect(html).toMatch(/class="h-short"[^>]*>◀ TAP<span class="h-drag"[^>]*> OR DRAG<\/span> ▶</);
+  });
+
+  it('says when the capture last wrote, not "none yet", when every reading is older than the window', async () => {
+    const old = readings('2026-09-10T00:00:00Z', 48, 3, () => 50);
+    const html = await render(DropconScope, { d, history: { ok: true, points: series(old) }, now: NOW });
+    expect(html).toContain('NO RECENT READINGS');
+    expect(html).toContain('Nothing captured in these 7 days; the last reading was 11 Sep 23:10Z.');
+    expect(html).not.toContain('NO READINGS YET');
+    expect(scopeData(html)).toMatchObject({ history: 'empty', last: Date.parse('2026-09-11T23:10:00Z') });
+  });
+
+  it('calls a gap at the window edge "no captures" when the record goes back further', async () => {
+    // Recorded from 15 Sep, the capture down 18-21 Sep across the window's left edge (19 Sep 12:00).
+    const before = readings('2026-09-15T00:00:00Z', 72, 3, () => 50);
+    const after = readings('2026-09-21T00:00:00Z', 132, 3, () => 50);
+    const html = await render(DropconScope, {
+      d,
+      history: { ok: true, points: series(before, after) },
+      now: NOW,
+    });
+    expect(html).not.toContain('captures start');
+    expect(html).toMatch(/class="sc-zone unrecorded"[^>]*style="left:0%[^"]*"[^>]*>.*?no captures/s);
+    expect(scopeData(html).recordFrom).toBe(Date.parse('2026-09-15T00:00:00Z'));
+    expect(html).not.toContain('class="sc-v3');
   });
 });
 
@@ -257,6 +297,8 @@ describe('Dropcon for a first-time reader', () => {
     expect(html).toContain('LEAD SCORE');
     expect(html).toContain('WHAT IS THIS?');
     expect(html).toContain('the line is that');
+    // A phone shows the short form above its readout.
+    expect(html).toContain('The line is the 0–100 lead score over time');
     expect(html).toMatch(/It is a lead score, <b class="nf"[^>]*>NOT A FORECAST<\/b>/);
     expect(html).toContain('context only, the score has not been shown to predict launches');
     expect(at('dc-name')).toBeLessThan(at('dc-num'));

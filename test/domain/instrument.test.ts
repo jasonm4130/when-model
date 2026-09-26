@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FLAG_GAP,
   FLAG_MAX,
   INSTRUMENT_WIDTH,
   INSTRUMENT_WINDOW_MS,
@@ -78,7 +79,7 @@ describe('buildInstrument', () => {
     expect(inst.scrub.every((p) => p.e > p.h)).toBe(true);
     expect(inst.scrub.at(-1)).toMatchObject({ kind: 'current', h: Date.parse('2026-09-26T11:00:00Z') });
     expect(inst.summary).toContain(
-      'v3 from 25 Sep 11:00Z: 25 hourly readings, scores 40 to 60; latest recorded level 2 (score 60).',
+      'v3 from the 25 Sep 11:00Z hour: 25 hourly readings in these 7 days, scores 40 to 60; latest recorded level 2 (score 60).',
     );
     expect(inst.summary).toContain('Now: level 3, score 53 of 100.');
   });
@@ -196,7 +197,9 @@ describe('buildInstrument', () => {
       }),
     );
     expect(one.current).toEqual({ x: x('2026-09-26T11:00:00Z'), count: 1, young: true, y: 47 });
-    expect(one.summary).toContain('v3 from 26 Sep 11:00Z: 1 hourly reading, score 53;');
+    expect(one.summary).toContain(
+      'v3 from the 26 Sep 11:00Z hour: 1 hourly reading in these 7 days, score 53;',
+    );
     const week = buildInstrument(
       input({ points: series(readings('2026-09-20T00:00:00Z', 156, 3, () => 50)) }),
     );
@@ -216,18 +219,38 @@ describe('buildInstrument', () => {
     };
     const inst = buildInstrument(input({ points: series(readings('2026-09-19T12:00:00Z', 168, 3, score)) }));
     expect(inst.changes.map((c) => c.text)).toEqual(['▲ L2 21 SEP 00:00Z', '▼ L4 26 SEP 00:00Z']);
-    expect(inst.changes[0]).toMatchObject({ dir: 'up', from: 4, level: 2, y: 40, side: 'left' });
-    expect(inst.changes[1]).toMatchObject({ dir: 'down', from: 2, level: 4, y: 75, side: 'left' });
-    // A see-saw every 6 hours: every change holds, so the gap rule keeps at most FLAG_MAX, latest first.
-    const saw = buildInstrument(
-      input({
-        points: series(readings('2026-09-19T12:00:00Z', 168, 3, (i) => (Math.floor(i / 6) % 2 ? 60 : 30))),
-      }),
-    );
-    expect(saw.changes.length).toBeLessThanOrEqual(FLAG_MAX);
-    expect(saw.changes.at(-1)!.at > saw.changes[0].at).toBe(true);
-    for (let i = 1; i < saw.changes.length; i++)
-      expect(saw.changes[i].x - saw.changes[i - 1].x).toBeGreaterThanOrEqual(120);
+    expect(inst.changes[0]).toMatchObject({
+      dir: 'up',
+      hang: 'above',
+      from: 4,
+      level: 2,
+      y: 40,
+      side: 'left',
+    });
+    expect(inst.changes[1]).toMatchObject({
+      dir: 'down',
+      hang: 'below',
+      from: 2,
+      level: 4,
+      y: 75,
+      side: 'left',
+    });
+    // A see-saw every 30 hours: every change holds and clears the gap, so FLAG_MAX, latest first.
+    const saw30 = (i: number) => (Math.floor(i / 30) % 2 ? 60 : 30);
+    const slow = buildInstrument(input({ points: series(readings('2026-09-19T12:00:00Z', 168, 3, saw30)) }));
+    expect(slow.changes.map((c) => c.text)).toEqual([
+      '▲ L2 20 SEP 18:00Z',
+      '▼ L4 22 SEP 00:00Z',
+      '▲ L2 23 SEP 06:00Z',
+      '▼ L4 24 SEP 12:00Z',
+      '▲ L2 25 SEP 18:00Z',
+    ]);
+    expect(slow.changes).toHaveLength(FLAG_MAX);
+    // A see-saw every 6 hours: every change holds, but each is within the gap of the next, so
+    // they fold together; what is left reads from the week's first level to its last.
+    const saw6 = (i: number) => (Math.floor(i / 6) % 2 ? 60 : 30);
+    const fast = buildInstrument(input({ points: series(readings('2026-09-19T12:00:00Z', 168, 3, saw6)) }));
+    expect(fast.changes.map((c) => [c.from, c.level])).toEqual([[4, 2]]);
     // A change near the left edge puts its flag on the right of the step, inside the plot.
     const early = buildInstrument(
       input({
@@ -236,5 +259,140 @@ describe('buildInstrument', () => {
     );
     expect(early.changes).toHaveLength(1);
     expect(early.changes[0]).toMatchObject({ text: '▲ L2 20 SEP 00:00Z', side: 'right' });
+  });
+  it('never leaves two flags that contradict: a short excursion under the gap goes with its return', () => {
+    // Level 4 (30) to 21 Sep, level 3 (45) after, a 5-hour spell at level 2 (60) on 25 Sep
+    // 18:00-23:00 (it holds past FLAG_HOLD_MS but is under FLAG_GAP), then back to level 3.
+    const score = (i: number) => {
+      const t = Date.parse('2026-09-19T13:00:00Z') + i * HOUR;
+      if (t < Date.parse('2026-09-21T00:00:00Z')) return 30;
+      if (t >= Date.parse('2026-09-25T18:00:00Z') && t < Date.parse('2026-09-25T23:00:00Z')) return 60;
+      return 45;
+    };
+    const inst = buildInstrument(input({ points: series(readings('2026-09-19T13:00:00Z', 167, 3, score)) }));
+    // Not "▲ L3 21 SEP" then "▼ L3 25 SEP": the level-2 spell and its return fold away together.
+    expect(inst.changes.map((c) => c.text)).toEqual(['▲ L3 21 SEP 00:00Z']);
+  });
+
+  it('folds a change the gap drops into the flag after it, so every flag reads on from the last', () => {
+    // L4 to L3 on 20 Sep, L2 on 22 Sep 00:00, L3 at 10:00, L5 on 23 Sep 06:00, L4 at 10:00, L2 on 25 Sep.
+    const plan: [string, number][] = [
+      ['2026-09-19T12:00:00Z', 30],
+      ['2026-09-20T02:00:00Z', 45],
+      ['2026-09-22T00:00:00Z', 60],
+      ['2026-09-22T10:00:00Z', 45],
+      ['2026-09-23T06:00:00Z', 10],
+      ['2026-09-23T10:00:00Z', 30],
+      ['2026-09-25T11:00:00Z', 60],
+    ];
+    const score = (i: number) => {
+      const t = Date.parse('2026-09-19T12:00:00Z') + i * HOUR;
+      return plan.filter(([at]) => Date.parse(at) <= t).at(-1)![1];
+    };
+    const inst = buildInstrument(input({ points: series(readings('2026-09-19T12:00:00Z', 168, 3, score)) }));
+    expect(inst.changes.map((c) => c.text)).toEqual([
+      '▲ L3 20 SEP 02:00Z',
+      // L3 -> L2 -> L3 -> L5 -> L4 within the gap: one flag where it settled, down from L3 to L4.
+      '▼ L4 23 SEP 10:00Z',
+      '▲ L2 25 SEP 11:00Z',
+    ]);
+    // That last step itself rose (L5 to L4), so its flag hangs above the corner, where the line was not.
+    expect(inst.changes[1]).toMatchObject({ from: 3, level: 4, dir: 'down', hang: 'above' });
+  });
+
+  it('keeps every flag chained to the one before it, whatever the series', () => {
+    let seed = 7;
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let run = 0; run < 40; run++) {
+      const hold = 1 + Math.floor(rand() * 30);
+      const scores = Array.from({ length: 168 }, () => 0);
+      let s = rand() * 100;
+      for (let i = 0; i < 168; i++) {
+        if (i % hold === 0) s = Math.min(100, Math.max(0, s + (rand() - 0.5) * 60));
+        scores[i] = Math.round(s);
+      }
+      const inst = buildInstrument(
+        input({ points: series(readings('2026-09-19T12:00:00Z', 168, 3, (i) => scores[i])) }),
+      );
+      expect(inst.changes.length).toBeLessThanOrEqual(FLAG_MAX);
+      for (const [i, c] of inst.changes.entries()) {
+        expect(c.from).not.toBe(c.level);
+        expect(c.dir).toBe(c.level < c.from ? 'up' : 'down');
+        const before = inst.changes[i - 1];
+        if (!before) continue;
+        expect(c.from, `${before.text} then ${c.text}`).toBe(before.level);
+        expect(c.x - before.x).toBeGreaterThanOrEqual(FLAG_GAP);
+      }
+    }
+  });
+
+  it('draws only the last 7 days of the 30-day series it is given', () => {
+    const month = readings('2026-08-27T12:00:00Z', 30 * 24, 3, () => 50);
+    const inst = buildInstrument(input({ points: series(month) }));
+    expect(inst.scrub).toHaveLength(168);
+    expect(inst.scrub[0].h).toBe(FROM);
+    expect(inst.scrub.every((p) => p.e > FROM && p.h < NOW)).toBe(true);
+    expect(inst.zones).toEqual([]);
+    expect(inst.traces).toHaveLength(1);
+    expect(inst.traces[0].line.startsWith('M0 50')).toBe(true);
+    expect(inst.summary).toContain('v3 (recorded since 27 Aug): 168 hourly readings in these 7 days');
+    expect(inst.summary).not.toContain('Nothing recorded before');
+    // The record started before the window: that start, and the current version's, are not in it.
+    expect(inst.recordedFrom).toBe('2026-08-27T12:00:00.000Z');
+    expect(inst.currentSince).toBe('2026-08-27T12:00:00.000Z');
+    expect(inst.current).toMatchObject({ x: 0, young: false });
+  });
+
+  it('calls a gap at the left edge a capture gap, not the start of the record, when older readings exist', () => {
+    // Captured since 26 Sep; the capture was down 12-14 Oct, across the window's left edge (13 Oct 12:00).
+    const now = Date.parse('2026-10-20T12:00:00Z');
+    const a = readings('2026-09-26T10:00:00Z', 16 * 24 + 14, 3, () => 50);
+    const b = readings('2026-10-14T00:00:00Z', 6 * 24 + 12, 3, () => 50);
+    const inst = buildInstrument(input({ now, points: series(a, b) }));
+    expect(inst.zones[0]).toMatchObject({ kind: 'unrecorded', x: 0, to: '2026-10-14T00:00:00.000Z' });
+    expect(inst.zones[0].start).toBeUndefined();
+    expect(inst.recordedFrom).toBe('2026-09-26T10:00:00.000Z');
+    expect(inst.current).toMatchObject({ x: 0, young: false });
+    expect(inst.summary).not.toContain('14 Oct 00:00Z');
+    // Where the record does begin in the window, the leading zone says so.
+    const fresh = buildInstrument(input({ points: series(v3) }));
+    expect(fresh.zones[0]).toMatchObject({ kind: 'unrecorded', x: 0, start: true });
+  });
+
+  it('says when the last reading was, rather than "none yet", when the whole record is older than the window', () => {
+    const now = Date.parse('2026-10-10T12:00:00Z');
+    const inst = buildInstrument(
+      input({ now, points: series(readings('2026-09-26T10:00:00Z', 120, 3, () => 50)) }),
+    );
+    expect(inst.state).toBe('empty');
+    expect(inst.lastReading).toBe('2026-10-01T09:10:00.000Z');
+    expect(inst.summary).toContain('No readings in these 7 days; the last was 1 Oct 09:10Z.');
+    expect(inst.summary).not.toContain('recorded yet');
+    expect(buildInstrument(input()).lastReading).toBeUndefined();
+  });
+
+  it('gives the hour two versions share to the new one, so the old zone never covers the new line', () => {
+    const at = (iso: string, algorithmVersion: number, score: number) => ({
+      slot: iso,
+      observedAt: iso,
+      algorithmVersion,
+      score,
+      level: algorithmVersion === 3 ? (3 as const) : (1 as const),
+      degraded: false,
+    });
+    const inst = buildInstrument(
+      input({
+        points: series([
+          at('2026-09-26T08:46:00.307Z', 2, 93),
+          at('2026-09-26T09:01:00.757Z', 2, 93),
+          at('2026-09-26T09:16:00.342Z', 2, 88),
+          at('2026-09-26T09:31:00.569Z', 3, 53),
+        ]),
+      }),
+    );
+    const old = inst.zones.find((z) => z.kind === 'old')!;
+    expect(old.to).toBe('2026-09-26T09:00:00.000Z');
+    expect(old.x + old.w).toBeCloseTo(inst.current!.x, 6);
+    expect(inst.currentSince).toBe('2026-09-26T09:00:00.000Z');
   });
 });

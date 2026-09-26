@@ -11,7 +11,7 @@ import { dayMonth, MONTHS } from '../domain/dates';
 import { LEVEL_NAMES } from '../domain/levels';
 
 const HOUR_MS = 3_600_000;
-const NEAR_MAX = 3;
+export const NEAR_MAX = 3;
 
 /** A reading of the current version, an older version's reading, or an hour the odds were offline. */
 export type ScrubKind = 'c' | 'o' | 'x';
@@ -45,8 +45,10 @@ export interface ScrubData {
   history: 'ok' | 'empty' | 'unavailable';
   /** False when the launch listings could not be read, so no marks does not mean no launches. */
   launchesOk: boolean;
-  /** The first hour in the record, when there is one. */
+  /** The first hour in the record, when there is one (it may be before the window). */
   recordFrom?: number;
+  /** The latest reading, when the record has one but none of it is in the window. */
+  last?: number;
   /** Launches this close to the cursor (ms) are named. */
   near: number;
   pts: ScrubPoint[];
@@ -96,7 +98,7 @@ export function pointAt(data: ScrubData, t: number): ScrubPoint | undefined {
   return data.pts.findLast((p) => t >= p[1] && t < p[2]);
 }
 
-/** Up to three launches within `data.near` of `t`, nearest first. */
+/** Up to `NEAR_MAX` launches within `data.near` of `t` (inclusive), nearest first. */
 export function launchesNear(data: ScrubData, t: number): ScrubLaunch[] {
   return data.launches
     .filter((l) => Math.abs(l[0] - t) <= data.near)
@@ -153,7 +155,10 @@ export function readout(data: ScrubData, t: number): Readout {
     near,
   });
   if (data.history === 'unavailable') return none('history offline · log unreadable');
-  if (data.history === 'empty') return none('no readings recorded yet');
+  if (data.history === 'empty')
+    return none(
+      data.last !== undefined ? `no reading · last one ${timeText(data.last)}` : 'no readings recorded yet',
+    );
   const p = pointAt(data, t);
   if (!p) {
     if (data.recordFrom !== undefined && t < data.recordFrom)

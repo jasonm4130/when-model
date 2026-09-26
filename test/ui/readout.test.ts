@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   launchLine,
   launchesNear,
+  NEAR_MAX,
   nearLine,
   nowReadout,
   pointAt,
@@ -72,6 +73,10 @@ describe('the instrument readout', () => {
     expect(offline.score).toBeUndefined();
     expect(readoutText(offline)).not.toMatch(/score|level/);
     expect(readout(data({ history: 'empty', pts: [] }), TO - HOUR).what).toBe('no readings recorded yet');
+    // A record that stopped more than 7 days ago is not "none yet": it says when the last one was.
+    expect(
+      readout(data({ history: 'empty', pts: [], last: h('2026-09-18T09:10:00Z') }), TO - HOUR).what,
+    ).toBe('no reading · last one 18 SEP 09:10Z');
   });
 
   it("names an older version's hour without its number, and an outage as held", () => {
@@ -106,6 +111,31 @@ describe('the instrument readout', () => {
     expect(readoutText(r)).toContain('Launches near: GPT-6 Sol (OpenAI), Claude Opus 5.5 (Anthropic)');
     expect(nearLine(d, readout(d, h('2026-09-24T00:00:00Z')))).toBe('no frontier launch within 3h');
     expect(nearLine(data({ launchesOk: false }), r)).toBe('launch listings offline');
+  });
+
+  it(`names at most ${NEAR_MAX} launches, and counts one exactly 3 hours away as near`, () => {
+    const t = h('2026-09-24T12:00:00Z');
+    const launch = (min: number, name: string): ScrubData['launches'][number] => [
+      t + min * 60_000,
+      name,
+      'Lab',
+      '▲',
+      '#fff',
+    ];
+    const d = data({
+      launches: [
+        launch(-180, 'edge'),
+        launch(-181, 'past'),
+        launch(30, 'a'),
+        launch(-60, 'b'),
+        launch(90, 'c'),
+        launch(120, 'd'),
+      ],
+    });
+    expect(launchesNear(d, t).map((l) => l[1])).toEqual(['a', 'b', 'c']);
+    expect(
+      launchesNear(data({ launches: [launch(-180, 'edge'), launch(181, 'past')] }), t).map((l) => l[1]),
+    ).toEqual(['edge']);
   });
 
   it("sums up the week's launches at rest, in the singular for one, and says when listings are down", () => {
