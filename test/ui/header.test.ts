@@ -87,7 +87,19 @@ describe('Header', async () => {
       kind: 'release',
       labId: 'openai',
       outcomes: [
-        { label: 'September 24', yes: 0.5, endDate: '2026-09-25T00:00:00Z', closed: false, vol24: 1 },
+        {
+          label: 'September 24',
+          yes: 0.5,
+          endDate: '2026-09-25T00:00:00Z',
+          closed: false,
+          vol24: 1,
+          deadline: '2026-09-25T03:59:59.000Z',
+          deadlineKind: 'by',
+          bestBid: 0.495,
+          bestAsk: 0.505,
+          thin: false,
+          liquidity: 1000,
+        },
       ],
     };
     const html = await container.renderToString(Header, {
@@ -95,6 +107,6 @@ describe('Header', async () => {
     });
     expect(html).toContain('STATUS: DEGRADED');
     // The release market's odds are a ticker item, so the ticker renders even with a source down.
-    expect(html).toContain('ODDS OF A DROP BY SEPTEMBER 24');
+    expect(html).toContain('OPENAI: 50% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
   });
 });

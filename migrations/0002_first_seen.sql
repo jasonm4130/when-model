@@ -58,13 +58,16 @@ CREATE TABLE IF NOT EXISTS score_series_metadata (
 
 INSERT OR IGNORE INTO score_series_metadata (id) VALUES (1);
 
+-- headline_p is the probability the DROPCON headline reads: in v3 the best trusted
+-- frontier-family P(release within 7 days), in v2 (backfilled rows) the max 7-day odds.
+-- NULL when the odds source was down. algo_version tells the two apart.
 CREATE TABLE IF NOT EXISTS score_series (
   slot TEXT PRIMARY KEY,
   observed_at TEXT NOT NULL,
   algo_version INTEGER NOT NULL,
   score INTEGER NOT NULL,
   level INTEGER NOT NULL,
-  p7 REAL,
+  headline_p REAL,
   degraded INTEGER NOT NULL DEFAULT 0 CHECK (degraded IN (0, 1))
 );
 
@@ -90,13 +93,14 @@ BEGIN
 END;
 
 -- Backfill from every existing observation. json_extract already returns SQLite integers
--- for JSON true/false, so the degraded CASE is defensive, not corrective. p7 is NULL when
--- the odds source was down (maxWeekOdds is then a placeholder 0, not a price). Rows from
--- before `measurement`/`dropcon` existed in the payload are skipped, not faked. Slots
--- captured after this runs but before the code that writes score_series is deployed are
--- caught up by backfillScoreSeries (src/infra/snapshot-store.ts), which must keep this
--- projection.
-INSERT OR IGNORE INTO score_series (slot, observed_at, algo_version, score, level, p7, degraded)
+-- for JSON true/false, so the degraded CASE is defensive, not corrective. headline_p is
+-- NULL when the odds source was down (the v2 maxWeekOdds and the v3 p7 are then a
+-- placeholder 0, not a price), else v3's inputs.p7, else v2's inputs.maxWeekOdds: the
+-- same rule as headlineProbability in src/domain/dropcon.ts. Rows from before
+-- `measurement`/`dropcon` existed in the payload are skipped, not faked. Slots captured
+-- after this runs but before the code that writes score_series is deployed are caught up
+-- by backfillScoreSeries (src/infra/snapshot-store.ts), which must keep this projection.
+INSERT OR IGNORE INTO score_series (slot, observed_at, algo_version, score, level, headline_p, degraded)
 SELECT
   scheduled_slot,
   observed_at,
@@ -104,7 +108,8 @@ SELECT
   CAST(json_extract(payload_json, '$.dropcon.score') AS INTEGER),
   CAST(json_extract(payload_json, '$.dropcon.level') AS INTEGER),
   CASE WHEN json_extract(payload_json, '$.measurement.inputs.oddsAvailable') = 0 THEN NULL
-       ELSE CAST(json_extract(payload_json, '$.measurement.inputs.maxWeekOdds') AS REAL) END,
+       ELSE CAST(COALESCE(json_extract(payload_json, '$.measurement.inputs.p7'),
+                          json_extract(payload_json, '$.measurement.inputs.maxWeekOdds')) AS REAL) END,
   CASE WHEN json_extract(payload_json, '$.dropcon.degraded') THEN 1 ELSE 0 END
 FROM dashboard_snapshots
 WHERE json_extract(payload_json, '$.dropcon.score') IS NOT NULL

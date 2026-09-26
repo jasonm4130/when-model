@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { assembleDashboard } from '../../src/domain/dashboard';
+import { LIMITS, assembleDashboard } from '../../src/domain/dashboard';
+import { LABS } from '../../src/domain/lab';
+import { SOURCE } from '../../src/domain/sources';
 import {
   MAX_CLEANUP_ROWS,
   MAX_FIRST_SEEN_ROWS,
+  MAX_SNAPSHOT_BYTES,
   MAX_SNAPSHOT_ROWS,
+  MAX_SNAPSHOT_STRING_BYTES,
   MAX_TOTAL_PAYLOAD_BYTES,
   SNAPSHOT_INTERVAL_MS,
   backfillScoreSeries,
+  clipString,
   compactSnapshot,
   readFirstSeen,
+  readHeadlineNear,
   readScoreSeries,
+  readSightings,
   recordFirstSeen,
   snapshotPayload,
   storeSnapshot,
@@ -23,18 +30,33 @@ import { SqliteD1 } from './sqlite-d1';
 
 const dashboard = {
   generatedAt: '2026-09-20T00:00:00.000Z',
-  measurement: { schema: 3, algorithmVersion: 2, inputs: { maxWeekOdds: 0 } },
-  dropcon: { score: 4, level: 5, extra: 'preserved' },
+  measurement: { schema: 4, algorithmVersion: 3, inputs: { p7: 0.123456, oddsAvailable: true } },
+  dropcon: {
+    score: 4,
+    level: 5,
+    name: 'QUIET ORBIT',
+    state: 'ok',
+    degraded: false,
+    headline: 'h',
+    blurb: 'fixed copy, not stored',
+    provenance: [{ term: 'market-7d', tag: 'LEAD', label: 'dropped', detail: '80 × 0.05', points: 4 }],
+  },
   labs: [
     {
       id: 'openai',
       heat: 2,
       status: 'QUIET',
-      weekOdds: undefined,
-      monthOdds: { p: 0.2 },
+      odds: {
+        family: 'GPT-6',
+        marketUrl: 'discarded',
+        p72: { p: 0.012345, trusted: true, interpolated: true },
+        p7: { p: 0.05, trusted: true },
+        p30: { p: 0.2, trusted: false },
+      },
       latest: { id: 'a', name: 'A', createdAt: '2026-09-19T00:00:00Z', url: 'discarded' },
       discarded: true,
     },
+    { id: 'meta', heat: 0, status: 'QUIET' },
   ],
   drops: [
     {
@@ -82,16 +104,29 @@ describe('snapshot store', () => {
     expect(compactSnapshot(dashboard)).toEqual({
       generatedAt: dashboard.generatedAt,
       measurement: dashboard.measurement,
-      dropcon: dashboard.dropcon,
+      dropcon: {
+        score: 4,
+        level: 5,
+        name: 'QUIET ORBIT',
+        state: 'ok',
+        degraded: false,
+        headline: 'h',
+        provenance: [{ term: 'market-7d', detail: '80 × 0.05', points: 4 }],
+      },
       labs: [
         {
           id: 'openai',
           heat: 2,
           status: 'QUIET',
-          weekOdds: null,
-          monthOdds: { p: 0.2 },
+          odds: {
+            family: 'GPT-6',
+            p72: { p: 0.0123, trusted: true },
+            p7: { p: 0.05, trusted: true },
+            p30: { p: 0.2, trusted: false },
+          },
           latest: { id: 'a', name: 'A', createdAt: '2026-09-19T00:00:00Z' },
         },
+        { id: 'meta', heat: 0, status: 'QUIET', odds: null, latest: null },
       ],
       drops: [
         {
@@ -104,6 +139,143 @@ describe('snapshot store', () => {
       ],
       sources: [{ name: 'Polymarket', ok: false, error: 'timeout' }],
     });
+  });
+
+  it('clips every string by its encoded size, escapes and multi-byte characters included', () => {
+    const fits = (x: string) => new TextEncoder().encode(JSON.stringify(x)).byteLength;
+    expect(clipString('short')).toBe('short');
+    for (const long of [
+      'a'.repeat(500),
+      '漢'.repeat(500),
+      '"'.repeat(500),
+      '\u0001'.repeat(500),
+      '😀'.repeat(500),
+      '\ud800'.repeat(500),
+    ]) {
+      const clipped = clipString(long);
+      expect(clipped.endsWith('…')).toBe(true);
+      expect(fits(clipped)).toBeLessThanOrEqual(MAX_SNAPSHOT_STRING_BYTES);
+    }
+    // A string exactly at the budget is kept whole.
+    const exact = 'a'.repeat(MAX_SNAPSHOT_STRING_BYTES - 2);
+    expect(clipString(exact)).toBe(exact);
+    expect(
+      compactSnapshot({ ...dashboard, sources: [{ name: 'X', ok: false, error: 'e'.repeat(900) }] })
+        .sources[0].error,
+    ).toHaveLength(MAX_SNAPSHOT_STRING_BYTES - 2 - 2);
+  });
+
+  it('stays within the 32 KiB cap in the worst case: every list full, every string over-long and multi-byte', () => {
+    const long = (seed: string) => `${seed}${'漢"'.repeat(400)}`;
+    const driver = {
+      labId: 'anthropic',
+      lab: 'Anthropic',
+      family: long('family'),
+      p: 0.123456789,
+      read: 'interpolated',
+      from: long('from'),
+      to: long('to'),
+      quote: { label: long('label'), p: 0.987654321 },
+      url: long('url'),
+    };
+    const read = {
+      p: 0.123456789,
+      trusted: true,
+      interpolated: true,
+      lowerBound: false,
+      source: 'curve',
+      url: long('u'),
+    };
+    const real = assembleDashboard(
+      {
+        markets: { name: 'Polymarket', ok: true, data: [] },
+        drops: { name: 'OpenRouter', ok: true, data: [] },
+        trending: { name: 'HF trending', ok: true, data: [] },
+        papers: { name: 'HF papers', ok: true, data: [] },
+        feeds: [],
+      },
+      Date.parse('2026-09-20T00:00:00.000Z'),
+    );
+    const worst = {
+      ...real,
+      measurement: {
+        schema: 4,
+        algorithmVersion: 3,
+        inputs: {
+          p7: 0.123456789,
+          p30: 0.987654321,
+          p7DayAgo: 0.123456789,
+          oddsAvailable: true,
+          listingsAvailable: true,
+          top7: driver,
+          top30: driver,
+        },
+      },
+      dropcon: {
+        ...real.dropcon,
+        name: 'VAGUE-POSTING DETECTED',
+        headline: long('headline'),
+        provenance: ['market-7d', 'market-30d', 'repricing'].map((term) => ({
+          term,
+          tag: 'LEAD',
+          label: long('l'),
+          detail: long('d'),
+          points: 100,
+          url: long('u'),
+        })),
+      },
+      // Ids, statuses, source names, terms and lab ids are this codebase's own enums; every
+      // upstream-shaped string is over-long, multi-byte and full of characters JSON escapes.
+      labs: LABS.map((lab) => ({
+        id: lab.id,
+        heat: 100,
+        status: 'SHIPPING',
+        odds: {
+          family: long('family'),
+          marketUrl: long('m'),
+          p72: read,
+          p7: read,
+          p30: read,
+          thinExcluded: 99,
+        },
+        latest: {
+          id: long('id'),
+          name: long('name'),
+          createdAt: '2026-09-19T00:00:00.000Z',
+          url: long('url'),
+        },
+      })),
+      drops: Array.from({ length: LIMITS.drops }, (_, i) => ({
+        id: long(`id${i}`),
+        name: long('name'),
+        labId: 'anthropic',
+        createdAt: '2026-09-19T00:00:00.000Z',
+        url: long('url'),
+      })),
+      sources: Object.values(SOURCE).map((name) => ({ name, ok: false, error: long('error') })),
+    };
+    expect(LABS.length).toBeGreaterThanOrEqual(10);
+    expect(Object.values(SOURCE)).toHaveLength(15);
+    const { byteCount } = snapshotPayload(worst as unknown as Parameters<typeof snapshotPayload>[0]);
+    // 29,835 bytes when this was written: under the cap with about 9% to spare.
+    expect(byteCount).toBeLessThanOrEqual(MAX_SNAPSHOT_BYTES);
+  });
+
+  it('keeps a real v3 dashboard well under the cap', () => {
+    const real = assembleDashboard(
+      {
+        markets: { name: 'Polymarket', ok: true, data: [] },
+        drops: { name: 'OpenRouter', ok: true, data: [] },
+        trending: { name: 'HF trending', ok: true, data: [] },
+        papers: { name: 'HF papers', ok: true, data: [] },
+        feeds: [],
+      },
+      Date.parse('2026-09-20T00:00:00.000Z'),
+    );
+    const payload = JSON.parse(snapshotPayload(real).json);
+    expect(payload.measurement.algorithmVersion).toBe(3);
+    expect(payload.dropcon).toMatchObject({ level: 5, state: 'ok', degraded: false });
+    expect(payload.dropcon.blurb).toBeUndefined();
   });
 
   it('uses SQL guards for duplicate slots and cached logical capacity, after bounded cleanup', async () => {
@@ -187,7 +359,7 @@ function fillSlots(db: SqliteD1, table: 'score_series' | 'dashboard_snapshots', 
   const insert =
     table === 'score_series'
       ? db.sqlite.prepare(
-          'INSERT INTO score_series (slot, observed_at, algo_version, score, level, p7, degraded) VALUES (?, ?, 2, 10, 5, NULL, 0)',
+          'INSERT INTO score_series (slot, observed_at, algo_version, score, level, headline_p, degraded) VALUES (?, ?, 2, 10, 5, NULL, 0)',
         )
       : db.sqlite.prepare(
           "INSERT INTO dashboard_snapshots (scheduled_slot, observed_at, generated_at, payload_json, byte_count) VALUES (?, ?, ?, '{}', 2)",
@@ -209,7 +381,7 @@ function reading(slotMs: number, overrides: Partial<ScoreSeriesInput> = {}): Sco
     algorithmVersion: 2,
     score: 64,
     level: 2,
-    p7: 0.6,
+    headlineP: 0.6,
     degraded: false,
     ...overrides,
   };
@@ -411,7 +583,7 @@ describe('writeScoreSeries / readScoreSeries (real SQLite, migrations applied)',
     await writeScoreSeries(db, reading(T0));
     await writeScoreSeries(
       db,
-      reading(T0 + SNAPSHOT_INTERVAL_MS, { score: 10, level: 5, p7: null, degraded: true }),
+      reading(T0 + SNAPSHOT_INTERVAL_MS, { score: 10, level: 5, headlineP: null, degraded: true }),
     );
     expect(await readScoreSeries(db, iso(T0 - 60_000))).toEqual([
       {
@@ -420,7 +592,7 @@ describe('writeScoreSeries / readScoreSeries (real SQLite, migrations applied)',
         algorithmVersion: 2,
         score: 64,
         level: 2,
-        p7: 0.6,
+        headlineP: 0.6,
         degraded: false,
       },
       {
@@ -429,7 +601,7 @@ describe('writeScoreSeries / readScoreSeries (real SQLite, migrations applied)',
         algorithmVersion: 2,
         score: 10,
         level: 5,
-        p7: undefined,
+        headlineP: undefined,
         degraded: true,
       },
     ]);
@@ -484,7 +656,12 @@ describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
       },
     };
   }
-  /** The real degraded path: Polymarket down, so maxWeekOdds is a placeholder 0. */
+  /** A v3 capture with live odds: headline_p is its measurement's P7. */
+  function v3Dashboard(generatedAt: string) {
+    const d = assembleDashboard(quiet, Date.parse(generatedAt));
+    return { ...d, measurement: { ...d.measurement, inputs: { ...d.measurement.inputs, p7: 0.42 } } };
+  }
+  /** The real degraded path: Polymarket down, so P7 is a placeholder 0. */
   function oddsOfflineDashboard(generatedAt: string) {
     return assembleDashboard(
       { ...quiet, markets: { name: 'Polymarket', ok: false, error: 'timeout', data: [] } },
@@ -504,11 +681,11 @@ describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
   const allRows = (db: SqliteD1) =>
     db.sqlite
       .prepare(
-        'SELECT slot, observed_at, algo_version, score, level, p7, degraded FROM score_series ORDER BY slot',
+        'SELECT slot, observed_at, algo_version, score, level, headline_p, degraded FROM score_series ORDER BY slot',
       )
       .all();
 
-  it('migration 0002 backfills existing snapshots, with no p7 when odds were offline, skipping legacy rows', async () => {
+  it('migration 0002 backfills v2 and v3 snapshots into headline_p, null when odds were offline, skipping legacy rows', async () => {
     const db = new SqliteD1(['0001_snapshots.sql']);
     await capture(db, T0, liveDashboard(at(T0)));
     await capture(db, T0 + SNAPSHOT_INTERVAL_MS, oddsOfflineDashboard(at(T0 + SNAPSHOT_INTERVAL_MS)));
@@ -519,6 +696,7 @@ describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
       drops: [],
       sources: [],
     });
+    await capture(db, T0 + 3 * SNAPSHOT_INTERVAL_MS, v3Dashboard(at(T0 + 3 * SNAPSHOT_INTERVAL_MS)));
     db.migrate('0002_first_seen.sql');
     expect(allRows(db)).toEqual([
       {
@@ -527,20 +705,31 @@ describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
         algo_version: 2,
         score: 95,
         level: 1,
-        p7: 0.865,
+        // v2: the max 7-day odds.
+        headline_p: 0.865,
         degraded: 0,
       },
       {
         slot: '2026-09-23T01:15:00.000Z',
         observed_at: '2026-09-23T01:15:40.000Z',
-        algo_version: 2,
+        algo_version: 3,
         score: 0,
         level: 5,
-        p7: null,
+        headline_p: null,
         degraded: 1,
       },
+      {
+        slot: '2026-09-23T01:45:00.000Z',
+        observed_at: '2026-09-23T01:45:40.000Z',
+        algo_version: 3,
+        score: 0,
+        level: 5,
+        // v3: P7.
+        headline_p: 0.42,
+        degraded: 0,
+      },
     ]);
-    expect(db.sqlite.prepare('SELECT row_count FROM score_series_metadata').get()).toEqual({ row_count: 2 });
+    expect(db.sqlite.prepare('SELECT row_count FROM score_series_metadata').get()).toEqual({ row_count: 3 });
   });
 
   it('catches up slots captured between applying the migration and deploying the writer, identically', async () => {
@@ -550,11 +739,13 @@ describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
     for (const db of [reference, gap]) {
       await capture(db, T0, liveDashboard(at(T0)));
       await capture(db, T0 + SNAPSHOT_INTERVAL_MS, oddsOfflineDashboard(at(T0 + SNAPSHOT_INTERVAL_MS)));
+      await capture(db, T0 + 2 * SNAPSHOT_INTERVAL_MS, v3Dashboard(at(T0 + 2 * SNAPSHOT_INTERVAL_MS)));
     }
     reference.migrate('0002_first_seen.sql');
     // The migration already ran on `gap` (empty then); the old Worker kept writing snapshots.
     expect(allRows(gap)).toEqual([]);
-    await backfillScoreSeries(gap, iso(T0 + 2 * SNAPSHOT_INTERVAL_MS));
+    await backfillScoreSeries(gap, iso(T0 + 3 * SNAPSHOT_INTERVAL_MS));
+    expect(allRows(reference)).toHaveLength(3);
     expect(allRows(gap)).toEqual(allRows(reference));
   });
 
@@ -576,5 +767,46 @@ describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
     db.sqlite.exec('DELETE FROM score_series');
     await backfillScoreSeries(db, iso(after + 90 * 24 * 60 * 60_000));
     expect(allRows(db)).toEqual([]);
+  });
+});
+
+describe('readSightings / readHeadlineNear (real SQLite, migrations applied)', () => {
+  it('reads first sightings of the asked kinds still seen since the cutoff, seeded flag included', async () => {
+    const db = new SqliteD1();
+    await recordFirstSeen(db, 'stealth', 'openrouter', [{ key: 'a' }], iso(T0));
+    await recordFirstSeen(db, 'stealth', 'openrouter', [{ key: 'a' }, { key: 'b' }], iso(T0 + 3_600_000));
+    await recordFirstSeen(db, 'broadcast', 'youtube', [{ key: 'v' }], iso(T0 - 5 * 86_400_000));
+    await recordFirstSeen(db, 'other', 'x', [{ key: 'z' }], iso(T0));
+    const rows = await readSightings(db, ['stealth', 'broadcast'], iso(T0 - 86_400_000));
+    expect(rows.sort((x, y) => x.key.localeCompare(y.key))).toEqual([
+      { kind: 'stealth', key: 'a', firstSeenAt: iso(T0), seeded: true },
+      { kind: 'stealth', key: 'b', firstSeenAt: iso(T0 + 3_600_000), seeded: false },
+    ]);
+    expect(await readSightings(db, [], iso(T0))).toEqual([]);
+    const query = db.queries.find((q) => q.includes('FROM first_seen') && q.includes('json_each')) ?? '';
+    expect(query).not.toContain('meta');
+  });
+
+  it('finds the non-degraded headline probability closest to the target within the tolerance', async () => {
+    const db = new SqliteD1();
+    const target = T0 + 24 * 3_600_000;
+    await writeScoreSeries(
+      db,
+      reading(target - 3 * SNAPSHOT_INTERVAL_MS, { algorithmVersion: 3, headlineP: 0.3 }),
+    );
+    await writeScoreSeries(db, reading(target, { algorithmVersion: 3, headlineP: null, degraded: true }));
+    await writeScoreSeries(
+      db,
+      reading(target + SNAPSHOT_INTERVAL_MS, { algorithmVersion: 2, headlineP: 0.9 }),
+    );
+    await writeScoreSeries(
+      db,
+      reading(target + 2 * SNAPSHOT_INTERVAL_MS, { algorithmVersion: 3, headlineP: 0.5 }),
+    );
+    expect(await readHeadlineNear(db, 3, iso(target))).toEqual({
+      p: 0.5,
+      observedAt: iso(target + 2 * SNAPSHOT_INTERVAL_MS + CAPTURE_DELAY_MS),
+    });
+    expect(await readHeadlineNear(db, 3, iso(target + 10 * 3_600_000))).toBeUndefined();
   });
 });

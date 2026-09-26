@@ -237,3 +237,22 @@ describe('isTextReleaseFamily', () => {
       expect(isTextReleaseFamily(title), title).toBe(false);
   });
 });
+
+describe('forecastSummary', () => {
+  it('summarises the 72h read with the fit behind it, and drops market reads when odds are offline', async () => {
+    const { forecastSummary, FORECAST_CONSTANTS: C } = await import('../../src/domain/forecast');
+    const live = forecastSummary([{ labId: 'openai', p: 0.5 }], true);
+    expect(live).toMatchObject({ horizonHours: 72, oddsAvailable: true, recommendation: 'lead-score' });
+    expect(live.market).toBeCloseTo(0.5, 10);
+    expect(live.p).toBeGreaterThan(live.market);
+    expect(live.labs.map((l) => l.labId)).toEqual(['openai']);
+    expect(live.baseRate).toBeCloseTo(0.3904, 4);
+    expect(live.skill).toBeCloseTo(-0.002, 3);
+    expect(live.trainWindow).toEqual({ from: C.fittedOn.from, to: C.fittedOn.to });
+    const offline = forecastSummary([{ labId: 'openai', p: 0.5 }], false);
+    expect(offline.labs).toEqual([]);
+    expect(offline.p).toBeCloseTo(offline.unpriced, 10);
+    const bare = forecastSummary([], true, 72, { ...C, horizons: [] });
+    expect([bare.baseRate, bare.skill, bare.skillCi95]).toEqual([0, 0, [0, 0]]);
+  });
+});

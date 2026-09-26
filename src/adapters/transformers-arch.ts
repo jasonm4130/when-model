@@ -702,3 +702,17 @@ export function pendingArchitectures(
   }
   return out;
 }
+
+/**
+ * The transformers module registry → pending architectures, for a caller that already has
+ * listings. `load-dashboard.ts` fetches the module list alone (`fetchTransformersModules`) and runs
+ * `pendingArchitectures` once OpenRouter and the first-seen ledger have settled.
+ */
+export async function fetchArchitectures(
+  listings: readonly { id: string; name: string }[],
+  now: Date,
+  firstSeen?: ReadonlyMap<string, string>,
+): Promise<PendingArchitecture[]> {
+  const modules = await fetchTransformersModules();
+  return pendingArchitectures(modules, BASELINE, PENDING_SEED, listings, now, firstSeen);
+}

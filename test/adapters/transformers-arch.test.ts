@@ -273,3 +273,44 @@ describe('BASELINE and PENDING_SEED', () => {
     ]);
   });
 });
+
+// Moved from test/domain/lead.test.ts with the fetcher itself (domain/lead.ts is pure now).
+describe('fetchArchitectures', () => {
+  it('detects a live novel module beyond BASELINE and backdates the seeded one via PENDING_SEED', async () => {
+    const { BASELINE } = await import('../../src/adapters/transformers-arch');
+    const lines = BASELINE.map((m) => `    from .${m} import *`).join('\n');
+    vi.resetModules();
+    mockUpstream({
+      [PRIMARY]: `if TYPE_CHECKING:\n${lines}\n    from .qwen_test_variant import *\n`,
+    });
+    const now = new Date('2026-09-26T12:03:40Z'); // exactly 31 days after the seed's verified mergedAt
+    const { fetchArchitectures } = await import('../../src/adapters/transformers-arch');
+    const out = await fetchArchitectures([], now);
+
+    expect(out.find((a) => a.module === 'qwen_test_variant')).toMatchObject({
+      labId: 'qwen',
+      since: now.toISOString(),
+      sinceSource: 'detected',
+      daysPending: 0,
+      pending: true,
+    });
+    expect(out.find((a) => a.module === 'qwen4_exp')).toMatchObject({
+      labId: 'qwen',
+      since: '2026-08-26T12:03:40Z',
+      sinceSource: 'seed',
+      daysPending: 31,
+      pending: true,
+    });
+  });
+
+  it('clears a listed module and passes firstSeen through', async () => {
+    const { BASELINE } = await import('../../src/adapters/transformers-arch');
+    const lines = BASELINE.map((m) => `    from .${m} import *`).join('\n');
+    vi.resetModules();
+    mockUpstream({ [PRIMARY]: `if TYPE_CHECKING:\n${lines}\n` });
+    const { fetchArchitectures } = await import('../../src/adapters/transformers-arch');
+    const now = new Date('2026-09-26T12:03:40Z');
+    const out = await fetchArchitectures([{ id: 'qwen/qwen4-72b', name: 'Qwen4 72B' }], now);
+    expect(out.find((a) => a.module === 'qwen4_exp')?.pending).toBe(false);
+  });
+});

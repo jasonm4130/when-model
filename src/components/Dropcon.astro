@@ -1,11 +1,13 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
 import { daysLabel, pct } from '../ui/format';
+import { dropconNumber, dropconPill, readNote, readValue } from '../ui/odds';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const c = d.dropcon;
 const colors: Record<number, string> = { 1: 'var(--red)', 2: 'var(--orange)', 3: 'var(--yellow)', 4: 'var(--cyan)', 5: 'var(--green)' };
-const color = colors[c.level];
+const color = c.state === 'no-signal' ? 'var(--muted)' : colors[c.level];
+const pill = dropconPill(c);
 const hottest = d.labs[0];
 const raceTitle = d.bestModelMarket?.title.replace(/which company has the best ai model /i, '') ?? '';
 ---
@@ -14,24 +16,36 @@ const raceTitle = d.bestModelMarket?.title.replace(/which company has the best a
     <div class="panel dropcon" style={`--lvl:${color}`}>
       <div class="panel-head">
         <h2><span>▣</span>DROPCON LEVEL</h2>
-        {c.degraded ? <span class="pill err">ODDS OFFLINE · FLOOR</span> : <span class="pill live">LIVE</span>}
-      </div>
-      <div class="dc-body">
-        <div class="dc-num head" style={`color:${color}`}>{c.level}</div>
-        <div class="dc-text">
-          <div class="dc-name head" style={`color:${color}`}>{c.name}</div>
-          <p class="dc-blurb">{c.blurb}</p>
-          <ul class="dc-drivers">
-            {c.drivers.map((x, i) => <li style={`--i:${i + 2}`} class="reveal">▸ {x}</li>)}
-          </ul>
+        <div class="pills">
+          {d.landed.banner && <span class="pill warn" title={d.landed.bannerText}>MODELS JUST LANDED</span>}
+          <span class={`pill ${pill.tone}`}>{pill.text}</span>
         </div>
       </div>
-      <div class="dc-scale" role="img" aria-label={`DROPCON ${c.level} of 5`}>
+      <div class="dc-body">
+        <div class="dc-num head" style={`color:${color}`}>{dropconNumber(c)}</div>
+        <div class="dc-text">
+          <div class="dc-name head" style={`color:${color}`}>{c.name}</div>
+          <p class="dc-headline">{c.headline}</p>
+          <p class="dc-blurb">{c.blurb}</p>
+        </div>
+      </div>
+      {d.landed.bannerText && <p class="dc-landed tiny">◆ {d.landed.bannerText} · <span class="muted">shown, not scored</span></p>}
+      <ul class="dc-drivers" aria-label="How the score adds up">
+        {c.provenance.map((row, i) => (
+          <li style={`--i:${i + 2}`} class="reveal">
+            <span class="pts">{row.points}</span>
+            <span class="why">{row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
+          </li>
+        ))}
+        <li class="total"><span class="pts">{c.score}</span><span class="why muted">LEAD SCORE / 100 · rows add up</span></li>
+      </ul>
+      <div class="dc-scale" role="img" aria-label={c.state === 'no-signal' ? 'DROPCON: no signal' : `DROPCON ${c.level} of 5`}>
         {[5, 4, 3, 2, 1].map((n, i) => (
-          <div class={`seg ${n === c.level ? 'on' : ''} ${n > c.level ? 'past' : ''}`} style={`--c:${colors[n]}; --i:${i}`} title={`DROPCON ${n}`}><span class="tiny">{n}</span></div>
+          <div class={`seg ${c.state !== 'no-signal' && n === c.level ? 'on' : ''} ${n > c.level ? 'past' : ''}`} style={`--c:${colors[n]}; --i:${i}`} title={`DROPCON ${n}`}><span class="tiny">{n}</span></div>
         ))}
       </div>
-      <div class="tiny muted dc-foot">ACTIVITY INDEX {c.score}/100 · 5 = QUIET ORBIT · 1 = RELEASE SURGE</div>
+      {c.baseRate && <p class="dc-base muted">{c.baseRate} <a href="/backtest">/backtest</a></p>}
+      <div class="tiny muted dc-foot">LEAD SCORE {c.score}/100 · 5 = QUIET ORBIT · 1 = RELEASE SURGE</div>
     </div>
 
     <div class="panel">
@@ -40,13 +54,13 @@ const raceTitle = d.bestModelMarket?.title.replace(/which company has the best a
         <div class="hot" style={`--lab:${hottest.color}`}>
           <div class="hot-name head">{hottest.glyph} {hottest.name} <span class="tag">{hottest.status}</span></div>
           <div class="metrics">
-            <div><div class="metric-label">DROP ≤7D</div><div class="metric-value glow-y">{pct(hottest.weekOdds?.p)}</div><div class="metric-note">{hottest.weekOdds ? `by ${hottest.weekOdds.label}` : 'no market'}</div></div>
-            <div><div class="metric-label">DROP ≤30D</div><div class="metric-value glow-c">{pct(hottest.monthOdds?.p)}</div><div class="metric-note">{hottest.monthOdds ? `by ${hottest.monthOdds.label}` : 'no market'}</div></div>
+            <div><div class="metric-label">DROP ≤7D</div><div class={`metric-value glow-y ${hottest.odds?.p7.trusted === false ? 'extrap' : ''}`}>{readValue(hottest.odds?.p7)}</div><div class="metric-note">{hottest.odds ? `${hottest.odds.family} · ${readNote(hottest.odds.p7)}` : 'no market'}</div></div>
+            <div><div class="metric-label">DROP ≤30D</div><div class={`metric-value glow-c ${hottest.odds?.p30.trusted === false ? 'extrap' : ''}`}>{readValue(hottest.odds?.p30)}</div><div class="metric-note">{readNote(hottest.odds?.p30)}</div></div>
             <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(hottest.daysSince)}</div><div class="metric-note" title={hottest.latest?.name}>{hottest.latest?.name ?? 'nothing listed'}</div></div>
             <div><div class="metric-label">BEST MODEL ODDS</div><div class="metric-value glow-m">{pct(hottest.leaderboardOdds)}</div><div class="metric-note" title={raceTitle}>{raceTitle || 'no market'}</div></div>
           </div>
           <div class="bar heat"><i style={`width:${hottest.heat}%`}></i></div>
-          <div class="tiny muted dc-foot">HEAT {hottest.heat}/100 · {hottest.status}</div>
+          <div class="tiny muted dc-foot">HEAT {hottest.heat}/100 · MARKETS {hottest.heatParts.market} + RECENCY {hottest.heatParts.recency} (BURSTINESS PRIOR) · {hottest.status}</div>
         </div>
       ) : <p class="empty">No lab data.</p>}
     </div>
@@ -56,14 +70,21 @@ const raceTitle = d.bestModelMarket?.title.replace(/which company has the best a
   .dc-body { display: flex; gap: 20px; align-items: flex-start; }
   .dc-num { font-size: clamp(64px, 12vw, 120px); line-height: 0.9; text-shadow: 0 0 8px currentColor; }
   .dc-name { font-size: clamp(14px, 2.2vw, 22px); margin-bottom: 8px; }
-  .dc-blurb { margin-bottom: 8px; font-size: var(--fs-lg); }
-  .dc-drivers { color: var(--muted); font-size: 19px; }
+  .dc-headline { margin-bottom: 6px; font-size: var(--fs-lg); color: #fff; }
+  .dc-blurb { margin-bottom: 8px; color: var(--muted); }
+  .dc-landed { margin: 8px 0 0; color: var(--yellow); }
+  .dc-drivers { margin-top: 10px; color: var(--muted); font-size: 18px; display: grid; gap: 4px; }
+  .dc-drivers li { display: grid; grid-template-columns: 3ch 1fr; gap: 10px; align-items: baseline; }
+  .dc-drivers .pts { color: var(--lvl); text-align: right; font-variant-numeric: tabular-nums; }
+  .dc-drivers .total { border-top: 1px dotted var(--line2); padding-top: 4px; }
+  .dc-base { margin-top: 10px; font-size: 17px; }
   .dc-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 14px; }
   .seg { height: 26px; border: 1px solid var(--c); display: grid; place-items: center; color: var(--c); opacity: 0.45; transition: opacity var(--fast) var(--ease); }
   .seg:hover { opacity: 0.8; }
   .seg.past { opacity: 0.25; }
   .seg.on { opacity: 1; background: var(--c); color: #000; box-shadow: 0 0 8px var(--c); }
   .dc-foot { margin-top: 8px; }
+  .extrap { opacity: 0.55; }
   .hot-name { font-size: 16px; margin-bottom: 12px; color: var(--lab); text-shadow: 0 0 12px var(--lab); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .hot-name .tag { color: var(--lab); }
   .heat { margin-top: 12px; }

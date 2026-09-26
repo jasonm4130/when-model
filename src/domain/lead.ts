@@ -1,23 +1,9 @@
 /**
- * WP-5 lead signals: shared types for the three new lead adapters (report §2 T1-3/T1-4/T1-5), plus
- * the two fetch entrypoints a later package wires into the dashboard.
- *
- * These fetchers are the one exception to "domain has no I/O": they exist so the next package can
- * call one function per signal without importing three adapters directly. They do nothing until
- * wired in — this package does not touch `load-dashboard.ts`.
+ * Lead signals (report §2 T1-3/T1-4/T1-5): the shared types for scheduled broadcasts, pending
+ * architectures and keynote windows, plus the pure keynote-window mapper. Pure: no fetch and no
+ * clock; the fetchers live in `src/adapters/youtube.ts` and `src/adapters/transformers-arch.ts`,
+ * and every caller passes `now`.
  */
-import {
-  CHANNELS,
-  broadcastCandidates,
-  fetchScheduledStartTime,
-  fetchYoutubeChannel,
-} from '../adapters/youtube';
-import {
-  BASELINE,
-  PENDING_SEED,
-  fetchTransformersModules,
-  pendingArchitectures,
-} from '../adapters/transformers-arch';
 import type { LabId } from './lab';
 
 /** A YouTube upload that looks like an unannounced live broadcast (report T1-3). */
@@ -89,46 +75,4 @@ export function toEventWindow(
     source: event.source,
     hoursToStart: (startMs - now.getTime()) / (60 * 60 * 1000),
   };
-}
-
-/**
- * Every lab channel's Atom feed → broadcast candidates. Individual channel failures are logged and
- * skipped (never thrown) unless every channel fails. `firstSeen` and `probeSchedule` are optional
- * so a caller with no D1 state yet can still call this: without `firstSeen`, the two-poll gate in
- * `broadcastCandidates` is skipped and only its stateless 60-minute age floor applies; with
- * `probeSchedule: true`, each candidate's watch page (about 1.2 MB) is fetched, fail-soft, for a
- * `scheduledStartTime`.
- */
-export async function fetchBroadcasts(
-  now: Date = new Date(),
-  options: { firstSeen?: ReadonlyMap<string, string>; probeSchedule?: boolean } = {},
-): Promise<BroadcastCandidate[]> {
-  const settled = await Promise.allSettled(CHANNELS.map((channel) => fetchYoutubeChannel(channel)));
-  const failed = settled.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
-  if (failed.length === settled.length)
-    throw new Error(`all ${settled.length} YouTube channels failed: ${failed[0].reason}`);
-  for (const f of failed) console.error('[source:YouTube broadcasts]', f.reason);
-
-  const entries = settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
-  const candidates = broadcastCandidates(entries, now, options.firstSeen);
-  if (!options.probeSchedule || candidates.length === 0) return candidates;
-
-  const withSchedule = await Promise.all(
-    candidates.map(async (c) => ({ ...c, scheduledStartTime: await fetchScheduledStartTime(c.videoId) })),
-  );
-  return withSchedule;
-}
-
-/**
- * The transformers module registry → pending architectures. `listings` and `firstSeen` are
- * optional passthroughs to `pendingArchitectures` for a caller that has real OpenRouter/Hugging
- * Face listings and D1 state; without them every novel or seeded module reads as still pending.
- */
-export async function fetchArchitectures(
-  listings: readonly { id: string; name: string }[] = [],
-  now: Date = new Date(),
-  firstSeen?: ReadonlyMap<string, string>,
-): Promise<PendingArchitecture[]> {
-  const modules = await fetchTransformersModules();
-  return pendingArchitectures(modules, BASELINE, PENDING_SEED, listings, now, firstSeen);
 }

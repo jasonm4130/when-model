@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
-import { env } from 'cloudflare:workers';
+import { DASHBOARD_SCHEMA } from '../../domain/dashboard';
 import { buildHistorySeries, type DisplayPoint } from '../../domain/history';
+import { historyDatabase } from '../../infra/bindings';
 import { memoJson } from '../../infra/edge-cache';
 import { readScoreSeries, type SnapshotDatabase } from '../../infra/snapshot-store';
 
@@ -30,13 +31,8 @@ export async function buildHistoryResponseBody(
   }
 }
 
-/**
- * Astro v6 removed `Astro.locals.runtime.env`; the Cloudflare adapter's own handler now
- * points at this import instead (see src/infra/cloudflare-env.d.ts).
- */
-function historyDatabase(): SnapshotDatabase | undefined {
-  return env.HISTORY_DB as SnapshotDatabase | undefined;
-}
+/** Versioned with the dashboard: a deploy that changes the point shape must not serve the old one. */
+export const HISTORY_MEMO_KEY = `history@v${DASHBOARD_SCHEMA}@30d`;
 
 const UNAVAILABLE: HistoryResponseBody = { ok: false, points: [] };
 
@@ -46,7 +42,7 @@ const UNAVAILABLE: HistoryResponseBody = { ok: false, points: [] };
  */
 async function historyBody(): Promise<HistoryResponseBody> {
   try {
-    return await memoJson('history@30d', HISTORY_CACHE_TTL_SECONDS, async () => {
+    return await memoJson(HISTORY_MEMO_KEY, HISTORY_CACHE_TTL_SECONDS, async () => {
       const body = await buildHistoryResponseBody(historyDatabase());
       if (!body.ok) throw new Error('history unavailable');
       return body;

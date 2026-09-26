@@ -1,6 +1,7 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
 import { dashboardFingerprint } from '../ui/fingerprint';
+import { familyPhrase } from '../domain/dropcon';
 import { pct } from '../ui/format';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
@@ -8,7 +9,10 @@ const okCount = d.sources.filter((s) => s.ok).length;
 const status = okCount === d.sources.length ? 'OPERATIONAL' : okCount > d.sources.length / 2 ? 'DEGRADED' : 'IMPAIRED';
 const statusClass = status === 'OPERATIONAL' ? 'glow-g' : status === 'DEGRADED' ? 'glow-y' : 'err';
 const ticker = [
-  ...d.labs.filter((l) => l.weekOdds).map((l) => `${l.name.toUpperCase()}: ${pct(l.weekOdds!.p)} ODDS OF A DROP BY ${l.weekOdds!.label.toUpperCase()}`),
+  ...(d.landed.bannerText ? [d.landed.bannerText] : []),
+  ...d.labs
+    .filter((l) => l.odds?.p7.trusted && l.odds.p7.p > 0)
+    .map((l) => `${l.name.toUpperCase()}: ${pct(l.odds!.p7.p)} ODDS ${familyPhrase(l.odds!.family).toUpperCase()} SHIPS WITHIN 7 DAYS`),
   ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${x.lab.toUpperCase()})`),
   ...d.feed.filter((f) => f.alert).slice(0, 6).map((f) => `${f.source.toUpperCase()}: ${f.title.toUpperCase()}`),
 ];

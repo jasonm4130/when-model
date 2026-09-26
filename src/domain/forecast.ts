@@ -206,3 +206,49 @@ export function levelFromProbability(
   const value = probability(p);
   return (levels.find((l) => value >= l.min) ?? levels[levels.length - 1]).level;
 }
+
+/** The forecast as the dashboard shows it: context for the base-rate line, never the level. */
+export interface ForecastSummary {
+  horizonHours: number;
+  /** P(some frontier lab lists a text model within the horizon). */
+  p: number;
+  /** The unpriced-release term that went into `p`. */
+  unpriced: number;
+  /** Noisy-OR of the trusted lab reads alone. */
+  market: number;
+  /** The trusted per-lab reads that went in, highest first. */
+  labs: LabRead[];
+  /** Share of train-window hours with a frontier text release within the horizon. */
+  baseRate: number;
+  /** Out-of-sample Brier skill against `baseRate`, and its 95% block-bootstrap interval. */
+  skill: number;
+  skillCi95: [number, number];
+  trainWindow: { from: string; to: string };
+  recommendation: ForecastConstants['recommendation'];
+  /** False when Polymarket was down: `p` is then the unpriced term alone. */
+  oddsAvailable: boolean;
+}
+
+/** Summarise `anyReleaseProbability` at `horizonHours` with the fit that backs it. */
+export function forecastSummary(
+  perLab: readonly LabRead[],
+  oddsAvailable: boolean,
+  horizonHours = 72,
+  constants: ForecastConstants = FORECAST_CONSTANTS,
+): ForecastSummary {
+  const forecast = anyReleaseProbability(oddsAvailable ? perLab : [], horizonHours, constants);
+  const fit = constants.horizons.length ? nearestHorizon(constants.horizons, horizonHours) : undefined;
+  return {
+    horizonHours,
+    p: forecast.p,
+    unpriced: forecast.unpriced,
+    market: forecast.components.market,
+    labs: forecast.components.labs,
+    baseRate: fit?.baseRate ?? 0,
+    skill: fit?.test.skill ?? 0,
+    skillCi95: fit?.test.skillCi95 ?? [0, 0],
+    trainWindow: { from: constants.fittedOn.from, to: constants.fittedOn.to },
+    recommendation: constants.recommendation,
+    oddsAvailable,
+  };
+}

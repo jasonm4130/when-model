@@ -17,6 +17,8 @@ import {
   pickBestModelMarket,
   poolAdjacentViolators,
   readCurve,
+  TRUSTED_BRACKET_DAYS,
+  isTrustedRead,
   releaseCurveForLab,
   releaseOddsForLab,
   type FamilyCurve,
@@ -827,5 +829,51 @@ describe('displayOutcomes with parsed deadlines', () => {
       ],
     });
     expect(displayOutcomes(m, 2).map((o) => o.label)).toEqual(['October 9', 'October 15']);
+  });
+});
+
+describe('isTrustedRead', () => {
+  const to = (deadline: string) => ({ deadline, p: 0.5, quoted: 0.5, label: 'x', url: 'u', spread: 0.01 });
+  const at7 = at('2026-09-08T00:00:00Z');
+  it('distrusts only a constant-hazard stretch to a first rung more than 14 days past the horizon', () => {
+    const base = { interpolated: true, lowerBound: false, url: 'u' } as const;
+    expect(isTrustedRead({ ...base, source: 'curve', to: to('2026-09-22T00:00:00Z') }, at7)).toBe(true);
+    expect(isTrustedRead({ ...base, source: 'curve', to: to('2026-09-22T00:00:01Z') }, at7)).toBe(false);
+    expect(
+      isTrustedRead(
+        { ...base, source: 'curve', from: to('2026-09-01T00:00:00Z'), to: to('2026-12-01T00:00:00Z') },
+        at7,
+      ),
+    ).toBe(true);
+    expect(isTrustedRead({ ...base, source: 'buckets', to: to('2026-12-01T00:00:00Z') }, at7)).toBe(true);
+    expect(
+      isTrustedRead({ ...base, source: 'curve', lowerBound: true, from: to('2026-09-01T00:00:00Z') }, at7),
+    ).toBe(true);
+    expect(TRUSTED_BRACKET_DAYS).toBe(14);
+  });
+
+  it('ranks a trusted 7-day read above a higher extrapolated one', () => {
+    const now = at('2026-09-01T00:00:00Z');
+    const markets = [
+      // Oct 10 is 32 days past the 7-day horizon (extrapolated) but 9 past the 30-day one (trusted).
+      market({
+        labId: 'google',
+        title: 'Next Gemini Flash released by…?',
+        url: 'flash',
+        outcomes: [quote('Oct 10', '2026-10-10T00:00:00Z', 0.9)],
+      }),
+      market({
+        labId: 'google',
+        title: 'Gemini 4 released by…?',
+        url: 'g4',
+        outcomes: [quote('Sep 10', '2026-09-10T00:00:00Z', 0.2)],
+      }),
+    ];
+    const best = releaseCurveForLab(markets, 'google', now)!;
+    expect(best.family).toBe('Gemini 4');
+    expect(best.trusted7).toBe(true);
+    const alone = releaseCurveForLab([markets[0]], 'google', now)!;
+    expect(alone).toMatchObject({ family: 'Next Gemini Flash', trusted7: false, trusted30: true });
+    expect(alone.p7).toBeGreaterThan(best.p7);
   });
 });

@@ -1,6 +1,7 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
-import { daysLabel, monthInitials, pct, shortDate } from '../ui/format';
+import { daysLabel, monthInitials, shortDate } from '../ui/format';
+import { readNote, readValue } from '../ui/odds';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const statusColor: Record<string, string> = { SHIPPING: 'var(--magenta)', HOT: 'var(--orange)', WARM: 'var(--yellow)', QUIET: 'var(--muted)' };
@@ -21,11 +22,13 @@ const months = monthInitials(new Date());
             <span class={`tag ${l.status === 'SHIPPING' ? 'pulse' : ''}`} style={`color:${statusColor[l.status]}`}>{l.status}</span>
           </div>
           <div class="metrics tight">
-            <div><div class="metric-label">DROP ≤7D</div><div class="metric-value glow-y">{pct(l.weekOdds?.p)}</div></div>
-            <div><div class="metric-label">DROP ≤30D</div><div class="metric-value glow-c">{pct(l.monthOdds?.p)}</div></div>
+            <div title={readNote(l.odds?.p72)}><div class="metric-label">DROP ≤72H</div><div class={`metric-value glow-m ${l.odds?.p72.trusted === false ? 'extrap' : ''}`}>{readValue(l.odds?.p72)}</div></div>
+            <div title={readNote(l.odds?.p7)}><div class="metric-label">DROP ≤7D</div><div class={`metric-value glow-y ${l.odds?.p7.trusted === false ? 'extrap' : ''}`}>{readValue(l.odds?.p7)}</div></div>
+            <div title={readNote(l.odds?.p30)}><div class="metric-label">DROP ≤30D</div><div class={`metric-value glow-c ${l.odds?.p30.trusted === false ? 'extrap' : ''}`}>{readValue(l.odds?.p30)}</div></div>
             <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(l.daysSince)}</div></div>
-            <div><div class="metric-label">30D DROPS</div><div class="metric-value">{l.drops30d}</div></div>
           </div>
+          {l.odds && <div class="odds-note tiny muted">{l.odds.family} · 7D {readNote(l.odds.p7)}</div>}
+          {l.launchedFamilies.length > 0 && <div class="odds-note tiny muted">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
           <div class="metric-label tempo">RELEASE TEMPO · 12 MONTHS</div>
           <div class="hist" title="Models listed on OpenRouter per month">
             {l.histogram.map((v, i) => <div class="col" style={`--i:${i}`}><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
@@ -36,10 +39,10 @@ const months = monthInitials(new Date());
           </div>
           <div class="bar heat"><i style={`width:${l.heat}%`}></i></div>
           <div class="lab-foot">
-            <span class="tiny muted">HEAT {l.heat}</span>
+            <span class="tiny muted" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}>HEAT {l.heat} · {l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'} / 30D</span>
             <span class="x">{l.xHandles.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</span>
           </div>
-          {l.weekOdds && <a class="mkt" href={l.weekOdds.url} target="_blank" rel="noopener">▸ {l.weekOdds.title}</a>}
+          {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener">▸ {l.odds.family} on Polymarket</a>}
         </article>
       );
     })}
@@ -58,6 +61,8 @@ const months = monthInitials(new Date());
   .lab-foot { display: flex; justify-content: space-between; margin-top: 6px; font-size: 17px; }
   .x a { margin-left: 8px; color: var(--muted); }
   .x a:hover { color: #fff; }
+  .extrap { opacity: 0.55; }
+  .odds-note { margin-top: 6px; }
   .mkt { display: block; margin-top: 8px; font-size: 17px; color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
   @media (max-width: 380px) {
     .metrics.tight { grid-template-columns: repeat(2, 1fr); }

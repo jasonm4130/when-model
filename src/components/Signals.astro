@@ -1,0 +1,102 @@
+---
+import type { Dashboard } from '../domain/dashboard';
+import { LABS } from '../domain/lab';
+import { ago } from '../ui/format';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const now = Date.now();
+const w = d.earlyWarnings;
+const l = d.landed;
+const labName = (id?: string) => LABS.find((x) => x.id === id)?.short ?? id ?? '';
+const LIMIT = 5;
+const days = (n: number) => `${n < 10 ? n.toFixed(1) : Math.round(n)}d`;
+const leakNote = w.leaks.checkedAgainstListings ? '' : ' OpenRouter is down, so already-listed models were not filtered out.';
+const archNote = w.architectures.checkedAgainstListings ? '' : ' OpenRouter is down, so shipped architectures were not cleared.';
+---
+<section class="section wrap reveal">
+  <div class="grid grid-2">
+    <div class="panel">
+      <div class="panel-head"><h2><span>◬</span>EARLY WARNINGS</h2><span class="pill warn">SHOWN WITH TRACK RECORD · NOT SCORED</span></div>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">STEALTH SLOTS <span class="muted">{w.stealth.ok ? w.stealth.items.length : 'OPENROUTER DOWN'}</span></h3>
+        <p class="track muted">{w.stealth.track.summary}</p>
+        {w.stealth.items.slice(0, LIMIT).map((s) => (
+          <a class="row" href={s.url ?? `https://openrouter.ai/${s.id}`} target="_blank" rel="noopener">
+            {s.name} <span class="muted">· {days(s.daysInStealth)} in stealth{s.claimsFrontier ? ' · claims frontier' : ''}</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">UNLISTED LEAKS <span class="muted">{w.leaks.items.length}{w.leaks.sources.filter((s) => !s.ok).length ? ' · SOURCE DOWN' : ''}</span></h3>
+        <p class="track muted">{w.leaks.track.summary}{leakNote}</p>
+        {w.leaks.items.slice(0, LIMIT).map((x) => (
+          <a class="row" href={x.url} target="_blank" rel="noopener">
+            {x.title} <span class="muted">· {x.sourceName} · <span data-time={x.publishedAt}>{ago(x.publishedAt, now)}</span></span>
+          </a>
+        ))}
+      </div>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">SCHEDULED STREAMS <span class="muted">{w.broadcasts.ok ? w.broadcasts.items.length : `${w.broadcasts.items.length} · FEED DOWN`}</span></h3>
+        <p class="track muted">{w.broadcasts.track.summary}</p>
+        {w.broadcasts.items.slice(0, LIMIT).map((b) => (
+          <a class="row" href={b.url} target="_blank" rel="noopener">
+            {b.channel}: {b.title} <span class="muted">· {b.startsInHours !== undefined ? (b.startsInHours >= 0 ? `starts in ${b.startsInHours}h` : 'started') : 'no start time'}{b.confirmed === false ? ' · first poll' : ''}</span>
+          </a>
+        ))}
+      </div>
+
+      <div class="sig">
+        <h3 class="sig-head tiny">PENDING ARCHITECTURES <span class="muted">{w.architectures.ok ? w.architectures.items.length : 'REGISTRY DOWN'}</span></h3>
+        <p class="track muted">{w.architectures.track.summary}{archNote}</p>
+        {w.architectures.items.slice(0, LIMIT).map((a) => (
+          <span class="row">
+            {a.module} <span class="muted">· {labName(a.labId)}{a.frontier ? ' · frontier lab' : ''} · {days(a.daysPending)} pending</span>
+          </span>
+        ))}
+      </div>
+
+      {w.events.items.length > 0 && (
+        <div class="sig">
+          <h3 class="sig-head tiny">EVENT WINDOWS <span class="muted">{w.events.items.length}</span></h3>
+          <p class="track muted">{w.events.track.summary}</p>
+          {w.events.items.map((e) => (
+            <a class="row" href={e.source} target="_blank" rel="noopener">
+              {e.label} <span class="muted">· {e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2><span>◆</span>LANDED</h2><span class={`pill ${l.banner ? 'warn' : ''}`}>{l.banner ? 'MODELS JUST LANDED' : 'LAST 7 DAYS'} · NOT SCORED</span></div>
+      <p class="track muted">{l.summary}. Launches that already happened are listed, never scored.</p>
+      {l.releases.map((r) => (
+        <div class="row">
+          <span class="glow-m">{r.name}</span> <span class="muted">· {r.lab} · listed {r.hoursAgo < 48 ? `${Math.round(r.hoursAgo)}h` : `${Math.round(r.hoursAgo / 24)}d`} ago</span>
+        </div>
+      ))}
+      {l.announcements.length > 0 && <h3 class="sig-head tiny">LAB ANNOUNCEMENTS</h3>}
+      {l.announcements.slice(0, LIMIT).map((a) => (
+        <a class="row" href={a.url} target="_blank" rel="noopener">
+          {a.title} <span class="muted">· {a.source.toUpperCase()} · <span data-time={a.seenAt}>{ago(a.seenAt, now)}</span></span>
+        </a>
+      ))}
+      {l.stories.length > 0 && <h3 class="sig-head tiny">HACKER NEWS LAUNCH STORIES</h3>}
+      {l.stories.slice(0, LIMIT).map((s) => (
+        <a class="row" href={s.url} target="_blank" rel="noopener">
+          {s.title} <span class="muted">· {s.score} points</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+<style>
+  .sig + .sig { margin-top: 12px; }
+  .sig-head { margin: 10px 0 4px; color: var(--yellow); }
+  .track { font-size: 17px; margin-bottom: 4px; }
+  .row { font-size: 18px; overflow-wrap: anywhere; }
+</style>

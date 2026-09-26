@@ -19,7 +19,7 @@ async function seededDatabase(): Promise<SqliteD1> {
   const first = NOW - 31 * 24 * 60 * 60_000;
   db.sqlite.exec('BEGIN');
   const insert = db.sqlite.prepare(
-    'INSERT INTO score_series (slot, observed_at, algo_version, score, level, p7, degraded) VALUES (?, ?, 2, 64, 2, 0.6, 0)',
+    'INSERT INTO score_series (slot, observed_at, algo_version, score, level, headline_p, degraded) VALUES (?, ?, 2, 64, 2, 0.6, 0)',
   );
   for (let slot = first; slot < NOW - SLOT; slot += SLOT) {
     insert.run(new Date(slot).toISOString(), new Date(slot + 40_000).toISOString());
@@ -32,7 +32,7 @@ async function seededDatabase(): Promise<SqliteD1> {
     algorithmVersion: 2,
     score: 95,
     level: 1,
-    p7: 0.865,
+    headlineP: 0.865,
     degraded: false,
   });
   return db;
@@ -68,7 +68,7 @@ describe('buildHistoryResponseBody', () => {
       algorithmVersion: 2,
       score: 95,
       level: 1,
-      p7: 0.865,
+      headlineP: 0.865,
       degraded: false,
       // 95 clears level 1's boundary by 20, so hysteresis shows it at once.
       displayLevel: 1,
@@ -110,7 +110,7 @@ describe('GET /api/history.json', () => {
     const reads = db.queries.length;
     expect((await (await get(route)).json()).ok).toBe(true);
     expect(db.queries.length).toBe(reads);
-    expect([...cache.store.keys()]).toEqual(['https://whenmodel.com/__cache/memo/history%4030d']);
+    expect([...cache.store.keys()]).toEqual(['https://whenmodel.com/__cache/memo/history%40v4%4030d']);
   });
 
   it('serves a failed read uncached, so the next request after D1 recovers gets data', async () => {

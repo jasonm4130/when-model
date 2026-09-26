@@ -4,6 +4,7 @@
  * wobbles don't flip the displayed level, and a split wherever the scoring algorithm
  * changed underneath the numbers. No fetch, no `Date.now()`.
  */
+import { LEVEL_BANDS } from './dropcon';
 
 /** One `score_series` row, already narrowed to display-relevant columns. */
 export interface ScorePoint {
@@ -13,8 +14,12 @@ export interface ScorePoint {
   algorithmVersion: number;
   score: number;
   level: 1 | 2 | 3 | 4 | 5;
-  /** "Ships within 7 days" odds behind the score, 0..1; absent on legacy rows. */
-  p7?: number;
+  /**
+   * The probability the headline reads, 0..1: v3's P7 (best trusted frontier-family 7-day odds),
+   * v2's max 7-day odds on backfilled rows. Absent when the odds source was down.
+   */
+  headlineP?: number;
+  /** The reading was a floor or had no signal: it holds the previous display level. */
   degraded: boolean;
 }
 
@@ -37,13 +42,8 @@ export function downsampleHourly<T extends ScorePoint>(points: readonly T[]): T[
   return [...buckets.values()];
 }
 
-/**
- * The same score bands `computeDropcon` uses (src/domain/dropcon.ts). Kept here rather
- * than imported so this package never needs to touch that file; a later package updates
- * both together if v3 rescales the bands (see the report's Critic section, "v3 level 1
- * is effectively unreachable").
- */
-const LEVEL_BOUNDARIES = [75, 55, 35, 15] as const;
+/** The score bands `computeDropcon` uses, from their one definition in src/domain/dropcon.ts. */
+const LEVEL_BOUNDARIES = LEVEL_BANDS;
 
 export const HYSTERESIS_HOLD_SLOTS = 2;
 export const HYSTERESIS_CLEAR_MARGIN = 5;
@@ -72,20 +72,26 @@ function clearedLevel(score: number, from: Level, to: Level): Level {
  * A level change is shown only once the new raw level holds for `HYSTERESIS_HOLD_SLOTS`
  * consecutive slots (shown from the first of them), or the score clears the crossed band
  * boundary by at least `HYSTERESIS_CLEAR_MARGIN` points. Everything else is a one-slot
- * wobble and stays at the previously displayed level. Run it on 15-minute slots, before
- * `downsampleHourly`: "2 slots" means two captures, not two hours. Assumes `points`
- * covers one algorithm version; run `splitByAlgorithmVersion` first.
+ * wobble and stays at the previously displayed level. A degraded reading (odds offline, or
+ * no signal) is an outage, not a move: it holds the previous display level and never counts
+ * as the slot that confirms a change. Run it on 15-minute slots, before `downsampleHourly`:
+ * "2 slots" means two captures, not two hours. Assumes `points` covers one algorithm
+ * version; run `splitByAlgorithmVersion` first.
  */
 export function applyHysteresis(points: readonly ScorePoint[]): DisplayPoint[] {
   const sorted = [...points].sort(byObservedAtAsc);
   const out: DisplayPoint[] = [];
   let current: Level | undefined;
+  // Set by a real reading, not only by a degraded one a series happened to start with.
+  let anchored = false;
   for (let i = 0; i < sorted.length; i++) {
     const point = sorted[i];
-    if (current === undefined) {
+    if (current === undefined || (!anchored && !point.degraded)) {
       current = point.level;
-    } else if (point.level !== current) {
-      const holds = sorted[i + 1]?.level === point.level;
+      anchored = !point.degraded;
+    } else if (!point.degraded && point.level !== current) {
+      const next = sorted.slice(i + 1).find((p) => !p.degraded);
+      const holds = next?.level === point.level;
       current = holds ? point.level : clearedLevel(point.score, current, point.level);
     }
     out.push({ ...point, displayLevel: current });

@@ -472,18 +472,39 @@ export interface CurveRead extends CurveBracket {
   p: number;
 }
 
-/** The best family curve for a lab, read at now+7d and now+30d. */
+/** The best family curve for a lab, read at now+72h, now+7d and now+30d. */
 export interface ReleaseCurve {
   labId: LabId;
   family: string;
+  /** P(released within 72 hours): the horizon the release forecast was calibrated on. */
+  p72: number;
   p7: number;
   p30: number;
+  bracket72: CurveBracket;
   bracket7: CurveBracket;
   bracket30: CurveBracket;
+  /** `isTrustedRead` for each horizon. An untrusted read is shown as extrapolated and never scored. */
+  trusted72: boolean;
+  trusted7: boolean;
+  trusted30: boolean;
   interpolated: boolean;
   thinExcluded: number;
   maxSpread?: number;
   marketUrl: string;
+}
+
+/** How far a read may sit from the rung that brackets it before it stops being trusted. */
+export const TRUSTED_BRACKET_DAYS = 14;
+
+/**
+ * A read is trusted when it sits at a quoted rung, between two rungs, on a day-bucket floor (real
+ * bids), or past the last rung (a floor), or when the rung it is extrapolated from lies within
+ * `TRUSTED_BRACKET_DAYS` of the horizon. What fails is the constant-hazard stretch from now to a
+ * distant first rung: "Next Gemini Flash" read 25.7% at 7 days off a lone Nov 30 rung (WP-1).
+ */
+export function isTrustedRead(read: CurveBracket, at: number): boolean {
+  if (read.source === 'buckets' || read.from || !read.to) return true;
+  return Date.parse(read.to.deadline) - at <= TRUSTED_BRACKET_DAYS * DAY_MS;
 }
 
 interface Quote {
@@ -692,32 +713,47 @@ export function readCurve(curve: FamilyCurve, at: number, now: number): CurveRea
 }
 
 /**
- * A lab's release odds at now+7d and now+30d from its strongest model family (highest P7, then P30).
- * Replaces `releaseOddsForLab`'s max-of-outcomes once DROPCON v3 switches over.
+ * A lab's release odds at now+72h, now+7d and now+30d from its strongest model family: a trusted
+ * 7-day read beats an extrapolated one, then the highest P7, then P30. The caller chooses which
+ * markets count (DROPCON v3 passes frontier text families that have not just launched).
  */
 export function releaseCurveForLab(
   markets: readonly Market[],
   labId: LabId,
   now: number,
 ): ReleaseCurve | undefined {
+  const at72 = now + 3 * DAY_MS;
+  const at7 = now + 7 * DAY_MS;
+  const at30 = now + 30 * DAY_MS;
   let best: ReleaseCurve | undefined;
   for (const curve of familyCurves(
     markets.filter((m) => m.labId === labId),
     now,
   )) {
-    const read7 = readCurve(curve, now + 7 * DAY_MS, now);
-    const read30 = readCurve(curve, now + 30 * DAY_MS, now);
-    if (!read7 || !read30) continue;
+    const read72 = readCurve(curve, at72, now);
+    const read7 = readCurve(curve, at7, now);
+    const read30 = readCurve(curve, at30, now);
+    if (!read72 || !read7 || !read30) continue;
+    const { p: p72, ...bracket72 } = read72;
     const { p: p7, ...bracket7 } = read7;
     const { p: p30, ...bracket30 } = read30;
-    if (best && (p7 < best.p7 || (p7 === best.p7 && p30 <= best.p30))) continue;
+    const trusted7 = isTrustedRead(bracket7, at7);
+    if (best) {
+      const rank = Number(trusted7) - Number(best.trusted7) || p7 - best.p7 || p30 - best.p30;
+      if (rank <= 0) continue;
+    }
     best = {
       labId,
       family: curve.family,
+      p72,
       p7,
       p30,
+      bracket72,
       bracket7,
       bracket30,
+      trusted72: isTrustedRead(bracket72, at72),
+      trusted7,
+      trusted30: isTrustedRead(bracket30, at30),
       interpolated: read7.interpolated || read30.interpolated,
       thinExcluded: curve.thinExcluded,
       maxSpread: curve.maxSpread,

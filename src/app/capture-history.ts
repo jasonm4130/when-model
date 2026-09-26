@@ -1,6 +1,9 @@
 import type { Dashboard } from '../domain/dashboard';
+import { headlineProbability } from '../domain/dropcon';
+import { firstSeenBatches } from '../domain/ledger';
 import {
   backfillScoreSeries,
+  recordFirstSeen,
   storeSnapshot,
   writeScoreSeries,
   type SnapshotDatabase,
@@ -9,14 +12,27 @@ import { buildDashboard } from './load-dashboard';
 
 /**
  * Records first-seen kinds (a stealth slot, a pending architecture module, a scheduled
- * broadcast, ...) from one capture's dashboard. None are wired yet: a later package
- * supplies these once the adapters that produce those candidates exist.
+ * broadcast, ...) from one capture's dashboard, keyed by `nowIso`, the capture's sighting time.
  */
 export type FirstSeenHook = (
   database: SnapshotDatabase,
   dashboard: Dashboard,
   nowIso: string,
 ) => Promise<void>;
+
+/**
+ * The default hook: every kind in `firstSeenBatches`, which leaves out any source whose
+ * `collect()` was not ok this capture. One kind failing does not stop the others.
+ */
+export const recordDashboardFirstSeen: FirstSeenHook = async (database, dashboard, nowIso) => {
+  for (const batch of firstSeenBatches(dashboard)) {
+    try {
+      await recordFirstSeen(database, batch.kind, batch.source, batch.items, nowIso);
+    } catch (e) {
+      console.error('[history:first-seen]', batch.kind, e instanceof Error ? e.message : e);
+    }
+  }
+};
 
 export interface CaptureHistoryOptions {
   firstSeenHooks?: readonly FirstSeenHook[];
@@ -31,7 +47,7 @@ export async function captureHistory(
   if (!database) throw new Error('HISTORY_DB binding is required for scheduled capture');
   const interval = 15 * 60_000;
   const scheduledSlot = new Date(Math.floor(scheduledTime / interval) * interval).toISOString();
-  const dashboard = await buildDashboard();
+  const dashboard = await buildDashboard(Date.now(), database);
   const now = Date.now();
   const observedAt = new Date(now).toISOString();
   const result = await storeSnapshot(database, {
@@ -50,8 +66,8 @@ export async function captureHistory(
       algorithmVersion: dashboard.measurement.algorithmVersion,
       score: dashboard.dropcon.score,
       level: dashboard.dropcon.level,
-      // With the odds source down maxWeekOdds is a placeholder 0, not a price.
-      p7: inputs.oddsAvailable === false ? null : inputs.maxWeekOdds,
+      // With the odds source down P7 is a placeholder 0, not a price.
+      headlineP: headlineProbability(inputs),
       degraded: dashboard.dropcon.degraded,
     });
   } catch (e) {
@@ -62,7 +78,7 @@ export async function captureHistory(
   } catch (e) {
     console.error('[history:score-backfill]', e instanceof Error ? e.message : e);
   }
-  for (const hook of options.firstSeenHooks ?? []) {
+  for (const hook of options.firstSeenHooks ?? [recordDashboardFirstSeen]) {
     try {
       await hook(database, dashboard, observedAt);
     } catch (e) {

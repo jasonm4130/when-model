@@ -159,11 +159,52 @@ const LIVE_BROADCAST_DETAILS = /"liveBroadcastDetails":\{[^}]*"startTimestamp":"
 export async function fetchScheduledStartTime(videoId: string): Promise<string | undefined> {
   try {
     const html = await cachedText(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, {
-      ttl: 300,
+      ttl: 1800,
     });
     return toIso(html.match(LIVE_BROADCAST_DETAILS)?.[1]);
   } catch (e) {
     console.error('[source:youtube watch]', videoId, e instanceof Error ? e.message : e);
     return undefined;
   }
+}
+
+/** One poll of every lab channel. `failedChannels` is non-empty when the list is partial. */
+export interface BroadcastFetch {
+  candidates: BroadcastCandidate[];
+  /** Labels of channels whose feed failed this poll; their candidates are missing, not absent. */
+  failedChannels: string[];
+}
+
+/**
+ * Every lab channel's Atom feed → stateless broadcast candidates (views=0, 60 min to 7 days old,
+ * broadcast-shaped title). Individual channel failures are logged and reported in
+ * `failedChannels`; this throws only when every channel fails. The two-poll first-seen gate is the
+ * caller's (see `src/domain/early-warnings.ts`), since it needs D1. With `probeSchedule`, each
+ * candidate's watch page (about 1.2 MB, cached 30 minutes) is fetched, fail-soft, for its
+ * `scheduledStartTime`. Candidates are rare, so this costs nothing on a normal poll.
+ */
+export async function fetchBroadcasts(
+  now: Date,
+  options: { probeSchedule?: boolean } = {},
+): Promise<BroadcastFetch> {
+  const settled = await Promise.allSettled(CHANNELS.map((channel) => fetchYoutubeChannel(channel)));
+  const failedChannels: string[] = [];
+  settled.forEach((r, i) => {
+    if (r.status === 'fulfilled') return;
+    failedChannels.push(CHANNELS[i].label);
+    console.error('[source:YouTube broadcasts]', CHANNELS[i].label, r.reason);
+  });
+  if (failedChannels.length === settled.length)
+    throw new Error(`all ${settled.length} YouTube channels failed`);
+
+  const entries = settled.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+  const candidates = broadcastCandidates(entries, now);
+  if (!options.probeSchedule || candidates.length === 0) return { candidates, failedChannels };
+  const withSchedule = await Promise.all(
+    candidates.map(async (c) => {
+      const scheduledStartTime = await fetchScheduledStartTime(c.videoId);
+      return scheduledStartTime ? { ...c, scheduledStartTime } : c;
+    }),
+  );
+  return { candidates: withSchedule, failedChannels };
 }

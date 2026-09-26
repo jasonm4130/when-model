@@ -45,12 +45,16 @@ export function toFeedItem(hit: HnHitDto): FeedItem | undefined {
 }
 
 /**
- * Algolia's `since` bound, floored to a 300 s bucket so every render inside the edge-cache TTL
- * builds the same URL. Per-second bounds made each request a cache miss.
+ * Algolia's `since` bound, floored to a `bucketSeconds` bucket so every render inside the
+ * edge-cache TTL builds the same URL. Per-second bounds made each request a cache miss, and a
+ * bucket shorter than the TTL caps the effective TTL at the bucket.
  */
-export function sinceBucket(nowMs: number, hours: number): number {
-  return Math.floor(nowMs / 1000 / 300) * 300 - hours * 3600;
+export function sinceBucket(nowMs: number, hours: number, bucketSeconds = 300): number {
+  return Math.floor(nowMs / 1000 / bucketSeconds) * bucketSeconds - hours * 3600;
 }
+
+/** Lead adapters cache for 30 minutes: their signals run days ahead, and every cold fetch competes for the Worker's six connections. */
+export const LEAK_TTL_SECONDS = 1800;
 
 /** Model-related stories above `minPoints` from the last `hours`, via Algolia. */
 export async function fetchHackerNews(hours = 48, minPoints = 60): Promise<FeedItem[]> {
@@ -84,13 +88,13 @@ export async function fetchHackerNewsLeaks(days = LEAK_WINDOW_DAYS): Promise<Lea
     query: LEAK_QUERY,
     optionalWords: LEAK_QUERY,
     tags: 'story',
-    numericFilters: `created_at_i>${sinceBucket(Date.now(), days * 24)}`,
+    numericFilters: `created_at_i>${sinceBucket(Date.now(), days * 24, LEAK_TTL_SECONDS)}`,
     hitsPerPage: '1000',
     typoTolerance: 'false',
     restrictSearchableAttributes: 'title',
   });
   const { hits } = await cachedJson<{ hits?: HnHitDto[] }>(`${ALGOLIA}/search_by_date?${params}`, {
-    ttl: 600,
+    ttl: LEAK_TTL_SECONDS,
   });
   if (!Array.isArray(hits)) throw new Error('Algolia leak search returned no hits array');
   return hits.map(toLeakItem).filter((l): l is LeakItem => l !== undefined);

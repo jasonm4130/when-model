@@ -7,12 +7,14 @@ const mocks = vi.hoisted(() => ({
   store: vi.fn(),
   writeScoreSeries: vi.fn(),
   backfillScoreSeries: vi.fn(),
+  recordFirstSeen: vi.fn(),
 }));
 vi.mock('../../src/app/load-dashboard', () => ({ buildDashboard: mocks.build }));
 vi.mock('../../src/infra/snapshot-store', () => ({
   storeSnapshot: mocks.store,
   writeScoreSeries: mocks.writeScoreSeries,
   backfillScoreSeries: mocks.backfillScoreSeries,
+  recordFirstSeen: mocks.recordFirstSeen,
 }));
 import { captureHistory } from '../../src/app/capture-history';
 import { SqliteD1 } from '../infra/sqlite-d1';
@@ -36,6 +38,7 @@ beforeEach(() => {
   mocks.store.mockReset().mockResolvedValue({ stored: true });
   mocks.writeScoreSeries.mockReset().mockResolvedValue({ stored: true });
   mocks.backfillScoreSeries.mockReset().mockResolvedValue(undefined);
+  mocks.recordFirstSeen.mockReset().mockResolvedValue([]);
   vi.spyOn(Date, 'now').mockReturnValue(now);
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -44,6 +47,8 @@ describe('captureHistory', () => {
   it('uses the scheduled quarter-hour and actual completion time independently', async () => {
     await captureHistory(database, now - 15_000);
     expect(mocks.build).toHaveBeenCalledOnce();
+    // The capture's own binding backs the first-seen ledger and the repricing read.
+    expect(mocks.build).toHaveBeenCalledWith(now, database);
     expect(mocks.store).toHaveBeenCalledWith(database, {
       scheduledSlot: '2026-09-23T01:00:00.000Z',
       observedAt: '2026-09-23T01:01:00.000Z',
@@ -65,11 +70,11 @@ describe('captureHistory', () => {
       algorithmVersion: dashboard.measurement.algorithmVersion,
       score: dashboard.dropcon.score,
       level: dashboard.dropcon.level,
-      p7: dashboard.measurement.inputs.maxWeekOdds,
+      headlineP: dashboard.measurement.inputs.p7,
       degraded: dashboard.dropcon.degraded,
     });
   });
-  it('records no p7 when the odds source was down, rather than a placeholder 0', async () => {
+  it('records no headline probability when the odds source was down, rather than a placeholder 0', async () => {
     const offline = assembleDashboard(
       {
         markets: { name: 'markets', ok: false, error: 'timeout', data: [] },
@@ -80,12 +85,12 @@ describe('captureHistory', () => {
       },
       now - 5000,
     );
-    expect(offline.measurement.inputs.maxWeekOdds).toBe(0);
+    expect(offline.measurement.inputs.p7).toBe(0);
     mocks.build.mockResolvedValue(offline);
     await captureHistory(database, now);
     expect(mocks.writeScoreSeries).toHaveBeenCalledWith(
       database,
-      expect.objectContaining({ p7: null, degraded: true }),
+      expect.objectContaining({ headlineP: null, degraded: true }),
     );
   });
   it('catches up missing rollup rows after writing this slot, isolating a failure', async () => {
@@ -118,7 +123,7 @@ describe('captureHistory', () => {
         algorithmVersion: dashboard.measurement.algorithmVersion,
         score: dashboard.dropcon.score,
         level: dashboard.dropcon.level,
-        p7: 0,
+        headlineP: 0,
         degraded: false,
       },
     ]);
@@ -139,5 +144,101 @@ describe('captureHistory', () => {
     expect(failing).toHaveBeenCalledWith(database, dashboard, '2026-09-23T01:01:00.000Z');
     expect(err).toHaveBeenCalledWith('[history:first-seen]', 'endpoint unreachable');
     expect(mocks.store).toHaveBeenCalledOnce();
+  });
+  it('records first sightings by default, only for sources that were ok this capture', async () => {
+    const sighted = assembleDashboard(
+      {
+        markets: { name: 'Polymarket', ok: true, data: [] },
+        drops: {
+          name: 'OpenRouter',
+          ok: true,
+          data: [
+            {
+              id: 'stealth/ox-alpha',
+              name: 'Ox Alpha',
+              lab: 'Stealth',
+              createdAt: '2026-09-22T00:00:00.000Z',
+              url: 'https://openrouter.ai/stealth/ox-alpha',
+              free: true,
+            },
+          ],
+        },
+        papers: { name: 'HF papers', ok: true, data: [] },
+        trending: { name: 'HF trending', ok: true, data: [] },
+        feeds: [
+          {
+            name: 'Anthropic news',
+            ok: true,
+            data: [
+              {
+                source: 'anthropic',
+                title: 'Introducing Claude Sonnet 5',
+                url: 'https://www.anthropic.com/news/claude-sonnet-5',
+                publishedAt: '2026-09-22T00:00:00.000Z',
+                alert: true,
+                precision: 'day',
+              },
+            ],
+          },
+        ],
+        leaks: [
+          {
+            name: 'TestingCatalog',
+            ok: false,
+            error: 'timeout',
+            source: 'testingcatalog',
+            data: [],
+          },
+        ],
+      },
+      now - 5000,
+    );
+    mocks.build.mockResolvedValue(sighted);
+    await captureHistory(database, now);
+    const kinds = mocks.recordFirstSeen.mock.calls.map((c) => c[1]);
+    expect(kinds).toEqual(['stealth', 'feed-day:anthropic']);
+    expect(mocks.recordFirstSeen).toHaveBeenCalledWith(
+      database,
+      'stealth',
+      'openrouter',
+      [{ key: 'stealth/ox-alpha', meta: { name: 'Ox Alpha' } }],
+      '2026-09-23T01:01:00.000Z',
+    );
+  });
+  it('keeps recording the other kinds when one first-seen write fails', async () => {
+    const actual = await vi.importActual<typeof import('../../src/app/capture-history')>(
+      '../../src/app/capture-history',
+    );
+    mocks.recordFirstSeen.mockRejectedValueOnce(new Error('D1 busy'));
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const withTwo = {
+      ...dashboard,
+      earlyWarnings: {
+        ...dashboard.earlyWarnings,
+        stealth: {
+          ...dashboard.earlyWarnings.stealth,
+          ok: true,
+          items: [{ id: 's', name: 'S', createdAt: '', daysInStealth: 0, claimsFrontier: false }],
+        },
+        architectures: {
+          ...dashboard.earlyWarnings.architectures,
+          ok: true,
+          items: [
+            {
+              module: 'qwen9',
+              labId: 'qwen' as const,
+              since: '',
+              sinceSource: 'detected' as const,
+              daysPending: 0,
+              pending: true,
+              frontier: false,
+            },
+          ],
+        },
+      },
+    };
+    await actual.recordDashboardFirstSeen(database, withTwo, '2026-09-23T01:01:00.000Z');
+    expect(mocks.recordFirstSeen.mock.calls.map((c) => c[1])).toEqual(['stealth', 'architecture']);
+    expect(err).toHaveBeenCalledWith('[history:first-seen]', 'stealth', 'D1 busy');
   });
 });

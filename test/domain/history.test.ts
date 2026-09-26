@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { LEVEL_BANDS } from '../../src/domain/dropcon';
 import {
   applyHysteresis,
   buildHistorySeries,
@@ -112,6 +113,49 @@ describe('applyHysteresis', () => {
       point({ observedAt: '2026-09-23T01:30:00.000Z', score: 80, level: 1 }),
     ];
     expect(applyHysteresis(down).map((p) => p.displayLevel)).toEqual([1, 2, 1]);
+  });
+});
+
+describe('applyHysteresis with degraded readings', () => {
+  it('holds the display level through an outage: a floor is not a move to level 5', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 64, level: 2 }),
+      point({ observedAt: '2026-09-23T01:15:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T01:45:00.000Z', score: 64, level: 2 }),
+    ];
+    expect(applyHysteresis(points).map((p) => p.displayLevel)).toEqual([2, 2, 2, 2]);
+  });
+
+  it('confirms a change on the next real reading, skipping the outage between them', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 40, level: 3 }),
+      point({ observedAt: '2026-09-23T01:15:00.000Z', score: 58, level: 2 }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T01:45:00.000Z', score: 58, level: 2 }),
+    ];
+    expect(applyHysteresis(points).map((p) => p.displayLevel)).toEqual([3, 2, 2, 2]);
+  });
+
+  it('lets the first real reading set the level when the series opens on an outage', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T01:15:00.000Z', score: 58, level: 2 }),
+      // A one-slot wobble 3 under level 2's band: held against the anchored level 2, not level 5.
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 52, level: 3 }),
+    ];
+    expect(applyHysteresis(points).map((p) => p.displayLevel)).toEqual([5, 2, 2]);
+  });
+
+  it('reads its bands from DROPCON itself, not a copy', () => {
+    // 75 is level 1's band in src/domain/dropcon.ts: 80 clears it by 5 and shows at once.
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 60, level: 2 }),
+      point({ observedAt: '2026-09-23T01:15:00.000Z', score: 80, level: 1 }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 60, level: 2 }),
+    ];
+    expect(LEVEL_BANDS[0]).toBe(75);
+    expect(applyHysteresis(points).map((p) => p.displayLevel)).toEqual([2, 1, 2]);
   });
 });
 
