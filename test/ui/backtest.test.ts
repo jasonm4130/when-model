@@ -229,8 +229,9 @@ describe('site copy and links', async () => {
     expect(html).toContain("xAI's release notes");
     expect(html).toContain("What can't it do?");
     expect(html).toContain('Read the backtest');
-    // The auto-refresh answer belongs to another package and stays as it was.
-    expect(html).toContain('The page reloads itself every 5 minutes while open.');
+    // The auto-refresh answer belongs to WP-8 (polled refresh) and stays as that package wrote it.
+    expect(html).toContain('The open page checks for new data every 5 minutes and offers a one-click reload');
+    expect(html).not.toContain('The page reloads itself every 5 minutes while open.');
   });
 
   it('the "her" minutes in History agree with the decoded tweet id', () => {
