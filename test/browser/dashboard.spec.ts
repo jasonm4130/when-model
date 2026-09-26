@@ -85,6 +85,11 @@ test('uses static, readable ticker content and stable DROPCON segments with redu
   await expect(page.locator('.ticker-controls')).toBeHidden();
   await expect(page.locator('.ticker-copy')).toBeHidden();
   await expect(page.locator('#ticker-track')).toHaveCSS('animation-name', 'none');
+  // UI-05: reduced motion used to wrap the ticker onto many lines (~487px); it must now stay a single line.
+  await expect(page.locator('#ticker-track')).toHaveCSS('white-space', 'nowrap');
+  const trackBox = await page.locator('#ticker-track').boundingBox();
+  expect(trackBox).not.toBeNull();
+  expect(trackBox!.height).toBeLessThan(40);
   await expect(page.locator('.seg')).toHaveCount(5);
   expect(await page.locator('.seg.on').count()).toBe(1);
   expect(await page.locator('.seg.on').evaluate((element) => getComputedStyle(element).opacity)).toBe('1');

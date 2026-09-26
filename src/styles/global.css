@@ -15,7 +15,11 @@
   --green: #39ff14;
   --orange: #ff7a1a;
   --red: #ff3355;
-  --blue: #4b59ff;
+  /* Every text colour clears WCAG AA (4.5:1) on --bg and --bg2; the lowest is --red at 5.4:1 on --bg2.
+     #4b59ff, the old blue, was 3.85:1; #7480ff is 5.8:1. */
+  --blue: #7480ff;
+  /* neutral foreground alias for consumers that want plain text rather than a themed colour */
+  --fg: var(--text);
   --font-head: 'Press Start 2P', 'VT323', ui-monospace, monospace;
   --font-mono: 'VT323', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
@@ -23,12 +27,15 @@
   --fs-body: 20px;
   --fs-lg: 22px;
   --fs-sm: 18px;
+  --fs-md: calc(var(--fs-body) - 1px);
   --fs-xs: 16px;
   --fs-metric: 30px;
-  --fs-head: 12px;
-  --fs-head-lg: 13px;
-  --fs-tiny: 10px;
-  --fs-pill: 9px;
+  --fs-metric-sm: 26px;
+  /* Press Start 2P is drawn on an 8px grid: other sizes land its pixels between device pixels and blur. */
+  --fs-head: 16px;
+  --fs-head-lg: 16px;
+  --fs-tiny: 8px;
+  --fs-pill: 8px;
 
   --gap: 16px;
   --pad: 16px;
@@ -76,17 +83,6 @@ body::after {
   pointer-events: none;
   background: radial-gradient(ellipse at center, transparent 66%, rgba(0, 0, 0, 0.32) 100%);
 }
-.crt-sweep {
-  position: fixed;
-  inset: 0;
-  z-index: 49;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 229, 255, 0.045) 50%, transparent 100%);
-  background-size: 100% 220px;
-  background-repeat: no-repeat;
-  background-position: 0 18vh;
-}
-
 a {
   color: var(--cyan);
   text-decoration: none;
@@ -132,9 +128,6 @@ ul {
 }
 .muted {
   color: var(--muted);
-}
-.small {
-  font-size: var(--fs-xs);
 }
 .tiny {
   font-family: var(--font-head);
@@ -219,8 +212,7 @@ ul {
   transition:
     border-color var(--fast) var(--ease),
     background var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease),
-    transform var(--fast) var(--ease);
+    box-shadow var(--fast) var(--ease);
 }
 .panel:hover {
   border-color: var(--line2);
@@ -329,7 +321,7 @@ a.pill:hover {
 .tag {
   display: inline-block;
   font-family: var(--font-head);
-  font-size: 8px;
+  font-size: var(--fs-pill);
   padding: 3px 5px;
   border: 1px solid currentColor;
   text-transform: uppercase;
@@ -361,7 +353,7 @@ a.pill:hover {
   font-variant-numeric: tabular-nums;
 }
 .metrics.tight .metric-value {
-  font-size: 26px;
+  font-size: var(--fs-metric-sm);
 }
 .metric-note {
   font-size: var(--fs-xs);
@@ -424,7 +416,7 @@ a.pill:hover {
   opacity: 1;
 }
 .hist .col span {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--muted);
   line-height: 1;
   margin-top: 3px;
@@ -472,7 +464,7 @@ a.pill:hover {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 19px;
+  font-size: var(--fs-md);
 }
 th {
   font-family: var(--font-head);
@@ -606,10 +598,6 @@ details summary {
 details summary::-webkit-details-marker {
   display: none;
 }
-code {
-  font-family: var(--font-mono);
-  color: var(--yellow);
-}
 hr.neon {
   border: 0;
   height: 2px;
@@ -634,9 +622,7 @@ hr.neon {
     --fs-body: 18px;
     --fs-metric: 26px;
   }
-  table {
-    font-size: 17px;
-  }
+  /* table's font-size is var(--fs-md), derived from --fs-body, so it re-narrows to 17px here on its own. */
   .pill {
     max-width: 100%;
     white-space: normal;
@@ -652,15 +638,17 @@ hr.neon {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  /* UI-05: a wrapped, multi-line ticker grew to ~487px and pushed the page below the fold.
+     Reduced motion instead gets a static single-line strip: nowrap, a left gutter, a right-edge fade. */
   .marquee > div {
     display: block;
-    white-space: normal;
+    white-space: nowrap;
     animation: none !important;
   }
   .marquee {
-    overflow: visible;
-    white-space: normal;
-    mask-image: none;
+    white-space: nowrap;
+    padding-left: var(--pad);
+    mask-image: linear-gradient(90deg, #000 92%, transparent);
   }
   .marquee .ticker-copy {
     display: none;
