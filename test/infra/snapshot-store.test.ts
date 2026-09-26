@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { assembleDashboard } from '../../src/domain/dashboard';
 import {
   MAX_CLEANUP_ROWS,
+  MAX_FIRST_SEEN_ROWS,
   MAX_SNAPSHOT_ROWS,
   MAX_TOTAL_PAYLOAD_BYTES,
+  SNAPSHOT_INTERVAL_MS,
+  backfillScoreSeries,
   compactSnapshot,
   readFirstSeen,
   readScoreSeries,
@@ -11,8 +15,11 @@ import {
   storeSnapshot,
   writeScoreSeries,
   type D1Statement,
+  type ScoreSeriesInput,
   type SnapshotDatabase,
+  type StoreSnapshotInput,
 } from '../../src/infra/snapshot-store';
+import { SqliteD1 } from './sqlite-d1';
 
 const dashboard = {
   generatedAt: '2026-09-20T00:00:00.000Z',
@@ -170,185 +177,85 @@ describe('snapshot store', () => {
   });
 });
 
-/**
- * A small in-memory double for the `first_seen`/`score_series` tables, driven by matching
- * on the stable substrings of the queries `snapshot-store.ts` actually issues. It exists
- * to exercise the JS-side branching (seeding, new-key detection, capacity, narrow reads)
- * with a real round trip; the SQL itself (json_each, the capacity triggers) was proven
- * separately against a real local D1 (`wrangler d1 execute --local`, see migration 0002).
- */
-class FakeHistoryDatabase implements SnapshotDatabase {
-  firstSeen: Array<{
-    kind: string;
-    key: string;
-    source: string;
-    first_seen_at: string;
-    last_seen_at: string;
-    seeded: number;
-    meta: string | null;
-  }> = [];
-  scoreSeries: Array<{
-    slot: string;
-    observed_at: string;
-    algo_version: number;
-    score: number;
-    level: number;
-    p7: number | null;
-    degraded: number;
-  }> = [];
-  readonly calls: Array<{ query: string; values: unknown[] }> = [];
+const iso = (ms: number) => new Date(ms).toISOString();
+const T0 = Date.parse('2026-09-23T01:00:00.000Z');
+/** Captures land a few seconds after their slot; the delay varies run to run. */
+const CAPTURE_DELAY_MS = 40_000;
 
-  prepare(query: string): D1Statement {
-    return this.bound(query, []);
+/** Bulk-loads `count` consecutive slots straight into SQLite (through the real triggers). */
+function fillSlots(db: SqliteD1, table: 'score_series' | 'dashboard_snapshots', from: number, count: number) {
+  const insert =
+    table === 'score_series'
+      ? db.sqlite.prepare(
+          'INSERT INTO score_series (slot, observed_at, algo_version, score, level, p7, degraded) VALUES (?, ?, 2, 10, 5, NULL, 0)',
+        )
+      : db.sqlite.prepare(
+          "INSERT INTO dashboard_snapshots (scheduled_slot, observed_at, generated_at, payload_json, byte_count) VALUES (?, ?, ?, '{}', 2)",
+        );
+  db.sqlite.exec('BEGIN');
+  for (let i = 0; i < count; i++) {
+    const slot = from + i * SNAPSHOT_INTERVAL_MS;
+    const args = [iso(slot), iso(slot + CAPTURE_DELAY_MS)];
+    if (table === 'dashboard_snapshots') args.push(iso(slot + CAPTURE_DELAY_MS - 1000));
+    insert.run(...args);
   }
-
-  private bound(query: string, values: unknown[]): D1Statement {
-    return {
-      bind: (...next: unknown[]) => this.bound(query, next),
-      run: async () => this.run(query, values),
-      first: async <T>() => this.first<T>(query, values),
-      all: async <T>() => this.all<T>(query, values),
-    };
-  }
-
-  private async run(query: string, values: unknown[]): Promise<{ meta: { changes?: number } }> {
-    this.calls.push({ query, values });
-    if (query.includes('INSERT OR IGNORE INTO first_seen')) {
-      const [kind, source, firstSeenAt, lastSeenAt, seeded, itemsJson] = values as [
-        string,
-        string,
-        string,
-        string,
-        number,
-        string,
-      ];
-      const items = JSON.parse(itemsJson) as Array<{ key: string; meta: unknown }>;
-      let changes = 0;
-      for (const item of items) {
-        if (this.firstSeen.some((r) => r.kind === kind && r.key === item.key)) continue;
-        this.firstSeen.push({
-          kind,
-          key: item.key,
-          source,
-          first_seen_at: firstSeenAt,
-          last_seen_at: lastSeenAt,
-          seeded,
-          meta: item.meta == null ? null : JSON.stringify(item.meta),
-        });
-        changes++;
-      }
-      return { meta: { changes } };
-    }
-    if (query.includes('UPDATE first_seen SET last_seen_at')) {
-      const [lastSeenAt, kind, itemsJson] = values as [string, string, string];
-      const keys = new Set((JSON.parse(itemsJson) as Array<{ key: string }>).map((i) => i.key));
-      let changes = 0;
-      for (const row of this.firstSeen) {
-        if (row.kind === kind && keys.has(row.key)) {
-          row.last_seen_at = lastSeenAt;
-          changes++;
-        }
-      }
-      return { meta: { changes } };
-    }
-    if (query.includes('DELETE FROM first_seen')) {
-      const [cutoff, limit] = values as [string, number];
-      const stale = this.firstSeen
-        .filter((r) => r.last_seen_at < cutoff)
-        .sort((a, b) => a.last_seen_at.localeCompare(b.last_seen_at))
-        .slice(0, limit);
-      this.firstSeen = this.firstSeen.filter((r) => !stale.includes(r));
-      return { meta: { changes: stale.length } };
-    }
-    if (query.includes('INSERT INTO score_series')) {
-      const [slot, observedAt, algoVersion, score, level, p7, degraded, cap] = values as [
-        string,
-        string,
-        number,
-        number,
-        number,
-        number | null,
-        number,
-        number,
-      ];
-      if (this.scoreSeries.some((r) => r.slot === slot) || this.scoreSeries.length >= cap) {
-        return { meta: { changes: 0 } };
-      }
-      this.scoreSeries.push({
-        slot,
-        observed_at: observedAt,
-        algo_version: algoVersion,
-        score,
-        level,
-        p7,
-        degraded,
-      });
-      return { meta: { changes: 1 } };
-    }
-    if (query.includes('DELETE FROM score_series')) {
-      const [cutoff, limit] = values as [string, number];
-      const stale = this.scoreSeries
-        .filter((r) => r.observed_at < cutoff)
-        .sort((a, b) => a.observed_at.localeCompare(b.observed_at))
-        .slice(0, limit);
-      this.scoreSeries = this.scoreSeries.filter((r) => !stale.includes(r));
-      return { meta: { changes: stale.length } };
-    }
-    throw new Error(`FakeHistoryDatabase: unhandled run() ${query}`);
-  }
-
-  private async first<T>(query: string, values: unknown[]): Promise<T | null> {
-    this.calls.push({ query, values });
-    if (query.includes('SELECT 1 AS present FROM first_seen')) {
-      const [kind] = values as [string];
-      return (this.firstSeen.some((r) => r.kind === kind) ? { present: 1 } : null) as T | null;
-    }
-    if (query.includes('SELECT 1 AS present FROM score_series')) {
-      const [slot] = values as [string];
-      return (this.scoreSeries.some((r) => r.slot === slot) ? { present: 1 } : null) as T | null;
-    }
-    if (query.includes('SELECT row_count FROM score_series_metadata')) {
-      return { row_count: this.scoreSeries.length } as T;
-    }
-    throw new Error(`FakeHistoryDatabase: unhandled first() ${query}`);
-  }
-
-  private async all<T>(query: string, values: unknown[]): Promise<{ results: T[] }> {
-    this.calls.push({ query, values });
-    if (query.includes('SELECT key FROM first_seen')) {
-      const [kind, firstSeenAt, itemsJson] = values as [string, string, string];
-      const keys = new Set((JSON.parse(itemsJson) as Array<{ key: string }>).map((i) => i.key));
-      const results = this.firstSeen
-        .filter((r) => r.kind === kind && r.first_seen_at === firstSeenAt && keys.has(r.key))
-        .map((r) => ({ key: r.key })) as T[];
-      return { results };
-    }
-    if (
-      query.includes('SELECT kind, key, source, first_seen_at, last_seen_at, seeded, meta FROM first_seen')
-    ) {
-      const [kind] = values as [string];
-      const results = this.firstSeen
-        .filter((r) => r.kind === kind)
-        .sort((a, b) => a.first_seen_at.localeCompare(b.first_seen_at)) as T[];
-      return { results };
-    }
-    if (
-      query.includes('SELECT slot, observed_at, algo_version, score, level, p7, degraded FROM score_series')
-    ) {
-      const [sinceIso, limit] = values as [string, number];
-      const results = this.scoreSeries
-        .filter((r) => r.observed_at >= sinceIso)
-        .sort((a, b) => a.observed_at.localeCompare(b.observed_at))
-        .slice(0, limit) as T[];
-      return { results };
-    }
-    throw new Error(`FakeHistoryDatabase: unhandled all() ${query}`);
-  }
+  db.sqlite.exec('COMMIT');
 }
 
-describe('recordFirstSeen / readFirstSeen', () => {
+function reading(slotMs: number, overrides: Partial<ScoreSeriesInput> = {}): ScoreSeriesInput {
+  return {
+    slot: iso(slotMs),
+    observedAt: iso(slotMs + CAPTURE_DELAY_MS),
+    algorithmVersion: 2,
+    score: 64,
+    level: 2,
+    p7: 0.6,
+    degraded: false,
+    ...overrides,
+  };
+}
+
+describe('retention at steady state (real SQLite, migrations applied)', () => {
+  // 90 days of 15-minute slots is exactly the 8,640-row cap, so the slot 90 days before
+  // the one being written must be evicted first or every write from day 90 on fails.
+  it('keeps storing snapshots once 90 days of slots fill the table', async () => {
+    const db = new SqliteD1();
+    fillSlots(db, 'dashboard_snapshots', T0, MAX_SNAPSHOT_ROWS);
+    const next = T0 + MAX_SNAPSHOT_ROWS * SNAPSHOT_INTERVAL_MS;
+    const observedAt = iso(next + CAPTURE_DELAY_MS);
+    const dashboard = { generatedAt: iso(next + 30_000), labs: [], drops: [], sources: [] };
+    expect(
+      await storeSnapshot(db, { scheduledSlot: iso(next), observedAt, dashboard, now: next + 60_000 }),
+    ).toEqual({ stored: true });
+    expect(db.sqlite.prepare('SELECT MIN(scheduled_slot) AS oldest FROM dashboard_snapshots').get()).toEqual({
+      oldest: iso(T0 + SNAPSHOT_INTERVAL_MS),
+    });
+    expect(db.sqlite.prepare('SELECT row_count FROM snapshot_store_metadata').get()).toEqual({
+      row_count: MAX_SNAPSHOT_ROWS,
+    });
+  });
+
+  it('keeps writing the score series once 90 days of slots fill the table', async () => {
+    const db = new SqliteD1();
+    fillSlots(db, 'score_series', T0, MAX_SNAPSHOT_ROWS);
+    const next = T0 + MAX_SNAPSHOT_ROWS * SNAPSHOT_INTERVAL_MS;
+    expect(await writeScoreSeries(db, reading(next))).toEqual({ stored: true });
+    expect(db.sqlite.prepare('SELECT row_count FROM score_series_metadata').get()).toEqual({
+      row_count: MAX_SNAPSHOT_ROWS,
+    });
+  });
+
+  it('still refuses to evict recent evidence when the table is full of it', async () => {
+    const db = new SqliteD1();
+    fillSlots(db, 'score_series', T0, MAX_SNAPSHOT_ROWS);
+    // A slot just before the stored window: none of the stored slots is 90 days older.
+    await expect(writeScoreSeries(db, reading(T0 - SNAPSHOT_INTERVAL_MS))).rejects.toThrow('capacity');
+  });
+});
+
+describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', () => {
   it('seeds a kind with no prior rows as a baseline, reporting nothing as new', async () => {
-    const db = new FakeHistoryDatabase();
+    const db = new SqliteD1();
     const newKeys = await recordFirstSeen(
       db,
       'module',
@@ -380,17 +287,25 @@ describe('recordFirstSeen / readFirstSeen', () => {
   });
 
   it('reports only genuinely new keys once a kind has a baseline, and bumps last_seen_at for the rest', async () => {
-    const db = new FakeHistoryDatabase();
+    const db = new SqliteD1();
     await recordFirstSeen(db, 'module', 'transformers', [{ key: 'qwen4_exp' }], '2026-09-23T01:00:00.000Z');
+    await recordFirstSeen(
+      db,
+      'stealth',
+      'openrouter',
+      [{ key: 'space-bunny-alpha' }],
+      '2026-09-23T01:00:00.000Z',
+    );
     const newKeys = await recordFirstSeen(
       db,
       'module',
       'transformers',
-      [{ key: 'qwen4_exp' }, { key: 'glm5' }],
+      [{ key: 'qwen4_exp' }, { key: 'glm5' }, { key: 'glm5' }],
       '2026-09-23T01:15:00.000Z',
     );
     expect(newKeys).toEqual(['glm5']);
     const rows = await readFirstSeen(db, 'module');
+    expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.key === 'qwen4_exp')).toMatchObject({
       firstSeenAt: '2026-09-23T01:00:00.000Z',
       lastSeenAt: '2026-09-23T01:15:00.000Z',
@@ -401,112 +316,107 @@ describe('recordFirstSeen / readFirstSeen', () => {
       lastSeenAt: '2026-09-23T01:15:00.000Z',
       seeded: false,
     });
+    // Another kind's ledger is untouched.
+    expect((await readFirstSeen(db, 'stealth'))[0].lastSeenAt).toBe('2026-09-23T01:00:00.000Z');
+  });
+
+  it('round-trips every JSON meta shape, including a bare string and a boolean', async () => {
+    const db = new SqliteD1();
+    await recordFirstSeen(db, 'stealth', 'openrouter', [{ key: 'baseline' }], '2026-09-23T01:00:00.000Z');
+    const metas = {
+      text: 'Cloaked model, 1M context',
+      flag: true,
+      count: 0,
+      list: [1, 'a'],
+      nested: { a: null },
+    };
+    const newKeys = await recordFirstSeen(
+      db,
+      'stealth',
+      'openrouter',
+      Object.entries(metas).map(([key, meta]) => ({ key, meta })),
+      '2026-09-23T01:15:00.000Z',
+    );
+    expect(newKeys.sort()).toEqual(Object.keys(metas).sort());
+    const rows = await readFirstSeen(db, 'stealth');
+    expect(Object.fromEntries(rows.filter((r) => r.key !== 'baseline').map((r) => [r.key, r.meta]))).toEqual(
+      metas,
+    );
+  });
+
+  it('writes hundreds of keys in one statement per direction, far past D1s 100 bound parameters', async () => {
+    const db = new SqliteD1();
+    const modules = Array.from({ length: 519 }, (_, i) => ({ key: `module_${i}` }));
+    await recordFirstSeen(db, 'module', 'transformers', modules, '2026-09-23T01:00:00.000Z');
+    expect(await readFirstSeen(db, 'module')).toHaveLength(519);
+    expect(db.queries.filter((q) => q.includes('INSERT OR IGNORE INTO first_seen'))).toHaveLength(1);
+    expect(
+      await recordFirstSeen(
+        db,
+        'module',
+        'transformers',
+        [...modules, { key: 'qwen4_exp' }],
+        '2026-09-23T01:15:00.000Z',
+      ),
+    ).toEqual(['qwen4_exp']);
   });
 
   it('does nothing for an empty item list, issuing no queries', async () => {
-    const db = new FakeHistoryDatabase();
+    const db = new SqliteD1();
     expect(await recordFirstSeen(db, 'module', 'transformers', [], '2026-09-23T01:00:00.000Z')).toEqual([]);
-    expect(db.calls).toHaveLength(0);
+    expect(db.queries).toHaveLength(0);
   });
 
-  it('prunes items unseen for over 90 days before writing', async () => {
-    const db = new FakeHistoryDatabase();
-    db.firstSeen.push({
-      kind: 'stealth',
-      key: 'old',
-      source: 'openrouter',
-      first_seen_at: '2026-01-01T00:00:00.000Z',
-      last_seen_at: '2026-01-01T00:00:00.000Z',
-      seeded: 1,
-      meta: null,
-    });
+  it('prunes items unseen for over 90 days, in every kind, before writing', async () => {
+    const db = new SqliteD1();
+    await recordFirstSeen(
+      db,
+      'stealth',
+      'openrouter',
+      [{ key: 'old' }, { key: 'kept' }],
+      '2026-06-01T00:00:00.000Z',
+    );
+    await recordFirstSeen(db, 'stealth', 'openrouter', [{ key: 'kept' }], '2026-09-01T00:00:00.000Z');
     await recordFirstSeen(db, 'module', 'transformers', [{ key: 'qwen4_exp' }], '2026-09-23T01:00:00.000Z');
-    expect(await readFirstSeen(db, 'stealth')).toEqual([]);
+    expect((await readFirstSeen(db, 'stealth')).map((r) => r.key)).toEqual(['kept']);
+    expect(db.sqlite.prepare('SELECT row_count FROM first_seen_metadata').get()).toEqual({ row_count: 2 });
+  });
+
+  it('fails loudly at logical capacity instead of dropping keys silently', async () => {
+    const db = new SqliteD1();
+    await recordFirstSeen(db, 'module', 'transformers', [{ key: 'a' }], '2026-09-23T01:00:00.000Z');
+    db.sqlite.exec(`UPDATE first_seen_metadata SET row_count = ${MAX_FIRST_SEEN_ROWS}`);
+    await expect(
+      recordFirstSeen(db, 'module', 'transformers', [{ key: 'b' }], '2026-09-23T01:15:00.000Z'),
+    ).rejects.toThrow('first_seen logical capacity reached');
   });
 
   it('reads an empty ledger for a kind with no rows', async () => {
-    expect(await readFirstSeen(new FakeHistoryDatabase(), 'broadcast')).toEqual([]);
+    expect(await readFirstSeen(new SqliteD1(), 'broadcast')).toEqual([]);
   });
 });
 
-describe('writeScoreSeries / readScoreSeries', () => {
+describe('writeScoreSeries / readScoreSeries (real SQLite, migrations applied)', () => {
   it('writes one slot at most once', async () => {
-    const db = new FakeHistoryDatabase();
-    expect(
-      await writeScoreSeries(db, {
-        slot: '2026-09-23T01:00:00.000Z',
-        observedAt: '2026-09-23T01:00:47.000Z',
-        algorithmVersion: 2,
-        score: 64,
-        level: 2,
-        p7: 0.6,
-        degraded: false,
-      }),
-    ).toEqual({ stored: true });
-    expect(
-      await writeScoreSeries(db, {
-        slot: '2026-09-23T01:00:00.000Z',
-        observedAt: '2026-09-23T01:00:48.000Z',
-        algorithmVersion: 2,
-        score: 65,
-        level: 2,
-        p7: 0.61,
-        degraded: false,
-      }),
-    ).toEqual({ stored: false });
-  });
-
-  it('throws when logical capacity is reached, without writing', async () => {
-    const db = new FakeHistoryDatabase();
-    // Recent enough that pruning (retention: 90 days) evicts none of them before the
-    // capacity check runs, so the fixture actually exercises the capacity path.
-    for (let i = 0; i < MAX_SNAPSHOT_ROWS; i++) {
-      db.scoreSeries.push({
-        slot: `slot-${i}`,
-        observed_at: '2026-09-22T00:00:00.000Z',
-        algo_version: 2,
-        score: 0,
-        level: 5,
-        p7: null,
-        degraded: 0,
-      });
-    }
-    await expect(
-      writeScoreSeries(db, {
-        slot: '2026-09-23T01:00:00.000Z',
-        observedAt: '2026-09-23T01:00:00.000Z',
-        algorithmVersion: 2,
-        score: 1,
-        level: 5,
-        degraded: false,
-      }),
-    ).rejects.toThrow('capacity');
+    const db = new SqliteD1();
+    expect(await writeScoreSeries(db, reading(T0))).toEqual({ stored: true });
+    expect(await writeScoreSeries(db, reading(T0, { score: 65, observedAt: iso(T0 + 50_000) }))).toEqual({
+      stored: false,
+    });
+    expect((await readScoreSeries(db, iso(T0))).map((r) => r.score)).toEqual([64]);
   });
 
   it('reads back narrow columns only, mapping snake_case, booleans and absent odds', async () => {
-    const db = new FakeHistoryDatabase();
-    await writeScoreSeries(db, {
-      slot: '2026-09-23T01:00:00.000Z',
-      observedAt: '2026-09-23T01:00:47.000Z',
-      algorithmVersion: 2,
-      score: 64,
-      level: 2,
-      p7: 0.6,
-      degraded: false,
-    });
-    await writeScoreSeries(db, {
-      slot: '2026-09-23T01:15:00.000Z',
-      observedAt: '2026-09-23T01:15:52.000Z',
-      algorithmVersion: 2,
-      score: 10,
-      level: 5,
-      degraded: true,
-    });
-    const rows = await readScoreSeries(db, '2026-09-23T00:00:00.000Z');
-    expect(rows).toEqual([
+    const db = new SqliteD1();
+    await writeScoreSeries(db, reading(T0));
+    await writeScoreSeries(
+      db,
+      reading(T0 + SNAPSHOT_INTERVAL_MS, { score: 10, level: 5, p7: null, degraded: true }),
+    );
+    expect(await readScoreSeries(db, iso(T0 - 60_000))).toEqual([
       {
         slot: '2026-09-23T01:00:00.000Z',
-        observedAt: '2026-09-23T01:00:47.000Z',
+        observedAt: '2026-09-23T01:00:40.000Z',
         algorithmVersion: 2,
         score: 64,
         level: 2,
@@ -515,7 +425,7 @@ describe('writeScoreSeries / readScoreSeries', () => {
       },
       {
         slot: '2026-09-23T01:15:00.000Z',
-        observedAt: '2026-09-23T01:15:52.000Z',
+        observedAt: '2026-09-23T01:15:40.000Z',
         algorithmVersion: 2,
         score: 10,
         level: 5,
@@ -523,30 +433,148 @@ describe('writeScoreSeries / readScoreSeries', () => {
         degraded: true,
       },
     ]);
-    const readQuery = db.calls.find((c) => c.query.includes('WHERE observed_at >='))?.query ?? '';
+    const readQuery = db.queries.find((q) => q.includes('WHERE observed_at >=')) ?? '';
     expect(readQuery).not.toContain('payload_json');
     expect(readQuery).not.toMatch(/select \*/i);
   });
 
-  it('excludes rows before sinceIso and respects the limit', async () => {
-    const db = new FakeHistoryDatabase();
-    await writeScoreSeries(db, {
-      slot: '2026-09-22T00:00:00.000Z',
-      observedAt: '2026-09-22T00:00:00.000Z',
-      algorithmVersion: 2,
-      score: 1,
-      level: 5,
-      degraded: false,
+  it('excludes rows before sinceIso and, over the limit, keeps the newest rows in ascending order', async () => {
+    const db = new SqliteD1();
+    for (let i = 0; i < 5; i++)
+      await writeScoreSeries(db, reading(T0 + i * SNAPSHOT_INTERVAL_MS, { score: i }));
+    expect((await readScoreSeries(db, iso(T0 + 2 * SNAPSHOT_INTERVAL_MS))).map((r) => r.score)).toEqual([
+      2, 3, 4,
+    ]);
+    expect((await readScoreSeries(db, iso(T0), 3)).map((r) => r.score)).toEqual([2, 3, 4]);
+  });
+});
+
+describe('score_series backfill (real SQLite, real snapshot payloads)', () => {
+  const quiet = {
+    markets: { name: 'Polymarket', ok: true, data: [] },
+    drops: { name: 'OpenRouter', ok: true, data: [] },
+    trending: { name: 'HF trending', ok: true, data: [] },
+    papers: { name: 'HF papers', ok: true, data: [] },
+    feeds: [],
+  };
+  /** Live /api/dashboard.json at 2026-09-26T00:43:46Z, trimmed to what the rollup reads. */
+  function liveDashboard(generatedAt: string) {
+    return {
+      ...assembleDashboard(quiet, Date.parse(generatedAt)),
+      measurement: {
+        schema: 3,
+        algorithmVersion: 2,
+        inputs: {
+          maxWeekOdds: 0.865,
+          maxMonthOdds: 0.9,
+          frontierDrops7d: 8,
+          frontierDrops48h: 0,
+          hotStories: 5,
+          releaseAlerts: 1,
+          oddsAvailable: true,
+        },
+      },
+      dropcon: {
+        level: 1 as const,
+        score: 95,
+        drivers: ['87% odds of a frontier drop within 7 days'],
+        degraded: false,
+        name: 'RELEASE SURGE',
+        blurb: 'Recent OpenRouter listings still contribute to this level for seven days.',
+      },
+    };
+  }
+  /** The real degraded path: Polymarket down, so maxWeekOdds is a placeholder 0. */
+  function oddsOfflineDashboard(generatedAt: string) {
+    return assembleDashboard(
+      { ...quiet, markets: { name: 'Polymarket', ok: false, error: 'timeout', data: [] } },
+      Date.parse(generatedAt),
+    );
+  }
+
+  async function capture(db: SqliteD1, slotMs: number, dashboard: StoreSnapshotInput['dashboard']) {
+    await storeSnapshot(db, {
+      scheduledSlot: iso(slotMs),
+      observedAt: iso(slotMs + CAPTURE_DELAY_MS),
+      dashboard,
+      now: slotMs + CAPTURE_DELAY_MS,
     });
-    await writeScoreSeries(db, {
-      slot: '2026-09-23T01:00:00.000Z',
-      observedAt: '2026-09-23T01:00:00.000Z',
-      algorithmVersion: 2,
-      score: 2,
-      level: 5,
-      degraded: false,
+  }
+  const at = (slotMs: number) => iso(slotMs + CAPTURE_DELAY_MS - 5000);
+  const allRows = (db: SqliteD1) =>
+    db.sqlite
+      .prepare(
+        'SELECT slot, observed_at, algo_version, score, level, p7, degraded FROM score_series ORDER BY slot',
+      )
+      .all();
+
+  it('migration 0002 backfills existing snapshots, with no p7 when odds were offline, skipping legacy rows', async () => {
+    const db = new SqliteD1(['0001_snapshots.sql']);
+    await capture(db, T0, liveDashboard(at(T0)));
+    await capture(db, T0 + SNAPSHOT_INTERVAL_MS, oddsOfflineDashboard(at(T0 + SNAPSHOT_INTERVAL_MS)));
+    // A row from before `measurement`/`dropcon` were captured.
+    await capture(db, T0 + 2 * SNAPSHOT_INTERVAL_MS, {
+      generatedAt: at(T0 + 2 * SNAPSHOT_INTERVAL_MS),
+      labs: [],
+      drops: [],
+      sources: [],
     });
-    expect(await readScoreSeries(db, '2026-09-23T00:00:00.000Z')).toHaveLength(1);
-    expect(await readScoreSeries(db, '2026-01-01T00:00:00.000Z', 1)).toHaveLength(1);
+    db.migrate('0002_first_seen.sql');
+    expect(allRows(db)).toEqual([
+      {
+        slot: '2026-09-23T01:00:00.000Z',
+        observed_at: '2026-09-23T01:00:40.000Z',
+        algo_version: 2,
+        score: 95,
+        level: 1,
+        p7: 0.865,
+        degraded: 0,
+      },
+      {
+        slot: '2026-09-23T01:15:00.000Z',
+        observed_at: '2026-09-23T01:15:40.000Z',
+        algo_version: 2,
+        score: 0,
+        level: 5,
+        p7: null,
+        degraded: 1,
+      },
+    ]);
+    expect(db.sqlite.prepare('SELECT row_count FROM score_series_metadata').get()).toEqual({ row_count: 2 });
+  });
+
+  it('catches up slots captured between applying the migration and deploying the writer, identically', async () => {
+    // Reference: the migration's own projection over the same snapshots.
+    const reference = new SqliteD1(['0001_snapshots.sql']);
+    const gap = new SqliteD1();
+    for (const db of [reference, gap]) {
+      await capture(db, T0, liveDashboard(at(T0)));
+      await capture(db, T0 + SNAPSHOT_INTERVAL_MS, oddsOfflineDashboard(at(T0 + SNAPSHOT_INTERVAL_MS)));
+    }
+    reference.migrate('0002_first_seen.sql');
+    // The migration already ran on `gap` (empty then); the old Worker kept writing snapshots.
+    expect(allRows(gap)).toEqual([]);
+    await backfillScoreSeries(gap, iso(T0 + 2 * SNAPSHOT_INTERVAL_MS));
+    expect(allRows(gap)).toEqual(allRows(reference));
+  });
+
+  it('fills at most one batch per call, newest first, and ignores slots past retention', async () => {
+    const db = new SqliteD1();
+    const count = MAX_CLEANUP_ROWS + 4;
+    for (let i = 0; i < count; i++) {
+      const slot = T0 + i * SNAPSHOT_INTERVAL_MS;
+      await capture(db, slot, liveDashboard(at(slot)));
+    }
+    const after = T0 + count * SNAPSHOT_INTERVAL_MS;
+    await backfillScoreSeries(db, iso(after));
+    const rows = allRows(db) as Array<{ slot: string }>;
+    expect(rows).toHaveLength(MAX_CLEANUP_ROWS);
+    expect(rows[0].slot).toBe(iso(T0 + 4 * SNAPSHOT_INTERVAL_MS));
+    await backfillScoreSeries(db, iso(after));
+    expect(allRows(db)).toHaveLength(count);
+    // 90 days on, every one of those slots is outside retention: nothing to re-insert.
+    db.sqlite.exec('DELETE FROM score_series');
+    await backfillScoreSeries(db, iso(after + 90 * 24 * 60 * 60_000));
+    expect(allRows(db)).toEqual([]);
   });
 });

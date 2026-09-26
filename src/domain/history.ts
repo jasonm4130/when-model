@@ -28,9 +28,9 @@ function byObservedAtAsc(a: ScorePoint, b: ScorePoint): number {
 }
 
 /** One point per UTC hour: the latest reading observed in that hour. */
-export function downsampleHourly(points: readonly ScorePoint[]): ScorePoint[] {
+export function downsampleHourly<T extends ScorePoint>(points: readonly T[]): T[] {
   const sorted = [...points].sort(byObservedAtAsc);
-  const buckets = new Map<string, ScorePoint>();
+  const buckets = new Map<string, T>();
   for (const point of sorted) {
     buckets.set(point.observedAt.slice(0, 13), point);
   }
@@ -45,38 +45,48 @@ export function downsampleHourly(points: readonly ScorePoint[]): ScorePoint[] {
  */
 const LEVEL_BOUNDARIES = [75, 55, 35, 15] as const;
 
-/**
- * How far `score` sits past the boundary it had to cross to move from `fromLevel` to
- * `toLevel`, in the direction of travel. Zero or negative means it hasn't cleared yet.
- */
-function marginBeyondBoundary(score: number, fromLevel: number, toLevel: number): number {
-  if (toLevel === fromLevel) return 0;
-  if (toLevel < fromLevel) return score - LEVEL_BOUNDARIES[toLevel - 1];
-  return LEVEL_BOUNDARIES[fromLevel - 1] - score;
-}
-
 export const HYSTERESIS_HOLD_SLOTS = 2;
 export const HYSTERESIS_CLEAR_MARGIN = 5;
 
+type Level = ScorePoint['level'];
+
+/**
+ * The level furthest from `from` toward `to` whose entry boundary `score` clears by
+ * `HYSTERESIS_CLEAR_MARGIN`, or `from` when it clears none. A jump from level 3 to a
+ * score of 76 clears 55 (level 2) by 21 but 75 (level 1) by only 1, so it shows level 2.
+ */
+function clearedLevel(score: number, from: Level, to: Level): Level {
+  if (to < from) {
+    for (let level = to; level < from; level++) {
+      if (score - LEVEL_BOUNDARIES[level - 1] >= HYSTERESIS_CLEAR_MARGIN) return level as Level;
+    }
+  } else {
+    for (let level = to; level > from; level--) {
+      if (LEVEL_BOUNDARIES[level - 2] - score >= HYSTERESIS_CLEAR_MARGIN) return level as Level;
+    }
+  }
+  return from;
+}
+
 /**
  * A level change is shown only once the new raw level holds for `HYSTERESIS_HOLD_SLOTS`
- * consecutive slots, or the score clears the crossed band boundary by at least
- * `HYSTERESIS_CLEAR_MARGIN` points. Everything else is a one-slot wobble and stays at the
- * previously displayed level. Assumes `points` covers one algorithm version; run
- * `splitByAlgorithmVersion` first.
+ * consecutive slots (shown from the first of them), or the score clears the crossed band
+ * boundary by at least `HYSTERESIS_CLEAR_MARGIN` points. Everything else is a one-slot
+ * wobble and stays at the previously displayed level. Run it on 15-minute slots, before
+ * `downsampleHourly`: "2 slots" means two captures, not two hours. Assumes `points`
+ * covers one algorithm version; run `splitByAlgorithmVersion` first.
  */
 export function applyHysteresis(points: readonly ScorePoint[]): DisplayPoint[] {
   const sorted = [...points].sort(byObservedAtAsc);
   const out: DisplayPoint[] = [];
-  let current: ScorePoint['level'] | undefined;
+  let current: Level | undefined;
   for (let i = 0; i < sorted.length; i++) {
     const point = sorted[i];
     if (current === undefined) {
       current = point.level;
     } else if (point.level !== current) {
-      const margin = marginBeyondBoundary(point.score, current, point.level);
       const holds = sorted[i + 1]?.level === point.level;
-      if (margin >= HYSTERESIS_CLEAR_MARGIN || holds) current = point.level;
+      current = holds ? point.level : clearedLevel(point.score, current, point.level);
     }
     out.push({ ...point, displayLevel: current });
   }
@@ -99,7 +109,11 @@ export function splitByAlgorithmVersion(points: readonly ScorePoint[]): ScorePoi
   return segments;
 }
 
-/** Split, downsample and apply hysteresis within each algorithm-version run, then flatten. */
+/**
+ * Within each algorithm-version run: hysteresis over the raw 15-minute slots, then one
+ * point per hour (the hour's latest reading and its display level). Flattened, oldest
+ * first; a consumer draws a break wherever `algorithmVersion` changes between points.
+ */
 export function buildHistorySeries(points: readonly ScorePoint[]): DisplayPoint[] {
-  return splitByAlgorithmVersion(points).flatMap((segment) => applyHysteresis(downsampleHourly(segment)));
+  return splitByAlgorithmVersion(points).flatMap((segment) => downsampleHourly(applyHysteresis(segment)));
 }

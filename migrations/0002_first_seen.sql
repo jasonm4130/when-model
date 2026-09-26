@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS first_seen (
 );
 
 CREATE INDEX IF NOT EXISTS first_seen_kind_last_seen ON first_seen (kind, last_seen_at);
+-- Retention prunes across every kind by last_seen_at alone.
+CREATE INDEX IF NOT EXISTS first_seen_last_seen ON first_seen (last_seen_at);
 
 CREATE TRIGGER IF NOT EXISTS first_seen_capacity
 BEFORE INSERT ON first_seen
@@ -88,8 +90,12 @@ BEGIN
 END;
 
 -- Backfill from every existing observation. json_extract already returns SQLite integers
--- for JSON true/false, so the CASE below is defensive, not corrective. Rows from before
--- `measurement`/`dropcon` existed in the payload are skipped, not faked.
+-- for JSON true/false, so the degraded CASE is defensive, not corrective. p7 is NULL when
+-- the odds source was down (maxWeekOdds is then a placeholder 0, not a price). Rows from
+-- before `measurement`/`dropcon` existed in the payload are skipped, not faked. Slots
+-- captured after this runs but before the code that writes score_series is deployed are
+-- caught up by backfillScoreSeries (src/infra/snapshot-store.ts), which must keep this
+-- projection.
 INSERT OR IGNORE INTO score_series (slot, observed_at, algo_version, score, level, p7, degraded)
 SELECT
   scheduled_slot,
@@ -97,7 +103,8 @@ SELECT
   CAST(json_extract(payload_json, '$.measurement.algorithmVersion') AS INTEGER),
   CAST(json_extract(payload_json, '$.dropcon.score') AS INTEGER),
   CAST(json_extract(payload_json, '$.dropcon.level') AS INTEGER),
-  CAST(json_extract(payload_json, '$.measurement.inputs.maxWeekOdds') AS REAL),
+  CASE WHEN json_extract(payload_json, '$.measurement.inputs.oddsAvailable') = 0 THEN NULL
+       ELSE CAST(json_extract(payload_json, '$.measurement.inputs.maxWeekOdds') AS REAL) END,
   CASE WHEN json_extract(payload_json, '$.dropcon.degraded') THEN 1 ELSE 0 END
 FROM dashboard_snapshots
 WHERE json_extract(payload_json, '$.dropcon.score') IS NOT NULL

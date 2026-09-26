@@ -1,5 +1,10 @@
 import type { Dashboard } from '../domain/dashboard';
-import { storeSnapshot, writeScoreSeries, type SnapshotDatabase } from '../infra/snapshot-store';
+import {
+  backfillScoreSeries,
+  storeSnapshot,
+  writeScoreSeries,
+  type SnapshotDatabase,
+} from '../infra/snapshot-store';
 import { buildDashboard } from './load-dashboard';
 
 /**
@@ -37,6 +42,7 @@ export async function captureHistory(
   });
   // The snapshot above is the record of truth; a rollup or ledger failure here must
   // never cost the slot, so each is isolated in its own try/catch.
+  const { inputs } = dashboard.measurement;
   try {
     await writeScoreSeries(database, {
       slot: scheduledSlot,
@@ -44,11 +50,17 @@ export async function captureHistory(
       algorithmVersion: dashboard.measurement.algorithmVersion,
       score: dashboard.dropcon.score,
       level: dashboard.dropcon.level,
-      p7: dashboard.measurement.inputs.maxWeekOdds,
+      // With the odds source down maxWeekOdds is a placeholder 0, not a price.
+      p7: inputs.oddsAvailable === false ? null : inputs.maxWeekOdds,
       degraded: dashboard.dropcon.degraded,
     });
   } catch (e) {
     console.error('[history:score-series]', e instanceof Error ? e.message : e);
+  }
+  try {
+    await backfillScoreSeries(database, observedAt);
+  } catch (e) {
+    console.error('[history:score-backfill]', e instanceof Error ? e.message : e);
   }
   for (const hook of options.firstSeenHooks ?? []) {
     try {

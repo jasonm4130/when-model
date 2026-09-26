@@ -96,6 +96,23 @@ describe('applyHysteresis', () => {
     ];
     expect(applyHysteresis(points).map((p) => p.displayLevel)).toEqual([3, 3, 1]);
   });
+
+  it('on a multi-level jump, shows the furthest band the score clears by 5, not none of them', () => {
+    const up = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 50, level: 3 }),
+      // 76 clears level 2's 55 by 21 but level 1's 75 by only 1.
+      point({ observedAt: '2026-09-23T01:15:00.000Z', score: 76, level: 1 }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 50, level: 3 }),
+    ];
+    expect(applyHysteresis(up).map((p) => p.displayLevel)).toEqual([3, 2, 3]);
+    const down = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 80, level: 1 }),
+      // 54 is 21 under level 1's 75 but only 1 under level 2's 55.
+      point({ observedAt: '2026-09-23T01:15:00.000Z', score: 54, level: 3 }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 80, level: 1 }),
+    ];
+    expect(applyHysteresis(down).map((p) => p.displayLevel)).toEqual([1, 2, 1]);
+  });
 });
 
 describe('splitByAlgorithmVersion', () => {
@@ -145,15 +162,37 @@ describe('buildHistorySeries', () => {
     ]);
   });
 
-  it('downsamples within each version run before applying hysteresis', () => {
+  it("applies hysteresis over the 15-minute slots, then keeps each hour's latest reading", () => {
     const points = [
-      point({ observedAt: '2026-09-23T01:00:00.000Z', algorithmVersion: 2, score: 40, level: 3 }),
-      point({ observedAt: '2026-09-23T01:45:00.000Z', algorithmVersion: 2, score: 58, level: 2 }),
-      point({ observedAt: '2026-09-23T02:15:00.000Z', algorithmVersion: 2, score: 40, level: 3 }),
+      point({ observedAt: '2026-09-23T00:45:40.000Z', score: 40, level: 3 }),
+      // Level 2 holds for three consecutive slots: a real change, even though it never
+      // clears 55 by 5 and the next hour is back at level 3.
+      point({ observedAt: '2026-09-23T01:15:40.000Z', score: 58, level: 2 }),
+      point({ observedAt: '2026-09-23T01:30:40.000Z', score: 58, level: 2 }),
+      point({ observedAt: '2026-09-23T01:45:40.000Z', score: 58, level: 2 }),
+      point({ observedAt: '2026-09-23T02:45:40.000Z', score: 40, level: 3 }),
     ];
-    // Downsampled to one point per hour first (01:45 wins the 01:00 bucket), then
-    // hysteresis sees only two slots: 2 then 3, with no third slot to hold the change.
-    expect(buildHistorySeries(points).map((p) => p.displayLevel)).toEqual([2, 3]);
+    expect(
+      buildHistorySeries(points).map((p) => [p.observedAt.slice(11, 16), p.level, p.displayLevel]),
+    ).toEqual([
+      ['00:45', 3, 3],
+      ['01:45', 2, 2],
+      ['02:45', 3, 3],
+    ]);
+  });
+
+  it('hides a one-slot wobble inside an hour that the hourly point happens to land on', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T00:45:40.000Z', score: 40, level: 3 }),
+      point({ observedAt: '2026-09-23T01:30:40.000Z', score: 40, level: 3 }),
+      point({ observedAt: '2026-09-23T01:45:40.000Z', score: 58, level: 2 }),
+      point({ observedAt: '2026-09-23T02:00:40.000Z', score: 40, level: 3 }),
+    ];
+    expect(buildHistorySeries(points).map((p) => [p.level, p.displayLevel])).toEqual([
+      [3, 3],
+      [2, 3],
+      [3, 3],
+    ]);
   });
 
   it('returns nothing for nothing', () => {

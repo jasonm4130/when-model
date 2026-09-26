@@ -38,14 +38,32 @@ function historyDatabase(): SnapshotDatabase | undefined {
   return env.HISTORY_DB as SnapshotDatabase | undefined;
 }
 
+const UNAVAILABLE: HistoryResponseBody = { ok: false, points: [] };
+
+/**
+ * A failed read is served but never memoised or cached downstream: one D1 blip must not
+ * blank the history strip for the next 15 minutes.
+ */
+async function historyBody(): Promise<HistoryResponseBody> {
+  try {
+    return await memoJson('history@30d', HISTORY_CACHE_TTL_SECONDS, async () => {
+      const body = await buildHistoryResponseBody(historyDatabase());
+      if (!body.ok) throw new Error('history unavailable');
+      return body;
+    });
+  } catch {
+    return UNAVAILABLE;
+  }
+}
+
 export const GET: APIRoute = async () => {
-  const body = await memoJson('history@30d', HISTORY_CACHE_TTL_SECONDS, () =>
-    buildHistoryResponseBody(historyDatabase()),
-  );
+  const body = await historyBody();
   return new Response(JSON.stringify(body), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': `public, max-age=60, s-maxage=${HISTORY_CACHE_TTL_SECONDS}, stale-while-revalidate=600`,
+      'cache-control': body.ok
+        ? `public, max-age=60, s-maxage=${HISTORY_CACHE_TTL_SECONDS}, stale-while-revalidate=600`
+        : 'no-store',
       'access-control-allow-origin': '*',
     },
   });

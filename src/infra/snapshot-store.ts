@@ -93,12 +93,18 @@ export function snapshotPayload(dashboard: DashboardLike): { json: string; byteC
   return { json, byteCount };
 }
 
-/** Deletes at most one day of stale slots, keeping scheduled work bounded. */
+/**
+ * Deletes at most one day of stale slots, keeping scheduled work bounded. Retention is by
+ * scheduled slot, not observation time: 90 days of slots is exactly the 8,640-row cap, so
+ * the slot 90 days before this one must go first. Pruning by `observed_at` kept it
+ * whenever this capture ran as soon after its slot as that one did, and from day 90 on
+ * those writes failed the capacity check.
+ */
 export async function cleanupSnapshots(database: SnapshotDatabase, observedAt: string): Promise<void> {
   const cutoff = new Date(timestamp(observedAt, 'observedAt') - RETENTION_MS).toISOString();
   await database
     .prepare(
-      'DELETE FROM dashboard_snapshots WHERE scheduled_slot IN (SELECT scheduled_slot FROM dashboard_snapshots WHERE observed_at < ? ORDER BY observed_at LIMIT ?)',
+      'DELETE FROM dashboard_snapshots WHERE scheduled_slot IN (SELECT scheduled_slot FROM dashboard_snapshots WHERE scheduled_slot <= ? ORDER BY scheduled_slot LIMIT ?)',
     )
     .bind(cutoff, MAX_CLEANUP_ROWS)
     .run();
@@ -224,6 +230,8 @@ async function pruneFirstSeen(database: SnapshotDatabase, nowIso: string): Promi
  * `first_seen_at`; every key in `items` gets its `last_seen_at` bumped to `nowIso`
  * regardless. When `kind` has no rows yet, every inserted row is seeded (a baseline),
  * and this returns no keys — there is nothing to call "new" on a first capture.
+ * `meta` is serialised here, not by SQLite: `json()` rejects a bare string and turns
+ * `true` into `1`.
  */
 export async function recordFirstSeen(
   database: SnapshotDatabase,
@@ -236,11 +244,13 @@ export async function recordFirstSeen(
   if (items.length === 0) return [];
   await pruneFirstSeen(database, nowIso);
   const seeded = (await kindHasRows(database, kind)) ? 0 : 1;
-  const itemsJson = JSON.stringify(items.map((item) => ({ key: item.key, meta: item.meta ?? null })));
+  const itemsJson = JSON.stringify(
+    items.map((item) => ({ key: item.key, meta: item.meta == null ? null : JSON.stringify(item.meta) })),
+  );
   await database
     .prepare(
       `INSERT OR IGNORE INTO first_seen (kind, key, source, first_seen_at, last_seen_at, seeded, meta)
-       SELECT ?, json_extract(value, '$.key'), ?, ?, ?, ?, json(json_extract(value, '$.meta'))
+       SELECT ?, json_extract(value, '$.key'), ?, ?, ?, ?, json_extract(value, '$.meta')
        FROM json_each(?)`,
     )
     .bind(kind, source, nowIso, nowIso, seeded, itemsJson)
@@ -298,7 +308,10 @@ export interface ScoreSeriesInput {
   algorithmVersion: number;
   score: number;
   level: number;
-  /** "Ships within 7 days" odds behind the score, 0..1; omit when the odds source was down. */
+  /**
+   * "Ships within 7 days" odds behind the score, 0..1. Null when the odds source was down:
+   * a 0 there would read as a real price and fake a full repricing once odds return.
+   */
   p7?: number | null;
   degraded: boolean;
 }
@@ -329,12 +342,15 @@ async function scoreSeriesSlotExists(database: SnapshotDatabase, slot: string): 
   return row?.present === 1;
 }
 
-/** Deletes at most one batch of slots outside the 90-day retention window, oldest first. */
+/**
+ * Deletes at most one batch of slots outside the 90-day retention window, oldest first.
+ * By slot, like `cleanupSnapshots`, so a full table always has room for the next slot.
+ */
 async function pruneScoreSeries(database: SnapshotDatabase, observedAtIso: string): Promise<void> {
   const cutoff = new Date(timestamp(observedAtIso, 'observedAt') - RETENTION_MS).toISOString();
   await database
     .prepare(
-      'DELETE FROM score_series WHERE slot IN (SELECT slot FROM score_series WHERE observed_at < ? ORDER BY observed_at LIMIT ?)',
+      'DELETE FROM score_series WHERE slot IN (SELECT slot FROM score_series WHERE slot <= ? ORDER BY slot LIMIT ?)',
     )
     .bind(cutoff, MAX_CLEANUP_ROWS)
     .run();
@@ -378,7 +394,11 @@ export async function writeScoreSeries(
   return { stored: (result.meta.changes ?? 0) > 0 };
 }
 
-/** Narrow columns only, oldest first: never `SELECT *`, and never `payload_json`. */
+/**
+ * Narrow columns only, never `SELECT *` and never `payload_json`; returned oldest first.
+ * When more than `limit` rows match, the newest `limit` are kept: the latest reading is
+ * the one a history strip can least afford to lose.
+ */
 export async function readScoreSeries(
   database: SnapshotDatabase,
   sinceIso: string,
@@ -387,7 +407,7 @@ export async function readScoreSeries(
   timestamp(sinceIso, 'sinceIso');
   const { results } = await database
     .prepare(
-      'SELECT slot, observed_at, algo_version, score, level, p7, degraded FROM score_series WHERE observed_at >= ? ORDER BY observed_at ASC LIMIT ?',
+      'SELECT slot, observed_at, algo_version, score, level, p7, degraded FROM score_series WHERE observed_at >= ? ORDER BY observed_at DESC LIMIT ?',
     )
     .bind(sinceIso, limit)
     .all<{
@@ -399,7 +419,7 @@ export async function readScoreSeries(
       p7: number | null;
       degraded: number;
     }>();
-  return results.map((row) => ({
+  return results.reverse().map((row) => ({
     slot: row.slot,
     observedAt: row.observed_at,
     algorithmVersion: row.algo_version,
@@ -408,4 +428,42 @@ export async function readScoreSeries(
     p7: row.p7 ?? undefined,
     degraded: row.degraded === 1,
   }));
+}
+
+/**
+ * Fills `score_series` from `dashboard_snapshots` for retained slots that have a snapshot
+ * but no rollup row, newest first, at most `MAX_CLEANUP_ROWS` per call. Migration 0002
+ * backfills once, when it is applied; slots captured between then and the deploy that
+ * starts calling `writeScoreSeries` (or any slot whose rollup write failed) are caught up
+ * here. The JSON is read inside D1, so no payload ever reaches the isolate, and the
+ * projection must stay identical to the one in migrations/0002_first_seen.sql. Snapshots
+ * from before `measurement`/`dropcon` existed are skipped, not faked.
+ */
+export async function backfillScoreSeries(database: SnapshotDatabase, observedAtIso: string): Promise<void> {
+  const cutoff = new Date(timestamp(observedAtIso, 'observedAt') - RETENTION_MS).toISOString();
+  await database
+    .prepare(
+      `INSERT OR IGNORE INTO score_series (slot, observed_at, algo_version, score, level, p7, degraded)
+       SELECT
+         d.scheduled_slot,
+         d.observed_at,
+         CAST(json_extract(d.payload_json, '$.measurement.algorithmVersion') AS INTEGER),
+         CAST(json_extract(d.payload_json, '$.dropcon.score') AS INTEGER),
+         CAST(json_extract(d.payload_json, '$.dropcon.level') AS INTEGER),
+         CASE WHEN json_extract(d.payload_json, '$.measurement.inputs.oddsAvailable') = 0 THEN NULL
+              ELSE CAST(json_extract(d.payload_json, '$.measurement.inputs.maxWeekOdds') AS REAL) END,
+         CASE WHEN json_extract(d.payload_json, '$.dropcon.degraded') THEN 1 ELSE 0 END
+       FROM (
+         SELECT s.scheduled_slot FROM dashboard_snapshots s
+         WHERE s.scheduled_slot > ?
+           AND NOT EXISTS (SELECT 1 FROM score_series r WHERE r.slot = s.scheduled_slot)
+         ORDER BY s.scheduled_slot DESC LIMIT ?
+       ) AS missing
+       JOIN dashboard_snapshots d ON d.scheduled_slot = missing.scheduled_slot
+       WHERE json_extract(d.payload_json, '$.dropcon.score') IS NOT NULL
+         AND json_extract(d.payload_json, '$.dropcon.level') IS NOT NULL
+         AND json_extract(d.payload_json, '$.measurement.algorithmVersion') IS NOT NULL`,
+    )
+    .bind(cutoff, MAX_CLEANUP_ROWS)
+    .run();
 }
