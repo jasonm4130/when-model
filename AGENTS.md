@@ -25,12 +25,14 @@ Rules of the house:
 
 - Run the real Worker locally with `pnpm build && pnpm exec wrangler dev`; `pnpm dev` is fine
   for markup but the Cache API code paths only execute under wrangler.
-- Every upstream call goes through `cachedText`/`cachedJson`. Buffer bodies; never stream a
+- Every upstream call goes through `cachedText`/`cachedJson` (or `cachedTextOrStale`, which
+  keeps a last good copy under its own cache key). Buffer bodies; never stream a
   `Response.clone()` into the cache (it truncated in production).
 - A source must degrade to empty data, never throw out of `buildDashboard`. Name it once in
   `src/domain/sources.ts` and wrap it in `collect()`; the health list is derived from the results
   automatically. The first-seen ledger records a source's sightings only when its result is `ok`,
-  so a partial poll (one failed YouTube channel) must report not ok.
+  so a partial poll must report not ok. A YouTube channel read from its last good copy (at most
+  two hours old) counts as complete; one with neither a fresh feed nor that copy does not.
 - DROPCON scores Polymarket odds only. A new signal goes into early warnings with a track record
   until `pnpm backtest:replay` shows it adds out-of-sample skill. Any scoring change bumps
   `DROPCON_ALGORITHM_VERSION`: history breaks its series at a version change and the repricing
