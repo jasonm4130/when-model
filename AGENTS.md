@@ -6,7 +6,9 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 
 - `src/domain` — pure types and rules: lab registry, market curves and trusted reads, drop/feed
   models, DROPCON v3 scoring, the forecast, lab heat, early warnings, landed, the first-seen
-  ledger's read side, and `assembleDashboard(inputs, now)`. No fetch, no `Date.now()`, fully
+  ledger's read side, the availability ledger (`model-id.ts` canonicalises a model id across
+  sources, `availability.ts` turns sightings into ledger rows and release events, and the lab
+  registry holds the tier rules and `TIER_OVERRIDES`), and `assembleDashboard(inputs, now)`. No fetch, no `Date.now()`, fully
   unit-tested. `lead.ts` holds only pure rules; its fetchers live in the adapters.
 - `src/adapters` — one module per upstream (Polymarket, OpenRouter, Hugging Face, Hacker News with
   its week-long launch search and its leak search, TestingCatalog, lab YouTube feeds, the `transformers` registry, RSS, Anthropic
