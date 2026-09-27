@@ -98,14 +98,24 @@ function logBuild(dashboard: Dashboard, results: readonly SourceResult<unknown>[
     );
 }
 
+/** One build: the dashboard, and the source results it was assembled from. */
+export interface Capture {
+  dashboard: Dashboard;
+  /**
+   * Every source's full result. The cron's availability ledger reads these (all OpenRouter
+   * listings, every feed item), not the dashboard's capped lists, so it makes no fetch of its own.
+   */
+  inputs: DashboardInputs;
+}
+
 /**
  * Fan out to every source, tolerate individual failures, assemble. `database` backs the
  * first-seen ledger and the repricing term; without it both read as unavailable.
  */
-export async function buildDashboard(
+export async function buildCapture(
   now = Date.now(),
   database: SnapshotDatabase | undefined = historyDatabase(),
-): Promise<Dashboard> {
+): Promise<Capture> {
   const started = Date.now();
   const at = new Date(now);
   const [markets, drops, trending, papers, feeds, leaks, ledger, modules, broadcastFetch, launchStories] =
@@ -168,7 +178,15 @@ export async function buildDashboard(
     [markets, drops, trending, papers, ...feeds, ...leaks, ledger, modules, broadcastFetch, launchStories],
     Date.now() - started,
   );
-  return dashboard;
+  return { dashboard, inputs };
+}
+
+/** `buildCapture`'s dashboard: what a page render and `/api/dashboard.json` assemble. */
+export async function buildDashboard(
+  now = Date.now(),
+  database: SnapshotDatabase | undefined = historyDatabase(),
+): Promise<Dashboard> {
+  return (await buildCapture(now, database)).dashboard;
 }
 
 /** The dashboard every request renders: memoised at the edge. */

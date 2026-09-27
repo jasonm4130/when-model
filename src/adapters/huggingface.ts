@@ -1,3 +1,4 @@
+import type { HubRepo } from '../domain/availability';
 import type { Paper, TrendingRepo } from '../domain/community';
 import { cachedJson } from '../infra/edge-cache';
 import { toIso } from '../infra/text';
@@ -73,4 +74,45 @@ export async function fetchPapers(limit = 8): Promise<Paper[]> {
     ttl: 1800,
   });
   return (papers ?? []).map(toPaper).filter((p): p is Paper => p !== undefined);
+}
+
+/** One repo in an organisation listing. `private` is true only for a repo the caller may see privately. */
+export interface HfOrgRepoDto {
+  id?: string;
+  private?: boolean;
+  pipeline_tag?: string | null;
+  createdAt?: string;
+}
+
+/** Newest-created first; 100 covers weeks of any lab's uploads (quantisations included). */
+export const HF_ORG_LIMIT = 100;
+/** Cron-only: each 15-minute capture reads a fresh listing. */
+const ORG_TTL_SECONDS = 60;
+
+export function hfOrgUrl(org: string): string {
+  return `${HF}/api/models?author=${encodeURIComponent(org)}&sort=createdAt&direction=-1&limit=${HF_ORG_LIMIT}`;
+}
+
+/**
+ * A public text repo, or undefined. A repo tagged with a pipeline outside `LANGUAGE_PIPELINES`
+ * (image, speech, embeddings) is not a language model; an untagged one is judged by its name later.
+ */
+export function toHubRepo(dto: HfOrgRepoDto): HubRepo | undefined {
+  if (typeof dto.id !== 'string' || !dto.id.includes('/') || dto.private === true) return undefined;
+  const tag = typeof dto.pipeline_tag === 'string' ? dto.pipeline_tag : undefined;
+  if (tag && !LANGUAGE_PIPELINES.has(tag)) return undefined;
+  const createdAt = toIso(dto.createdAt);
+  return { id: dto.id, ...(tag ? { pipelineTag: tag } : {}), ...(createdAt ? { createdAt } : {}) };
+}
+
+/**
+ * One organisation's newest repos for the availability ledger. The Hub pages by a cursor in the
+ * Link header, which the edge cache drops, so this reads the first page only. Throws on anything
+ * but a non-empty array, so a changed format turns the source red instead of seeding nothing.
+ */
+export async function fetchHfOrg(org: string): Promise<HubRepo[]> {
+  const models = await cachedJson<HfOrgRepoDto[] | null>(hfOrgUrl(org), { ttl: ORG_TTL_SECONDS });
+  if (!Array.isArray(models) || models.length === 0)
+    throw new Error(`Hugging Face listed no models for ${org}`);
+  return models.map(toHubRepo).filter((r): r is HubRepo => r !== undefined);
 }

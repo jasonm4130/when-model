@@ -30,6 +30,19 @@ export function feedDayKind(source: FeedSource): string {
   return `feed-day:${source}`;
 }
 
+/**
+ * The availability ledger's kinds: one per source (`avail:openrouter`, `avail:qwen-chat`,
+ * `avail:hf:Qwen`, …) and one per announcing feed (`announce:meta`). Deliberately not in
+ * `LEDGER_KINDS`: the page never reads them back, which keeps `readSightings` under its row cap.
+ */
+export function availKind(source: string): string {
+  return `avail:${source}`;
+}
+
+export function announceKind(source: string): string {
+  return `announce:${source}`;
+}
+
 /** Every kind the dashboard reads back. */
 export const LEDGER_KINDS: readonly string[] = [
   FIRST_SEEN_KIND.stealth,

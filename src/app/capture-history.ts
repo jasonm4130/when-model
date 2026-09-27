@@ -1,4 +1,4 @@
-import type { Dashboard } from '../domain/dashboard';
+import type { Dashboard, DashboardInputs } from '../domain/dashboard';
 import { headlineProbability } from '../domain/dropcon';
 import { firstSeenBatches } from '../domain/ledger';
 import {
@@ -8,7 +8,8 @@ import {
   writeScoreSeries,
   type SnapshotDatabase,
 } from '../infra/snapshot-store';
-import { buildDashboard } from './load-dashboard';
+import { captureAvailability } from './capture-availability';
+import { buildCapture } from './load-dashboard';
 
 /**
  * Records first-seen kinds (a stealth slot, a pending architecture module, a scheduled
@@ -34,8 +35,13 @@ export const recordDashboardFirstSeen: FirstSeenHook = async (database, dashboar
   }
 };
 
+/** The availability ledger's capture (`src/app/capture-availability.ts`), given the build's inputs. */
+export type AvailabilityHook = (database: SnapshotDatabase, inputs: DashboardInputs) => Promise<unknown>;
+
 export interface CaptureHistoryOptions {
   firstSeenHooks?: readonly FirstSeenHook[];
+  /** Defaults to `captureAvailability`; `false` skips it. */
+  availability?: AvailabilityHook | false;
 }
 
 /** Fetch fresh assembled inputs; stamp observation time only after every source has settled. */
@@ -47,7 +53,7 @@ export async function captureHistory(
   if (!database) throw new Error('HISTORY_DB binding is required for scheduled capture');
   const interval = 15 * 60_000;
   const scheduledSlot = new Date(Math.floor(scheduledTime / interval) * interval).toISOString();
-  const dashboard = await buildDashboard(Date.now(), database);
+  const { dashboard, inputs: sourceResults } = await buildCapture(Date.now(), database);
   const now = Date.now();
   const observedAt = new Date(now).toISOString();
   const result = await storeSnapshot(database, {
@@ -83,6 +89,16 @@ export async function captureHistory(
       await hook(database, dashboard, observedAt);
     } catch (e) {
       console.error('[history:first-seen]', e instanceof Error ? e.message : e);
+    }
+  }
+  // Last, and isolated like the rest: it polls the cron-only sources, and a failure there must
+  // never cost the snapshot, the score row or the dashboard's first-seen kinds.
+  const availability = options.availability ?? captureAvailability;
+  if (availability) {
+    try {
+      await availability(database, sourceResults);
+    } catch (e) {
+      console.error('[history:availability]', e instanceof Error ? e.message : e);
     }
   }
   console.log(
