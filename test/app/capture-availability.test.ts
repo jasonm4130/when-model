@@ -342,6 +342,81 @@ describe('captureAvailability', () => {
   });
 });
 
+describe('captureAvailability through a D1 failure', () => {
+  /** A database whose next statement matching `pattern` fails once, as a dropped D1 connection does. */
+  function flaky(): { db: SqliteD1; failNext: (pattern: string) => void } {
+    const db = new SqliteD1();
+    const prepare = db.prepare.bind(db);
+    let failing: string | undefined;
+    vi.spyOn(db, 'prepare').mockImplementation((query: string) => {
+      if (failing && query.includes(failing)) {
+        failing = undefined;
+        throw new Error('D1_ERROR: Network connection lost.');
+      }
+      return prepare(query);
+    });
+    return { db, failNext: (pattern) => (failing = pattern) };
+  }
+
+  it('writes a release sighted during a failed ledger write on the next capture', async () => {
+    const { db, failNext } = flaky();
+    await captureAvailability(db, inputs([drop('openai/gpt-5.5')]), { poll: poll(undefined), now: at(T0) });
+    failNext('INSERT OR IGNORE INTO availability');
+    const failed = await captureAvailability(db, inputs([drop('openai/gpt-5.5'), drop('openai/gpt-6')]), {
+      poll: poll(undefined),
+      now: at(T0 + QUARTER),
+    });
+    expect(failed.sources[0]).toMatchObject({ error: 'D1_ERROR: Network connection lost.' });
+    const next = await captureAvailability(db, inputs([drop('openai/gpt-5.5'), drop('openai/gpt-6')]), {
+      poll: poll(undefined),
+      now: at(T0 + 2 * QUARTER),
+    });
+    expect(next.sources[0]).toMatchObject({ newSkus: ['openai:gpt-6'], newSkuCount: 1 });
+    expect(availabilityRows(db).map((r) => [r.sku, r.first_available_at, r.baseline])).toEqual([
+      ['gpt-5.5', iso(T0), 1],
+      ['gpt-6', iso(T0 + 2 * QUARTER), 0],
+    ]);
+  });
+
+  it('seeds a kind again when its baseline rows failed to write, never leaving it seeded without them', async () => {
+    const { db, failNext } = flaky();
+    failNext('INSERT OR IGNORE INTO availability');
+    await captureAvailability(db, inputs([drop('openai/gpt-5.5')]), { poll: poll(undefined), now: at(T0) });
+    expect(availabilityRows(db)).toEqual([]);
+    expect(await readFirstSeen(db, 'avail:openrouter')).toEqual([]);
+    const next = await captureAvailability(db, inputs([drop('openai/gpt-5.5')]), {
+      poll: poll(undefined),
+      now: at(T0 + QUARTER),
+    });
+    expect(next.sources[0]).toMatchObject({ seeded: true, newSkus: ['openai:gpt-5.5'] });
+    expect(availabilityRows(db).map((r) => [r.sku, r.baseline])).toEqual([['gpt-5.5', 1]]);
+  });
+
+  it('keeps the first sighting when the first-seen write fails after the ledger write', async () => {
+    const { db, failNext } = flaky();
+    await captureAvailability(db, inputs([drop('openai/gpt-5.5')]), { poll: poll(undefined), now: at(T0) });
+    failNext('INSERT OR IGNORE INTO first_seen');
+    await captureAvailability(db, inputs([drop('openai/gpt-5.5'), drop('openai/gpt-6')]), {
+      poll: poll(undefined),
+      now: at(T0 + QUARTER),
+    });
+    const next = await captureAvailability(db, inputs([drop('openai/gpt-5.5'), drop('openai/gpt-6')]), {
+      poll: poll(undefined),
+      now: at(T0 + 2 * QUARTER),
+    });
+    // The retry finds gpt-6 new to the kind again; the ledger keeps its earlier sighting.
+    expect(next.sources[0]).toMatchObject({ newSkuCount: 0 });
+    expect(availabilityRows(db).map((r) => [r.sku, r.first_available_at])).toEqual([
+      ['gpt-5.5', iso(T0)],
+      ['gpt-6', iso(T0 + QUARTER)],
+    ]);
+    expect((await readFirstSeen(db, 'avail:openrouter')).map((r) => r.key).sort()).toEqual([
+      'openai/gpt-5.5',
+      'openai/gpt-6',
+    ]);
+  });
+});
+
 describe('captureAvailability before migration 0003', () => {
   it('records nothing, so no kind seeds without its baseline rows', async () => {
     const db = new SqliteD1(['0001_snapshots.sql', '0002_first_seen.sql']);

@@ -380,6 +380,29 @@ export async function recordFirstSeen(
   return { newKeys: results.map((row) => row.key), seeded: false };
 }
 
+/**
+ * What `recordFirstSeen` would call new, without writing: the keys of `items` not yet recorded for
+ * `kind`, or `seeded` when the kind has no rows. The availability capture reads this, writes its
+ * ledger rows (INSERT OR IGNORE, so a retry is harmless) and records the keys last, so a D1 failure
+ * in between leaves the keys new and the next capture writes the rows again. Recording first would
+ * lose them for good, a seed's baseline included.
+ */
+export async function peekFirstSeen(
+  database: SnapshotDatabase,
+  kind: string,
+  items: readonly FirstSeenItem[],
+): Promise<FirstSeenResult> {
+  if (items.length === 0) return { newKeys: [], seeded: false };
+  if (!(await kindHasRows(database, kind))) return { newKeys: [], seeded: true };
+  const keys = [...new Set(items.map((item) => item.key))];
+  const { results } = await database
+    .prepare(`SELECT key FROM first_seen WHERE kind = ? AND key IN (SELECT value FROM json_each(?))`)
+    .bind(kind, JSON.stringify(keys))
+    .all<{ key: string }>();
+  const recorded = new Set(results.map((row) => row.key));
+  return { newKeys: keys.filter((key) => !recorded.has(key)), seeded: false };
+}
+
 /** The read side's cap on sightings; a capture records a few dozen keys per kind at most. */
 export const MAX_SIGHTING_ROWS = 5000;
 

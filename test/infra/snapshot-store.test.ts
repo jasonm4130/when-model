@@ -15,6 +15,7 @@ import {
   backfillScoreSeries,
   clipString,
   compactSnapshot,
+  peekFirstSeen,
   readAvailability,
   readFirstSeen,
   readHeadlineNear,
@@ -440,6 +441,28 @@ describe('retention at steady state (real SQLite, migrations applied)', () => {
 });
 
 describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', () => {
+  it('peeks at what recordFirstSeen would call new, writing nothing', async () => {
+    const db = new SqliteD1();
+    const now = '2026-09-23T01:00:00.000Z';
+    expect(await peekFirstSeen(db, 'avail:openrouter', [])).toEqual({ newKeys: [], seeded: false });
+    expect(await peekFirstSeen(db, 'avail:openrouter', [{ key: 'openai/gpt-5.5' }])).toEqual({
+      newKeys: [],
+      seeded: true,
+    });
+    expect(await readFirstSeen(db, 'avail:openrouter')).toEqual([]);
+    await recordFirstSeen(db, 'avail:openrouter', 'openrouter', [{ key: 'openai/gpt-5.5' }], now);
+    const items = [{ key: 'openai/gpt-5.5' }, { key: 'openai/gpt-6' }, { key: 'openai/gpt-6' }];
+    expect(await peekFirstSeen(db, 'avail:openrouter', items)).toEqual({
+      newKeys: ['openai/gpt-6'],
+      seeded: false,
+    });
+    const later = '2026-09-23T01:15:00.000Z';
+    expect(await recordFirstSeen(db, 'avail:openrouter', 'openrouter', items, later)).toEqual({
+      newKeys: ['openai/gpt-6'],
+      seeded: false,
+    });
+  });
+
   it('seeds a kind with no prior rows as a baseline, reporting nothing as new', async () => {
     const db = new SqliteD1();
     const recorded = await recordFirstSeen(

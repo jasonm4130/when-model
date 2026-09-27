@@ -27,6 +27,7 @@ import { fetchQwenChatModels } from '../adapters/qwen-chat';
 import { collect } from '../infra/source-result';
 import {
   hasReleaseLedger,
+  peekFirstSeen,
   readAvailability,
   readOpenAnnouncements,
   recordFirstSeen,
@@ -121,21 +122,26 @@ function sourceLog(result: SourceResult<readonly unknown[]>): AvailabilitySource
   };
 }
 
-/** Record one batch in `first_seen`, then write the rows its new keys make. */
+/**
+ * Write the ledger rows of one batch's keys new to its kind, then record the keys in `first_seen`.
+ * In that order, so a D1 failure between the two leaves the keys new and the next capture writes
+ * the rows again (the tables keep the earliest), instead of recording keys whose rows never landed.
+ */
 async function recordBatch(
   database: SnapshotDatabase,
   batch: LedgerBatch,
   observedAt: string,
   log: AvailabilitySourceLog | undefined,
 ): Promise<void> {
-  const recorded = await recordFirstSeen(database, batch.kind, batch.source, batch.items, observedAt, {
-    touchAfterMs: AVAILABILITY_TOUCH_MS,
-  });
+  const recorded = await peekFirstSeen(database, batch.kind, batch.items);
   const writes = ledgerWrites(batch, recorded, observedAt);
   const written = [
     ...(await upsertAvailability(database, writes.availability)),
     ...(await upsertAnnouncements(database, writes.announcements)),
   ];
+  await recordFirstSeen(database, batch.kind, batch.source, batch.items, observedAt, {
+    touchAfterMs: AVAILABILITY_TOUCH_MS,
+  });
   if (!log) return;
   if (recorded.seeded) log.seeded = true;
   log.newSkus.push(...written.slice(0, MAX_LOGGED_IDS - log.newSkus.length));
