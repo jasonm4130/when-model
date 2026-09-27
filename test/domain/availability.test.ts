@@ -335,6 +335,29 @@ describe('ledgerWrites', () => {
     expect(writes.dropped).toEqual(['nvidia/nemotron-5']);
   });
 
+  it('writes a new repo older than every recorded repo in view as a baseline: it slid in from below', () => {
+    const items = huggingFaceSightings([
+      { id: 'Qwen/Qwen3.8-9B', pipelineTag: 'text-generation', createdAt: '2026-09-10T00:00:00.000Z' },
+      { id: 'Qwen/Qwen3.9-72B', pipelineTag: 'text-generation', createdAt: '2026-09-05T00:00:00.000Z' },
+      { id: 'Qwen/Qwen3.7-4B', pipelineTag: 'text-generation', createdAt: '2026-09-01T00:00:00.000Z' },
+      { id: 'Qwen/Qwen3.6-14B', pipelineTag: 'text-generation', createdAt: '2026-07-01T00:00:00.000Z' },
+    ]);
+    const hf: LedgerBatch = { kind: 'avail:hf:Qwen', name: 'HF Qwen', source: 'hf:Qwen', items };
+    const recorded = { newKeys: ['Qwen/Qwen3.9-72B', 'Qwen/Qwen3.6-14B'], seeded: false };
+    expect(ledgerWrites(hf, recorded, iso(T0)).availability.map((r) => [r.sku, r.baseline])).toEqual([
+      ['qwen3.9-72b', false],
+      ['qwen3.6-14b', true],
+    ]);
+    // With no recorded repo in view there is no floor: a listing without creation times reads as before.
+    const bare = {
+      ...hf,
+      items: items.map((i) => ({ key: i.key, meta: { ...i.meta, createdAt: undefined } })),
+    };
+    expect(ledgerWrites(bare, recorded, iso(T0)).availability.every((r) => !r.baseline)).toBe(true);
+    const allNew = { newKeys: items.map((i) => i.key), seeded: false };
+    expect(ledgerWrites(hf, allNew, iso(T0)).availability.every((r) => !r.baseline)).toBe(true);
+  });
+
   it('writes only the keys new to the kind once it has a baseline', () => {
     const writes = ledgerWrites(
       batch,

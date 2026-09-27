@@ -112,6 +112,11 @@ describe('huggingface organisation listings', () => {
       pipelineTag: 'image-text-to-text',
     });
     expect(toHubRepo({ id: 'Qwen/Qwen3.8-9B', pipeline_tag: null })).toEqual({ id: 'Qwen/Qwen3.8-9B' });
+    expect(toHubRepo({ id: 'Qwen/Qwen3.8-9B', createdAt: '2026-09-20T10:00:00Z' })).toEqual({
+      id: 'Qwen/Qwen3.8-9B',
+      createdAt: '2026-09-20T10:00:00.000Z',
+    });
+    expect(toHubRepo({ id: 'Qwen/Qwen3.8-9B', createdAt: 'soon' })).toEqual({ id: 'Qwen/Qwen3.8-9B' });
     expect(toHubRepo({ id: 'Qwen/Qwen-Image-2.1', pipeline_tag: 'text-to-image' })).toBeUndefined();
     expect(toHubRepo({ id: 'Qwen/Secret', private: true })).toBeUndefined();
     expect(toHubRepo({ id: 'no-org' })).toBeUndefined();

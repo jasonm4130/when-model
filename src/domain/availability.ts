@@ -64,6 +64,8 @@ export interface SightingMeta {
   publishedAt?: string;
   /** chat.qwen.ai's `is_visitor_active`: usable without signing in. */
   visitorActive?: boolean;
+  /** When the source created it, for a listing paged by creation time (Hugging Face): see `ledgerWrites`. */
+  createdAt?: string;
 }
 
 export interface LedgerItem {
@@ -93,6 +95,8 @@ export interface HubRepo {
   id: string;
   /** Absent when the Hub has none: a text model is then judged by its name. */
   pipelineTag?: string;
+  /** When the repo was created (not made public): the listing's sort key. */
+  createdAt?: string;
 }
 
 /** One post from a lab's own site. */
@@ -154,7 +158,15 @@ export function huggingFaceSightings(repos: readonly HubRepo[]): LedgerItem[] {
   return repos.map((repo) => {
     const model = canonicalModel(repo.id, { source: 'huggingface' });
     const placed = model && (repo.pipelineTag !== undefined || !model.unversioned) ? model : undefined;
-    return { key: repo.id, meta: { role: 'availability', name: repo.id, ...modelMeta(placed) } };
+    return {
+      key: repo.id,
+      meta: {
+        role: 'availability',
+        name: repo.id,
+        ...modelMeta(placed),
+        ...(repo.createdAt ? { createdAt: repo.createdAt } : {}),
+      },
+    };
   });
 }
 
@@ -360,9 +372,24 @@ export interface LedgerWrites {
 }
 
 /**
+ * The oldest creation time among the batch's keys already recorded. A Hugging Face listing is the
+ * newest page by creation time, so when a lab deletes or privates newer repos, older ones slide in
+ * from below: a new key created before every recorded key in view is one of those, available all
+ * along. A repo created privately and made public later still sorts among its neighbours, so it
+ * stays a first availability unless it predates everything in view.
+ */
+function slideFloor(batch: LedgerBatch, fresh: ReadonlySet<string>): number | undefined {
+  const times = batch.items
+    .flatMap(({ key, meta }) => (!fresh.has(key) && meta.createdAt ? [Date.parse(meta.createdAt)] : []))
+    .filter(Number.isFinite);
+  return times.length ? Math.min(...times) : undefined;
+}
+
+/**
  * The rows one recorded batch writes. Only keys new to the kind become rows, or every key when this
- * capture seeded the kind, and then as baseline rows. Times are the capture's `observedAt`, stamped
- * after every source settled; the tables' `INSERT OR IGNORE` keeps the earliest sighting of a sku.
+ * capture seeded the kind, and then as baseline rows; so is a new key that slid into a paged listing
+ * from below (`slideFloor`). Times are the capture's `observedAt`, stamped after every source
+ * settled; the tables' `INSERT OR IGNORE` keeps the earliest sighting of a sku.
  */
 export function ledgerWrites(
   batch: LedgerBatch,
@@ -370,6 +397,7 @@ export function ledgerWrites(
   observedAt: string,
 ): LedgerWrites {
   const fresh = new Set(recorded.newKeys);
+  const floor = recorded.seeded ? undefined : slideFloor(batch, fresh);
   const out: LedgerWrites = { availability: [], announcements: [], dropped: [] };
   for (const { key, meta } of batch.items) {
     if (!recorded.seeded && !fresh.has(key)) continue;
@@ -378,6 +406,7 @@ export function ledgerWrites(
       out.dropped.push(key);
       continue;
     }
+    const slid = floor !== undefined && meta.createdAt !== undefined && Date.parse(meta.createdAt) < floor;
     for (const sku of meta.skus) {
       if (meta.role === 'availability') {
         const snapshot = sku.split('@')[1];
@@ -388,7 +417,7 @@ export function ledgerWrites(
           firstAvailableAt: observedAt,
           source: batch.source,
           sourceKey: key,
-          baseline: recorded.seeded,
+          baseline: recorded.seeded || slid,
           ...(snapshot ? { snapshot } : {}),
         });
       } else {

@@ -101,7 +101,8 @@ export function toHubRepo(dto: HfOrgRepoDto): HubRepo | undefined {
   if (typeof dto.id !== 'string' || !dto.id.includes('/') || dto.private === true) return undefined;
   const tag = typeof dto.pipeline_tag === 'string' ? dto.pipeline_tag : undefined;
   if (tag && !LANGUAGE_PIPELINES.has(tag)) return undefined;
-  return { id: dto.id, ...(tag ? { pipelineTag: tag } : {}) };
+  const createdAt = toIso(dto.createdAt);
+  return { id: dto.id, ...(tag ? { pipelineTag: tag } : {}), ...(createdAt ? { createdAt } : {}) };
 }
 
 /**

@@ -225,6 +225,37 @@ describe('captureAvailability', () => {
     );
   });
 
+  it('never makes a release of an old repo sliding into the Hugging Face window from below', async () => {
+    const db = new SqliteD1();
+    const repo = (id: string, createdAt: string): HubRepo => ({
+      id,
+      pipelineTag: 'text-generation',
+      createdAt,
+    });
+    const newest = repo('Qwen/Qwen3.8-27B', '2026-09-20T00:00:00.000Z');
+    const middle = repo('Qwen/Qwen3.8-9B', '2026-09-10T00:00:00.000Z');
+    const oldest = repo('Qwen/Qwen3.7-4B', '2026-09-01T00:00:00.000Z');
+    await captureAvailability(db, inputs([]), {
+      poll: poll(undefined, { Qwen: [newest, middle, oldest] }),
+      now: at(T0),
+    });
+    // Qwen takes its newest repo private: the page reaches one repo further down, created in July.
+    // Days later it ships a model whose repo it had created privately on 5 September.
+    const below = repo('Qwen/Qwen3.6-14B', '2026-07-01T00:00:00.000Z');
+    const flipped = repo('Qwen/Qwen3.9-72B', '2026-09-05T00:00:00.000Z');
+    await captureAvailability(db, inputs([]), {
+      poll: poll(undefined, { Qwen: [middle, flipped, oldest, below] }),
+      now: at(T0 + QUARTER),
+    });
+    expect(availabilityRows(db).map((r) => [r.sku, r.first_available_at, r.baseline])).toEqual([
+      ['qwen3.6-14b', iso(T0 + QUARTER), 1],
+      ['qwen3.7-4b', iso(T0), 1],
+      ['qwen3.8-27b', iso(T0), 1],
+      ['qwen3.8-9b', iso(T0), 1],
+      ['qwen3.9-72b', iso(T0 + QUARTER), 0],
+    ]);
+  });
+
   it('never makes a release of a model re-listed after the first-seen prune', async () => {
     const db = new SqliteD1();
     await captureAvailability(db, inputs([drop('openai/gpt-5.5'), drop('openai/gpt-5')]), {
