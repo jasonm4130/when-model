@@ -308,14 +308,31 @@ async function pruneFirstSeen(database: SnapshotDatabase, nowIso: string): Promi
     .run();
 }
 
+export interface RecordFirstSeenOptions {
+  /**
+   * Bump `last_seen_at` only on keys last touched more than this long ago. Only the 90-day prune
+   * (and `readSightings`, for `LEDGER_KINDS`) reads the column, so a kind the page never reads
+   * back can skip most of the rewrites; availability kinds pass 6 hours.
+   */
+  touchAfterMs?: number;
+}
+
+export interface FirstSeenResult {
+  /** Keys first seen this capture; empty when the kind was seeded. */
+  newKeys: string[];
+  /** This capture was the kind's first: every row it wrote is a baseline. */
+  seeded: boolean;
+}
+
 /**
  * Records first-seen `items` for `kind` in one statement per direction, using
  * `json_each` so the bound-parameter count never depends on `items.length` (D1 caps a
  * statement at 100 bound parameters; a multi-VALUES insert of e.g. 519 transformers
  * modules would need thousands). A key already present keeps its original
  * `first_seen_at`; every key in `items` gets its `last_seen_at` bumped to `nowIso`
- * regardless. When `kind` has no rows yet, every inserted row is seeded (a baseline),
- * and this returns no keys — there is nothing to call "new" on a first capture.
+ * (with `touchAfterMs`, only a key last touched longer ago than that). When `kind` has
+ * no rows yet, every inserted row is seeded (a baseline) and `seeded` is true, with no
+ * new keys — there is nothing to call "new" on a first capture.
  * `meta` is serialised here, not by SQLite: `json()` rejects a bare string and turns
  * `true` into `1`.
  */
@@ -325,9 +342,10 @@ export async function recordFirstSeen(
   source: string,
   items: readonly FirstSeenItem[],
   nowIso: string,
-): Promise<string[]> {
-  timestamp(nowIso, 'nowIso');
-  if (items.length === 0) return [];
+  options: RecordFirstSeenOptions = {},
+): Promise<FirstSeenResult> {
+  const now = timestamp(nowIso, 'nowIso');
+  if (items.length === 0) return { newKeys: [], seeded: false };
   await pruneFirstSeen(database, nowIso);
   const seeded = (await kindHasRows(database, kind)) ? 0 : 1;
   const itemsJson = JSON.stringify(
@@ -341,14 +359,16 @@ export async function recordFirstSeen(
     )
     .bind(kind, source, nowIso, nowIso, seeded, itemsJson)
     .run();
+  const touchBefore =
+    options.touchAfterMs === undefined ? nowIso : new Date(now - options.touchAfterMs).toISOString();
   await database
     .prepare(
       `UPDATE first_seen SET last_seen_at = ?
-       WHERE kind = ? AND key IN (SELECT json_extract(value, '$.key') FROM json_each(?))`,
+       WHERE kind = ? AND last_seen_at < ? AND key IN (SELECT json_extract(value, '$.key') FROM json_each(?))`,
     )
-    .bind(nowIso, kind, itemsJson)
+    .bind(nowIso, kind, touchBefore, itemsJson)
     .run();
-  if (seeded) return [];
+  if (seeded) return { newKeys: [], seeded: true };
   const { results } = await database
     .prepare(
       `SELECT key FROM first_seen
@@ -357,7 +377,7 @@ export async function recordFirstSeen(
     )
     .bind(kind, nowIso, itemsJson)
     .all<{ key: string }>();
-  return results.map((row) => row.key);
+  return { newKeys: results.map((row) => row.key), seeded: false };
 }
 
 /** The read side's cap on sightings; a capture records a few dozen keys per kind at most. */
@@ -626,5 +646,201 @@ export async function backfillScoreSeries(database: SnapshotDatabase, observedAt
          AND json_extract(d.payload_json, '$.measurement.algorithmVersion') IS NOT NULL`,
     )
     .bind(cutoff, MAX_CLEANUP_ROWS)
+    .run();
+}
+
+/* ───────────── Release ledger: availability and announcements (migration 0003) ───────────── */
+
+export const MAX_AVAILABILITY_ROWS = 50_000;
+export const MAX_ANNOUNCEMENT_ROWS = 10_000;
+/** Open announcements resolved per capture; a lab announces a handful a week. */
+export const MAX_OPEN_ANNOUNCEMENTS = 200;
+/** Availability rows read to resolve them: every sku of the labs with open announcements. */
+export const MAX_AVAILABILITY_READ = 5000;
+
+export interface AvailabilityRecord {
+  labId: string;
+  sku: string;
+  name: string;
+  firstAvailableAt: string;
+  source: string;
+  sourceKey: string;
+  baseline: boolean;
+  snapshot?: string;
+}
+
+export interface AnnouncementRecord {
+  labId: string;
+  sku: string;
+  firstSeenAt: string;
+  source: string;
+  url: string;
+  title: string;
+  publishedAt?: string;
+  baseline: boolean;
+  usableAt?: string;
+  usableSku?: string;
+}
+
+/**
+ * Whether migration 0003 has run. The availability capture checks first: recording a kind in
+ * `first_seen` without its baseline rows would make every later sighting of those models, from
+ * another source, look like a first availability.
+ */
+export async function hasReleaseLedger(database: SnapshotDatabase): Promise<boolean> {
+  try {
+    await database
+      .prepare(
+        `SELECT (SELECT row_count FROM availability_metadata WHERE id = 1) AS available,
+                (SELECT row_count FROM announcements_metadata WHERE id = 1) AS announced`,
+      )
+      .first();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Writes availability rows, keeping the earliest sighting of each (lab, sku): a sku already in the
+ * table is ignored, whichever source saw it now. One JSON parameter, so the bound-parameter count is
+ * fixed whatever the row count. Returns the rows this call wrote, as `lab:sku`. A D1 failure,
+ * including the capacity trigger, reaches the caller.
+ */
+export async function upsertAvailability(
+  database: SnapshotDatabase,
+  rows: readonly AvailabilityRecord[],
+): Promise<string[]> {
+  if (rows.length === 0) return [];
+  for (const row of rows) timestamp(row.firstAvailableAt, 'firstAvailableAt');
+  const rowsJson = JSON.stringify(rows.map((r) => ({ ...r, baseline: r.baseline ? 1 : 0 })));
+  await database
+    .prepare(
+      `INSERT OR IGNORE INTO availability (lab_id, sku, name, first_available_at, source, source_key, baseline, snapshot)
+       SELECT json_extract(value, '$.labId'), json_extract(value, '$.sku'), json_extract(value, '$.name'),
+              json_extract(value, '$.firstAvailableAt'), json_extract(value, '$.source'),
+              json_extract(value, '$.sourceKey'), json_extract(value, '$.baseline'), json_extract(value, '$.snapshot')
+       FROM json_each(?)`,
+    )
+    .bind(rowsJson)
+    .run();
+  const { results } = await database
+    .prepare(
+      `SELECT lab_id, sku FROM availability
+       WHERE (lab_id, sku, first_available_at, source_key) IN (
+         SELECT json_extract(value, '$.labId'), json_extract(value, '$.sku'),
+                json_extract(value, '$.firstAvailableAt'), json_extract(value, '$.sourceKey')
+         FROM json_each(?))`,
+    )
+    .bind(rowsJson)
+    .all<{ lab_id: string; sku: string }>();
+  return results.map((r) => `${r.lab_id}:${r.sku}`);
+}
+
+/** Writes announcement rows, the earliest sighting of each (lab, sku) winning. Returns the rows written, as `lab:sku`. */
+export async function upsertAnnouncements(
+  database: SnapshotDatabase,
+  rows: readonly AnnouncementRecord[],
+): Promise<string[]> {
+  if (rows.length === 0) return [];
+  for (const row of rows) timestamp(row.firstSeenAt, 'firstSeenAt');
+  const rowsJson = JSON.stringify(rows.map((r) => ({ ...r, baseline: r.baseline ? 1 : 0 })));
+  await database
+    .prepare(
+      `INSERT OR IGNORE INTO announcements
+         (lab_id, sku, first_seen_at, source, url, title, published_at, baseline, usable_at, usable_sku)
+       SELECT json_extract(value, '$.labId'), json_extract(value, '$.sku'), json_extract(value, '$.firstSeenAt'),
+              json_extract(value, '$.source'), json_extract(value, '$.url'), json_extract(value, '$.title'),
+              json_extract(value, '$.publishedAt'), json_extract(value, '$.baseline'),
+              json_extract(value, '$.usableAt'), json_extract(value, '$.usableSku')
+       FROM json_each(?)`,
+    )
+    .bind(rowsJson)
+    .run();
+  const { results } = await database
+    .prepare(
+      `SELECT lab_id, sku FROM announcements
+       WHERE (lab_id, sku, first_seen_at, source) IN (
+         SELECT json_extract(value, '$.labId'), json_extract(value, '$.sku'),
+                json_extract(value, '$.firstSeenAt'), json_extract(value, '$.source')
+         FROM json_each(?))`,
+    )
+    .bind(rowsJson)
+    .all<{ lab_id: string; sku: string }>();
+  return results.map((r) => `${r.lab_id}:${r.sku}`);
+}
+
+type AnnouncementColumns = {
+  lab_id: string;
+  sku: string;
+  first_seen_at: string;
+  source: string;
+  url: string | null;
+  title: string | null;
+  published_at: string | null;
+  baseline: number;
+};
+
+/** Announcements not yet usable, newest first, narrow columns. */
+export async function readOpenAnnouncements(
+  database: SnapshotDatabase,
+  limit = MAX_OPEN_ANNOUNCEMENTS,
+): Promise<AnnouncementRecord[]> {
+  const { results } = await database
+    .prepare(
+      `SELECT lab_id, sku, first_seen_at, source, url, title, published_at, baseline FROM announcements
+       WHERE usable_at IS NULL ORDER BY first_seen_at DESC LIMIT ?`,
+    )
+    .bind(limit)
+    .all<AnnouncementColumns>();
+  return results.map((row) => ({
+    labId: row.lab_id,
+    sku: row.sku,
+    firstSeenAt: row.first_seen_at,
+    source: row.source,
+    url: row.url ?? '',
+    title: row.title ?? '',
+    ...(row.published_at ? { publishedAt: row.published_at } : {}),
+    baseline: row.baseline === 1,
+  }));
+}
+
+/** Every sku available for `labIds`, newest first: what an open announcement is resolved against. */
+export async function readAvailability(
+  database: SnapshotDatabase,
+  labIds: readonly string[],
+  limit = MAX_AVAILABILITY_READ,
+): Promise<Pick<AvailabilityRecord, 'labId' | 'sku' | 'firstAvailableAt'>[]> {
+  if (!labIds.length) return [];
+  const { results } = await database
+    .prepare(
+      `SELECT lab_id, sku, first_available_at FROM availability
+       WHERE lab_id IN (SELECT value FROM json_each(?)) ORDER BY first_available_at DESC LIMIT ?`,
+    )
+    .bind(JSON.stringify(labIds), limit)
+    .all<{ lab_id: string; sku: string; first_available_at: string }>();
+  return results.map((row) => ({
+    labId: row.lab_id,
+    sku: row.sku,
+    firstAvailableAt: row.first_available_at,
+  }));
+}
+
+/** Marks announcements usable, once: a resolved row is never rewritten. */
+export async function updateAnnouncementsUsable(
+  database: SnapshotDatabase,
+  updates: readonly { labId: string; sku: string; usableAt: string; usableSku: string }[],
+): Promise<void> {
+  if (updates.length === 0) return;
+  await database
+    .prepare(
+      `UPDATE announcements
+       SET usable_at = json_extract(u.value, '$.usableAt'), usable_sku = json_extract(u.value, '$.usableSku')
+       FROM json_each(?) AS u
+       WHERE announcements.lab_id = json_extract(u.value, '$.labId')
+         AND announcements.sku = json_extract(u.value, '$.sku')
+         AND announcements.usable_at IS NULL`,
+    )
+    .bind(JSON.stringify(updates))
     .run();
 }

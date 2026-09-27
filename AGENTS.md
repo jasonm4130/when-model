@@ -16,7 +16,7 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   `fetchX()` that goes through the edge cache.
 - `src/infra` — `edge-cache.ts` (Workers Cache API wrapper), `source-result.ts` (`collect`:
   timeout + degrade-to-fallback + timing), `snapshot-store.ts` (D1 snapshots, `score_series`,
-  `first_seen`), `bindings.ts` (`HISTORY_DB`), `text.ts` (safe parsing helpers).
+  `first_seen`, and the release ledger's `availability` and `announcements`), `bindings.ts` (`HISTORY_DB`), `text.ts` (safe parsing helpers).
 - `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
   the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
   shared by `/api/history.json` and the page's DROPCON instrument; `loadHistoryForPage` adds the
@@ -66,8 +66,8 @@ Rules of the house:
   compact D1 snapshot must stay under 32 KiB (`MAX_SNAPSHOT_BYTES`); the worst-case test in
   `test/infra/snapshot-store.test.ts` enforces it, so clip new strings and lists there.
 - D1 migrations in `migrations/` apply to the remote `whenmodel-history` before the code that
-  needs them merges (command under the README's Point-in-time review). Never edit a migration that has run
-  remotely.
+  needs them merges (command under the README's Point-in-time review); 0003 (the release ledger)
+  goes before the availability-ledger branch. Never edit a migration that has run remotely.
 - Shared CSS (tokens, panels, metrics, rows, motion) lives in `src/styles/global.css`;
   component `<style>` blocks hold presentation specific to that component. Every animation is
   gated by `prefers-reduced-motion`.
