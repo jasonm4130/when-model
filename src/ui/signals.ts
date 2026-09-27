@@ -4,6 +4,7 @@
  * the pill). Pure; safe to unit test.
  */
 import {
+  ARCHITECTURE_LAST_LEAD,
   ARCHITECTURE_TRACK,
   BROADCAST_TRACK,
   LEAK_TRACK,
@@ -25,7 +26,7 @@ export const TRACK_LINES = {
   leaks: `${LEAK_TRACK.launched} of ${LEAK_TRACK.n} leaks listed within ${LEAK_TRACK.windowDays} days, a median ${round1(LEAK_TRACK.medianLeadDays)} days later (in-sample).`,
   // The misses are part of the record: a stream list without them read as "OpenAI always streams first".
   broadcasts: `Streams went up ahead of ${BROADCAST_TRACK.n} of ${BROADCAST_TRACK.n + BROADCAST_TRACK.openAiMisses.length} OpenAI launches checked, a median ${BROADCAST_TRACK.medianLeadHours} h ahead (${BROADCAST_TRACK.minLeadHours}–${BROADCAST_TRACK.maxLeadHours} h); none before ${andList(BROADCAST_TRACK.openAiMisses)}.`,
-  architectures: `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases, a median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead (Qwen and Z.ai only).`,
+  architectures: `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases, a median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead (Qwen and Z.ai only), but none of the ${ARCHITECTURE_TRACK.datedSinceLastLead} since ${ARCHITECTURE_LAST_LEAD}.`,
   events: (() => {
     const rate = hitRate();
     return `${rate.hits} of ${rate.total} past keynotes debuted a frontier model.`;

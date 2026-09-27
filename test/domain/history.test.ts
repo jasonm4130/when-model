@@ -24,20 +24,57 @@ function point(overrides: Partial<ScorePoint> & Pick<ScorePoint, 'observedAt'>):
 }
 
 describe('downsampleHourly', () => {
-  it('keeps the latest reading observed in each UTC hour', () => {
+  it("keeps each UTC hour's median reading, the lower middle one of an even count", () => {
     const points = [
       point({ observedAt: '2026-09-23T01:00:00.000Z', score: 10 }),
       point({ observedAt: '2026-09-23T01:45:00.000Z', score: 20 }),
       point({ observedAt: '2026-09-23T02:15:00.000Z', score: 30 }),
     ];
-    expect(downsampleHourly(points).map((p) => p.score)).toEqual([20, 30]);
+    expect(downsampleHourly(points).map((p) => p.score)).toEqual([10, 30]);
+  });
+
+  it('does not let one flickering capture set the hour (26 Sep: 53, 69, 55)', () => {
+    const points = [
+      point({ observedAt: '2026-09-26T13:00:50.000Z', score: 69, level: 2 }),
+      point({ observedAt: '2026-09-26T13:15:50.000Z', score: 55, level: 2 }),
+      point({ observedAt: '2026-09-26T13:30:50.000Z', score: 54, level: 3 }),
+      point({ observedAt: '2026-09-26T13:45:50.000Z', score: 55, level: 2 }),
+    ];
+    // The old rule took the last capture: 55 here by luck, 54 without the 13:45 capture.
+    // The median reads 55 either way.
+    expect(downsampleHourly(points).map((p) => [p.score, p.observedAt.slice(11, 16)])).toEqual([
+      [55, '13:45'],
+    ]);
+    expect(downsampleHourly(points.slice(0, 3)).map((p) => p.score)).toEqual([55]);
+  });
+
+  it('keeps the later capture of a tied median, whole, with its own level and odds', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 50, level: 3, headlineP: 0.6 }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 50, level: 3, headlineP: 0.61 }),
+      point({ observedAt: '2026-09-23T01:45:00.000Z', score: 90, level: 1, headlineP: 0.9 }),
+    ];
+    expect(downsampleHourly(points)).toEqual([points[1]]);
+  });
+
+  it('skips degraded captures unless the whole hour was degraded', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 60, level: 2 }),
+      point({ observedAt: '2026-09-23T01:45:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T02:00:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T02:30:00.000Z', score: 0, level: 5, degraded: true }),
+    ];
+    expect(downsampleHourly(points).map((p) => [p.observedAt.slice(11, 16), p.degraded])).toEqual([
+      ['01:00', false],
+      ['02:30', true],
+    ]);
   });
 
   it('sorts out-of-order input before bucketing', () => {
     const points = [
       point({ observedAt: '2026-09-23T02:15:00.000Z', score: 30 }),
-      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 10 }),
       point({ observedAt: '2026-09-23T01:45:00.000Z', score: 20 }),
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 20 }),
     ];
     expect(downsampleHourly(points).map((p) => p.observedAt)).toEqual([
       '2026-09-23T01:45:00.000Z',
@@ -229,10 +266,9 @@ describe('buildHistorySeries', () => {
     ]);
   });
 
-  it('hides a one-slot wobble inside an hour that the hourly point happens to land on', () => {
+  it("hides a one-slot wobble that is the hour's only capture", () => {
     const points = [
       point({ observedAt: '2026-09-23T00:45:40.000Z', score: 40, level: 3 }),
-      point({ observedAt: '2026-09-23T01:30:40.000Z', score: 40, level: 3 }),
       point({ observedAt: '2026-09-23T01:45:40.000Z', score: 58, level: 2 }),
       point({ observedAt: '2026-09-23T02:00:40.000Z', score: 40, level: 3 }),
     ];
