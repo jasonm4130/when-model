@@ -491,6 +491,76 @@ describe('announced, not yet usable', () => {
     ).toEqual([{ labId: 'openai', sku: 'gpt-6', usableAt: iso(T0 + HOUR), usableSku: 'gpt-6-luna' }]);
   });
 
+  it('keeps a new snapshot announced while only its base is usable open, and times its release lead', () => {
+    const [post] = postSightings(
+      [
+        {
+          title: 'DeepSeek-V4-Flash-1015 Release',
+          url: 'https://api-docs.deepseek.com/news/news261015',
+          publishedAt: iso(T0),
+          precision: 'day',
+        },
+      ],
+      'deepseek',
+    );
+    const batch = { kind: 'announce:deepseek', name: 'DeepSeek news', source: 'deepseek', items: [post] };
+    const [announced] = ledgerWrites(batch, { newKeys: [post.key], seeded: false }, iso(T0)).announcements;
+    expect(announced.sku).toBe('deepseek-v4-flash@1015');
+
+    const base = { labId: 'deepseek', sku: 'deepseek-v4-flash', firstAvailableAt: iso(T0 - 170 * DAY) };
+    expect(resolveAnnouncements([announced], [base])).toEqual([]);
+    expect(announcedNotUsable([announced], T0 + DAY)).toEqual([
+      expect.objectContaining({ sku: 'deepseek-v4-flash@1015', hoursSince: 24 }),
+    ]);
+
+    // The snapshot ships a day later: the announcement resolves to it, and its release has the lead.
+    const shipped = { labId: 'deepseek', sku: 'deepseek-v4-flash@1015', firstAvailableAt: iso(T0 + DAY) };
+    const [update] = resolveAnnouncements([announced], [base, shipped]);
+    expect(update).toMatchObject({ usableAt: iso(T0 + DAY), usableSku: 'deepseek-v4-flash@1015' });
+    const [event] = releaseEventsFromLedger(
+      [
+        row('deepseek', 'deepseek-v4-flash', T0 - 170 * DAY),
+        row('deepseek', 'deepseek-v4-flash@1015', T0 + DAY),
+      ],
+      T0 + 2 * DAY,
+      [{ ...announced, usableSku: update.usableSku }],
+    );
+    expect(event).toMatchObject({ skus: ['deepseek-v4-flash@1015'], announcedAt: iso(T0), leadH: 24 });
+  });
+
+  it('resolves a preview post by the models it launched, which carry no "preview"', () => {
+    const [post] = postSightings(
+      [
+        {
+          title: 'DeepSeek-V4 Preview Release',
+          url: 'https://api-docs.deepseek.com/news/news260424',
+          publishedAt: iso(T0),
+          precision: 'day',
+        },
+      ],
+      'deepseek',
+    );
+    const batch = { kind: 'announce:deepseek', name: 'DeepSeek news', source: 'deepseek', items: [post] };
+    const [announced] = ledgerWrites(batch, { newKeys: [post.key], seeded: false }, iso(T0)).announcements;
+    expect(announced.sku).toBe('deepseek-v4-preview');
+    expect(
+      resolveAnnouncements(
+        [announced],
+        [
+          { labId: 'deepseek', sku: 'deepseek-v4-pro', firstAvailableAt: iso(T0 + HOUR) },
+          { labId: 'deepseek', sku: 'deepseek-v4-flash', firstAvailableAt: iso(T0 + HOUR) },
+        ],
+      ),
+    ).toEqual([
+      {
+        labId: 'deepseek',
+        sku: 'deepseek-v4-preview',
+        usableAt: iso(T0 + HOUR),
+        usableSku: 'deepseek-v4-flash',
+      },
+    ]);
+  });
+
   it('resolves a post about a model already usable to a time before the post: a lagging post', () => {
     expect(
       resolveAnnouncements(

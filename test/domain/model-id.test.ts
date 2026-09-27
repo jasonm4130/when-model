@@ -63,12 +63,62 @@ describe('canonicalModel: one sku per model across sources (the design examples)
     });
   });
 
-  it('keeps a tier word the grammar stops at as the variant, outside the sku', () => {
+  it('folds a Contributor into its Muse Spark, as the variant outside the sku', () => {
     const contributor = canonicalModel('meta/muse-spark-1.2-contributor', openrouter);
     expect(contributor).toMatchObject({ labId: 'meta', sku: 'muse-spark-1.2', variant: 'contributor' });
     expect(canonicalModel('meta/muse-spark-1.2', openrouter)).not.toHaveProperty('variant');
-    // Suffixes that are not tier words are simply dropped.
+    // Packaging words end the sku and are not a variant.
     expect(canonicalModel('Qwen/Qwen3.8-27B-Instruct-FP8', hf)).not.toHaveProperty('variant');
+  });
+
+  // Live ids the grammar stops short of: each is a model of its own, so its words past the grammar
+  // stay in the sku, and a later release never folds into an earlier model's row.
+  it.each<[string, string, string, ModelHint]>([
+    ['qwen/qwen3-235b-a22b', 'qwen', 'qwen3-235b', openrouter],
+    ['qwen/qwen3-235b-a22b-2507', 'qwen', 'qwen3-235b@2507', openrouter],
+    ['qwen/qwen3-235b-a22b-thinking-2507', 'qwen', 'qwen3-235b-thinking@2507', openrouter],
+    ['qwen/qwen3-30b-a3b-instruct-2507', 'qwen', 'qwen3-30b@2507', openrouter],
+    ['Qwen/Qwen3-30B-A3B-Thinking-2507-FP8', 'qwen', 'qwen3-30b-thinking@2507', hf],
+    ['Qwen/Qwen3.8-27B-Instruct-2610', 'qwen', 'qwen3.8-27b@2610', hf],
+    ['qwen/qwen3.8-35b-a3b', 'qwen', 'qwen3.8-35b', openrouter],
+    ['qwen/qwen3.8-35b-a3b-thinking', 'qwen', 'qwen3.8-35b-thinking', openrouter],
+    ['Qwen/Qwen3.8-VL-27B-Instruct', 'qwen', 'qwen3.8-vl-27b', hf],
+    ['qwen/qwen3-vl-235b-a22b-instruct', 'qwen', 'qwen3-vl-235b', openrouter],
+    ['Qwen/Qwen3-VL-8B-Instruct', 'qwen', 'qwen3-vl-8b', hf],
+    ['qwen/qwen2.5-vl-72b-instruct', 'qwen', 'qwen2.5-vl-72b', openrouter],
+    ['qwen/qwen3.5-flash-02-23', 'qwen', 'qwen3.5-flash@02-23', openrouter],
+    ['deepseek/deepseek-v3.1-terminus', 'deepseek', 'deepseek-v3.1-terminus', openrouter],
+    ['deepseek-ai/DeepSeek-V2-Chat-0628', 'deepseek', 'deepseek-v2-chat@0628', hf],
+    ['deepseek/deepseek-r1-distill-llama-70b', 'deepseek', 'deepseek-r1-distill-llama-70b', openrouter],
+    ['google/gemini-3.1-pro-preview-customtools', 'google', 'gemini-3.1-pro-preview-customtools', openrouter],
+    ['google/gemma-4-E4B-it-qat-q4_0-unquantized', 'google', 'gemma-4-e4b', hf],
+    ['openai/gpt-5.2-chat', 'openai', 'gpt-5.2-chat', openrouter],
+    ['meta-llama/llama-4-maverick', 'meta', 'llama-4-maverick', openrouter],
+    ['meta-llama/Llama-3.2-3B-Instruct-SpinQuant_INT4_EO8', 'meta', 'llama-3.2-3b', hf],
+    ['z-ai/glm-5.3-flashx', 'zai', 'glm-5.3-flashx', openrouter],
+    ['moonshotai/kimi-k2.7-code', 'moonshot', 'kimi-k2.7-code', openrouter],
+    ['mistralai/mistral-medium-3-5', 'mistral', 'mistral-medium-3.5', openrouter],
+    ['mistralai/mistral-medium-3', 'mistral', 'mistral-medium-3', openrouter],
+  ])('keeps the model words past the grammar: %s → %s:%s', (raw, labId, sku, hint) => {
+    expect(canonicalModel(raw, hint)).toMatchObject({ labId, sku });
+  });
+
+  it('reads the display name past its model, without OpenRouter’s "(free)"', () => {
+    // The o-series grammar stops at `o3-mini-high`, so the name places it: never as o3 itself.
+    expect(
+      canonicalModel('openai/o3-mini-high', { source: 'openrouter', name: 'OpenAI: o3 Mini High' }),
+    ).toMatchObject({ labId: 'openai', sku: 'o3-mini-high' });
+    expect(
+      canonicalModel('openai/o4-mini-high', { source: 'openrouter', name: 'OpenAI: o4 Mini High (free)' }),
+    ).toMatchObject({ sku: 'o4-mini-high' });
+    expect(canonicalModel('openai/o3-mini', openrouter)).toMatchObject({ sku: 'o3-mini' });
+  });
+
+  it('reads a hyphenated point version, and a lab docs id with it', () => {
+    expect(canonicalModel('claude-3-5-haiku-20241022', { source: 'id', labId: 'anthropic' })).toMatchObject({
+      sku: 'claude-haiku-3.5@20241022',
+      version: '3.5',
+    });
   });
 
   it('falls back to the stripped slug, tagged unversioned, for an id with no version', () => {
@@ -119,6 +169,8 @@ describe('canonicalModel: one sku per model across sources (the design examples)
     ['a TTS repo', 'Qwen/Qwen3-TTS-1.7B', hf],
     ['an embedding repo', 'Qwen/Qwen3-Embedding-8B', hf],
     ['a video generator', 'google/veo-4', openrouter],
+    ['an image generator (any-to-any on the Hub)', 'deepseek-ai/Janus-Pro-7B', hf],
+    ['its flow-matching twin', 'deepseek-ai/JanusFlow-1.3B', hf],
     ['an unknown lab', 'nvidia/nemotron-5', openrouter],
     ['a community HF quant', 'someone/Qwen3.8-27B-GGUF', hf],
     ['a third-party fine-tune', 'nvidia/llama-3.1-nemotron-70b-instruct', openrouter],
@@ -140,5 +192,25 @@ describe('skuBase / satisfies', () => {
     expect(satisfies('gpt-6', 'gpt-6@2026-09-30')).toBe(true);
     expect(satisfies('gpt-6', 'gpt-6.5')).toBe(false);
     expect(satisfies('gpt-6-sol', 'gpt-6')).toBe(false);
+  });
+
+  it('needs an announced snapshot itself: the base that shipped months before is not it', () => {
+    expect(satisfies('deepseek-v4-flash@1015', 'deepseek-v4-flash')).toBe(false);
+    expect(satisfies('deepseek-v4-flash@1015', 'deepseek-v4-flash@0731')).toBe(false);
+    expect(satisfies('deepseek-v4-flash@1015', 'deepseek-v4-flash@1015')).toBe(true);
+    // One date, spelled by a title and by a listing.
+    expect(satisfies('qwen3.5-plus@0420', 'qwen3.5-plus@20260420')).toBe(true);
+    expect(satisfies('gemini-3-flash@06-17', 'gemini-3-flash@0617')).toBe(true);
+    expect(satisfies('qwen3.5-plus@0420', 'qwen3.5-plus@20260421')).toBe(false);
+  });
+
+  it('lets a preview be satisfied by its line: the models it launched carry no "preview"', () => {
+    const title = canonicalModel('DeepSeek-V4 Preview Release', { source: 'title', labId: 'deepseek' });
+    expect(title?.sku).toBe('deepseek-v4-preview');
+    expect(satisfies('deepseek-v4-preview', 'deepseek-v4-flash')).toBe(true);
+    expect(satisfies('deepseek-v4-preview', 'deepseek-v4-pro')).toBe(true);
+    expect(satisfies('gemini-3-pro-preview', 'gemini-3-pro-preview')).toBe(true);
+    expect(satisfies('gemini-3-pro-preview', 'gemini-3-pro')).toBe(true);
+    expect(satisfies('deepseek-v4-preview', 'deepseek-v4.1-flash')).toBe(false);
   });
 });

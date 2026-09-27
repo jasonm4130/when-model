@@ -43,7 +43,7 @@ export type Tier = 'flagship' | 'minor';
 
 /**
  * One way a lab's release is a flagship. Read against a model's tier slug: its canonical base
- * (`src/domain/model-id.ts`), plus the tier word the id carried past the grammar, if any
+ * (`src/domain/model-id.ts`), plus the word the canonicaliser folded into it, if any
  * (`muse-spark-1.2-contributor`).
  */
 export interface TierRule {
@@ -343,7 +343,7 @@ export function labForHost(url: string): Lab | undefined {
   return LABS.find((lab) => lab.firstPartyHosts.some((h) => host === h || host.endsWith(`.${h}`)));
 }
 
-/** A model as the tier rules read it: its sku, canonical base, snapshot and dropped tier word. */
+/** A model as the tier rules read it: its sku, canonical base, snapshot and folded word. */
 export interface TierModel {
   sku: string;
   base: string;

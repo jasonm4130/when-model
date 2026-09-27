@@ -86,10 +86,52 @@ export function ledgerRowsFromListings(
   }));
 }
 
+/**
+ * The frontier release events the ledger's detector forms from the listings, and the replay markers
+ * of the same window (`from` < t ≤ `until`, unix seconds), keyed `<lab> <t>` so each side can name
+ * what the other lacks.
+ */
+function detectorEvents(models: readonly OpenRouterModel[], from: number, until: number) {
+  const markers = frontierReleases(models, until).filter((r) => r.t > from && r.t <= until);
+  const events = releaseEventsFromLedger(ledgerRowsFromListings(models), until * 1000).filter((e) => {
+    const t = Date.parse(e.firstAvailableAt) / 1000;
+    return e.frontier && t > from && t <= until;
+  });
+  const eventKeys = new Set(events.map((e) => `${e.labId} ${Date.parse(e.firstAvailableAt) / 1000}`));
+  const markerKeys = new Set(markers.map((m) => `${m.labId} ${m.t}`));
+  return { markers, events, eventKeys, markerKeys };
+}
+
+/**
+ * Every replay marker in the window the detector does not reproduce, and every event it forms that
+ * no marker has. `buildLabelledReleases` reads the scored window; the test also runs it over the
+ * whole OpenRouter history, where the canonicaliser meets years of naming conventions.
+ */
+export function detectorExceptions(
+  models: readonly OpenRouterModel[],
+  from: number,
+  until: number,
+): DetectorException[] {
+  const { markers, events, eventKeys, markerKeys } = detectorEvents(models, from, until);
+  return [
+    ...markers
+      .filter((m) => !eventKeys.has(`${m.labId} ${m.t}`))
+      .map((m) => ({ at: iso(m.t), labId: m.labId, models: m.models, kind: 'missing' as const })),
+    ...events
+      .filter((e) => !markerKeys.has(`${e.labId} ${Date.parse(e.firstAvailableAt) / 1000}`))
+      .map((e) => ({
+        at: iso(Date.parse(e.firstAvailableAt) / 1000),
+        labId: e.labId,
+        models: e.skus,
+        kind: 'extra' as const,
+      })),
+  ];
+}
+
 export function buildLabelledReleases(models: readonly OpenRouterModel[], pulledAt: string) {
   const until = Math.floor(Date.parse(pulledAt) / 1000 / HOUR) * HOUR;
   const from = SCORE_FROM;
-  const markers = frontierReleases(models, until).filter((r) => r.t > from && r.t <= until);
+  const { markers, eventKeys } = detectorEvents(models, from, until);
   const canonical = canonicalListings(models);
 
   // What each lab had shipped before the window: the tier rules' "first of its line" state.
@@ -100,13 +142,6 @@ export function buildLabelledReleases(models: readonly OpenRouterModel[], pulled
     if (model && m.created < from)
       for (const key of tierMarks(model.labId, model)) seenFor(model.labId).add(key);
   }
-
-  const events = releaseEventsFromLedger(ledgerRowsFromListings(models), until * 1000).filter((e) => {
-    const t = Date.parse(e.firstAvailableAt) / 1000;
-    return e.frontier && t > from && t <= until;
-  });
-  const eventKeys = new Set(events.map((e) => `${e.labId} ${Date.parse(e.firstAvailableAt) / 1000}`));
-  const markerKeys = new Set(markers.map((m) => `${m.labId} ${m.t}`));
 
   const releases: LabelledRelease[] = markers.map((marker, i) => {
     const review = TIER_REVIEW[i];
@@ -137,19 +172,7 @@ export function buildLabelledReleases(models: readonly OpenRouterModel[], pulled
     };
   });
 
-  const exceptions: DetectorException[] = [
-    ...releases
-      .filter((r) => !r.detector)
-      .map((r) => ({ at: r.at, labId: r.labId, models: r.models, kind: 'missing' as const })),
-    ...events
-      .filter((e) => !markerKeys.has(`${e.labId} ${Date.parse(e.firstAvailableAt) / 1000}`))
-      .map((e) => ({
-        at: iso(Date.parse(e.firstAvailableAt) / 1000),
-        labId: e.labId,
-        models: e.skus,
-        kind: 'extra' as const,
-      })),
-  ];
+  const exceptions = detectorExceptions(models, from, until);
   const count = (tier: Tier) => releases.filter((r) => r.tier === tier).length;
 
   return {

@@ -3,6 +3,7 @@ import type { RawPulls } from '../../scripts/backtest/build';
 import { readJson, readRaw } from '../../scripts/backtest/io';
 import {
   buildLabelledReleases,
+  detectorExceptions,
   ledgerRowsFromListings,
   type LabelledReleases,
 } from '../../scripts/backtest/labels';
@@ -65,6 +66,28 @@ describe('labelled releases', () => {
       skus: ['muse-spark-1.2'],
       tier: 'minor',
     });
+  });
+
+  it('reproduces every frontier marker of the whole OpenRouter history but two, which it names', () => {
+    // 128 markers from 2023 on, through Qwen's YYMM snapshots (qwen3-235b-a22b-2507), VL lines,
+    // active-parameter ids with -thinking, and suffix revisions (V3.1-Terminus, -customtools). The
+    // two left fold into an earlier sku by design: -instruct is packaging (Qwen's -Instruct is its
+    // default release), and a Contributor is its Muse Spark's cheaper tier.
+    const until = Math.floor(Date.parse(raw.pulledAt) / 1000);
+    expect(detectorExceptions(raw.openrouter, 0, until)).toEqual([
+      {
+        at: '2023-09-28T00:00:00Z',
+        labId: 'openai',
+        models: ['openai/gpt-3.5-turbo-instruct'],
+        kind: 'missing',
+      },
+      {
+        at: '2026-08-21T18:21:16Z',
+        labId: 'meta',
+        models: ['meta/muse-spark-1.2-contributor'],
+        kind: 'missing',
+      },
+    ]);
   });
 
   it('times each sku by its earliest listing, across :free twins and renamed ids', () => {
