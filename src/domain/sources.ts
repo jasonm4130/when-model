@@ -45,3 +45,19 @@ export const LEAK_SOURCE_RESULT: Readonly<Record<LeakSource, string>> = {
   hn: SOURCE.hnLeaks,
   testingcatalog: SOURCE.testingCatalog,
 };
+
+/**
+ * Sources only the 15-minute cron polls, for the availability ledger (`src/app/capture-availability.ts`).
+ * They never reach a page render, so they are not in `SOURCE` or the health list: each run logs
+ * their health in one `[availability]` line instead.
+ */
+export const AVAILABILITY_SOURCE = {
+  qwenChat: 'chat.qwen.ai models',
+  metaNewsroom: 'Meta newsroom',
+  deepseekNews: 'DeepSeek news',
+} as const;
+
+/** One Hugging Face organisation listing: one source per org, so one failed org skips only its kind. */
+export function hfOrgSource(org: string): string {
+  return `HF ${org}`;
+}

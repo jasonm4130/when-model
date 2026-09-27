@@ -1,0 +1,53 @@
+{
+  "success": true,
+  "request_id": "b6c6ebca-7b98-4076-b96c-7e10cf3a5a7f",
+  "data": {
+    "data": [
+      {
+        "id": "qwen3.7-plus",
+        "name": "Qwen3.7-Plus",
+        "object": "model",
+        "owned_by": "qwen",
+        "info": {
+          "id": "qwen3.7-plus",
+          "name": "Qwen3.7-Plus",
+          "base_model_id": null,
+          "is_active": true,
+          "is_visitor_active": true,
+          "created_at": 1732711466,
+          "updated_at": 1732711466
+        }
+      },
+      {
+        "id": "qwen3.8-max",
+        "name": "Qwen3.8-Max",
+        "object": "model",
+        "owned_by": "qwen",
+        "info": {
+          "id": "qwen3.8-max",
+          "name": "Qwen3.8-Max",
+          "base_model_id": null,
+          "is_active": true,
+          "is_visitor_active": true,
+          "created_at": 1732711466,
+          "updated_at": 1732711466
+        }
+      },
+      {
+        "id": "qwen3.8-omni-flash",
+        "name": "Qwen3.8-Omni-Flash",
+        "object": "model",
+        "owned_by": "qwen",
+        "info": {
+          "id": "qwen3.8-omni-flash",
+          "name": "Qwen3.8-Omni-Flash",
+          "base_model_id": null,
+          "is_active": true,
+          "is_visitor_active": false,
+          "created_at": 1732711466,
+          "updated_at": 1732711466
+        }
+      }
+    ]
+  }
+}

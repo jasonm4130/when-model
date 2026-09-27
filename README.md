@@ -27,6 +27,22 @@ The lead adapters cache for 30 minutes: their signals run days ahead, and every 
 
 X/Twitter has no free read API and the mirrors are gone, so the page links a watchlist of accounts instead of ingesting posts.
 
+### Availability ledger (cron only)
+
+The release forecast needs its own labelled history: when each model first became usable by someone outside its lab, and when a lab announced one ([decision 1](docs/release-forecast-2026-09-27.md)). The 15-minute cron collects it; nothing on the page reads it yet, and a page render makes no call to its sources (`test/app/load-dashboard.test.ts` counts the page's fetches). `src/app/capture-availability.ts` runs after the snapshot, score row and first-seen kinds, in its own try/catch.
+
+| Source                                                                                                          | Role                                                                         | Edge cache |
+| --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------- |
+| OpenRouter models (the dashboard's own result, every text listing, no extra call)                               | availability; `stealth/` slots are sighted but never form a release          | 10 min     |
+| chat.qwen.ai `/api/v2/models` (web app list, `data.data`)                                                       | `is_active` models are available, listed but inactive ones are announcements | 1 min      |
+| Hugging Face org listings (`Qwen`, `deepseek-ai`, `meta-llama`, `google`, `openai`, `xai-org`), newest 100 each | public text repos are available; one source and one kind per org             | 1 min      |
+| Meta newsroom RSS, DeepSeek API docs news (the docs page, then the newest post's sidebar)                       | launch-shaped posts are announcements                                        | 5 min      |
+| The dashboard's OpenAI, DeepMind, Anthropic and xAI feeds, and HN launch stories linking a lab's own site       | launch-shaped posts are announcements                                        | as above   |
+
+Each source's native ids go into `first_seen` under their own kind (`avail:<source>`, `announce:<feed>`, kept out of `LEDGER_KINDS`), so the ledger rules hold: a source that is not ok writes nothing, and a kind's first capture is a baseline. Availability kinds bump `last_seen_at` at most every 6 hours. Ids new to a kind are canonicalised to one (lab, sku) per model (`src/domain/model-id.ts`: `qwen/qwen3.8-max-prime`, `Qwen/Qwen3.8-Max-Prime` and "Introducing Qwen3.8-Max-Prime" are one sku; a date suffix becomes `@snapshot`) and written to the permanent `availability` and `announcements` tables (migration 0003), where the earliest sighting across every source wins. A row written on its kind's first capture is `baseline` and never a release. Release events are derived, never stored: `releaseEventsFromLedger` groups a lab's non-baseline rows within 2 hours of the first, the replay's rule, folds a new snapshot of a base under 30 days old into that release and tiers each event with the lab registry's rules plus `TIER_OVERRIDES` (`RELEASE_DETECTOR_VERSION`). Each run resolves open announcements against what is available (`gpt-6` by `gpt-6-sol`) and logs one `[availability]` line with each source's ok, ms, items, new skus and the new ids it could not place.
+
+Deferred, with what the probe on 27 September 2026 saw: `chat.deepseek.com` (202, AWS WAF challenge), `www.meta.ai` (403, anti-automation script), `x.ai/news` (403, Cloudflare captcha), `qwen.ai` and its blog (200, but a client-rendered shell with no data), `ai.meta.com/blog` (400 without `Sec-Fetch-*` headers, 200 with them) and the labs' model docs pages (OpenAI, Anthropic, Gemini behind a sign-in redirect loop, xAI, DeepSeek). The Gemini model API needs a key.
+
 ### DROPCON (v3)
 
 Scored 0–100 in `src/domain/dropcon.ts` from Polymarket release odds alone (`DROPCON_ALGORITHM_VERSION = 3`):
@@ -126,14 +142,14 @@ The Cache API is per Cloudflare colo, so the first visitor in a region pays one 
 
 ### Code layout
 
-| Directory        | Holds                                                                                                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/domain`     | Pure rules: labs, markets and family curves, drops, feed, DROPCON, forecast, early warnings, landed, the ledger's read side, `assembleDashboard`. No I/O, no clock. |
-| `src/adapters`   | One module per upstream: a pure DTO→domain mapper plus a cached `fetch*()`.                                                                                         |
-| `src/infra`      | Edge cache wrapper, `collect()` (timeout + degrade + timing), D1 snapshot store and ledger reads, the `HISTORY_DB` binding, text helpers.                           |
-| `src/app`        | `loadDashboard()`: fan out, collect, assemble, memoise. `captureHistory()`: the cron's snapshot, rollup and first-seen writes.                                      |
-| `src/ui`         | Presentation: formatting, what each panel selects and its source pill (`panels.ts`), the refresh fingerprint.                                                       |
-| `src/components` | Astro markup; shared styling in `src/styles/global.css`.                                                                                                            |
+| Directory        | Holds                                                                                                                                                                                                                        |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/domain`     | Pure rules: labs and their tier rules, markets and family curves, drops, feed, model ids, DROPCON, forecast, early warnings, landed, the ledger's read side, the availability ledger, `assembleDashboard`. No I/O, no clock. |
+| `src/adapters`   | One module per upstream: a pure DTO→domain mapper plus a cached `fetch*()`.                                                                                                                                                  |
+| `src/infra`      | Edge cache wrapper, `collect()` (timeout + degrade + timing), D1 snapshot store and ledger reads, the `HISTORY_DB` binding, text helpers.                                                                                    |
+| `src/app`        | `loadDashboard()`: fan out, collect, assemble, memoise. `captureHistory()`: the cron's snapshot, rollup and first-seen writes, then `captureAvailability()`.                                                                 |
+| `src/ui`         | Presentation: formatting, what each panel selects and its source pill (`panels.ts`), the refresh fingerprint.                                                                                                                |
+| `src/components` | Astro markup; shared styling in `src/styles/global.css`.                                                                                                                                                                     |
 
 `test/` mirrors `src/`. Domain and infra are tested directly, adapters against fixtures with the cache mocked, and components through Astro's container API. Run `pnpm test --coverage` to enforce the thresholds in `vitest.config.ts`; plain `pnpm test` omits the coverage gate.
 

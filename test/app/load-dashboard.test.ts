@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BroadcastCandidate } from '../../src/domain/lead';
+import { SOURCE } from '../../src/domain/sources';
 import { writeScoreSeries, type SnapshotDatabase } from '../../src/infra/snapshot-store';
 import { SqliteD1 } from '../infra/sqlite-d1';
 
@@ -7,6 +8,7 @@ afterEach(() => {
   vi.resetModules();
   vi.doUnmock('cloudflare:workers');
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 const NOW = Date.parse('2026-09-20T00:00:00Z');
@@ -241,5 +243,67 @@ describe('buildDashboard', () => {
       error: 'both mirrors failed',
     });
     expect(d.earlyWarnings.architectures.items).toEqual([]);
+  });
+});
+
+describe('buildCapture', () => {
+  it('returns the dashboard with the full source results it was assembled from', async () => {
+    const { buildCapture } = await load();
+    const { dashboard, inputs } = await buildCapture(NOW, undefined);
+    expect(inputs.drops).toMatchObject({ name: 'OpenRouter', ok: true });
+    expect(inputs.drops.data.map((d) => d.id)).toEqual(['openai/gpt-6', 'qwen/qwen4-72b']);
+    expect(inputs.feeds.map((f) => f.name)).toEqual([
+      'Hacker News',
+      'OpenAI news',
+      'DeepMind blog',
+      'Anthropic news',
+      'xAI news',
+      'GitHub SDKs',
+    ]);
+    expect(inputs.launchStories).toMatchObject({ name: SOURCE.hnLaunches, ok: true });
+    expect(dashboard.sources.map((s) => s.name)).toContain('OpenRouter');
+  });
+});
+
+/**
+ * The page's upstream calls, with every adapter real and every fetch answered 503 (no Cache API in
+ * Node, so each call reaches fetch). The availability ledger's sources are cron-only: a page render
+ * must never reach them, and the count must stay what it was before the ledger.
+ */
+describe('page upstream calls', () => {
+  const PAGE_FETCHES = 27;
+
+  it(`makes the same ${PAGE_FETCHES} fetches as before the ledger, none to a cron-only source`, async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    // `load()` registers its adapter mocks for the whole file: unregister them all.
+    for (const path of [
+      '../../src/infra/edge-cache',
+      '../../src/adapters/polymarket',
+      '../../src/adapters/openrouter',
+      '../../src/adapters/huggingface',
+      '../../src/adapters/hacker-news',
+      '../../src/adapters/testingcatalog',
+      '../../src/adapters/youtube',
+      '../../src/adapters/transformers-arch',
+      '../../src/adapters/rss',
+      '../../src/adapters/xai-news',
+      '../../src/adapters/anthropic-news',
+      '../../src/adapters/github-releases',
+    ])
+      vi.doUnmock(path);
+    vi.doMock('cloudflare:workers', () => ({ env: {} }));
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+      calls.push(String(input));
+      return new Response('unavailable', { status: 503 });
+    });
+    const { buildDashboard } = await import('../../src/app/load-dashboard');
+    await buildDashboard(NOW, undefined);
+    const cronOnly = calls.filter((url) =>
+      /chat\.qwen\.ai|[?&]author=|about\.fb\.com|api-docs\.deepseek\.com/.test(url),
+    );
+    expect(cronOnly).toEqual([]);
+    expect(calls).toHaveLength(PAGE_FETCHES);
   });
 });
