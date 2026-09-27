@@ -65,7 +65,7 @@ describe('track lines', () => {
       `Streams went up ahead of ${BROADCAST_TRACK.n} of ${BROADCAST_TRACK.n + BROADCAST_TRACK.openAiMisses.length} OpenAI launches checked, a median ${BROADCAST_TRACK.medianLeadHours} h ahead (${BROADCAST_TRACK.minLeadHours}–${BROADCAST_TRACK.maxLeadHours} h); none before GPT-5.4, GPT-5.5, GPT-6 Astra and GPT-6 Sol/Luna.`,
     );
     expect(TRACK_LINES.architectures).toBe(
-      `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases, a median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead (Qwen and Z.ai only).`,
+      `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases, a median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead (Qwen and Z.ai only), but none of the 5 since Feb 2026.`,
     );
     const rate = hitRate();
     expect(TRACK_LINES.events).toBe(`${rate.hits} of ${rate.total} past keynotes debuted a frontier model.`);

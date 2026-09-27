@@ -21,20 +21,23 @@ async function seededDatabase(): Promise<SqliteD1> {
   const insert = db.sqlite.prepare(
     'INSERT INTO score_series (slot, observed_at, algo_version, score, level, headline_p, degraded) VALUES (?, ?, 2, 64, 2, 0.6, 0)',
   );
-  for (let slot = first; slot < NOW - SLOT; slot += SLOT) {
+  for (let slot = first; slot < NOW - 2 * SLOT; slot += SLOT) {
     insert.run(new Date(slot).toISOString(), new Date(slot + 40_000).toISOString());
   }
   db.sqlite.exec('COMMIT');
-  // The newest reading, through the production write path.
-  await writeScoreSeries(db, {
-    slot: new Date(NOW - SLOT).toISOString(),
-    observedAt: new Date(NOW - SLOT + 40_000).toISOString(),
-    algorithmVersion: 2,
-    score: 95,
-    level: 1,
-    headlineP: 0.865,
-    degraded: false,
-  });
+  // The newest hour, through the production write path: two 95 captures, so the hour's median
+  // point is the newest reading.
+  for (const slot of [NOW - 2 * SLOT, NOW - SLOT]) {
+    await writeScoreSeries(db, {
+      slot: new Date(slot).toISOString(),
+      observedAt: new Date(slot + 40_000).toISOString(),
+      algorithmVersion: 2,
+      score: 95,
+      level: 1,
+      headlineP: 0.865,
+      degraded: false,
+    });
+  }
   return db;
 }
 
@@ -53,7 +56,7 @@ describe('buildHistoryResponseBody', () => {
     expect(await buildHistoryResponseBody(undefined)).toEqual({ ok: false, points: [] });
   });
 
-  it('returns the last 30 days as hourly points, ending with the newest reading', async () => {
+  it("returns the last 30 days as hourly points, ending with the newest hour's median reading", async () => {
     const db = await seededDatabase();
     const { buildHistoryResponseBody, HISTORY_WINDOW_MS } = await loadRoute(db);
     const body = await buildHistoryResponseBody(db, NOW);

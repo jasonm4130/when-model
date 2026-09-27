@@ -33,14 +33,31 @@ function byObservedAtAsc(a: ScorePoint, b: ScorePoint): number {
   return a.observedAt < b.observedAt ? -1 : a.observedAt > b.observedAt ? 1 : 0;
 }
 
-/** One point per UTC hour: the latest reading observed in that hour. */
+/**
+ * One point per UTC hour: the hour's median reading, a real capture rather than an average, so
+ * its level and odds stay the ones that capture recorded. With an even count it is the lower of
+ * the two middle scores, and equal scores keep the later capture. Degraded captures count only
+ * when the whole hour was degraded. The median, not the last capture, because a thin market
+ * dropping in and out of the curve moved v3 by 15 points between captures (53, 69, 55 on 26 Sep):
+ * one capture in four should not set the hour.
+ */
 export function downsampleHourly<T extends ScorePoint>(points: readonly T[]): T[] {
   const sorted = [...points].sort(byObservedAtAsc);
-  const buckets = new Map<string, T>();
+  const buckets = new Map<string, T[]>();
   for (const point of sorted) {
-    buckets.set(point.observedAt.slice(0, 13), point);
+    const hour = point.observedAt.slice(0, 13);
+    const bucket = buckets.get(hour);
+    if (bucket) bucket.push(point);
+    else buckets.set(hour, [point]);
   }
-  return [...buckets.values()];
+  return [...buckets.values()].map((hour) => {
+    const live = hour.filter((p) => !p.degraded);
+    if (live.length === 0) return hour[hour.length - 1];
+    // A stable sort keeps capture order among equal scores; the later one of a tie wins.
+    const byScore = [...live].sort((a, b) => a.score - b.score);
+    const mid = byScore[Math.floor((byScore.length - 1) / 2)];
+    return byScore.filter((p) => p.score === mid.score).at(-1)!;
+  });
 }
 
 /** The score bands `computeDropcon` uses, from their one definition in src/domain/dropcon.ts. */
@@ -118,7 +135,7 @@ export function splitByAlgorithmVersion(points: readonly ScorePoint[]): ScorePoi
 
 /**
  * Within each algorithm-version run: hysteresis over the raw 15-minute slots, then one
- * point per hour (the hour's latest reading and its display level). Flattened, oldest
+ * point per hour (the hour's median reading and its display level). Flattened, oldest
  * first; a consumer draws a break wherever `algorithmVersion` changes between points.
  */
 export function buildHistorySeries(points: readonly ScorePoint[]): DisplayPoint[] {
