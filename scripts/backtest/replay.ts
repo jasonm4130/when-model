@@ -6,7 +6,8 @@
  *   E(t, h) = some frontier lab has a text-output release event (OpenRouter, grouped and
  *             deduplicated by `releaseEvents`) whose first listing falls in (t, t + h]
  *
- * out of sample, and writes data/backtest/v3-replay.json. Everything above `main()` is pure and
+ * out of sample, and writes data/backtest/v3-replay.json, plus the labelled tiers of its release
+ * markers in data/backtest/labelled-releases.json (`labels.ts`). Everything above `main()` is pure and
  * deterministic for a given raw set; the output is formatted with oxfmt so `pnpm lint` stays clean.
  *
  * Leak control. The CLOB pull kept only the last 15 days of each rung (clobWindow in fetch.ts), so a
@@ -50,6 +51,7 @@ import {
 } from './build';
 import type { OpenRouterModel } from './events';
 import { OUT_DIR, readRaw } from './io';
+import { buildLabelledReleases } from './labels';
 import { DAY, eventKind, HOUR, iso, parseRung, priceAt, round, seriesPoints, type Point } from './markets';
 
 /** Bumped when the output shape or a metric's definition changes. */
@@ -1067,10 +1069,17 @@ export function buildReplay(raw: RawPulls) {
 export type Replay = ReturnType<typeof buildReplay>;
 
 async function main(): Promise<void> {
+  const raw = await readRaw();
   const out = `${OUT_DIR}/v3-replay.json`;
-  await writeFile(out, `${JSON.stringify(buildReplay(await readRaw()), null, 2)}\n`);
-  execFileSync('pnpm', ['exec', 'oxfmt', out], { stdio: 'inherit' });
-  console.log(`wrote ${out}`);
+  // The labelled history of the same markers: canonicalised, tiered and checked against the ledger's detector.
+  const labelled = `${OUT_DIR}/labelled-releases.json`;
+  await writeFile(out, `${JSON.stringify(buildReplay(raw), null, 2)}\n`);
+  await writeFile(
+    labelled,
+    `${JSON.stringify(buildLabelledReleases(raw.openrouter, raw.pulledAt), null, 2)}\n`,
+  );
+  execFileSync('pnpm', ['exec', 'oxfmt', out, labelled], { stdio: 'inherit' });
+  console.log(`wrote ${out} and ${labelled}`);
 }
 
 const argv = (globalThis as { process?: { argv?: string[] } }).process?.argv ?? [];
