@@ -18,7 +18,7 @@ import { SCORE_FROM } from './build';
 import type { OpenRouterModel } from './events';
 import { HOUR, iso } from './markets';
 import { frontierReleases, replayDrops } from './replay';
-import { TIER_REVIEW } from './tier-review';
+import { TIER_REVIEW, TIER_REVIEWED } from './tier-review';
 
 export const LABELS_VERSION = 1;
 
@@ -187,6 +187,7 @@ export function buildLabelledReleases(models: readonly OpenRouterModel[], pulled
         'OpenRouter first listings stand in for first public availability. The forward ledger also reads chat.qwen.ai and Hugging Face, so its release times will run earlier than these.',
         'Muse Spark 1.0 (meta.ai, 2026-04-08) never listed on OpenRouter and is missing.',
       ],
+      reviewed: TIER_REVIEWED,
     },
     counts: {
       releases: releases.length,

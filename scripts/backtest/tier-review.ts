@@ -21,6 +21,21 @@ export interface TierReview {
   note?: string;
 }
 
+/**
+ * The review decision 2 asks for: Jason's answers on the four calls that change which releases
+ * count, given on 27 September 2026. Every other ambiguous row follows from these rules.
+ */
+export const TIER_REVIEWED = {
+  by: 'Jason',
+  on: '2026-09-27',
+  decisions: [
+    'Meta: a new Muse Spark point version (1.1, 1.2, 1.3) is flagship; the contributor tier, Muse Glimmer and Muse Code are minor.',
+    'Google: flagship is a new Pro, Ultra or Deep Think version, or the first model of a new N.0 or N.5 generation (so Gemini 3.5 Flash); Flash point bumps are minor.',
+    "Qwen: flagship is a version's first Max or Max-Preview, or its debut when that is not a small tier (so Qwen3.6-Plus and the Qwen3.8 2.4T open weights); later Plus, dated snapshots and Max-Prime are minor.",
+    'DeepSeek: flagship is a new V or R version in the Pro tier or with no tier; a Flash-only version (V4.1 Flash) and a dated or GA re-release (V4 Pro 0813) are minor.',
+  ],
+} as const;
+
 export const TIER_REVIEW: readonly TierReview[] = [
   {
     at: '2026-04-02T12:39:17Z',
