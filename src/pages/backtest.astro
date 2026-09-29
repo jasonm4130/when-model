@@ -128,8 +128,8 @@ const toc = [
   description={`Can public signals see a frontier AI launch coming? An hourly replay of Polymarket release odds from ${longDate(meta.window.from)} to ${longDate(meta.window.until)}, scored out of sample on ${FORECAST_CONSTANTS.testedOn.events} launches, plus ${events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in its tables.`}
 >
   <header class="bt-hero wrap">
-    <a class="home" href="/"><span class="wm">when<span class="m">model</span></span><span class="tiny">Back to the dashboard</span></a>
-    <h1>BACKTEST</h1>
+    <a class="home" href="/"><span class="wm">when<span class="m plate" data-plate="model">model</span></span><span class="tiny">Back to the dashboard</span></a>
+    <h1 class="plate" data-plate="BACKTEST">BACKTEST</h1>
     <p class="bt-question">Can public signals see a frontier model launch coming?</p>
     <p class="bt-method">
       <span class="tiny">METHOD</span>
@@ -331,10 +331,10 @@ const toc = [
   /* The wordmark doubles as the way home; the page title is the one poster-size word. */
   .home { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 20px; flex-wrap: wrap; padding-bottom: 12px; margin-bottom: clamp(28px, 5vw, 64px); border-bottom: 1px solid var(--ink); color: var(--ink); text-decoration: none; }
   .home .wm { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; text-transform: lowercase; letter-spacing: -0.01em; }
-  .home .wm .m { color: var(--accent); }
+  .home .wm .m { --plate-x: 0.045em; --plate-y: 0.04em; color: var(--blue); }
   .home .tiny { color: var(--ink-2); }
   .home:hover .tiny { color: var(--accent-ink); }
-  .bt-hero h1 { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d1); line-height: 0.82; letter-spacing: -0.02em; color: var(--ink); margin-bottom: clamp(20px, 3vw, 36px); overflow-wrap: anywhere; }
+  .bt-hero h1 { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d1); line-height: 0.82; letter-spacing: -0.02em; color: var(--ink); margin-bottom: clamp(20px, 3vw, 36px); overflow-wrap: anywhere; --plate-x: 0.03em; --plate-y: 0.026em; }
   .bt-question { font-family: var(--font-text); font-size: var(--fs-lede); color: var(--ink); max-width: 30ch; margin-bottom: var(--s4); line-height: 1.2; text-wrap: balance; }
   .bt-method, .bt-verdict { max-width: 68ch; font-size: var(--fs-body); line-height: 1.55; }
   .bt-method { color: var(--ink-2); margin-bottom: var(--s3); }

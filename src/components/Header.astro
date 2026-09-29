@@ -30,7 +30,7 @@ const fingerprint = dashboardFingerprint(d);
       </span>
     </div>
     <div class="brand">
-      <h1 class="wordmark">when<span class="m">model</span><span class="sr-only">: frontier model release intelligence</span></h1>
+      <h1 class="wordmark">when<span class="m plate" data-plate="model">model</span><span class="sr-only">: frontier model release intelligence</span></h1>
       <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
     </div>
   </div>
@@ -43,14 +43,14 @@ const fingerprint = dashboardFingerprint(d);
   .statusbar .left, .statusbar .right { display: flex; align-items: center; gap: 0 20px; flex-wrap: wrap; }
   .statusbar .right { margin-left: auto; }
   .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 20px; flex-wrap: wrap; min-width: 0; padding-top: 12px; }
-  /* The wordmark is the display face at its narrowest, "model" in the one colour. */
+  /* The wordmark is the display face at its narrowest, "model" in the blue with a pink plate under it. */
   .wordmark { font-size: 40px; line-height: 1; color: var(--ink); }
-  .wordmark .m { color: var(--accent); }
+  .wordmark .m { --plate-x: 0.045em; --plate-y: 0.04em; color: var(--blue); }
   .tag-line { font-size: var(--fs-sm); font-style: italic; color: var(--ink-2); }
   .status-live { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); }
   .status-live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
   .status-live.warn { color: var(--accent-ink); }
-  .status-live.warn::before { background: var(--accent); }
+  .status-live.warn::before { background: var(--pink); }
   .clock, .next { font-variant-numeric: tabular-nums; }
   .clock { color: var(--ink); }
   .refresh-toggle { min-height: 44px; padding: 0 2px; color: var(--ink); background: none; border: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.35em; text-decoration-color: var(--line2); }

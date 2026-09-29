@@ -5,7 +5,7 @@ import { levelBandsText, WEIGHTS } from '../domain/dropcon';
 import { displayOutcomes } from '../domain/market';
 import { SOURCE } from '../domain/sources';
 import { dropconPill, forecastAnswer, levelBaseRateText, outcomeOdds, topReadText } from '../ui/odds';
-import { PANEL_ROWS, asOfMs, releaseRows, sourceOk, sourcePill } from '../ui/panels';
+import { PANEL_ROWS, asOfMs, labInk, releaseRows, sourceOk, sourcePill } from '../ui/panels';
 import DropconScope from './DropconScope.astro';
 interface Props {
   d: Dashboard;
@@ -44,8 +44,8 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
           {noLabData ? (
             <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
           ) : hottest && (
-            <a class="dc-hot" href={`#lab-${hottest.id}`}>
-              <span class="tiny">HOTTEST LAB</span> <b class="dc-big">{hottest.name}</b> <span class="dc-sub">heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}</span>
+            <a class={`dc-hot ink-${labInk(hottest.id)}`} href={`#lab-${hottest.id}`}>
+              <span class="tiny">HOTTEST LAB</span> <b class="dc-big"><i class="lab-chip" aria-hidden="true">{hottest.glyph}</i>{hottest.name}</b> <span class="dc-sub">heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}</span>
             </a>
           )}
         </div>
@@ -57,15 +57,16 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
               <span class="dc-rungs">
                 {leadOutcomes.map((o) => {
                   const odds = outcomeOdds(o);
-                  return <span class="rung"><b class:list={{ thin: odds.thin }}>{odds.text}</b> {o.label}</span>;
+                  // A priced rung prints its odds as a field of pink as wide as the price; a thin book has none.
+                  return <span class="rung" style={odds.thin ? undefined : `--p:${Math.round(o.yes * 100)}%`}><b class:list={{ thin: odds.thin }}>{odds.text}</b> <span class="rl">{o.label}</span></span>;
                 })}
               </span>
             </>
           ) : <p class="dc-sub">{polymarketUp ? 'No open release market right now.' : 'Polymarket unreachable. Odds return when it does.'}</p>}
         </div>
         {d.landed.bannerText && (
-          <div class="dc-cell">
-            <p class="dc-landed"><span class="tiny">JUST LANDED</span> <b class="dc-big">{d.landed.bannerText.replace(/^[^:]*:\s*/, '')}</b> <span class="dc-sub"><span class="sr-only">{d.landed.bannerText}. </span>First listed on OpenRouter; shown, not scored.</span></p>
+          <div class="dc-cell dc-landed-cell">
+            <p class="dc-landed"><span class="stamp hot thunk">JUST LANDED</span> <b class="dc-big">{d.landed.bannerText.replace(/^[^:]*:\s*/, '')}</b> <span class="dc-sub"><span class="sr-only">{d.landed.bannerText}. </span>First listed on OpenRouter; shown, not scored.</span></p>
           </div>
         )}
       </div>
@@ -114,24 +115,59 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
   /* The answer strip: two or three cells under one rule, each a label, a name and one line. */
   .dc-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 28px clamp(24px, 4vw, 56px); border-top: 1px solid var(--ink); padding-top: 18px; }
   .dc-cell { min-width: 0; }
-  /* On a wide screen the market cell takes the room its rungs need, so they sit in one row. */
-  @media (min-width: 1100px) {
-    .dc-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr); }
-    .dc-strip:has(> :nth-child(3)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr) minmax(0, 1fr); }
+  @media (min-width: 1100px) and (max-width: 1239.98px) {
+    .dc-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); }
+    .dc-strip:has(> :nth-child(3)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); }
   }
   .dc-cell .tiny { display: block; margin-bottom: 10px; color: var(--ink-2); }
-  .dc-big { display: block; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d3); line-height: 0.98; text-transform: uppercase; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
-  a.dc-big:hover { color: var(--accent-ink); }
+  .dc-big { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d3); line-height: 0.98; text-transform: uppercase; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+  .dc-big .lab-chip { font-size: 16px; }
   .dc-sub { display: block; margin-top: 10px; font-size: var(--fs-sm); line-height: 1.4; color: var(--ink-2); }
   .dc-hot { display: block; color: var(--ink); text-decoration: none; }
   .dc-hot:hover .dc-big { color: var(--accent-ink); }
   p.dc-hot { font-size: var(--fs-sm); }
   .dc-mkt { display: block; font-size: var(--fs-lg); line-height: 1.25; color: var(--ink); text-decoration: none; }
   .dc-mkt:hover { color: var(--accent-ink); }
-  /* The market's rungs as a small table of odds: the number large, its deadline under it. */
-  .dc-rungs { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px 20px; margin-top: 14px; font-size: var(--fs-xs); line-height: 1.3; color: var(--ink-2); }
-  .rung b { display: block; font-family: var(--font-display); font-size: var(--fs-d3); font-weight: 800; font-stretch: 62.5%; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* The market's rungs as a ruled list: the price large, its deadline on the same line (never
+     wrapped), and a grainy pink bar along its rule as long as the price. */
+  .dc-rungs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 0 28px; margin-top: 12px; font-size: var(--fs-sm); line-height: 1.3; color: var(--ink-2); }
+  .rung { position: relative; isolation: isolate; display: flex; align-items: baseline; gap: 12px; min-width: 0; padding: 5px 0 4px; border-bottom: 1px solid var(--rule-soft); }
+  .rung::before { content: ''; position: absolute; z-index: -1; left: 0; bottom: -1px; height: 5px; width: var(--p, 0%); background: var(--pink); -webkit-mask: var(--grain) 0 0 / 180px 180px; mask: var(--grain) 0 0 / 180px 180px; mix-blend-mode: multiply; }
+  .rung b { flex: none; min-width: 3.4ch; font-family: var(--font-display); font-size: 28px; font-weight: 800; font-stretch: 62.5%; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .rung b.thin { color: var(--ink-2); font-weight: 600; }
+  .rung .rl { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink); }
+  .dc-landed .stamp { --tilt: -4deg; --thunk-delay: 1300ms; margin: 2px 0 12px; }
+  @media (max-width: 640px) {
+    .rung { padding: 3px 0 2px; }
+    .rung b { font-size: 24px; }
+  }
+  /* A wide screen hangs the strip down the poster's right side as a column of three tickets, so the
+     poster fills the width and the week's instrument comes up onto the first screen. */
+  @media (min-width: 1240px) {
+    .dc-hero { margin-top: 24px; }
+    .dc-top { margin-bottom: 16px; }
+    .dc-landed { display: flex; flex-wrap: wrap; align-items: center; column-gap: 14px; }
+    .dc-landed .stamp { order: 1; margin: 0; }
+    .dc-landed .dc-sub { order: 2; flex-basis: 100%; }
+    .dc-strip { grid-template-columns: minmax(0, 1fr); gap: 0; border-top: 0; padding-top: 0; }
+    .dc-cell { padding: 14px 0 18px; border-top: 1px solid var(--ink); }
+    .dc-cell:first-child { border-top-width: 4px; padding-top: 12px; }
+    .dc-big { font-size: clamp(26px, 1rem + 1.2vw, 34px); }
+    .dc-mkt { font-size: var(--fs-body); }
+    .dc-sub { margin-top: 6px; }
+  }
+  /* A short wide screen (a 1366 x 768 laptop) sets the hottest lab and the landed model side by side
+     over the market, so the column is short enough for the week's instrument to start on screen. */
+  @media (min-width: 1240px) and (max-height: 820px) {
+    .dc-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'hot landed' 'lead lead'; column-gap: 24px; }
+    .dc-strip:not(:has(.dc-landed-cell)) { grid-template-areas: 'hot hot' 'lead lead'; }
+    .dc-cell:first-child { grid-area: hot; }
+    .dc-lead { grid-area: lead; }
+    .dc-landed-cell { grid-area: landed; border-top-width: 4px; padding-top: 12px; }
+    .dc-landed { display: block; }
+    .dc-landed .stamp { margin: 0 0 10px; }
+    .dc-big { font-size: 26px; }
+  }
 
   /* Below the instrument: the arithmetic, folded, and the plain answer to "is this a forecast?" */
   .dc-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px clamp(24px, 4vw, 56px); align-items: start; margin-top: clamp(32px, 4vw, 56px); }

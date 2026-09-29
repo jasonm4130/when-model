@@ -3,6 +3,7 @@ import type { Dashboard } from '../domain/dashboard';
 import type { LabOddsRead } from '../domain/lab-status';
 import { daysLabel, monthInitials, shortDate } from '../ui/format';
 import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue } from '../ui/odds';
+import { labInk } from '../ui/panels';
 import { leadFlags } from '../ui/signals';
 interface Props { d: Dashboard; now?: Date }
 const { d, now = new Date() } = Astro.props;
@@ -34,14 +35,14 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
       const flags = leadFlags(d.earlyWarnings, l.id);
       const p7 = l.odds?.p7;
       return (
-        <li class="lab" id={`lab-${l.id}`}>
+        <li class={`lab ink-${labInk(l.id)}`} id={`lab-${l.id}`}>
           <details class="lab-fold">
             <summary class="lab-row">
               <span class="rank" aria-hidden="true">{rank(idx)}</span>
               <span class="lab-id">
-                <h3 class="lab-name">{l.name}</h3>
+                <span class="lab-title"><i class="lab-chip" aria-hidden="true">{l.glyph}</i><h3 class="lab-name">{l.name}</h3></span>
                 <span class="lab-tags">
-                  <span class:list={['tag', 'lab-status', { shipping: l.status === 'SHIPPING' }]}>{l.status}</span>
+                  <span class:list={l.status === 'SHIPPING' ? ['stamp', 'hot', 'lab-status', 'shipping'] : ['tag', 'lab-status']}>{l.status}</span>
                   {flags.length > 0 && <span class="lab-flagged">{flags.length} LEAD FLAG{flags.length === 1 ? '' : 'S'}</span>}
                 </span>
               </span>
@@ -112,7 +113,7 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
   .labs-kicker { margin: calc(var(--s4) * -0.5) 0 var(--s4); }
   .labs-grid { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
   .lab { scroll-margin-top: 16px; border-bottom: 1px solid var(--rule-soft); }
-  .lab:target .lab-row { box-shadow: inset 4px 0 0 var(--accent); }
+  .lab:target .lab-row { box-shadow: inset 4px 0 0 var(--pink); }
 
   /* One lab, one line: rank, name, the 7-day odds large, the rest small. */
   .lab-row {
@@ -128,13 +129,16 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
   .lab-row:hover { background: color-mix(in srgb, var(--paper-2) 60%, transparent); }
   .lab-row:hover .lab-name { color: var(--accent-ink); }
   .lab-row:focus-visible { outline-offset: -2px; }
-  .rank { grid-area: rank; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--line2); font-variant-numeric: tabular-nums; }
-  .lab:first-child .rank { color: var(--accent); }
+  .rank { grid-area: rank; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .lab:first-child .rank { color: var(--pink-deep); }
   .lab-id { grid-area: id; min-width: 0; }
-  .lab-name { font-size: clamp(28px, 1.2rem + 1.4vw, 40px); line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; transition: color var(--fast) var(--ease); }
+  .lab-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .lab-title .lab-chip { width: 30px; height: 30px; font-size: 17px; transition: transform var(--fast) var(--ease); }
+  .lab-row:hover .lab-chip { transform: rotate(-8deg) scale(1.08); }
+  .lab-name { min-width: 0; font-size: clamp(28px, 1.2rem + 1.4vw, 40px); line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; transition: color var(--fast) var(--ease); }
   .lab-tags { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-top: 8px; }
   .lab-status { color: var(--ink-2); border-color: var(--rule-soft); }
-  .lab-status.shipping { color: var(--accent-ink); border-color: currentColor; }
+  .lab-status.shipping { --tilt: -3deg; padding: 3px 7px 2px; font-size: var(--fs-pill); color: var(--pink-ink); border-color: currentColor; }
   .lab-flagged { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--accent-ink); }
   .lab-odds { grid-area: odds; display: grid; justify-items: end; text-align: right; }
   .lab-odds .metric-value { margin: 0; font-size: clamp(44px, 1.6rem + 2.4vw, 64px); line-height: 0.9; }
@@ -147,8 +151,9 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
   .lab-foot { grid-area: foot; display: grid; gap: 8px; min-width: 0; }
   .heat-line { color: var(--ink-2); }
   .heat-line > span { white-space: nowrap; }
-  .bar.heat { height: 4px; }
-  .lab:first-child .bar.heat > i { background: var(--accent); }
+  /* Each lab's heat prints in its ink, with the drum's grain in it. */
+  .bar.heat { height: 6px; }
+  .bar.heat > i { background: var(--lab); -webkit-mask: var(--grain) 0 0 / 180px 180px; mask: var(--grain) 0 0 / 180px 180px; }
   .lab-toggle { grid-area: toggle; justify-self: end; font-family: var(--font-display); font-size: 28px; font-weight: 400; font-stretch: 100%; line-height: 1; }
   .lab-toggle::before { content: '+'; }
   .lab-fold[open] .lab-toggle::before { content: '−'; }

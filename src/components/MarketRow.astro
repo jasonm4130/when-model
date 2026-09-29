@@ -39,6 +39,10 @@ const tone = (p: number) => (p >= 0.5 ? 'hi' : p >= 0.2 ? 'mid' : 'lo');
   .outs { display: flex; gap: 4px 20px; flex-wrap: wrap; margin-top: 8px; padding-left: 19px; font-size: var(--fs-sm); color: var(--ink-2); }
   .compact .outs { padding-left: 0; margin-top: 6px; }
   .out { overflow-wrap: anywhere; }
+  /* A rung's price and deadline stay on one line wherever there is room for it. */
+  @media (min-width: 481px) {
+    .out { white-space: nowrap; }
+  }
   .out b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 24px; line-height: 1; margin-right: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .compact .out b { font-size: 19px; }
   .out b.hi { color: var(--ink); }

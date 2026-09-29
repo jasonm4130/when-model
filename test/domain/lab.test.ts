@@ -121,15 +121,21 @@ describe('lab colours', () => {
   const token = (name: string) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})\\b`, 'i').exec(css)?.[1];
   const background = token('bg');
 
-  it('text tokens reach 4.5:1 against the paper background', () => {
+  it('text tokens reach 7:1 against the paper, display inks 3:1, and the fluorescent pink is a fill', () => {
     expect(background).toBe('#f1eee6');
     expect(token('paper')).toBe(background);
-    for (const name of ['ink', 'ink-2', 'accent-ink']) {
-      expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(4.5);
+    // Running text, and the small-text versions of the two spot inks, clear 7:1 on paper and on paper-2.
+    for (const name of ['ink', 'ink-2', 'accent-ink', 'pink-ink', 'blue-ink']) {
+      expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(7);
+      expect(contrast(token(name)!, token('paper-2')!), `${name} on paper-2`).toBeGreaterThanOrEqual(7);
     }
-    // The full-strength accent is for display sizes and fills only: it passes the 3:1 large-text bar, not 4.5:1.
-    expect(contrast(token('accent')!, background!)).toBeGreaterThanOrEqual(3);
-    expect(contrast(token('accent')!, background!)).toBeLessThan(4.5);
+    // The full-strength inks are for display sizes and fills only: they pass the 3:1 large-text bar, not 4.5:1.
+    for (const name of ['accent', 'blue', 'pink-deep', 'ink-3']) {
+      expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(3);
+      expect(contrast(token(name)!, background!), name).toBeLessThan(4.5);
+    }
+    // Riso fluorescent pink cannot carry type on paper at all: it is only ever a field, a bar or a plate.
+    expect(contrast(token('pink')!, background!)).toBeLessThan(3);
   });
 
   it('never ink markup in a lab colour, which was tuned for the old dark page', () => {

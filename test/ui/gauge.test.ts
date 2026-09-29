@@ -11,6 +11,7 @@ import { buildInstrument } from '../../src/domain/instrument';
 import type { Market } from '../../src/domain/market';
 import { SOURCE } from '../../src/domain/sources';
 import { dropconTitle } from '../../src/ui/odds';
+import { labInk } from '../../src/ui/panels';
 import type { ScrubData } from '../../src/ui/readout';
 import { TRACK_LINES } from '../../src/ui/signals';
 import { readings, series } from '../fixtures/history';
@@ -113,7 +114,11 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(html).toContain('NO READINGS YET');
     expect(html).toContain('v3 history starts 26 Sep: the 15-minute capture writes the first point.');
     expect(html).not.toContain('class="sc-line"');
-    expect(html).toMatch(new RegExp(`class="dc-num head" data-num[^>]*>${d.dropcon.level}<`));
+    expect(html).toMatch(
+      new RegExp(
+        `class="dc-num head plate over" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
+      ),
+    );
     expect(html).toContain(`--y:${100 - d.dropcon.score}`);
     // The readout starts at NOW, from the same function the browser runs.
     expect(html).toMatch(/data-r-when[^>]*>NOW · 26 SEP 12:00Z</);
@@ -132,7 +137,11 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(data).toMatchObject({ history: 'unavailable', pts: [] });
     expect(data.live).toMatchObject({ state: 'ok', score: d.dropcon.score, level: d.dropcon.level });
     // The big number is the live reading all the same.
-    expect(html).toMatch(new RegExp(`class="dc-num head" data-num[^>]*>${d.dropcon.level}<`));
+    expect(html).toMatch(
+      new RegExp(
+        `class="dc-num head plate over" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
+      ),
+    );
   });
 
   it('draws an old version as a labelled hatch, never a line, and calls a young v3 line what it is', async () => {
@@ -222,10 +231,12 @@ describe('DropconScope: the level and its week as one instrument', () => {
     );
     expect(html).toContain(`LEVEL ${d.dropcon.level} OF 5</span>`);
     // Stamped on the number itself, so the first screen says it wherever the number is.
-    expect(html).toMatch(/class="sc-eq-nf"[^>]*><span class="sr-only"[^>]*>, <\/span>NOT A FORECAST<\/span>/);
+    expect(html).toMatch(
+      /class="sc-eq-nf stamp hot thunk"[^>]*><span class="sr-only"[^>]*>, <\/span>NOT A FORECAST<\/span>/,
+    );
     for (const inputs of [floorInputs, darkInputs]) {
       const off = await render(DropconScope, { d: dashboard(inputs), now: NOW });
-      expect(off).not.toContain('class="sc-eq-nf"');
+      expect(off).not.toContain('sc-eq-nf');
     }
   });
 
@@ -312,6 +323,7 @@ describe('Dropcon for a first-time reader', () => {
     const html = await render(Dropcon, { d, now: NOW });
     expect(d.dropcon.state).toBe('floor');
     expect(html).toMatch(/class="section wrap reveal dc-hero"[^>]*style="--lvl:var\(--muted\)"/);
+    // A floor is not a reading: no second plate, no misprint.
     expect(html).toMatch(/class="dc-num head" data-num[^>]*>5</);
     expect(html).toContain('FLOOR (ODDS OFFLINE)');
     expect(html).toContain('class="sc-dot"');
@@ -451,8 +463,17 @@ describe('Labs cards', () => {
     const d = dashboard();
     const html = await render(Labs, { d });
     expect(
-      html.match(/<li class="lab"[^>]*><details class="lab-fold"[^>]*><summary class="lab-row"/g),
+      html.match(
+        /<li class="lab ink-(?:pink|blue|ink)"[^>]*><details class="lab-fold"[^>]*><summary class="lab-row"/g,
+      ),
     ).toHaveLength(d.labs.length);
+    // Each row prints in its lab's riso ink, and carries the lab's glyph so two labs in one ink still differ.
+    for (const lab of d.labs)
+      expect(html).toMatch(
+        new RegExp(
+          `<li class="lab ink-${labInk(lab.id)}"[^>]*id="lab-${lab.id}"[\\s\\S]*?class="lab-chip"[^>]*>${lab.glyph}<`,
+        ),
+      );
     // Closed by default, so ten labs read as ten lines, ranked from 01 in heat order.
     expect(html).not.toMatch(/<details class="lab-fold"[^>]*open/);
     expect(html).toMatch(/class="rank"[^>]*aria-hidden="true"[^>]*>01</);

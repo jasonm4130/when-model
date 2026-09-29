@@ -20,7 +20,7 @@ import {
   STALE_AFTER_MS,
   asOfMs,
   dropPrice,
-  feedColour,
+  labInk,
   otherRows,
   releaseRows,
   sourceErrorText,
@@ -229,14 +229,14 @@ describe('panel selections', () => {
     expect(dropPrice(listing(1))).toBe('$1 / $4');
   });
 
-  it('colours a lab’s own feed from LABS, and Hacker News apart from every lab (UI-15)', () => {
-    const color = (id: string) => LABS.find((l) => l.id === id)!.color;
-    expect(feedColour('openai')).toBe(color('openai'));
-    expect(feedColour('deepmind')).toBe(color('google'));
-    expect(feedColour('anthropic')).toBe(color('anthropic'));
-    expect(feedColour('xai')).toBe(color('xai'));
-    expect(feedColour('hn')).toBe('var(--yellow)');
-    expect(feedColour('hn')).not.toBe(feedColour('anthropic'));
+  it('prints every lab in one of the three riso inks, and each ink carries more than one lab (UI-15)', () => {
+    const inks = LABS.map((l) => labInk(l.id));
+    expect(new Set(inks)).toEqual(new Set(['pink', 'blue', 'ink']));
+    // The ink only groups labs; the glyph beside it has to tell them apart.
+    expect(new Set(LABS.map((l) => l.glyph)).size).toBe(LABS.length);
+    expect(labInk('anthropic')).toBe('pink');
+    expect(labInk('google')).toBe('blue');
+    expect(labInk('openai')).toBe('ink');
     for (const source of SOURCES) expect(FEED_LABELS[source]).toBeTruthy();
   });
 });

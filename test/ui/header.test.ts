@@ -42,7 +42,10 @@ describe('Header', async () => {
       const html = await container.renderToString(Header, { props: { d } });
       expect(html).not.toContain('ticker');
       expect(html).not.toContain('NEW ON OPENROUTER');
-      expect(html).toMatch(/<h1 class="wordmark"[^>]*>when<span class="m"[^>]*>model<\/span>/);
+      // "model" prints twice, once as a pink plate out of register; the plate's copy is an attribute, read once.
+      expect(html).toMatch(
+        /<h1 class="wordmark"[^>]*>when<span class="m plate" data-plate="model"[^>]*>model<\/span>/,
+      );
     }
   });
 

@@ -1,19 +1,30 @@
 /* ───────────────────────────── tokens ─────────────────────────────
-   A typographic poster: warm paper, black ink, one electric vermilion. Type does the work; rules
-   (lines) divide; there are no boxes, glows or textures. */
+   A risograph gig poster: warm paper, and three spot inks that overprint. Black carries the words;
+   fluorescent pink and blue are the colour, printed as fields, plates and stamps. Where two inks
+   overlap they multiply, as they do on the drum. Texture belongs to the inks at display sizes and in
+   colour fields; running text is always flat black on paper. */
 :root {
   --paper: #f1eee6;
   --paper-2: #e8e4da;
   --ink: #141312;
-  /* 6.3:1 on paper: every small secondary line. */
-  --ink-2: #57534b;
+  /* 8.1:1 on paper (7.4:1 on paper-2): every small secondary line clears 7:1. */
+  --ink-2: #4a463f;
   --rule-soft: #d3cdc1;
-  /* The one colour. #ff3c00 is 3.1:1 on paper, so it is only ever display type (24px and up) or a
-     fill; small text in the colour uses --accent-ink, 5.0:1. */
-  --accent: #ff3c00;
-  --accent-ink: #c42a00;
+  /* Rank numerals and other quiet display type: 4.0:1, so never small text. */
+  --ink-3: #7a746a;
+  /* Riso Fluorescent Pink. 2.7:1 on paper, so it is never text on its own: fields, plates, bars. */
+  --pink: #ff48b0;
+  /* The pink for display type (4.4:1) and for small text (7.9:1). */
+  --pink-deep: #d6007a;
+  --pink-ink: #8f0050;
+  /* Riso Blue. 4.1:1: display type (24px and up) and fields; small text uses --blue-ink, 8.0:1. */
+  --blue: #0078bf;
+  --blue-ink: #004a7a;
+  /* The accent is the blue plate; the hot accent (warnings, SHIPPING, the level-1 surge) is the pink. */
+  --accent: #0078bf;
+  --accent-ink: #8f0050;
 
-  /* The names the older components use, mapped onto the poster palette. */
+  /* The names the older components use, mapped onto the riso inks. */
   --bg: #f1eee6;
   --bg2: #e8e4da;
   --panel: transparent;
@@ -24,13 +35,19 @@
   --text: var(--ink);
   --muted: var(--ink-2);
   --fg: var(--ink);
-  --magenta: var(--accent-ink);
-  --red: var(--accent-ink);
-  --orange: var(--accent-ink);
-  --cyan: var(--ink);
-  --blue: var(--ink);
+  --magenta: var(--pink-ink);
+  --red: var(--pink-ink);
+  --orange: var(--pink-ink);
+  --cyan: var(--blue-ink);
   --yellow: var(--ink);
   --green: var(--ink);
+
+  /* Print texture. Grain knocks small specks out of an ink, the way a riso drum starves; the
+     halftone is a tint of an ink as dots. Both are masks and backgrounds on colour, never on text. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -5 0 0 0 3.55'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
+  --halftone-size: 5px;
+  --plate-x: 0.028em;
+  --plate-y: 0.018em;
 
   /* Fonts: fonts.css re-points these at the webfonts and their metric-matched fallbacks. */
   --font-display: 'Arial Narrow', sans-serif;
@@ -96,7 +113,7 @@ body {
   overflow-x: hidden;
 }
 ::selection {
-  background: var(--accent);
+  background: var(--pink);
   color: var(--ink);
 }
 a {
@@ -328,8 +345,8 @@ button {
 }
 .pill.warn::before,
 .pill.err::before {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--pink);
+  border-color: var(--pink);
 }
 a.pill:hover {
   color: var(--accent-ink);
@@ -342,8 +359,8 @@ button.pill {
   background: var(--ink);
 }
 button.pill::before {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--pink);
+  border-color: var(--pink);
 }
 button.pill:hover {
   background: var(--accent-ink);
@@ -644,4 +661,154 @@ code {
     linear-gradient(270deg, var(--scroll-cover) 40%, transparent) right center / 32px 100% no-repeat local,
     linear-gradient(90deg, rgba(20, 19, 18, 0.22), transparent) left center / 12px 100% no-repeat scroll,
     linear-gradient(270deg, rgba(20, 19, 18, 0.22), transparent) right center / 12px 100% no-repeat scroll;
+}
+
+/* ───────────────────────────── riso ─────────────────────────────
+   The print: grain, halftone, stamps, lab inks and the section swipes. */
+
+/* An ink with the drum's grain in it. Only on colour: a plate, a field, a bar, never a line of text. */
+.riso-grain {
+  -webkit-mask: var(--grain) 0 0 / 180px 180px;
+  mask: var(--grain) 0 0 / 180px 180px;
+}
+/* A tint of an ink as dots, for a field that should read lighter than solid. */
+.halftone {
+  background: radial-gradient(circle, var(--tone, var(--pink)) 0 38%, transparent 42%) 0 0 /
+    var(--halftone-size) var(--halftone-size);
+}
+
+/* The lab inks. The ink groups labs; the glyph printed on it names the lab. */
+.ink-pink {
+  --lab: var(--pink);
+  --lab-type: var(--pink-deep);
+  --lab-on: var(--ink);
+}
+.ink-blue {
+  --lab: var(--blue);
+  --lab-type: var(--blue);
+  --lab-on: var(--paper);
+}
+.ink-ink {
+  --lab: var(--ink);
+  --lab-type: var(--ink);
+  --lab-on: var(--paper);
+}
+/* A lab's chip: a square of its ink with its glyph knocked out of it (printed on it, on pink). */
+.lab-chip {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  font-family: var(--font-text);
+  font-size: 15px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  color: var(--lab-on);
+  background: var(--lab);
+  mix-blend-mode: multiply;
+}
+
+/* A rubber stamp: wide capitals in a double rule, set a few degrees off square, overprinting what is
+   under it. Its ink is dark enough for small text (8:1). */
+.stamp {
+  --tilt: -3deg;
+  display: inline-block;
+  padding: 5px 9px 4px;
+  font-family: var(--font-label);
+  font-size: var(--fs-tiny);
+  font-weight: 800;
+  font-stretch: 125%;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--stamp, var(--blue-ink));
+  border: 2px solid currentColor;
+  border-radius: 3px 6px 2px 5px;
+  box-shadow:
+    inset 0 0 0 2px var(--paper),
+    inset 0 0 0 3px currentColor;
+  transform: rotate(var(--tilt));
+  mix-blend-mode: multiply;
+}
+.stamp.hot {
+  --stamp: var(--pink-ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* The page's one flourish: a stamp comes down once, hard, and settles at its angle. */
+  .stamp.thunk {
+    /* It grows from its right edge, so the big first frame reaches left, never past the page's right side. */
+    transform-origin: right center;
+    animation: thunk 380ms cubic-bezier(0.5, 0, 0.75, 0) var(--thunk-delay, 900ms) both;
+  }
+  @keyframes thunk {
+    0% {
+      opacity: 0;
+      transform: rotate(calc(var(--tilt) - 8deg)) scale(1.9);
+    }
+    70% {
+      opacity: 1;
+      transform: rotate(var(--tilt)) scale(0.94);
+      animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    100% {
+      opacity: 1;
+      transform: rotate(var(--tilt)) scale(1);
+    }
+  }
+}
+
+/* Every section's name gets a swipe of ink under its baseline, blue and pink in turn, printed on
+   its own pass and a hair out of register. The words stay flat black above it. */
+.section-head h2 {
+  position: relative;
+  isolation: isolate;
+}
+.section-head h2::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -0.05em;
+  right: -0.12em;
+  bottom: -0.03em;
+  height: 0.38em;
+  background: var(--swipe, var(--pink));
+  transform: rotate(-0.8deg) translateX(0.06em);
+  -webkit-mask: var(--grain) 0 0 / 180px 180px;
+  mask: var(--grain) 0 0 / 180px 180px;
+  mix-blend-mode: multiply;
+}
+main > .section:nth-of-type(even) .section-head h2 {
+  --swipe: var(--blue);
+}
+.section-head {
+  border-top-width: 4px;
+}
+
+/* A second plate of the same words, a hair out of register: the misprint that makes it riso. Only
+   display type gets one. The copy lives in data-plate and is hidden from assistive tech (the "/ ''"
+   alt text), so the words are read once. Under the words by default; `.over` prints it on top,
+   multiplied, so where the inks overlap they darken as they would on paper. */
+.plate {
+  position: relative;
+  isolation: isolate;
+}
+.plate::before {
+  content: attr(data-plate);
+  content: attr(data-plate) / '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto auto 0;
+  width: 100%;
+  color: var(--plate-ink, var(--pink));
+  transform: translate(var(--plate-x), var(--plate-y));
+  -webkit-mask: var(--grain) 0 0 / 180px 180px;
+  mask: var(--grain) 0 0 / 180px 180px;
+  pointer-events: none;
+}
+.plate.over::before {
+  z-index: 1;
+  mix-blend-mode: multiply;
 }

@@ -113,26 +113,26 @@ const tableRows = inst.scrub.slice().reverse();
 >
   <div class="sc-poster">
     <div class="dc-lede">
-      <p class="dc-name head">{dropconName(c)}</p>
+      <p class:list={['dc-name head', { plate: ok }]} data-plate={dropconName(c)}>{dropconName(c)}</p>
       <p class="dc-headline">{c.headline}</p>
       <p class="sc-eq">
         {ok ? (
           <>
             <span class="sc-eq-score"><b>{c.score}</b><span class="of">/100</span> LEAD SCORE</span>
             <span class="sc-eq-level"><span aria-hidden="true">→ </span><span class="sr-only">sets </span>LEVEL {c.level} OF 5</span>
-            <span class="sc-eq-nf"><span class="sr-only">, </span>NOT A FORECAST</span>
+            <span class="sc-eq-nf stamp hot thunk"><span class="sr-only">, </span>NOT A FORECAST</span>
           </>
         ) : c.state === 'floor' ? (
           <>
             <span class="sc-eq-score"><b class="word">FLOOR</b> ODDS OFFLINE</span>
-            <span class="sc-eq-level">NOT A MEASUREMENT</span>
+            <span class="sc-eq-level stamp">NOT A MEASUREMENT</span>
           </>
         ) : (
           <span class="sc-eq-score"><b class="word">NO SIGNAL</b></span>
         )}
       </p>
     </div>
-    <div class="dc-num head" data-num>{dropconNumber(c)}</div>
+    <div class:list={['dc-num head', { 'plate over': ok }]} data-num data-plate={dropconNumber(c)}>{dropconNumber(c)}</div>
   </div>
 
   {Astro.slots.has('default') && <div class="sc-strip"><slot /></div>}
@@ -323,8 +323,10 @@ const tableRows = inst.scrub.slice().reverse();
 <style>
   /* The level ramp: quiet is faint, a surge is the one colour. */
   .scope {
-    --l1: var(--accent);
-    --l2: var(--accent-ink);
+    /* The level ramp in the three inks: a surge is the hot pink, a strong lead the blue, and the
+       quiet levels fade from black to grey. Each clears 3:1 as a line on paper. */
+    --l1: var(--pink-deep);
+    --l2: var(--blue);
     --l3: var(--ink);
     --l4: var(--ink-2);
     --l5: #8f897d;
@@ -357,7 +359,11 @@ const tableRows = inst.scrub.slice().reverse();
 
   /* ── The poster: the numeral enormous, the level's name huge beside it, then everything calm. ── */
   .sc-poster { grid-area: poster; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'num lede'; column-gap: clamp(20px, 3.5vw, 64px); align-items: start; }
-  .dc-num { grid-area: num; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--num); line-height: 0.74; letter-spacing: -0.02em; color: var(--lvl); font-variant-numeric: lining-nums; margin-top: calc(var(--num) * -0.012); }
+  .dc-num { grid-area: num; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--num); line-height: 0.74; letter-spacing: -0.02em; color: var(--lvl); font-variant-numeric: lining-nums; margin-top: calc(var(--num) * -0.012); --plate-x: 0.024em; --plate-y: 0.014em; }
+  /* A reading prints in two plates, blue and pink over it, a few pixels apart: the overlap goes deep
+     navy (11:1 on paper) and each plate shows as a fringe on one side. */
+  .dc-num.plate::before { mix-blend-mode: multiply; }
+  .dc-name.plate { --plate-x: 0.03em; --plate-y: 0.026em; }
   .dc-lede { grid-area: lede; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
   .dc-name { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d1); line-height: 0.84; letter-spacing: -0.005em; text-transform: uppercase; color: var(--ink); overflow-wrap: anywhere; }
   .scope:not(.ok) .dc-name { color: var(--ink-2); }
@@ -368,7 +374,8 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-eq b.word { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink); margin-right: 6px; }
   .sc-eq-level { color: var(--ink); }
   .scope:not(.ok) .sc-eq-level { color: var(--ink-2); }
-  .sc-eq-nf { padding: 3px 6px 2px; line-height: 1.2; color: var(--accent-ink); border: 1px solid currentColor; }
+  .sc-eq-nf { --tilt: -4deg; margin-left: 4px; }
+  .sc-eq-level.stamp { --tilt: 2deg; }
 
   /* The answer strip (the hottest lab, the busiest market) arrives from Dropcon.astro through the slot. */
   .sc-strip { grid-area: strip; min-width: 0; margin-top: clamp(32px, 3.5vw, 48px); }
@@ -401,7 +408,7 @@ const tableRows = inst.scrub.slice().reverse();
   /* The DROPCON scale, standing up: each level's segment as tall as its score band. */
   .dc-scale { grid-area: rail; display: grid; grid-template-rows: 25fr 20fr 20fr 20fr 15fr; gap: 2px; }
   .seg { display: grid; place-items: center; font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 700; color: var(--ink-2); background: var(--paper-2); outline: 1px solid transparent; outline-offset: 1px; transition: outline-color var(--fast) var(--ease); }
-  .seg.on { background: var(--accent); color: var(--ink); }
+  .seg.on { background: var(--accent); color: var(--paper); }
   .seg.dim { background: transparent; border: 1px dashed var(--line2); }
   .seg.floor { border: 2px solid var(--ink-2); }
   .seg.is-probe { outline-color: var(--ink); }
@@ -474,7 +481,8 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-v3 .yl-short { display: none; }
 
   /* Level changes on the line: where it crossed a band and stayed. A tick joins the flag to the step. */
-  .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)); padding: 2px 5px; font-family: var(--font-label); font-size: 11px; font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; background: var(--paper); border: 1px solid var(--lc); }
+  .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)) rotate(-2deg); padding: 3px 6px 2px; font-family: var(--font-label); font-size: 11px; font-weight: 800; font-stretch: 125%; letter-spacing: 0.08em; color: var(--ink); white-space: nowrap; background: var(--paper); border: 2px solid var(--lc); border-radius: 2px 4px 2px 3px; box-shadow: inset 0 0 0 1px var(--paper), inset 0 0 0 2px var(--lc); }
+  /* A level change is stamped on the week where it happened, a couple of degrees off square. */
   .sc-change.l1, .sc-change.l2 { color: var(--accent-ink); }
   .sc-change.right { --tx: 0px; }
   .sc-change[data-side='below'] { --ty: 8px; }
@@ -552,6 +560,15 @@ const tableRows = inst.scrub.slice().reverse();
     .sc-ink { animation: sc-ink var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 250ms both; }
     .sc-change, .sc-v3, .sc-dot { animation: sc-fade 360ms var(--ease) calc(var(--sweep) + 200ms) both; }
     .dc-num { animation: sc-num 900ms var(--ease) 60ms both; }
+    /* Then the second plate slides in from the left (never past the page's right side) into (near) register, as if the drum had just been lined up;
+       hovering the numeral knocks it out again. */
+    .scope .plate::before { animation: sc-register 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) 500ms backwards; transition: transform 260ms var(--ease); }
+    .dc-num.plate:hover::before { transform: translate(calc(var(--plate-x) * 2.2), calc(var(--plate-y) * -0.5)); }
+    @keyframes sc-register {
+      from { opacity: 0; transform: translate(calc(var(--plate-x) - 0.14em), calc(var(--plate-y) - 0.07em)); }
+      25% { opacity: 1; }
+      to { opacity: 1; transform: translate(var(--plate-x), var(--plate-y)); }
+    }
     @keyframes sc-sweep {
       0% { left: 0; opacity: 0; }
       8% { opacity: 1; }
@@ -568,9 +585,40 @@ const tableRows = inst.scrub.slice().reverse();
     }
     /* The numeral rises into place from its baseline, like type set on a press. */
     @keyframes sc-num {
-      from { clip-path: inset(100% 0 0 0); transform: translateY(8%); }
-      to { clip-path: inset(0 0 0 0); transform: none; }
+      from { clip-path: inset(100% -10% -10% -10%); transform: translateY(8%); }
+      to { clip-path: inset(-10% -10% -10% -10%); transform: none; }
     }
+  }
+
+  /* Wide screens: the answer strip hangs down the poster's right-hand third, so the poster spans the
+     width and the week's instrument starts on the first screen. The lede is a container, so the
+     level's name sets itself to the room it has (and to the screen's height) and breaks onto a
+     second line like a headline rather than running under the strip. */
+  @media (min-width: 1240px) {
+    .scope {
+      --num: clamp(260px, min(6rem + 30vw, 60vh), 560px);
+      grid-template-columns: 30px 30px minmax(0, 1fr) minmax(320px, 0.44fr);
+      grid-template-rows: auto auto auto var(--plot-h) 26px auto auto auto auto;
+      grid-template-areas:
+        'poster poster poster strip'
+        'read read read read'
+        'lcap lcap pcap pcap'
+        'rail ticks stage stage'
+        '. . marks marks'
+        '. . days days'
+        'what what what what'
+        'key key key key'
+        'table table table table';
+    }
+    .sc-poster { align-self: start; padding-right: clamp(24px, 3vw, 48px); }
+    .dc-lede { container: lede / inline-size; }
+    .dc-name { font-size: clamp(64px, min(25cqi, 18.5vh), 172px); }
+    .dc-headline { font-size: clamp(21px, 0.9rem + 0.6vw, 27px); }
+    .sc-strip { margin: 0; padding-left: clamp(24px, 3vw, 44px); border-left: 1px solid var(--ink); align-self: start; }
+    .sc-readout { margin-top: clamp(20px, 3vh, 40px); }
+  }
+  @media (min-width: 1240px) and (max-height: 820px) {
+    .scope { grid-template-columns: 30px 30px minmax(0, 1fr) minmax(420px, 0.62fr); }
   }
 
   /* Tablets: a slightly shorter plot. */
@@ -594,7 +642,7 @@ const tableRows = inst.scrub.slice().reverse();
       --plot-h: 150px;
       --num: clamp(150px, 48vw, 220px);
       grid-template-columns: 20px 22px minmax(0, 1fr);
-      grid-template-rows: auto auto auto auto var(--plot-h) 22px auto auto auto;
+      grid-template-rows: auto auto auto var(--plot-h) 22px auto auto auto auto;
       grid-template-areas:
         'poster poster poster'
         'strip strip strip'

@@ -6,7 +6,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import type { Drop } from '../domain/drop';
 import type { FeedSource } from '../domain/feed';
-import { LABS, type LabId } from '../domain/lab';
+import type { LabId } from '../domain/lab';
 import { displayOutcomes, isPlaceholderOutcome, type Market, type Outcome } from '../domain/market';
 import { perMillion } from './format';
 
@@ -91,22 +91,29 @@ export const FEED_LABELS: Readonly<Record<FeedSource, string>> = {
   xai: 'XAI',
 };
 
-/** A lab's own feed wears the lab's colour from `LABS`, so the feed and the lab cards agree. */
-const FEED_LAB: Readonly<Partial<Record<FeedSource, LabId>>> = {
-  openai: 'openai',
-  deepmind: 'google',
-  anthropic: 'anthropic',
-  xai: 'xai',
-};
-/** Hacker News and GitHub are nobody's lab. HN was orange, the same as Anthropic. */
-const FEED_OWN: Readonly<Partial<Record<FeedSource, string>>> = {
-  hn: 'var(--yellow)',
-  github: 'var(--muted)',
+// ─── lab inks ────────────────────────────────────────────────────────────────
+
+/** The riso print has three inks. Each lab prints in one, by the hue its old dark-page colour had. */
+export type LabInk = 'pink' | 'blue' | 'ink';
+const LAB_INKS: Readonly<Record<LabId, LabInk>> = {
+  openai: 'ink',
+  anthropic: 'pink',
+  google: 'blue',
+  xai: 'ink',
+  deepseek: 'blue',
+  qwen: 'pink',
+  meta: 'blue',
+  mistral: 'pink',
+  moonshot: 'pink',
+  zai: 'blue',
 };
 
-export function feedColour(source: FeedSource): string {
-  const lab = FEED_LAB[source];
-  return (lab && LABS.find((l) => l.id === lab)?.color) || FEED_OWN[source] || 'var(--muted)';
+/**
+ * A lab's ink. Three inks cannot tell ten labs apart, so every mark printed in one carries the lab's
+ * glyph or name as well: the ink groups, the glyph identifies.
+ */
+export function labInk(id: LabId): LabInk {
+  return LAB_INKS[id];
 }
 
 // ─── source pills ────────────────────────────────────────────────────────────
