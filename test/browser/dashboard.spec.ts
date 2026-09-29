@@ -25,37 +25,45 @@ async function overflowingElements(page: import('@playwright/test').Page) {
   );
 }
 
-test('keeps the wide dashboard, FAQ and footer aligned to the shared container', async ({ page }) => {
+const PAGES = ['/', '/labs', '/labs/anthropic', '/markets', '/radar', '/about', '/backtest'];
+
+test('keeps the wide page body, FAQ and footer aligned to the shared container', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1000 });
-  await openDashboard(page);
+  await page.goto('/about', { waitUntil: 'domcontentloaded', timeout: 45_000 });
 
   const faq = page
     .getByRole('heading', { name: 'FREQUENTLY ASKED QUESTIONS' })
     .locator('xpath=ancestor::section');
   const [faqBox, footerBox] = await Promise.all([
     faq.boundingBox(),
-    page.locator('footer.wrap').boundingBox(),
+    // The footer's text, not its padded box: both start at the shared container's content edge.
+    page.locator('footer .foot-note').boundingBox(),
   ]);
   expect(faqBox).not.toBeNull();
   expect(footerBox).not.toBeNull();
   expect(faqBox!.width).toBeLessThanOrEqual(1400);
   expect(Math.abs(faqBox!.x - footerBox!.x)).toBeLessThanOrEqual(1);
   await expect(faq).toBeVisible();
-  await expect(page.locator('footer')).toContainText('OPERATIONAL DISCLAIMER');
+  // The full disclaimer is on /about; every footer carries one line of it and a link there.
+  await expect(page.getByRole('heading', { name: 'OPERATIONAL DISCLAIMER' })).toBeVisible();
+  await expect(page.locator('footer a[href="/about#disclaimer"]')).toHaveCount(1);
 });
 
-test('does not create horizontal overflow on narrow screens', async ({ page }) => {
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ width, height: 844 });
-    await openDashboard(page);
-    const overflow = await overflowingElements(page);
-    const documentWidth = await page.evaluate(() => document.documentElement.scrollWidth);
-    expect(
-      documentWidth,
-      `overflow at ${width}px (document width ${documentWidth}px): ${JSON.stringify(overflow)}`,
-    ).toBeLessThanOrEqual(width);
-  }
-});
+for (const path of PAGES) {
+  test(`does not create horizontal overflow on narrow screens: ${path}`, async ({ page }) => {
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+      await expect(page.locator('main')).toBeVisible();
+      const overflow = await overflowingElements(page);
+      const documentWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(
+        documentWidth,
+        `overflow on ${path} at ${width}px (document width ${documentWidth}px): ${JSON.stringify(overflow)}`,
+      ).toBeLessThanOrEqual(width);
+    }
+  });
+}
 
 test('pauses and resumes auto-refresh from the keyboard, and there is no ticker to pause', async ({
   page,
@@ -78,15 +86,19 @@ test('opens a folded list from the keyboard, and keeps DROPCON segments stable w
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await openDashboard(page);
 
+  // How the score adds up is /about's first section, open, not folded away.
+  await page.goto('/about#score', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await expect(page.locator('#score .dc-drivers')).toBeVisible();
   // Secondary detail waits behind a summary; Enter on it opens the fold and shows what it held.
-  const fold = page.locator('details.fold.dc-adds');
-  await expect(fold.locator('.dc-drivers')).toBeHidden();
+  const fold = page.locator('#faq details').first();
+  await expect(fold.locator('.faq-a, p').first()).toBeHidden();
   await fold.locator('summary').focus();
   await page.keyboard.press('Enter');
   await expect(fold).toHaveAttribute('open', '');
-  await expect(fold.locator('.dc-drivers')).toBeVisible();
+  await expect(fold.locator('.faq-a, p').first()).toBeVisible();
+
+  await openDashboard(page);
   await expect(page.locator('.seg')).toHaveCount(5);
   expect(await page.locator('.seg.on').count()).toBe(1);
   expect(await page.locator('.seg.on').evaluate((element) => getComputedStyle(element).opacity)).toBe('1');

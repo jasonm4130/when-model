@@ -15,10 +15,10 @@ test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on 
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openDashboard(page);
-  // The per-source list waits behind its fold; the summary line above it is what shows by default.
-  await page.locator('details.health-fold > summary').click();
-  const fit = await page.locator('details.health-fold ul.health').evaluate((list) => {
+  // /about lists every source in full, unfolded.
+  await page.goto('/about#health', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await expect(page.locator('#health ul.health')).toBeVisible();
+  const fit = await page.locator('#health ul.health').evaluate((list) => {
     const li = list.querySelector('li')!.cloneNode(true) as HTMLElement;
     const muted = document.createElement('span');
     for (const a of li.attributes) if (a.name.startsWith('data-astro-cid')) muted.setAttribute(a.name, '');
@@ -38,7 +38,7 @@ test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on 
 });
 
 test('an extrapolated lab read is muted at full opacity, with AA contrast', async ({ page }) => {
-  await openDashboard(page);
+  await page.goto('/labs', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   const read = await page
     .locator('.lab .metric-value')
     .first()
@@ -178,11 +178,17 @@ for (const width of [390, 360, 320]) {
 
 test('focus rings inside the feed and an opened lab row are unclipped', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openDashboard(page);
-  // A lab's LATEST link is inside its fold: open it from the keyboard.
-  await page.locator('.lab summary.lab-row').first().focus();
-  await page.keyboard.press('Enter');
-  for (const selector of ['[data-feed] a', '.lab .latest a']) {
+  const cases: [string, string][] = [
+    ['/radar', '[data-feed] a'],
+    ['/labs', '.lab .latest a'],
+  ];
+  for (const [path, selector] of cases) {
+    await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    // A lab's LATEST link is inside its fold: open it from the keyboard.
+    if (path === '/labs') {
+      await page.locator('.lab summary.lab-row').first().focus();
+      await page.keyboard.press('Enter');
+    }
     const link = page.locator(selector).first();
     if (!(await link.count())) continue;
     await link.focus();

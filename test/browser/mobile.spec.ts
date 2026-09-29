@@ -206,7 +206,7 @@ test.describe('polling refresh (UI-11)', () => {
     await pollOnce(page); // new data arrives
     await expect(page.locator('[data-reload-status] .pill')).toBeVisible();
 
-    const details = page.locator('details.panel').first(); // an FAQ answer: the panel folds are inline at this width
+    const details = page.locator('details.sc-table'); // the instrument's hourly table: the one fold on the home page
     await details.locator('summary').click();
     await expect(details).toHaveJSProperty('open', true);
 

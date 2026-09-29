@@ -5,10 +5,10 @@ const MOBILE_MARKETS = 6;
 const MOBILE_DROPS = 8;
 const MOBILE_FEED = 12;
 
-async function openDashboard(page: Page) {
-  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+/** The panels live on their own pages now: release markets on /markets, the rest on /radar. */
+async function open(page: Page, path: '/' | '/markets' | '/radar') {
+  await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.locator('main')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
 }
 
 const panel = (page: Page, heading: string) =>
@@ -24,10 +24,10 @@ async function visibleCount(list: Locator): Promise<number> {
 test.describe('panels on a phone (UI-10)', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await openDashboard(page);
   });
 
   test('Fresh Drops stack into rows with a price, capped with an expander', async ({ page }) => {
+    await open(page, '/radar');
     const drops = panel(page, 'FRESH DROPS');
     test.skip((await drops.locator('.drop-item').count()) === 0, 'OpenRouter returned no listings');
     await expect(drops.locator('table')).toBeHidden();
@@ -45,6 +45,7 @@ test.describe('panels on a phone (UI-10)', () => {
   });
 
   test('release markets show six rows, then an expander', async ({ page }) => {
+    await open(page, '/markets');
     const markets = panel(page, 'RELEASE MARKETS');
     const rows = markets.locator('.mrow');
     const total = await rows.count();
@@ -65,6 +66,7 @@ test.describe('panels on a phone (UI-10)', () => {
   });
 
   test('the feed drops its inner scroller and shows twelve reports, then an expander', async ({ page }) => {
+    await open(page, '/radar');
     const feed = page.locator('[data-feed]');
     test.skip((await feed.count()) === 0, 'every feed is down');
     const scrolls = await feed.evaluate((el) => el.scrollHeight > el.clientHeight + 1);
@@ -76,6 +78,7 @@ test.describe('panels on a phone (UI-10)', () => {
   });
 
   test('the auto-refresh pause is reachable with a 44px target and keeps its full name', async ({ page }) => {
+    await open(page, '/');
     const toggle = page.getByRole('button', { name: 'PAUSE AUTO-REFRESH' });
     await expect(toggle).toBeVisible();
     const box = (await toggle.boundingBox())!;
@@ -90,6 +93,7 @@ test.describe('panels on a phone (UI-10)', () => {
   });
 
   test('expanders open from the keyboard with a visible, unclipped focus ring', async ({ page }) => {
+    await open(page, '/radar');
     const summary = panel(page, 'FRESH DROPS').locator('.fold-summary');
     test.skip((await summary.count()) === 0, 'not enough listings to fold');
     await summary.focus();
@@ -114,16 +118,22 @@ test.describe('panels on a phone (UI-10)', () => {
   });
 
   test('stays inside 390px and 320px with every expander open', async ({ page }) => {
-    for (const width of [390, 320]) {
-      await page.setViewportSize({ width, height: 844 });
-      for (const summary of await page.locator('details.fold > summary').all()) {
-        if (
-          (await summary.isVisible()) &&
-          !(await summary.evaluate((s) => (s.parentElement as HTMLDetailsElement).open))
-        )
-          await summary.click();
+    for (const path of ['/markets', '/radar'] as const) {
+      await open(page, path);
+      for (const width of [390, 320]) {
+        await page.setViewportSize({ width, height: 844 });
+        for (const summary of await page.locator('details.fold > summary').all()) {
+          if (
+            (await summary.isVisible()) &&
+            !(await summary.evaluate((s) => (s.parentElement as HTMLDetailsElement).open))
+          )
+            await summary.click();
+        }
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth),
+          `${path} at ${width}`,
+        ).toBeLessThanOrEqual(width);
       }
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     }
   });
 });
@@ -131,12 +141,12 @@ test.describe('panels on a phone (UI-10)', () => {
 test.describe('panels on a desktop', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await openDashboard(page);
   });
 
   test('folds the long lists at every width; opening one shows its rows, which take focus', async ({
     page,
   }) => {
+    await open(page, '/markets');
     // Round two moved density behind disclosure on desktop too: a short list first, the rest folded.
     const rows = panel(page, 'RELEASE MARKETS').locator('.mrow');
     const total = await rows.count();
@@ -152,6 +162,7 @@ test.describe('panels on a desktop', () => {
   test('the feed shows its first reports and folds the rest, with no inner scroller (UI-17)', async ({
     page,
   }) => {
+    await open(page, '/radar');
     const feed = page.locator('[data-feed]');
     test.skip((await feed.count()) === 0, 'every feed is down');
     const items = page.locator('[data-feed] .item');
@@ -177,6 +188,7 @@ test.describe('panels on a desktop', () => {
       ['OPEN WEIGHTS TRENDING', 'HF trending', 'HF TRENDING'],
     ];
     for (const [heading, source, label] of cases) {
+      await open(page, heading === 'RELEASE MARKETS' ? '/markets' : '/radar');
       const pill = panel(page, heading).locator('[data-source-pill]').first();
       await expect(pill).toHaveText(ok(source) ? new RegExp(`^(LIVE|STALE) · ${label}$`) : `DOWN · ${label}`);
     }
@@ -187,7 +199,7 @@ test.describe('panels on a desktop', () => {
 
   test('a page left open turns its LIVE pills STALE', async ({ page }) => {
     await page.clock.install({ time: Date.now() });
-    await openDashboard(page);
+    await open(page, '/radar');
     const live = page.locator('[data-source-pill].live');
     test.skip((await live.count()) === 0, 'no source is live');
     // Every pill that can age does: LIVE ones and PARTIAL ones (a signals panel with one feed down).
@@ -201,7 +213,7 @@ test.describe('panels on a desktop', () => {
 test('reduced motion leaves the feed rows static', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 390, height: 844 });
-  await openDashboard(page);
+  await open(page, '/radar');
   const item = page.locator('[data-feed] .item').first();
   test.skip((await item.count()) === 0, 'every feed is down');
   const duration = await item.evaluate((el) => parseFloat(getComputedStyle(el).animationDuration));

@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** Integration checks across the panels: grids that end on a full row, and pills that share one vocabulary. */
 
-async function openDashboard(page: Page) {
-  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
+async function open(page: Page, path: string) {
+  await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await expect(page.locator('main')).toBeVisible();
 }
 
 /** How many cells a grid's last row leaves empty. */
@@ -22,8 +22,11 @@ async function emptyCells(
 for (const width of [1440, 1280, 1024, 768, 390]) {
   test(`leaves no orphaned grid cells at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
-    for (const grid of ['.labs-grid', '.timeline']) {
+    for (const [path, grid] of [
+      ['/labs', '.labs-grid'],
+      ['/about', '.timeline'],
+    ]) {
+      await open(page, path);
       const shape = await emptyCells(page, grid);
       expect(shape.empty, `${grid} at ${width}px: ${JSON.stringify(shape)}`).toBe(0);
     }
@@ -33,7 +36,7 @@ for (const width of [1440, 1280, 1024, 768, 390]) {
 for (const width of [1440, 1360, 1024]) {
   test(`breaks a lab card's heat line only between its phrases at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
+    await open(page, '/labs');
     // Every card gets the same text, so the check does not depend on today's numbers.
     const write = (heat: string, launches: string) =>
       page.locator('.heat-line').evaluateAll(
@@ -78,9 +81,13 @@ for (const width of [1440, 1360, 1024]) {
 }
 
 test('every source status pill reads LIVE, PARTIAL, DOWN or STALE with what it covers', async ({ page }) => {
-  await openDashboard(page);
-  const texts = await page.locator('[data-source-pill]').allInnerTexts();
-  // DROPCON, early warnings, landed, release markets, fresh drops, trending, papers and the feed.
-  expect(texts.length).toBeGreaterThanOrEqual(8);
+  // DROPCON on /, the release markets on /markets, and on /radar early warnings, landed, fresh
+  // drops, trending, papers and the feed.
+  const texts: string[] = [];
+  for (const path of ['/', '/markets', '/radar', '/labs/anthropic']) {
+    await open(page, path);
+    texts.push(...(await page.locator('[data-source-pill]').allInnerTexts()));
+  }
+  expect(texts.length).toBeGreaterThanOrEqual(9);
   for (const text of texts) expect(text).toMatch(/^(LIVE|PARTIAL|DOWN|STALE) · \S/);
 });
