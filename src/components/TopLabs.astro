@@ -1,0 +1,71 @@
+---
+/**
+ * The home page's short answer to "who ships next?": the three labs with the highest 7-day odds,
+ * each a ticket to its own page, then the way on to the rest of the site.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { topLabs } from '../ui/lab-page';
+import { noOddsText, readValue } from '../ui/odds';
+import { labPath } from '../ui/site';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const top = topLabs(d.labs);
+const oddsAvailable = d.measurement.inputs.oddsAvailable;
+const anyOdds = top.some((l) => l.odds);
+const ONWARD = [
+  { href: '/labs', name: 'Labs', line: `All ${d.labs.length} labs ranked by heat, each with its own page.` },
+  { href: '/markets', name: 'Markets', line: 'Every release market, the best-model race and the benchmark bets.' },
+  { href: '/radar', name: 'Radar', line: 'Early warnings with their track records, fresh drops and the feed.' },
+  { href: '/about', name: 'About', line: 'How the score adds up, and why it is not a forecast.' },
+];
+---
+<section class="wrap home-more reveal" aria-labelledby="top-title">
+  <div class="panel-head">
+    <h2 id="top-title">Next to ship?</h2>
+    <span class="tiny muted">{anyOdds ? 'TOP 3 BY 7-DAY ODDS' : noOddsText(oddsAvailable)}</span>
+  </div>
+  <ol class="top-labs">
+    {top.map((l, i) => (
+      <li>
+        <a class="top-lab" href={labPath(l.id)}>
+          <span class="t-rank" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <span class="t-name">{l.name}</span>
+          <span class="t-odds"><b class:list={{ extrap: l.odds?.p7.trusted === false }}>{readValue(l.odds?.p7)}</b> <span class="tiny">DROP ≤7D</span></span>
+          <span class="t-fam">{l.odds ? l.odds.family : 'no release market'}</span>
+        </a>
+      </li>
+    ))}
+  </ol>
+  <nav class="home-onward" aria-labelledby="onward-title">
+    <h2 id="onward-title" class="tiny">FURTHER IN</h2>
+    <ul class="onward">
+      {ONWARD.map((o) => <li><a href={o.href}><b>{o.name}</b><span>{o.line}</span></a></li>)}
+    </ul>
+  </nav>
+</section>
+<style>
+  .home-more { margin-bottom: var(--s6); }
+  .panel-head .tiny { white-space: nowrap; }
+  .top-labs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 0 var(--s4); margin: 0; padding: 0; list-style: none; }
+  .top-lab {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'rank name' 'rank odds' 'rank fam';
+    column-gap: 16px;
+    row-gap: 4px;
+    align-items: baseline;
+    padding: 6px 0 20px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .t-rank { grid-area: rank; align-self: start; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .t-name { grid-area: name; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d3); line-height: 1; text-transform: uppercase; }
+  .top-lab:hover .t-name { color: var(--accent-ink); }
+  .t-odds { grid-area: odds; display: flex; align-items: baseline; gap: 10px; margin-top: 6px; }
+  .t-odds b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: clamp(40px, 1.4rem + 2vw, 56px); line-height: 0.9; font-variant-numeric: tabular-nums; }
+  .t-odds b.extrap { color: var(--muted); }
+  .t-odds .tiny { color: var(--ink-2); }
+  .t-fam { grid-area: fam; font-size: var(--fs-sm); line-height: 1.35; color: var(--ink-2); overflow-wrap: anywhere; }
+  .home-onward { margin-top: var(--s5); }
+  .home-onward h2 { margin-bottom: 10px; color: var(--ink); }
+</style>

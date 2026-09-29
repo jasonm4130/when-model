@@ -783,6 +783,100 @@ code {
 main > .section:nth-of-type(even) .section-head h2 {
   --swipe: var(--blue);
 }
+
+/* ───────────────────────────── pages ─────────────────────────────
+   Every page but the home one opens on its name, set large over the page's one swipe of ink, and
+   one line saying what the page is for. Below it, panels carry the page: thin rules, no more swipes. */
+.page-head {
+  padding-top: clamp(28px, 4vw, 56px);
+  margin-bottom: clamp(40px, 5vw, 72px);
+}
+.page-head h1 {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  max-width: 100%;
+  font-size: var(--fs-d2);
+  line-height: 0.88;
+  text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.page-head h1::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -0.05em;
+  right: -0.12em;
+  bottom: -0.03em;
+  height: 0.38em;
+  background: var(--swipe, var(--pink));
+  transform: rotate(-0.8deg) translateX(0.06em);
+  -webkit-mask: var(--grain) 0 0 / 180px 180px;
+  mask: var(--grain) 0 0 / 180px 180px;
+  mix-blend-mode: multiply;
+}
+.page-intro {
+  margin-top: var(--s3);
+  max-width: 46ch;
+  font-size: var(--fs-lede);
+  line-height: 1.3;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: var(--s2);
+}
+/* A page's panels, one block after another with room between them. */
+.page-body {
+  display: grid;
+  gap: clamp(64px, 7vw, 104px);
+  margin-bottom: var(--s6);
+}
+.page-body > * {
+  min-width: 0;
+}
+/* Where to go next: a ruled list of the other pages, each a name and a line. */
+.onward {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 0 var(--s4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ink);
+}
+.onward a {
+  display: grid;
+  gap: 6px;
+  padding: 16px 0 18px;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--ink);
+  text-decoration: none;
+}
+.onward b {
+  font-family: var(--font-display);
+  font-size: var(--fs-d3);
+  font-weight: 800;
+  font-stretch: 62.5%;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.onward b::after {
+  content: ' →';
+  font-weight: 500;
+}
+.onward span {
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.onward a:hover b {
+  color: var(--accent-ink);
+}
 .section-head {
   border-top-width: 4px;
 }

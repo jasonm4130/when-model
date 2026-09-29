@@ -23,18 +23,18 @@ describe('lead flags', () => {
         label: 'LEAK ×2',
         detail:
           'OpenAI tests GPT-6.1 ahead of release (TestingCatalog); GPT-6.1 spotted in the API (Hacker News)',
-        href: '#ew-leaks',
+        href: '/radar#ew-leaks',
       },
       {
         kind: 'stream',
         label: 'STREAM 5H',
         detail: 'OpenAI: OpenAI DevDay 2026 keynote',
-        href: '#ew-streams',
+        href: '/radar#ew-streams',
       },
-      { kind: 'keynote', label: 'KEYNOTE 70H', detail: 'OpenAI DevDay 2026', href: '#ew-events' },
+      { kind: 'keynote', label: 'KEYNOTE 70H', detail: 'OpenAI DevDay 2026', href: '/radar#ew-events' },
     ]);
     expect(leadFlags(w, 'qwen')).toEqual([
-      { kind: 'arch', label: 'ARCH', detail: 'qwen4_exp, 31d pending', href: '#ew-arch' },
+      { kind: 'arch', label: 'ARCH', detail: 'qwen4_exp, 31d pending', href: '/radar#ew-arch' },
     ]);
     expect(leadFlags(w, 'anthropic')).toEqual([]);
   });

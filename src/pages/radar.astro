@@ -1,0 +1,28 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import PageHead from '../components/PageHead.astro';
+import Signals from '../components/Signals.astro';
+import Drops from '../components/Drops.astro';
+import Feed from '../components/Feed.astro';
+import Footer from '../components/Footer.astro';
+import { loadDashboard } from '../app/load-dashboard';
+import { pageMeta } from '../ui/site';
+
+const d = await loadDashboard();
+Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
+const view = { page: 'radar' } as const;
+const meta = pageMeta(view);
+---
+<Layout title={meta.title} description={meta.description}>
+  <Header d={d} view={view} />
+  <main id="main">
+    <PageHead title="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." />
+    <div class="wrap page-body">
+      <Signals d={d} />
+      <Drops d={d} />
+      <Feed d={d} />
+    </div>
+  </main>
+  <Footer generatedAt={d.generatedAt} />
+</Layout>

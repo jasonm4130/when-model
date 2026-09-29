@@ -1,0 +1,76 @@
+---
+/**
+ * The tab strip under the masthead. The current page's tab is printed: a swipe of pink under a
+ * heavier word, and aria-current. A lab's own page marks Labs as its section (aria-current="true").
+ * One row from 390px; narrower, the six tabs sit in a 3 × 2 block inside the strip, never wider
+ * than the page.
+ */
+import { NAV, navKey, type SiteView } from '../ui/site';
+interface Props { view: SiteView }
+const { view } = Astro.props;
+const current = navKey(view);
+const exact = view.page !== 'lab';
+---
+<nav class="site-nav" aria-label="Site">
+  <ul class="tabs">
+    {NAV.map((item) => {
+      const on = item.key === current;
+      return (
+        <li>
+          <a class:list={['tab', { on }]} href={item.href} aria-current={on ? (exact ? 'page' : 'true') : undefined}>{item.label}</a>
+        </li>
+      );
+    })}
+  </ul>
+</nav>
+<style>
+  .site-nav { min-width: 0; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 0 clamp(16px, 2.2vw, 32px); margin: 0; padding: 0; list-style: none; }
+  .tab {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 2px;
+    font-family: var(--font-label);
+    font-size: 13px;
+    font-weight: 600;
+    font-stretch: 112.5%;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+  .tab:hover { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.5em; }
+  .tab:focus-visible { outline-offset: 0; }
+  /* The current tab: the word in black at full weight over a grainy pink swipe, a hair out of register. */
+  .tab.on { color: var(--ink); font-weight: 800; }
+  .tab.on::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -4px;
+    right: -6px;
+    top: calc(50% - 2px);
+    height: 11px;
+    background: var(--pink);
+    transform: rotate(-1.2deg) translateX(2px);
+    -webkit-mask: var(--grain) 0 0 / 180px 180px;
+    mask: var(--grain) 0 0 / 180px 180px;
+    mix-blend-mode: multiply;
+  }
+  .tab.on:hover { text-decoration: none; }
+  @media (max-width: 480px) {
+    .tabs { gap: 0 6px; justify-content: space-between; }
+    .tab { font-size: 11px; letter-spacing: 0.02em; }
+    /* The tabs sit 6px apart here: the swipe stays inside its own tab. */
+    .tab.on::after { left: -1px; right: -1px; }
+  }
+  /* The narrowest phones: two rows of three, each tab a full 44px target. */
+  @media (max-width: 389.98px) {
+    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 12px; }
+    .tab { justify-self: start; }
+  }
+</style>

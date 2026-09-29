@@ -273,9 +273,11 @@ describe('buildCapture', () => {
 describe('page upstream calls', () => {
   const PAGE_FETCHES = 27;
 
-  it(`makes the same ${PAGE_FETCHES} fetches as before the ledger, none to a cron-only source`, async () => {
+  /** Every adapter real and every fetch answered 503; returns the list the fetches are recorded in. */
+  function realAdapters(): string[] {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     // `load()` registers its adapter mocks for the whole file: unregister them all.
     for (const path of [
       '../../src/infra/edge-cache',
@@ -298,6 +300,11 @@ describe('page upstream calls', () => {
       calls.push(String(input));
       return new Response('unavailable', { status: 503 });
     });
+    return calls;
+  }
+
+  it(`makes the same ${PAGE_FETCHES} fetches as before the ledger, none to a cron-only source`, async () => {
+    const calls = realAdapters();
     const { buildDashboard } = await import('../../src/app/load-dashboard');
     await buildDashboard(NOW, undefined);
     const cronOnly = calls.filter((url) =>
@@ -305,5 +312,47 @@ describe('page upstream calls', () => {
     );
     expect(cronOnly).toEqual([]);
     expect(calls).toHaveLength(PAGE_FETCHES);
+  });
+
+  // Every page reads the one memoised dashboard: rendering any of them costs one build and no more.
+  // (With no Cache API in Node the memo misses, so each render builds once: exactly PAGE_FETCHES.)
+  const PAGES: [string, () => Promise<{ default: unknown }>, Record<string, string>?][] = [
+    ['/', () => import('../../src/pages/index.astro')],
+    ['/labs', () => import('../../src/pages/labs/index.astro')],
+    ['/labs/anthropic', () => import('../../src/pages/labs/[id].astro'), { id: 'anthropic' }],
+    ['/markets', () => import('../../src/pages/markets.astro')],
+    ['/radar', () => import('../../src/pages/radar.astro')],
+    ['/about', () => import('../../src/pages/about.astro')],
+  ];
+  for (const [path, page, params] of PAGES) {
+    it(`renders ${path} with no fetch beyond the dashboard's ${PAGE_FETCHES}`, async () => {
+      const calls = realAdapters();
+      const { experimental_AstroContainer: AstroContainer } = await import('astro/container');
+      const container = await AstroContainer.create();
+      const Page = (await page()).default;
+      const res = await container.renderToResponse(Page as never, {
+        params,
+        request: new Request(`https://whenmodel.com${path}`),
+      });
+      expect(res.status).toBe(200);
+      expect(await res.text()).toContain('aria-label="Site"');
+      expect(calls).toHaveLength(PAGE_FETCHES);
+    });
+  }
+
+  it('answers an unknown lab with a 404 and fetches nothing', async () => {
+    const calls = realAdapters();
+    const { experimental_AstroContainer: AstroContainer } = await import('astro/container');
+    const container = await AstroContainer.create();
+    const Page = (await import('../../src/pages/labs/[id].astro')).default;
+    const res = await container.renderToResponse(Page, {
+      params: { id: 'nope' },
+      request: new Request('https://whenmodel.com/labs/nope'),
+    });
+    expect(res.status).toBe(404);
+    const html = await res.text();
+    expect(html).toContain('404');
+    expect(html).toContain('name="robots" content="noindex"');
+    expect(calls).toEqual([]);
   });
 });

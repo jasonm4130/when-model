@@ -20,11 +20,16 @@ describe('GET /api/dashboard.json', () => {
 });
 
 describe('GET /sitemap.xml', () => {
-  it('lists the dashboard', async () => {
+  it('lists every page, and a page for each lab in the registry', async () => {
     const { GET } = await import('../src/pages/sitemap.xml');
     const res = (GET as unknown as () => Response)();
     expect(res.headers.get('content-type')).toBe('application/xml');
-    expect(await res.text()).toContain('<loc>https://whenmodel.com/</loc>');
+    const xml = await res.text();
+    for (const path of ['/', '/labs', '/markets', '/radar', '/about', '/backtest'])
+      expect(xml).toContain(`<loc>https://whenmodel.com${path}</loc>`);
+    const { LABS } = await import('../src/domain/lab');
+    for (const lab of LABS) expect(xml).toContain(`<loc>https://whenmodel.com/labs/${lab.id}</loc>`);
+    expect(xml.match(/<url>/g)).toHaveLength(6 + LABS.length);
   });
 });
 
@@ -68,6 +73,95 @@ describe('Layout head', () => {
       slots: { default: '<p>x</p>' },
     });
     expect(html).toContain('name="robots" content="noindex"');
+  });
+});
+
+describe('the pages', () => {
+  const NOW = Date.parse('2026-09-19T12:00:00Z');
+  async function render(path: string, params?: Record<string, string>) {
+    const { assembleDashboard } = await import('../src/domain/dashboard');
+    const { warnings } = await import('./fixtures/warnings');
+    const d = {
+      ...assembleDashboard(
+        {
+          markets: { name: 'Polymarket', data: [], ok: true },
+          drops: { name: 'OpenRouter', data: [], ok: true },
+          trending: { name: 'HF trending', data: [], ok: true },
+          papers: { name: 'HF papers', data: [], ok: true },
+          feeds: [{ name: 'Hacker News', data: [], ok: true }],
+        },
+        NOW,
+      ),
+      earlyWarnings: warnings(),
+    };
+    const history = vi.fn(async () => ({ ok: true, points: [] }));
+    vi.doMock('../src/app/load-dashboard', () => ({
+      loadDashboard: async () => d,
+      loadHistoryForPage: history,
+    }));
+    const pages: Record<string, () => Promise<{ default: unknown }>> = {
+      '/': () => import('../src/pages/index.astro'),
+      '/labs': () => import('../src/pages/labs/index.astro'),
+      '/labs/[id]': () => import('../src/pages/labs/[id].astro'),
+      '/markets': () => import('../src/pages/markets.astro'),
+      '/radar': () => import('../src/pages/radar.astro'),
+      '/about': () => import('../src/pages/about.astro'),
+    };
+    const Page = (await pages[params ? '/labs/[id]' : path]()).default;
+    const container = await AstroContainer.create();
+    const url = params ? `/labs/${params.id}` : path;
+    const res = await container.renderToResponse(Page as never, {
+      params,
+      request: new Request(`https://whenmodel.com${url}`),
+    });
+    return { res, html: await res.text(), d, history };
+  }
+
+  it('gives each page one h1, its own title and a canonical of its own path', async () => {
+    const titles = new Set<string>();
+    for (const path of ['/', '/labs', '/markets', '/radar', '/about']) {
+      const { res, html } = await render(path);
+      expect(res.status).toBe(200);
+      expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
+      expect(html).toContain(`<link rel="canonical" href="https://whenmodel.com${path}">`);
+      titles.add(html.match(/<title>([^<]*)<\/title>/)![1]);
+      vi.resetModules();
+    }
+    expect(titles.size).toBe(5);
+  });
+
+  it('reads the history only on the page that draws the chart', async () => {
+    const home = await render('/');
+    expect(home.history).toHaveBeenCalledTimes(1);
+    expect(home.html).toContain('data-plot');
+    for (const path of ['/labs', '/markets', '/radar', '/about']) {
+      vi.resetModules();
+      const page = await render(path);
+      expect(page.history).not.toHaveBeenCalled();
+      expect(page.html).not.toContain('data-plot');
+    }
+  });
+
+  it('has the home page answer, show the top three labs linked to their pages and lead onward', async () => {
+    const { html, d } = await render('/');
+    const top = [...html.matchAll(/<a class="top-lab[^"]*" href="\/labs\/([a-z]+)"/g)].map((m) => m[1]);
+    expect(top).toHaveLength(3);
+    for (const id of top) expect(d.labs.map((l) => l.id)).toContain(id);
+    for (const href of ['/labs', '/markets', '/radar', '/about']) expect(html).toContain(`href="${href}"`);
+    // The rest of the old single page is gone from it.
+    for (const gone of ['id="feed"', 'id="faq"', 'id="health"', 'class="labs-list"'])
+      expect(html).not.toContain(gone);
+  });
+
+  it("renders a lab's page with its question, its warnings and the tab it sits under", async () => {
+    const { res, html } = await render('/labs/openai', { id: 'openai' });
+    expect(res.status).toBe(200);
+    expect(html).toMatch(/<h1[^>]*>When will OpenAI ship\?<\/h1>/);
+    expect(html).toContain('<title>When will OpenAI ship? — whenmodel</title>');
+    expect(html).toContain('<link rel="canonical" href="https://whenmodel.com/labs/openai">');
+    expect(html).toMatch(/href="\/labs" aria-current="true"/);
+    expect(html).toContain('GPT-6.1 spotted in the API');
+    expect(html).toContain('x.com/sama');
   });
 });
 

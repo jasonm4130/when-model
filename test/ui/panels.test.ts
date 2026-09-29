@@ -1,9 +1,11 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import Disclaimer from '../../src/components/Disclaimer.astro';
 import Drops from '../../src/components/Drops.astro';
 import Feed from '../../src/components/Feed.astro';
 import Footer from '../../src/components/Footer.astro';
 import Markets from '../../src/components/Markets.astro';
+import SourceHealth from '../../src/components/SourceHealth.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { FeedItem, FeedSource } from '../../src/domain/feed';
@@ -358,30 +360,38 @@ describe('panels render', async () => {
     const url = `https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(60)}`;
     const failing = inputs();
     failing.feeds[3] = { name: FEED_SOURCE_NAME.anthropic, data: [], ok: false, error: `503 ${url}` };
-    const html = await container.renderToString(Feed, { props: { d: assembleDashboard(failing, NOW) } });
-    expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}<span class="muted"`);
-    expect(html).toMatch(/> — 503 · hn\.algolia\.com<\/span>/);
+    const d = assembleDashboard(failing, NOW);
+    const html = await container.renderToString(Feed, { props: { d } });
     expect(html).not.toContain('search_by_date');
-    // The pill's hover title uses the same short text.
+    // The pill's hover title uses the short text.
     expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}: 503 · hn.algolia.com`);
+    // /about's source health list prints it the same way.
+    const health = await container.renderToString(SourceHealth, { props: { d } });
+    expect(health).toContain(`${FEED_SOURCE_NAME.anthropic}<span class="muted"`);
+    expect(health).toMatch(/> — 503 · hn\.algolia\.com<\/span>/);
+    expect(health).not.toContain('search_by_date');
   });
 
-  it('Footer lists every upstream named in SOURCE, and the backtest variant links home and to the rebuild', async () => {
-    const html = await container.renderToString(Footer, { props: { generatedAt: GENERATED } });
+  it('Disclaimer lists every upstream named in SOURCE; the footer points to it and, on /backtest, to the rebuild', async () => {
+    const disclaimer = await container.renderToString(Disclaimer, {});
     for (const [key, name] of Object.entries(SOURCE)) {
-      if (key === 'ledger') expect(html).not.toContain(`>${name}<`);
-      else expect(html).toContain(`>${name}</a>`);
+      if (key === 'ledger') expect(disclaimer).not.toContain(`>${name}<`);
+      else expect(disclaimer).toContain(`>${name}</a>`);
     }
+    expect(disclaimer).toContain('OPERATIONAL DISCLAIMER');
+    expect(disclaimer).toContain('id="disclaimer"');
+
+    const html = await container.renderToString(Footer, { props: { generatedAt: GENERATED } });
     expect(html).toContain('GENERATED 2026-09-19 12:00:00Z');
     expect(html).toContain('href="/backtest"');
+    expect(html).toContain('href="/about#disclaimer"');
 
     const bt = await container.renderToString(Footer, {
       props: { generatedAt: GENERATED, variant: 'backtest' },
     });
-    expect(bt).toContain('href="/"');
     expect(bt).toContain('DATA PULLED 2026-09-19 12:00Z');
     expect(bt).toMatch(/href="#reproduce"[^>]*><code[^>]*>pnpm backtest</);
     expect(bt).not.toContain('EDGE-CACHED');
-    expect(bt).toContain('OPERATIONAL DISCLAIMER');
+    expect(bt).toContain('href="/about#disclaimer"');
   });
 });

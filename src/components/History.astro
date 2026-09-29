@@ -13,7 +13,7 @@ const eras: { when: string; title: string; body: string; link?: { href: string; 
   { when: '2025', title: 'THE ARENA STEALTH ERA', body: 'Anonymous checkpoints with codenames turned up on LMArena around launches: "nano-banana", "gemini-test", assorted mystery models. Not measured here: the one arena registry this site could check, Design Arena, purged its codenames in June 2026 and has listed each one only after launch since.', link: { href: '/backtest#negative-results', label: 'What didn\'t lead' } },
   { when: '2025', title: 'THE CHANGELOG LEAK', body: 'Model IDs turn up in SDK release notes, config strings and API error messages. Measured against the announcement, SDK releases land with it or after it: 5 of 7 lagged, and the best, Opus 5.5, beat the post by two minutes. GitHub release feeds were supposed to be the new pizza delivery van. They turn up once the party has started.', link: { href: '/backtest#negative-results', label: 'What didn\'t lead' } },
   { when: '2025–26', title: 'MARKETS PRICE THE DROP', body: `Polymarket started listing "released by" markets per lab. Traders now aggregate every rumour into one number. When a lab's odds crossed 50% with a day to spare, the model shipped on time ${ladder.resolvedYes} of ${ladder.fired} times.`, link: { href: '/backtest#seven-day', label: 'The backtest' } },
-  { when: 'NOW', title: 'WHENMODEL', body: 'Release markets, OpenRouter listings, Hugging Face trending, Hacker News, lab blogs and SDK changelogs on one screen. DROPCON reads the markets; the rest is shown, not scored.' },
+  { when: 'NOW', title: 'WHENMODEL', body: 'Release markets, OpenRouter listings, Hugging Face trending, Hacker News, lab blogs and SDK changelogs in one place. DROPCON reads the markets; the rest is shown, not scored.' },
 ];
 const faq: { q: string; a: string; link?: { href: string; label: string } }[] = [
   { q: 'What is whenmodel?', a: 'A dashboard of free public signals about frontier AI model releases. Its headline level, DROPCON, reads Polymarket release odds only. Model registry listings, lab blogs, SDK changelogs, Hacker News, stealth slots and leaks are shown beside it with their track records and never move it.' },
@@ -25,8 +25,21 @@ const faq: { q: string; a: string; link?: { href: string; label: string } }[] = 
   { q: 'Is this financial advice?', a: 'No. Odds are what traders think, not what labs have decided. Model release dates slip. Do not bet the GPU budget on a DROPCON reading.' },
 ];
 ---
-<section class="section wrap reveal" aria-labelledby="vague-title">
-  <div class="section-head">
+<section class="about-faq" id="faq" aria-labelledby="faq-title">
+  <div class="panel-head">
+    <h2 id="faq-title">FREQUENTLY ASKED QUESTIONS</h2>
+  </div>
+  <div class="faq">
+    {faq.map((f) => (
+      <details class="panel">
+        <summary><span class="q">{f.q}</span></summary>
+        <p>{f.a}{f.link && <> <a href={f.link.href}>{f.link.label}</a>.</>}</p>
+      </details>
+    ))}
+  </div>
+</section>
+<section class="about-history" id="history" aria-labelledby="vague-title">
+  <div class="panel-head">
     <h2 id="vague-title">A BRIEF HISTORY OF VAGUE-POSTING</h2>
   </div>
   <ol class="timeline">
@@ -39,19 +52,6 @@ const faq: { q: string; a: string; link?: { href: string; label: string } }[] = 
       </li>
     ))}
   </ol>
-</section>
-<section class="section wrap reveal" aria-labelledby="faq-title">
-  <div class="section-head">
-    <h2 id="faq-title">FREQUENTLY ASKED QUESTIONS</h2>
-  </div>
-  <div class="faq">
-    {faq.map((f) => (
-      <details class="panel">
-        <summary><span class="q">{f.q}</span></summary>
-        <p>{f.a}{f.link && <> <a href={f.link.href}>{f.link.label}</a>.</>}</p>
-      </details>
-    ))}
-  </div>
 </section>
 <style>
   /* Six eras in the order they happened: the date is the display line, set large. */

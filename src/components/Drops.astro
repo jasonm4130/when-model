@@ -45,15 +45,11 @@ const item = (r: (typeof rows)[number]) => ({
 /** Trending repos shown before the fold. */
 const TRENDING_SHOWN = 6;
 ---
-<section class="section wrap reveal" aria-labelledby="shelf-title">
-  <div class="section-head">
-    <h2 id="shelf-title">NEW ON THE SHELF</h2>
-  </div>
-  <p class="kicker dr-kicker">The newest listings on OpenRouter, and what the open-weights crowd is downloading instead of sleeping.</p>
+<section class="drops" id="drops" aria-label="New listings and open weights">
   <div class="grid dr-grid">
     <div class="panel">
       <div class="panel-head">
-        <h3><span aria-hidden="true">▼</span>FRESH DROPS</h3>
+        <h2><span aria-hidden="true">▼</span>FRESH DROPS</h2>
         <span class={`pill ${pills.drops.tone}`} title={pills.drops.title} data-source-pill data-stale-at={pills.drops.staleAt} data-stale-text={pills.drops.staleText}>{pills.drops.text}</span>
       </div>
       {rows.length ? (
@@ -76,7 +72,7 @@ const TRENDING_SHOWN = 6;
 
     <div class="panel">
       <div class="panel-head">
-        <h3><span aria-hidden="true">▲</span>OPEN WEIGHTS TRENDING</h3>
+        <h2><span aria-hidden="true">▲</span>OPEN WEIGHTS TRENDING</h2>
         <span class={`pill ${pills.trending.tone}`} title={pills.trending.title} data-source-pill data-stale-at={pills.trending.staleAt} data-stale-text={pills.trending.staleText}>{pills.trending.text}</span>
       </div>
       {d.trending.length ? (
@@ -109,7 +105,7 @@ const TRENDING_SHOWN = 6;
       {(papers.length > 0 || !papersUp) && (
         <>
           <div class="panel-head sub-head">
-            <h3><span aria-hidden="true">§</span>PAPERS OF THE DAY</h3>
+            <h2><span aria-hidden="true">§</span>PAPERS OF THE DAY</h2>
             <span class={`pill ${pills.papers.tone}`} title={pills.papers.title} data-source-pill data-stale-at={pills.papers.staleAt} data-stale-text={pills.papers.staleText}>{pills.papers.text}</span>
           </div>
           {papers.length ? (
@@ -123,7 +119,7 @@ const TRENDING_SHOWN = 6;
   </div>
 </section>
 <style>
-  .dr-kicker { margin: calc(var(--s4) * -0.5) 0 var(--s5); }
+  .drops { scroll-margin-top: 16px; }
   .dr-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
   @media (max-width: 960px) {
     .dr-grid { grid-template-columns: minmax(0, 1fr); }

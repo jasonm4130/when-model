@@ -44,6 +44,15 @@ export function releaseRows(d: MarketsView): Market[] {
     .slice(0, PANEL_ROWS.releases);
 }
 
+/** Rungs the home page's busiest-market ticket shows; /markets shows the ladder. */
+export const HOME_RUNGS = 2;
+
+/** The busiest release market with the rungs the home page shows, or undefined with none open. */
+export function leadMarket(d: MarketsView): { market: Market; outcomes: Outcome[] } | undefined {
+  const market = releaseRows(d)[0];
+  return market && { market, outcomes: displayOutcomes(market, HOME_RUNGS, asOfMs(d)) };
+}
+
 /** Leaderboard markets other than the best-model race, then everything else model-relevant. */
 export function otherRows(d: MarketsView): Market[] {
   const markets = d.markets ?? [];

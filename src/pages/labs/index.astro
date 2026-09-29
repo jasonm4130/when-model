@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import PageHead from '../../components/PageHead.astro';
+import Labs from '../../components/Labs.astro';
+import Footer from '../../components/Footer.astro';
+import { loadDashboard } from '../../app/load-dashboard';
+import { pageMeta } from '../../ui/site';
+
+const d = await loadDashboard();
+Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
+const view = { page: 'labs' } as const;
+const meta = pageMeta(view);
+---
+<Layout title={meta.title} description={meta.description}>
+  <Header d={d} view={view} />
+  <main id="main">
+    <PageHead title="Lab Watch" intro="Ranked by heat. The big number is the market's odds of a drop inside seven days; open a row for a quick look, or a lab's name for its whole page." />
+    <div class="wrap page-body">
+      <Labs d={d} />
+    </div>
+  </main>
+  <Footer generatedAt={d.generatedAt} />
+</Layout>

@@ -1,0 +1,189 @@
+---
+/**
+ * One lab's page: "When will <Lab> ship?" Its 72-hour, 7-day and 30-day reads with how far each can
+ * be trusted come first, then its next named market, its tempo and latest listing, and the early
+ * warnings, landed launches and headlines that name it. Every list is a filter of the dashboard
+ * (`labPage` in src/ui/lab-page.ts), so the page makes no fetch of its own.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { SOURCE } from '../domain/sources';
+import { ago, daysLabel, monthInitials, shortDate } from '../ui/format';
+import type { LabPage } from '../ui/lab-page';
+import { labWarningCount } from '../ui/lab-page';
+import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue } from '../ui/odds';
+import { PANEL_ROWS, asOfMs, sourcePill } from '../ui/panels';
+import { TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
+import FeedRow from './FeedRow.astro';
+import MarketRow from './MarketRow.astro';
+interface Props { d: Dashboard; p: LabPage; now?: Date }
+const { d, p, now = new Date() } = Astro.props;
+const l = p.status;
+const name = p.lab.name;
+const nowMs = now.getTime();
+const oddsAvailable = d.measurement.inputs.oddsAvailable;
+const horizons: { key: 'p72' | 'p7' | 'p30'; label: string }[] = [
+  { key: 'p72', label: '72H' },
+  { key: 'p7', label: '7D' },
+  { key: 'p30', label: '30D' },
+];
+const months = monthInitials(now);
+const max = Math.max(1, ...(l?.histogram ?? []));
+const others = p.markets.filter((m) => m !== p.next);
+const asOf = asOfMs(d);
+const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, nowMs);
+const warnings = labWarningCount(p);
+const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time' : h >= 0 ? `in ${Math.round(h)}h` : 'started');
+const heard = p.landed.length + p.announcements.length + p.feed.length;
+---
+<section class="lab-answer" aria-labelledby="reads-title">
+  <div class="panel-head">
+    <h2 id="reads-title">The odds</h2>
+    <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
+  </div>
+  {l?.odds ? (
+    <div class="answer-grid">
+      <div class="big-read">
+        <b class:list={['big-value', { extrap: !l.odds.p7.trusted }]} title={readNote(l.odds.p7)}>{readValue(l.odds.p7)}</b>
+        <span class="big-label tiny">DROP ≤7D · {l.odds.family}</span>
+      </div>
+      <div class="reads">
+        <dl>
+          {horizons.map((h) => {
+            const read = l.odds![h.key];
+            const trust = readTrust(read);
+            return (
+              <div class={`read ${trust}`} title={readNote(read)}>
+                <dt>{h.label}</dt>
+                <dd class="rv"><span class:list={['rv-n', { extrap: !read.trusted }]}>{readValue(read)}</span></dd>
+                <dd class="rb"><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrapolated, not scored'}</span> · <span class="bracket">{readBracket(read)}</span>{read.family && <span class="rfam"> · {read.family}</span>}</dd>
+              </div>
+            );
+          })}
+        </dl>
+        {l.launchedFamilies.length > 0 && <p class="odds-note">Left out, just launched: {l.launchedFamilies.join(', ')}</p>}
+        <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener">{l.odds.family} on Polymarket</a>
+      </div>
+    </div>
+  ) : <p class="empty">{noOddsText(oddsAvailable)}{l?.latest ? `. Last listed ${l.latest.name.replace(/^[^:]+:\s*/, '')}, ${shortDate(l.latest.createdAt)}.` : '.'}</p>}
+</section>
+
+{p.next && (
+  <section class="lab-markets" aria-labelledby="lab-markets-title">
+    <div class="panel-head"><h2 id="lab-markets-title">Next named market</h2></div>
+    <div class="mlist">
+      <MarketRow m={p.next} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} />
+      {others.length > 0 && (
+        <details class="fold">
+          <summary class="fold-summary">{others.length} MORE {name.toUpperCase()} MARKET{others.length === 1 ? '' : 'S'}</summary>
+          {others.map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} />)}
+        </details>
+      )}
+    </div>
+  </section>
+)}
+
+{l && (
+  <section class="lab-tempo" aria-labelledby="tempo-title">
+    <div class="panel-head"><h2 id="tempo-title">Tempo and heat</h2></div>
+    <div class="tempo-grid">
+      <div>
+        <div class="metric-label">RELEASE TEMPO · 12 MONTHS</div>
+        <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
+          {l.histogram.map((v, i) => <div class="col"><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
+        </div>
+      </div>
+      <div class="facts">
+        <div class="fact"><span class="metric-label">HEAT</span><b>{l.heat}</b><span class="fact-note">markets {l.heatParts.market} + recency {l.heatParts.recency}, a burstiness prior, not a forecast</span><span class="bar heat" aria-hidden="true"><i style={`width:${l.heat}%`}></i></span></div>
+        <div class="fact"><span class="metric-label">LAUNCHES · 30D</span><b>{l.releases30d}</b><span class="fact-note">last drop {daysLabel(l.daysSince)}{l.daysSince ? ' ago' : ''}</span></div>
+        <div class="fact latest"><span class="metric-label">LATEST</span>{l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted when">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}</div>
+      </div>
+    </div>
+  </section>
+)}
+
+<section class="lab-signals" aria-labelledby="lab-signals-title">
+  <div class="panel-head"><h2 id="lab-signals-title">Early warnings</h2><a class="tiny all" href="/radar">ALL EARLY WARNINGS</a></div>
+  {warnings === 0 ? (
+    <p class="empty">None of the early warnings names {name} right now. Stealth slots are anonymous, so no lab page carries one.</p>
+  ) : (
+    <ul class="rows">
+      {p.leaks.map((x) => <li><a class="r" href={x.url} target="_blank" rel="noopener"><span class="r-main">{x.title}</span><span class="r-when" data-time={x.publishedAt}>{ago(x.publishedAt, nowMs)}</span><span class="r-meta">Leak · {x.sourceName} · {TRACK_LINES.leaks}</span></a></li>)}
+      {p.streams.map((b) => <li><a class="r" href={b.url} target="_blank" rel="noopener"><span class="r-main">{b.title}</span><span class="r-when">{streamWhen(b.startsInHours)}</span><span class="r-meta">Scheduled stream · {b.channel} on YouTube · {TRACK_LINES.broadcasts}</span></a></li>)}
+      {p.architectures.map((a) => <li><div class="r"><span class="r-main">{a.module}</span><span class="r-when">{daysShort(a.daysPending)} pending</span><span class="r-meta">Pending architecture in transformers · {TRACK_LINES.architectures}</span></div></li>)}
+      {p.events.map((e) => <li><a class="r" href={e.source} target="_blank" rel="noopener"><span class="r-main">{e.label}</span><span class="r-when">{e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span><span class="r-meta">Keynote window · {TRACK_LINES.events}</span></a></li>)}
+    </ul>
+  )}
+</section>
+
+<section class="lab-heard" aria-labelledby="heard-title">
+  <div class="panel-head"><h2 id="heard-title">Landed and in the news</h2></div>
+  {heard === 0 ? (
+    <p class="empty">Nothing from or about {name} this week in the listings, the lab feeds or Hacker News.</p>
+  ) : (
+    <div class="heard">
+      {(p.landed.length > 0 || p.announcements.length > 0) && (
+        <ul class="rows">
+          {p.landed.map((r) => <li><a class="r" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener"><span class="r-main landed-name">{r.name}</span><span class="r-when">listed {hoursAgo(r.hoursAgo)}</span><span class="r-meta">First OpenRouter listing · shown, not scored</span></a></li>)}
+          {p.announcements.map((a) => <li><a class="r" href={a.url} target="_blank" rel="noopener"><span class="r-main">{a.title}</span><span class="r-when" data-time={a.seenAt}>{ago(a.seenAt, nowMs)}</span><span class="r-meta">Launch post · {a.source.toUpperCase()}</span></a></li>)}
+        </ul>
+      )}
+      {p.feed.length > 0 && (
+        <div class="feed">
+          {p.feed.map((f, i) => <FeedRow f={f} i={i} now={nowMs} />)}
+        </div>
+      )}
+    </div>
+  )}
+</section>
+
+{l && l.xHandles.length > 0 && (
+  <p class="lab-x"><span class="tiny">ON X</span> {l.xHandles.map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)} <span class="muted">No free API, so click through.</span></p>
+)}
+<style>
+  section { scroll-margin-top: 16px; }
+  .answer-grid { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 24px clamp(32px, 5vw, 80px); align-items: start; }
+  .big-read { display: grid; gap: 10px; }
+  .big-value { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: clamp(96px, 4rem + 9vw, 200px); line-height: 0.8; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums lining-nums; }
+  /* An extrapolated read is marked by its "~" and the secondary ink, never by opacity. */
+  .big-value.extrap, .rv-n.extrap { color: var(--muted); }
+  .big-label { color: var(--ink-2); }
+  .reads dl { display: grid; margin: 0; border-top: 1px solid var(--ink); }
+  .read { display: grid; grid-template-columns: 4ch 7ch minmax(0, 1fr); gap: 14px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
+  .read dt { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink-2); }
+  .read dd { margin: 0; }
+  .rv-n { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .rb { font-size: var(--fs-sm); color: var(--ink); overflow-wrap: anywhere; }
+  .read .trust { font-style: italic; }
+  .read.extrapolated .rb, .read .rfam { color: var(--ink-2); }
+  .odds-note { margin-top: 10px; font-size: var(--fs-sm); color: var(--ink-2); }
+  .mkt { display: inline-block; margin-top: 14px; font-size: var(--fs-sm); }
+  .mlist { display: flex; flex-direction: column; }
+  .tempo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 28px clamp(32px, 5vw, 80px); }
+  .tempo-grid .hist { height: 96px; margin-top: 12px; }
+  .facts { display: grid; gap: 18px; }
+  .fact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid var(--rule-soft); }
+  .fact b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 36px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .fact-note { grid-column: 1 / -1; font-size: var(--fs-sm); color: var(--ink-2); }
+  .fact .bar { grid-column: 1 / -1; }
+  .bar.heat > i { background: var(--ink); }
+  .fact.latest { grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere; font-size: var(--fs-md); }
+  .latest .when { white-space: nowrap; }
+  .all { color: var(--ink); }
+  .rows { border-top: 1px solid var(--ink); }
+  .r { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'main when' 'meta meta'; column-gap: 16px; row-gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); color: var(--ink); text-decoration: none; font-size: var(--fs-md); line-height: 1.3; }
+  a.r:hover .r-main { color: var(--accent-ink); }
+  a.r:focus-visible { outline-offset: -2px; }
+  .r-main { grid-area: main; overflow-wrap: anywhere; }
+  .landed-name { font-weight: 650; }
+  .r-when { grid-area: when; white-space: nowrap; font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .r-meta { grid-area: meta; font-size: var(--fs-xs); color: var(--ink-2); }
+  .heard { display: grid; gap: var(--s4); }
+  .feed { border-top: 1px solid var(--ink); }
+  .lab-x { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; font-size: var(--fs-md); }
+  .lab-x a { font-weight: 600; text-decoration: none; }
+  .lab-x a:hover { text-decoration: underline; }
+  @media (max-width: 640px) {
+    .answer-grid { grid-template-columns: minmax(0, 1fr); }
+    .read { grid-template-columns: 4ch 7ch minmax(0, 1fr); gap: 10px; }
+  }
+</style>

@@ -2,7 +2,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import { X_WATCHLIST } from '../domain/lab';
 import { FEED_SOURCE_NAME } from '../domain/sources';
-import { MOBILE_FEED, sourceErrorText, sourcePill } from '../ui/panels';
+import { MOBILE_FEED, sourcePill } from '../ui/panels';
 import FeedRow from './FeedRow.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
@@ -14,17 +14,12 @@ const first = d.feed.slice(0, MOBILE_FEED);
 const rest = d.feed.slice(MOBILE_FEED);
 /** Watchlist accounts shown before the fold. */
 const WATCH_SHOWN = 5;
-const up = d.sources.filter((s) => s.ok).length;
 ---
-<section class="section wrap reveal" aria-labelledby="wire-title">
-  <div class="section-head">
-    <h2 id="wire-title">THE WIRE</h2>
-  </div>
-  <p class="kicker wire-kicker">Lab blogs, SDK changelogs and Hacker News, newest first. The labs' own words, before the press release gets a second draft.</p>
+<section class="feed-section" id="feed" aria-label="Lab blogs, SDK changelogs and Hacker News">
   <div class="grid feed-grid">
     <div class="panel feed-panel">
       <div class="panel-head">
-        <h3><span aria-hidden="true">◍</span>OSINT FEED</h3>
+        <h2><span aria-hidden="true">◍</span>OSINT FEED</h2>
         <div class="pills">
           <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
           <span class="pill">{d.feed.length} REPORTS · {alerts} ALERTS</span>
@@ -43,43 +38,29 @@ const up = d.sources.filter((s) => s.ok).length;
       ) : <p class="empty">{pill.state === 'down' ? 'Every feed is down. That is itself a signal.' : 'No reports yet.'}</p>}
     </div>
 
-    <div class="stack side">
-      <div class="panel">
-        <div class="panel-head"><h3><span aria-hidden="true">✕</span>X WATCHLIST</h3><span class="pill warn">NO FREE API · CLICK THROUGH</span></div>
-        <p class="intro">X killed free read access, so we can't ingest the vague-posts. These are the accounts that leak first.</p>
-        <ul class="list watch">
-          {X_WATCHLIST.slice(0, WATCH_SHOWN).map((a) => (
-            <li><a href={`https://x.com/${a.handle}`} target="_blank" rel="noopener">@{a.handle}</a><span class="muted"> — {a.why}</span></li>
-          ))}
-        </ul>
-        {X_WATCHLIST.length > WATCH_SHOWN && (
-          <details class="fold">
-            <summary class="fold-summary">{X_WATCHLIST.length - WATCH_SHOWN} MORE ACCOUNTS</summary>
-            <ul class="list watch">
-              {X_WATCHLIST.slice(WATCH_SHOWN).map((a) => (
-                <li><a href={`https://x.com/${a.handle}`} target="_blank" rel="noopener">@{a.handle}</a><span class="muted"> — {a.why}</span></li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h3><span aria-hidden="true">◌</span>SOURCE HEALTH</h3></div>
-        <p class="health-sum"><b class="health-n">{up}/{d.sources.length}</b> sources answered this build.</p>
-        <details class="fold health-fold">
-          <summary class="fold-summary">EVERY SOURCE</summary>
-          <ul class="list health">
-            {d.sources.map((s) => (
-              <li><span class={s.ok ? 'dot' : 'err dot'} aria-hidden="true">{s.ok ? '●' : '○'}</span><span class="sr-only">{s.ok ? 'Up: ' : 'Down: '}</span>{s.name}{!s.ok && <span class="muted"> — {sourceErrorText(s.error)}</span>}</li>
+    <div class="panel side">
+      <div class="panel-head"><h2><span aria-hidden="true">✕</span>X WATCHLIST</h2><span class="pill">NO FREE API · CLICK THROUGH</span></div>
+      <p class="intro">X killed free read access, so we can't ingest the vague-posts. These are the accounts that leak first.</p>
+      <ul class="list watch">
+        {X_WATCHLIST.slice(0, WATCH_SHOWN).map((a) => (
+          <li><a href={`https://x.com/${a.handle}`} target="_blank" rel="noopener">@{a.handle}</a><span class="muted"> — {a.why}</span></li>
+        ))}
+      </ul>
+      {X_WATCHLIST.length > WATCH_SHOWN && (
+        <details class="fold">
+          <summary class="fold-summary">{X_WATCHLIST.length - WATCH_SHOWN} MORE ACCOUNTS</summary>
+          <ul class="list watch">
+            {X_WATCHLIST.slice(WATCH_SHOWN).map((a) => (
+              <li><a href={`https://x.com/${a.handle}`} target="_blank" rel="noopener">@{a.handle}</a><span class="muted"> — {a.why}</span></li>
             ))}
           </ul>
         </details>
-      </div>
+      )}
     </div>
   </div>
 </section>
 <style>
-  .wire-kicker { margin: calc(var(--s4) * -0.5) 0 var(--s5); }
+  .feed-section { scroll-margin-top: 16px; }
   .feed-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .feed { border-top: 1px solid var(--ink); }
   .intro { margin-bottom: 14px; font-size: var(--fs-sm); color: var(--ink-2); }
@@ -87,35 +68,9 @@ const up = d.sources.filter((s) => s.ok).length;
   .watch { border-top: 1px solid var(--ink); }
   .watch a { text-decoration: none; font-weight: 600; }
   .watch a:hover { text-decoration: underline; }
-  /* A long error or handle breaks anywhere rather than running off a phone's screen. */
+  /* A long handle breaks anywhere rather than running off a phone's screen. */
   .list li { overflow-wrap: anywhere; }
-  .health-sum { font-size: var(--fs-sm); color: var(--ink-2); margin-bottom: 8px; }
-  .health-n { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--ink); margin-right: 8px; }
-  .health { font-size: var(--fs-xs); }
-  .dot { display: inline-block; width: 1.2em; color: var(--ink); }
-  .dot.err { color: var(--accent-ink); }
   @media (max-width: 900px) {
     .feed-grid { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
-<script>
-  import { ago } from '../ui/format';
-
-  // Relative times and source pills age while the page stays open, and an edge-cached page can be minutes
-  // old on arrival, so they are brought up to date at load and every 30 seconds after.
-  const refresh = () => {
-    const now = Date.now();
-    document.querySelectorAll<HTMLElement>('[data-time]').forEach((el) => {
-      el.textContent = ago(el.dataset.time!, now);
-    });
-    document.querySelectorAll<HTMLElement>('[data-source-pill][data-stale-at]').forEach((el) => {
-      if (Date.parse(el.dataset.staleAt!) > now) return;
-      el.textContent = el.dataset.staleText ?? el.textContent;
-      el.classList.remove('live');
-      el.classList.add('warn');
-      el.removeAttribute('data-stale-at');
-    });
-  };
-  refresh();
-  setInterval(refresh, 30_000);
-</script>

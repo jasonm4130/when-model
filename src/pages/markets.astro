@@ -1,0 +1,24 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import PageHead from '../components/PageHead.astro';
+import Markets from '../components/Markets.astro';
+import Footer from '../components/Footer.astro';
+import { loadDashboard } from '../app/load-dashboard';
+import { pageMeta } from '../ui/site';
+
+const d = await loadDashboard();
+Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
+const view = { page: 'markets' } as const;
+const meta = pageMeta(view);
+---
+<Layout title={meta.title} description={meta.description}>
+  <Header d={d} view={view} />
+  <main id="main">
+    <PageHead title="The odds" intro="What traders will pay to be right about a launch date. Crowd opinion, not a roadmap." />
+    <div class="wrap page-body">
+      <Markets d={d} />
+    </div>
+  </main>
+  <Footer generatedAt={d.generatedAt} />
+</Layout>

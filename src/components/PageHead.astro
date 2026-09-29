@@ -1,0 +1,15 @@
+---
+/** A page's name, set large over one swipe of ink, and the one line that says what the page is for. */
+interface Props {
+  title: string;
+  intro: string;
+  /** The heading's id, for aria-labelledby. */
+  id?: string;
+}
+const { title, intro, id = 'page-title' } = Astro.props;
+---
+<div class="wrap page-head reveal">
+  <h1 id={id}>{title}</h1>
+  <p class="page-intro">{intro}</p>
+  {Astro.slots.has('default') && <div class="page-meta"><slot /></div>}
+</div>

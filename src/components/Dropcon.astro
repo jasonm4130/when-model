@@ -1,11 +1,15 @@
 ---
+/**
+ * The home page's answer: the level, the market sentence and score line, a strip of three tickets
+ * (the hottest lab, the busiest market, the model that just landed) and the week's instrument.
+ * How the score adds up and whether it is a forecast live on /about (`ScoreDetail.astro`).
+ */
 import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
-import { levelBandsText, WEIGHTS } from '../domain/dropcon';
-import { displayOutcomes } from '../domain/market';
 import { SOURCE } from '../domain/sources';
-import { dropconPill, forecastAnswer, levelBaseRateText, outcomeOdds, topReadText } from '../ui/odds';
-import { PANEL_ROWS, asOfMs, labInk, releaseRows, sourceOk, sourcePill } from '../ui/panels';
+import { dropconPill, outcomeOdds, topReadText } from '../ui/odds';
+import { labInk, leadMarket, sourceOk, sourcePill } from '../ui/panels';
+import { labPath } from '../ui/site';
 import DropconScope from './DropconScope.astro';
 interface Props {
   d: Dashboard;
@@ -17,14 +21,13 @@ const { d, history, now } = Astro.props;
 const c = d.dropcon;
 // A reading is the page's one colour; a floor or no signal is not a level reading, so it is muted.
 const color = c.state === 'ok' ? 'var(--accent)' : 'var(--muted)';
-// A reading wears the markets panel's own Polymarket pill, so it turns STALE with the rest of the
+// A reading wears the markets page's own Polymarket pill, so it turns STALE with the rest of the
 // page; a floor or no signal says why there is no reading instead.
 const pill = c.state === 'ok' ? sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now ?? Date.now()) : dropconPill(c);
 const hottest = d.labs[0];
 const noLabData = c.state === 'no-signal';
-// The busiest release market, as the markets section lists it first, with the rungs it shows there.
-const lead = releaseRows(d)[0];
-const leadOutcomes = lead ? displayOutcomes(lead, PANEL_ROWS.releaseOutcomes, asOfMs(d)) : [];
+// The busiest release market, as /markets lists it first, with its nearest rungs: the ladder is there.
+const lead = leadMarket(d);
 const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
 ---
 <section class="section wrap reveal dc-hero" aria-labelledby="dc-title" style={`--lvl:${color}`}>
@@ -32,7 +35,6 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
     <div class="dc-top">
       <h2 id="dc-title" class="tiny"><span aria-hidden="true">▣</span>DROPCON LEVEL</h2>
       <div class="pills">
-        {d.landed.banner && <span class="pill warn" title={d.landed.bannerText}>MODELS JUST LANDED</span>}
         {'state' in pill ? (
           <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
         ) : <span class={`pill ${pill.tone}`}>{pill.text}</span>}
@@ -44,7 +46,7 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
           {noLabData ? (
             <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
           ) : hottest && (
-            <a class={`dc-hot ink-${labInk(hottest.id)}`} href={`#lab-${hottest.id}`}>
+            <a class={`dc-hot ink-${labInk(hottest.id)}`} href={labPath(hottest.id)}>
               <span class="tiny">HOTTEST LAB</span> <b class="dc-big"><i class="lab-chip" aria-hidden="true">{hottest.glyph}</i>{hottest.name}</b> <span class="dc-sub">heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}</span>
             </a>
           )}
@@ -53,14 +55,15 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
           <span class="tiny">BUSIEST RELEASE MARKET</span>
           {lead ? (
             <>
-              <a class="dc-mkt" href={lead.url} target="_blank" rel="noopener">{lead.title}</a>
+              <a class="dc-mkt" href={lead.market.url} target="_blank" rel="noopener">{lead.market.title}</a>
               <span class="dc-rungs">
-                {leadOutcomes.map((o) => {
+                {lead.outcomes.map((o) => {
                   const odds = outcomeOdds(o);
                   // A priced rung prints its odds as a field of pink as wide as the price; a thin book has none.
                   return <span class="rung" style={odds.thin ? undefined : `--p:${Math.round(o.yes * 100)}%`}><b class:list={{ thin: odds.thin }}>{odds.text}</b> <span class="rl">{o.label}</span></span>;
                 })}
               </span>
+              <a class="dc-more-link" href="/markets">Every rung and market</a>
             </>
           ) : <p class="dc-sub">{polymarketUp ? 'No open release market right now.' : 'Polymarket unreachable. Odds return when it does.'}</p>}
         </div>
@@ -72,53 +75,17 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
       </div>
     </DropconScope>
   </div>
-
-  <div class="dc-detail">
-    <details class="fold dc-adds">
-      <summary class="fold-summary">How the score adds up: {c.score} of 100</summary>
-      <div class="dc-cols" id="dc-adds">
-        <div>
-          <ul class="dc-drivers" aria-label="How the score adds up">
-            {c.provenance.map((row) => (
-              <li>
-                <span class="pts">{row.points}</span>
-                <span class="why"><span class="tag lead">{row.tag}</span> {row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
-              </li>
-            ))}
-            <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
-          </ul>
-        </div>
-        <div>
-          <p class="dc-bands">{levelBandsText()} Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
-          <p class="dc-blurb">{c.blurb}</p>
-        </div>
-      </div>
-    </details>
-    <div class="dc-honest">
-      <p class="dc-q"><b>Is this a forecast?</b> No — it's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
-      <p class="dc-base">{levelBaseRateText()}</p>
-      <details class="dc-more">
-        <summary class="tiny">WHY IT'S NOT A PROBABILITY</summary>
-        <p>{forecastAnswer(d.forecast)}</p>
-        <ul>{c.notes.map((n) => <li>{n}</li>)}</ul>
-      </details>
-    </div>
-  </div>
 </section>
 <style>
-  .dc-hero { margin-top: clamp(28px, 4vw, 56px); }
+  .dc-hero { margin-top: clamp(24px, 3vw, 40px); margin-bottom: var(--s5); }
   .dc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; margin-bottom: clamp(12px, 2vw, 24px); }
   .dc-top h2 { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.12em; line-height: 1.35; color: var(--ink); }
   .dc-top h2 > span[aria-hidden] { display: none; }
   .dc-top .pills { display: flex; gap: 4px 16px; flex-wrap: wrap; }
 
   /* The answer strip: two or three cells under one rule, each a label, a name and one line. */
-  .dc-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 28px clamp(24px, 4vw, 56px); border-top: 1px solid var(--ink); padding-top: 18px; }
+  .dc-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 28px clamp(24px, 4vw, 56px); border-top: 1px solid var(--ink); padding-top: 18px; }
   .dc-cell { min-width: 0; }
-  @media (min-width: 1100px) and (max-width: 1239.98px) {
-    .dc-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); }
-    .dc-strip:has(> :nth-child(3)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); }
-  }
   .dc-cell .tiny { display: block; margin-bottom: 10px; color: var(--ink-2); }
   .dc-big { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d3); line-height: 0.98; text-transform: uppercase; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
   .dc-big .lab-chip { font-size: 16px; }
@@ -128,7 +95,7 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
   p.dc-hot { font-size: var(--fs-sm); }
   .dc-mkt { display: block; font-size: var(--fs-lg); line-height: 1.25; color: var(--ink); text-decoration: none; }
   .dc-mkt:hover { color: var(--accent-ink); }
-  /* The market's rungs as a ruled list: the price large, its deadline on the same line (never
+  /* The market's nearest rungs as a ruled list: the price large, its deadline on the same line (never
      wrapped), and a grainy pink bar along its rule as long as the price. */
   .dc-rungs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 0 28px; margin-top: 12px; font-size: var(--fs-sm); line-height: 1.3; color: var(--ink-2); }
   .rung { position: relative; isolation: isolate; display: flex; align-items: baseline; gap: 12px; min-width: 0; padding: 5px 0 4px; border-bottom: 1px solid var(--rule-soft); }
@@ -136,57 +103,40 @@ const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
   .rung b { flex: none; min-width: 3.4ch; font-family: var(--font-display); font-size: 28px; font-weight: 800; font-stretch: 62.5%; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .rung b.thin { color: var(--ink-2); font-weight: 600; }
   .rung .rl { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink); }
+  .dc-more-link { display: inline-block; margin-top: 10px; font-size: var(--fs-sm); color: var(--ink-2); }
   .dc-landed .stamp { --tilt: -4deg; --thunk-delay: 1300ms; margin: 2px 0 12px; }
   @media (max-width: 640px) {
     .rung { padding: 3px 0 2px; }
     .rung b { font-size: 24px; }
+    .dc-more-link { display: none; }
   }
-  /* A wide screen hangs the strip down the poster's right side as a column of three tickets, so the
-     poster fills the width and the week's instrument comes up onto the first screen. */
-  @media (min-width: 1240px) {
-    .dc-hero { margin-top: 24px; }
-    .dc-top { margin-bottom: 16px; }
+  /* From 1024px the strip hangs down the poster's right side as a column of tickets, so the poster
+     fills the width and the week's instrument comes up onto the first screen. */
+  @media (min-width: 1024px) {
+    .dc-hero { margin-top: 20px; }
+    .dc-top { margin-bottom: 14px; }
     .dc-landed { display: flex; flex-wrap: wrap; align-items: center; column-gap: 14px; }
     .dc-landed .stamp { order: 1; margin: 0; }
     .dc-landed .dc-sub { order: 2; flex-basis: 100%; }
     .dc-strip { grid-template-columns: minmax(0, 1fr); gap: 0; border-top: 0; padding-top: 0; }
-    .dc-cell { padding: 14px 0 18px; border-top: 1px solid var(--ink); }
-    .dc-cell:first-child { border-top-width: 4px; padding-top: 12px; }
-    .dc-big { font-size: clamp(26px, 1rem + 1.2vw, 34px); }
+    .dc-cell { padding: 12px 0 16px; border-top: 1px solid var(--ink); }
+    .dc-cell:first-child { border-top-width: 4px; padding-top: 10px; }
+    .dc-big { font-size: clamp(24px, 0.9rem + 1.2vw, 34px); }
     .dc-mkt { font-size: var(--fs-body); }
     .dc-sub { margin-top: 6px; }
+    .dc-rungs { grid-template-columns: minmax(0, 1fr); }
   }
-  /* A short wide screen (a 1366 x 768 laptop) sets the hottest lab and the landed model side by side
-     over the market, so the column is short enough for the week's instrument to start on screen. */
-  @media (min-width: 1240px) and (max-height: 820px) {
-    .dc-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'hot landed' 'lead lead'; column-gap: 24px; }
-    .dc-strip:not(:has(.dc-landed-cell)) { grid-template-areas: 'hot hot' 'lead lead'; }
-    .dc-cell:first-child { grid-area: hot; }
-    .dc-lead { grid-area: lead; }
-    .dc-landed-cell { grid-area: landed; border-top-width: 4px; padding-top: 12px; }
-    .dc-landed { display: block; }
-    .dc-landed .stamp { margin: 0 0 10px; }
+  /* A short wide screen (a 1366 x 768 laptop): the tickets tighten and the ladder link waits for
+     /markets, so the week's instrument starts on the first screen. */
+  @media (min-width: 1024px) and (max-height: 820px) {
+    .dc-cell { padding: 8px 0 10px; }
+    .dc-cell:first-child { padding-top: 8px; }
+    .dc-cell .tiny { margin-bottom: 6px; }
+    .dc-more-link { display: none; }
+    .dc-mkt { font-size: var(--fs-md); }
+    .rung { padding: 2px 0 1px; }
+    .rung b { font-size: 24px; }
     .dc-big { font-size: 26px; }
+    .dc-landed .dc-sub { font-size: var(--fs-xs); }
   }
-
-  /* Below the instrument: the arithmetic, folded, and the plain answer to "is this a forecast?" */
-  .dc-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px clamp(24px, 4vw, 56px); align-items: start; margin-top: clamp(32px, 4vw, 56px); }
-  .dc-cols { display: grid; gap: 18px; padding-top: 16px; }
-  .dc-drivers { display: grid; gap: 6px; font-size: var(--fs-sm); line-height: 1.4; color: var(--ink-2); }
-  .dc-drivers li { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: 12px; align-items: baseline; }
-  .dc-drivers .why { overflow-wrap: anywhere; }
-  .dc-drivers .pts { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 20px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
-  .dc-drivers .total { border-top: 1px solid var(--ink); padding-top: 6px; color: var(--ink); }
-  .dc-drivers .total .pts { color: var(--accent-ink); }
-  .dc-bands, .dc-blurb { font-size: var(--fs-sm); line-height: 1.45; color: var(--ink-2); }
-  .tag.lead { margin-right: 2px; color: var(--ink); }
-  .dc-honest { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ink); font-size: var(--fs-sm); line-height: 1.45; }
-  .dc-q { font-size: var(--fs-md); }
-  .dc-q b { font-weight: 650; }
-  .dc-base { color: var(--ink-2); }
-  .dc-more summary { color: var(--ink); padding: 10px 0; min-height: 44px; display: flex; align-items: center; gap: 8px; }
-  .dc-more summary::before { content: '+'; font-family: var(--font-display); font-size: 20px; font-weight: 500; font-stretch: 100%; }
-  .dc-more[open] summary::before { content: '−'; }
-  .dc-more summary:hover { color: var(--accent-ink); }
-  .dc-more p, .dc-more li { color: var(--ink-2); margin-top: 8px; }
 </style>

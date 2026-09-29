@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import Dropcon from '../../src/components/Dropcon.astro';
 import DropconScope from '../../src/components/DropconScope.astro';
 import Labs from '../../src/components/Labs.astro';
+import ScoreDetail from '../../src/components/ScoreDetail.astro';
 import Signals from '../../src/components/Signals.astro';
 import Layout from '../../src/layouts/Layout.astro';
 import { assembleDashboard, type Dashboard, type DashboardInputs } from '../../src/domain/dashboard';
@@ -116,7 +117,7 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(html).not.toContain('class="sc-line"');
     expect(html).toMatch(
       new RegExp(
-        `class="dc-num head plate over" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
+        `class="dc-num head plate" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
       ),
     );
     expect(html).toContain(`--y:${100 - d.dropcon.score}`);
@@ -139,7 +140,7 @@ describe('DropconScope: the level and its week as one instrument', () => {
     // The big number is the live reading all the same.
     expect(html).toMatch(
       new RegExp(
-        `class="dc-num head plate over" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
+        `class="dc-num head plate" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
       ),
     );
   });
@@ -272,19 +273,18 @@ describe('DropconScope: the level and its week as one instrument', () => {
 });
 
 describe('Dropcon for a first-time reader', () => {
-  it('shows the level, the scale right under the headline, a linked LEAD provenance and plain disclosure', async () => {
+  it('on /about, adds the score up row by row, says plainly it is no forecast and lists the bands', async () => {
     const d = dashboard();
-    const html = await render(Dropcon, { d, history: { ok: true, points: [] }, now: NOW });
+    const html = await render(ScoreDetail, { d });
     const at = (s: string) => html.indexOf(s);
-    expect(at('dc-headline')).toBeLessThan(at('dc-scale'));
-    expect(at('dc-scale')).toBeLessThan(at('dc-drivers'));
+    expect(at('dc-now')).toBeLessThan(at('dc-drivers'));
     expect(html.match(/class="tag lead"[^>]*>LEAD</g)).toHaveLength(d.dropcon.provenance.length);
     const pts = [...html.matchAll(/<span class="pts"[^>]*>(\d+)<\/span>/g)].map((m) => Number(m[1]));
     expect(pts.slice(0, -1).reduce((a, b) => a + b, 0)).toBe(pts.at(-1));
+    expect(html).toMatch(/<h2 id="forecast-title"[^>]*>Is this a forecast\?<\/h2>/);
     expect(html).toMatch(
-      /Is this a forecast\?<\/b> No — it's a hand-weighted lead score, not a probability\. <a href="\/backtest"/,
+      /<b[^>]*>No\.<\/b> It's a hand-weighted lead score, not a probability\. <a href="\/backtest"/,
     );
-    expect(html).toContain('href="/backtest"');
     // Beside the level: the base rate at its own 7-day horizon. The 72-hour rate sits in the note.
     const base = html.slice(html.indexOf('class="dc-base"'), html.indexOf('class="dc-more"'));
     expect(base).toContain('within 7 days in 73% of hours');
@@ -296,9 +296,19 @@ describe('Dropcon for a first-time reader', () => {
     expect(html).not.toContain('Context, not the level');
     // The score-to-level cut points, from LEVEL_BANDS.
     expect(html).toContain('Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.');
-    // The hottest-lab line links to that lab's card, which Labs renders with the same id.
+  });
+
+  it('shows the level, the scale right under the headline, and links to the score and the hottest lab', async () => {
+    const d = dashboard();
+    const html = await render(Dropcon, { d, history: { ok: true, points: [] }, now: NOW });
+    const at = (s: string) => html.indexOf(s);
+    expect(at('dc-headline')).toBeLessThan(at('dc-scale'));
+    // The arithmetic is one link away on /about, not on the home page.
+    expect(html).not.toContain('dc-drivers');
+    expect(html).toContain('href="/about#score"');
+    // The hottest-lab line links to that lab's own page; the lab list keeps the same id for old links.
     const hot = d.labs[0];
-    expect(html).toContain(`href="#lab-${hot.id}"`);
+    expect(html).toContain(`href="/labs/${hot.id}"`);
     expect(html).toContain(`heat ${hot.heat}`);
     expect(await render(Labs, { d })).toContain(`id="lab-${hot.id}"`);
     // Icon glyphs are hidden from the heading's accessible name.
@@ -371,10 +381,10 @@ describe('Labs cards', () => {
     const html = await render(Labs, { d });
     const card = (id: string) =>
       html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</details>', html.indexOf(`id="lab-${id}"`)));
-    expect(card('openai')).toMatch(/class="flag leak" href="#ew-leaks"[^>]*>LEAK ×2</);
-    expect(card('openai')).toMatch(/class="flag stream" href="#ew-streams"[^>]*>STREAM 5H</);
-    expect(card('openai')).toMatch(/class="flag keynote" href="#ew-events"[^>]*>KEYNOTE 70H</);
-    expect(card('qwen')).toMatch(/class="flag arch" href="#ew-arch"[^>]*>ARCH</);
+    expect(card('openai')).toMatch(/class="flag leak" href="\/radar#ew-leaks"[^>]*>LEAK ×2</);
+    expect(card('openai')).toMatch(/class="flag stream" href="\/radar#ew-streams"[^>]*>STREAM 5H</);
+    expect(card('openai')).toMatch(/class="flag keynote" href="\/radar#ew-events"[^>]*>KEYNOTE 70H</);
+    expect(card('qwen')).toMatch(/class="flag arch" href="\/radar#ew-arch"[^>]*>ARCH</);
     expect(card('anthropic')).not.toContain('class="flag');
     // A stealth slot has no lab: it is counted once, in the section head, never on a card.
     expect(html).toContain('1 STEALTH SLOT · UNATTRIBUTED');
@@ -394,7 +404,9 @@ describe('Labs cards', () => {
     expect(html).toMatch(
       /class="hist" role="img" aria-label="Models listed on OpenRouter per month: Oct 2025 \d+, [^"]*Sep 2026 \d+\."/,
     );
-    expect(html).toMatch(/<h3 class="lab-name"[^>]*>Anthropic<\/h3>/);
+    expect(html).toMatch(
+      /<h2 class="lab-name"[^>]*><a class="lab-link" href="\/labs\/anthropic"[^>]*>Anthropic<\/a><\/h2>/,
+    );
   });
 
   it('says "NO POLYMARKET RELEASE MARKET" only when the odds are up, and "1 LAUNCH" in the singular', async () => {

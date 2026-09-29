@@ -39,7 +39,7 @@ export interface LeadFlag {
   label: string;
   /** What raised it, for the hover title. */
   detail: string;
-  /** The early-warnings subsection that lists it. */
+  /** The early-warnings subsection that lists it, on /radar. */
   href: string;
 }
 
@@ -58,7 +58,7 @@ export function leadFlags(w: EarlyWarnings, labId: LabId): LeadFlag[] {
       kind: 'leak',
       label: `LEAK${count(leaks.length)}`,
       detail: leaks.map((l) => `${l.title} (${l.sourceName})`).join('; '),
-      href: '#ew-leaks',
+      href: '/radar#ew-leaks',
     });
   const streams = w.broadcasts.items.filter((b) => b.labId === labId);
   if (streams.length) {
@@ -70,7 +70,7 @@ export function leadFlags(w: EarlyWarnings, labId: LabId): LeadFlag[] {
       kind: 'stream',
       label: `STREAM${next !== undefined ? ` ${hours(next)}` : count(streams.length)}`,
       detail: streams.map((b) => `${b.channel}: ${b.title}`).join('; '),
-      href: '#ew-streams',
+      href: '/radar#ew-streams',
     });
   }
   const archs = w.architectures.items.filter((a) => a.labId === labId);
@@ -79,7 +79,7 @@ export function leadFlags(w: EarlyWarnings, labId: LabId): LeadFlag[] {
       kind: 'arch',
       label: `ARCH${count(archs.length)}`,
       detail: archs.map((a) => `${a.module}, ${Math.round(a.daysPending)}d pending`).join('; '),
-      href: '#ew-arch',
+      href: '/radar#ew-arch',
     });
   const events = w.events.items.filter((e) => e.labId === labId);
   if (events.length) {
@@ -88,7 +88,7 @@ export function leadFlags(w: EarlyWarnings, labId: LabId): LeadFlag[] {
       kind: 'keynote',
       label: e.hoursToStart >= 0 ? `KEYNOTE ${hours(e.hoursToStart)}` : 'KEYNOTE LIVE',
       detail: events.map((x) => x.label).join('; '),
-      href: '#ew-events',
+      href: '/radar#ew-events',
     });
   }
   return flags;

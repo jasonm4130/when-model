@@ -132,7 +132,7 @@ const tableRows = inst.scrub.slice().reverse();
         )}
       </p>
     </div>
-    <div class:list={['dc-num head', { 'plate over': ok }]} data-num data-plate={dropconNumber(c)}>{dropconNumber(c)}</div>
+    <div class:list={['dc-num head', { plate: ok }]} data-num data-plate={dropconNumber(c)}>{dropconNumber(c)}</div>
   </div>
 
   {Astro.slots.has('default') && <div class="sc-strip"><slot /></div>}
@@ -279,7 +279,7 @@ const tableRows = inst.scrub.slice().reverse();
   <b class="tiny">WHAT IS THIS?</b> <span class="w-long">DROPCON reads Polymarket's odds on frontier model
   releases into a 0–100 lead score. The score's band sets the level, 5 (quiet) to 1 (release surge); the
   line is that score over time.</span><span class="w-short">The line is the 0–100 lead score over time;
-  its band sets the level, 5 quiet to 1 surge.</span> It is a lead score, <b class="nf">NOT A FORECAST</b>. <a href="#dc-adds">How it adds up</a> · <a href="/backtest">/backtest</a>
+  its band sets the level, 5 quiet to 1 surge.</span> It is a lead score, <b class="nf">NOT A FORECAST</b>. <a href="/about#score">How it adds up</a> · <a href="/backtest">/backtest</a>
 </p>
 <p class="dc-key">
   <span class="k-item"><i class="k-line" aria-hidden="true"></i>lead score, coloured by its level</span>
@@ -359,9 +359,10 @@ const tableRows = inst.scrub.slice().reverse();
 
   /* ── The poster: the numeral enormous, the level's name huge beside it, then everything calm. ── */
   .sc-poster { grid-area: poster; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'num lede'; column-gap: clamp(20px, 3.5vw, 64px); align-items: start; }
-  .dc-num { grid-area: num; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--num); line-height: 0.74; letter-spacing: -0.02em; color: var(--lvl); font-variant-numeric: lining-nums; margin-top: calc(var(--num) * -0.012); --plate-x: 0.024em; --plate-y: 0.014em; }
-  /* A reading prints in two plates, blue and pink over it, a few pixels apart: the overlap goes deep
-     navy (11:1 on paper) and each plate shows as a fringe on one side. */
+  .dc-num { grid-area: num; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--num); line-height: 0.74; letter-spacing: -0.02em; color: var(--lvl); font-variant-numeric: lining-nums; margin-top: calc(var(--num) * -0.012); --plate-x: 0.05em; --plate-y: 0.032em; }
+  /* A reading prints in two plates: the blue on top, flat and crisp, and the grainy pink under it, far
+     enough out of register that it shows as its own colour down one side rather than darkening the
+     blue to navy (the overprint read as one dark ink). */
   .dc-num.plate::before { mix-blend-mode: multiply; }
   .dc-name.plate { --plate-x: 0.03em; --plate-y: 0.026em; }
   .dc-lede { grid-area: lede; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
@@ -594,10 +595,10 @@ const tableRows = inst.scrub.slice().reverse();
      width and the week's instrument starts on the first screen. The lede is a container, so the
      level's name sets itself to the room it has (and to the screen's height) and breaks onto a
      second line like a headline rather than running under the strip. */
-  @media (min-width: 1240px) {
+  @media (min-width: 1024px) {
     .scope {
       --num: clamp(260px, min(6rem + 30vw, 60vh), 560px);
-      grid-template-columns: 30px 30px minmax(0, 1fr) minmax(320px, 0.44fr);
+      grid-template-columns: 30px 30px minmax(0, 1fr) minmax(280px, 0.44fr);
       grid-template-rows: auto auto auto var(--plot-h) 26px auto auto auto auto;
       grid-template-areas:
         'poster poster poster strip'
@@ -617,8 +618,10 @@ const tableRows = inst.scrub.slice().reverse();
     .sc-strip { margin: 0; padding-left: clamp(24px, 3vw, 44px); border-left: 1px solid var(--ink); align-self: start; }
     .sc-readout { margin-top: clamp(20px, 3vh, 40px); }
   }
-  @media (min-width: 1240px) and (max-height: 820px) {
-    .scope { grid-template-columns: 30px 30px minmax(0, 1fr) minmax(420px, 0.62fr); }
+  @media (min-width: 1024px) and (max-height: 820px) {
+    .scope { --num: clamp(240px, min(6rem + 30vw, 50vh), 560px); }
+    .dc-name { font-size: clamp(56px, min(25cqi, 11.5vh), 172px); }
+    .sc-readout { margin-top: 16px; }
   }
 
   /* Tablets: a slightly shorter plot. */

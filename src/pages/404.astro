@@ -1,14 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
 ---
 <Layout title="404 — whenmodel" description="Not found" robots="noindex">
-  <main class="wrap nf reveal">
-    <h1 class="glow-m">404</h1>
-    <p>This model has not been released yet. <a href="/">Back to the dashboard</a>.</p>
+  <Header view={{ page: 'not-found' }} />
+  <main id="main" class="wrap nf reveal">
+    <h1>404</h1>
+    <p>This model has not been released yet. <a href="/">Back to the level</a>, or <a href="/labs">the lab list</a>.</p>
   </main>
 </Layout>
 <style>
-  .nf { padding: 80px 0; text-align: center; }
-  .nf h1 { font-size: 40px; }
-  .nf p { font-size: 24px; margin-top: 16px; }
+  .nf { padding-block: 80px; text-align: center; }
+  .nf h1 { font-size: var(--fs-d1); line-height: 0.9; color: var(--ink); }
+  .nf p { font-size: var(--fs-lede); margin-top: 24px; }
 </style>

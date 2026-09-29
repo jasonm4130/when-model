@@ -31,24 +31,18 @@ const announceItems = l.announcements.slice(0, LIMIT);
 const storyItems = l.stories.slice(0, LIMIT);
 const more = (n: number) => `${n} MORE`;
 ---
-<section class="section wrap reveal" aria-labelledby="tells-title">
-  <div class="section-head">
-    <h2 id="tells-title">TELLS</h2>
-  </div>
-  <p class="kicker sig-kicker">What has come before launches, and the launches that already came. Every tell shows its track record. None of it moves the level.</p>
+<section class="signals" aria-label="Early warnings and landed launches">
   <div class="grid grid-2">
     <div class="panel sig-panel">
       <div class="panel-head">
-        <h3><span aria-hidden="true">◬</span>EARLY WARNINGS</h3>
+        <h2><span aria-hidden="true">◬</span>EARLY WARNINGS</h2>
         <div class="pills">
           <span class={`pill ${ewPill.tone}`} title={ewPill.title} data-source-pill data-stale-at={ewPill.staleAt} data-stale-text={ewPill.staleText}>{ewPill.text}</span>
-          <span class="pill">NOT SCORED</span>
         </div>
       </div>
-      <p class="sig-intro">Signals that have come before launches. Each shows its track record; none moves the level.</p>
 
       <div class="sig" id="ew-stealth">
-        <h4 class="sig-head tiny">STEALTH SLOTS <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : w.stealth.items.length}</span></h4>
+        <h3 class="sig-head tiny">STEALTH SLOTS <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : w.stealth.items.length}</span></h3>
         <p class="track" title={w.stealth.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.stealth}</p>
         {stealthItems.slice(0, SHOW).map((s) => (
           <a class="sig-row" href={s.url ?? `https://openrouter.ai/${s.id}`} target="_blank" rel="noopener">
@@ -73,7 +67,7 @@ const more = (n: number) => `${n} MORE`;
       </div>
 
       <div class="sig" id="ew-leaks">
-        <h4 class="sig-head tiny">UNLISTED LEAKS <span class="count">{w.leaks.items.length}{leaksDown ? ' · SOURCE DOWN' : ''}</span></h4>
+        <h3 class="sig-head tiny">UNLISTED LEAKS <span class="count">{w.leaks.items.length}{leaksDown ? ' · SOURCE DOWN' : ''}</span></h3>
         <p class="track" title={w.leaks.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.leaks}</p>
         {!w.leaks.checkedAgainstListings && <p class="sig-note">OpenRouter is down, so models that already listed were not filtered out.</p>}
         {leakItems.slice(0, SHOW).map((x) => (
@@ -99,7 +93,7 @@ const more = (n: number) => `${n} MORE`;
       </div>
 
       <div class="sig" id="ew-streams">
-        <h4 class="sig-head tiny">SCHEDULED STREAMS <span class="count">{w.broadcasts.items.length}{w.broadcasts.ok ? '' : ' · FEED DOWN'}</span></h4>
+        <h3 class="sig-head tiny">SCHEDULED STREAMS <span class="count">{w.broadcasts.items.length}{w.broadcasts.ok ? '' : ' · FEED DOWN'}</span></h3>
         <p class="track" title={w.broadcasts.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.broadcasts}</p>
         {streamItems.slice(0, SHOW).map((b) => (
           <a class="sig-row" href={b.url} target="_blank" rel="noopener">
@@ -124,7 +118,7 @@ const more = (n: number) => `${n} MORE`;
       </div>
 
       <div class="sig" id="ew-arch">
-        <h4 class="sig-head tiny">PENDING ARCHITECTURES <span class="count">{w.architectures.ok ? w.architectures.items.length : 'REGISTRY DOWN'}</span></h4>
+        <h3 class="sig-head tiny">PENDING ARCHITECTURES <span class="count">{w.architectures.ok ? w.architectures.items.length : 'REGISTRY DOWN'}</span></h3>
         <p class="track" title={w.architectures.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.architectures}</p>
         {!w.architectures.checkedAgainstListings && <p class="sig-note">OpenRouter is down, so shipped architectures were not cleared.</p>}
         {archItems.slice(0, SHOW).map((a) => (
@@ -151,7 +145,7 @@ const more = (n: number) => `${n} MORE`;
 
       {w.events.items.length > 0 && (
         <div class="sig" id="ew-events">
-          <h4 class="sig-head tiny">KEYNOTE WINDOWS <span class="count">{w.events.items.length}</span></h4>
+          <h3 class="sig-head tiny">KEYNOTE WINDOWS <span class="count">{w.events.items.length}</span></h3>
           <p class="track" title={w.events.track.summary}><span class="tiny">TRACK</span> {TRACK_LINES.events}</p>
           {w.events.items.map((e) => (
             <a class="sig-row" href={e.source} target="_blank" rel="noopener">
@@ -164,19 +158,17 @@ const more = (n: number) => `${n} MORE`;
       )}
     </div>
 
-    <div class="panel sig-panel">
+    <div class="panel sig-panel" id="landed">
       <div class="panel-head">
-        <h3><span aria-hidden="true">◆</span>LANDED</h3>
+        <h2><span aria-hidden="true">◆</span>LANDED</h2>
         <div class="pills">
-          {l.banner && <span class="pill warn">MODELS JUST LANDED</span>}
           <span class={`pill ${landedPill.tone}`} title={landedPill.title} data-source-pill data-stale-at={landedPill.staleAt} data-stale-text={landedPill.staleText}>{landedPill.text}</span>
-          <span class="pill">NOT SCORED</span>
         </div>
       </div>
       <p class="sig-intro">{l.summary}. Launches that already happened are listed, never scored.</p>
 
       <div class="sig">
-        <h4 class="sig-head tiny">LISTED ON OPENROUTER · 7 DAYS <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : l.releases.length}</span></h4>
+        <h3 class="sig-head tiny">LISTED ON OPENROUTER · 7 DAYS <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : l.releases.length}</span></h3>
         {l.releases.slice(0, SHOW).map((r) => (
           <a class="sig-row" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener">
             <span class="sig-main landed-name">{r.name}</span>
@@ -200,7 +192,7 @@ const more = (n: number) => `${n} MORE`;
       </div>
 
       <div class="sig">
-        <h4 class="sig-head tiny">LAB ANNOUNCEMENTS <span class="count">{l.announcements.length}{labFeedsDown ? ` · ${labFeedsDown} FEED${labFeedsDown === 1 ? '' : 'S'} DOWN` : ''}</span></h4>
+        <h3 class="sig-head tiny">LAB ANNOUNCEMENTS <span class="count">{l.announcements.length}{labFeedsDown ? ` · ${labFeedsDown} FEED${labFeedsDown === 1 ? '' : 'S'} DOWN` : ''}</span></h3>
         {announceItems.slice(0, SHOW).map((a) => (
           <a class="sig-row" href={a.url} target="_blank" rel="noopener">
             <span class="sig-main">{a.title}</span>
@@ -224,7 +216,7 @@ const more = (n: number) => `${n} MORE`;
       </div>
 
       <div class="sig">
-        <h4 class="sig-head tiny">HACKER NEWS LAUNCH STORIES <span class="count">{hnDown ? 'HN DOWN' : l.stories.length}</span></h4>
+        <h3 class="sig-head tiny">HACKER NEWS LAUNCH STORIES <span class="count">{hnDown ? 'HN DOWN' : l.stories.length}</span></h3>
         {storyItems.slice(0, SHOW).map((s) => (
           <a class="sig-row" href={s.url} target="_blank" rel="noopener">
             <span class="sig-main">{s.title}</span>
@@ -250,9 +242,9 @@ const more = (n: number) => `${n} MORE`;
   </div>
 </section>
 <style>
-  .sig-kicker { margin: calc(var(--s4) * -0.5) 0 var(--s5); }
   .sig-intro { font-size: var(--fs-sm); color: var(--ink-2); max-width: 52ch; margin-bottom: 8px; }
   .sig { scroll-margin-top: 16px; margin-top: 36px; }
+  #landed { scroll-margin-top: 16px; }
   /* Each tell leads with its count, set large; the name and its track record sit beside it. */
   .sig-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 6px; color: var(--ink); font-family: var(--font-label); }
   .sig-head .count { order: -1; font-family: var(--font-display); font-size: 40px; font-weight: 800; font-stretch: 62.5%; letter-spacing: 0; line-height: 0.9; color: var(--ink); }

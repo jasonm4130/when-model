@@ -6,7 +6,9 @@ import Feed from '../../src/components/Feed.astro';
 import Header from '../../src/components/Header.astro';
 import Labs from '../../src/components/Labs.astro';
 import Markets from '../../src/components/Markets.astro';
+import ScoreDetail from '../../src/components/ScoreDetail.astro';
 import Signals from '../../src/components/Signals.astro';
+import SourceHealth from '../../src/components/SourceHealth.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
@@ -124,7 +126,7 @@ describe('components', async () => {
   const container = await AstroContainer.create();
   const d = dashboard();
 
-  it('Dropcon shows the level, the headline, a provenance that adds up and the hottest lab', async () => {
+  it('Dropcon shows the level, the headline, the hottest lab linked to its page and the landed model', async () => {
     const html = await container.renderToString(Dropcon, { props: { d, now: Date.parse(d.generatedAt) } });
     expect(html).toContain(`DROPCON LEVEL`);
     expect(html).toContain(`>${d.dropcon.level}<`);
@@ -139,15 +141,28 @@ describe('components', async () => {
     expect(html).not.toContain('ODDS OFFLINE');
     expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by Sep 24');
     expect(html).toContain(d.dropcon.headline);
+    // The busiest release market links out to Polymarket, and its full ladder is on /markets.
+    expect(html).toContain('href="https://polymarket.com/event/gpt-6"');
+    expect(html).toContain('href="/markets"');
+    expect(html).toContain(d.labs[0].name);
+    expect(html).toMatch(new RegExp(`class="dc-hot[^"]*" href="/labs/${d.labs[0].id}"`));
+    // A frontier listing under 48 hours old gets the JUST LANDED ticket, which is never scored.
+    expect(html).toContain('JUST LANDED');
+    expect(html).toContain('shown, not scored');
+    // The arithmetic and the forecast question live on /about now, linked from the score line.
+    expect(html).not.toContain('class="pts"');
+    expect(html).toContain('href="/about#score"');
+  });
+
+  it('ScoreDetail shows a provenance that adds up and answers whether it is a forecast', async () => {
+    const html = await container.renderToString(ScoreDetail, { props: { d } });
     const pts = [...html.matchAll(/<span class="pts"[^>]*>(\d+)<\/span>/g)].map((m) => Number(m[1]));
     expect(pts).toEqual([...d.dropcon.provenance.map((r) => r.points), d.dropcon.score]);
     expect(pts.slice(0, -1).reduce((a, b) => a + b, 0)).toBe(d.dropcon.score);
     expect(html).toContain('href="https://polymarket.com/event/gpt-6"');
     expect(html).toContain('Is this a forecast?');
-    expect(html).toContain(d.labs[0].name);
-    // A frontier listing under 48 hours old raises the banner, which is never scored.
-    expect(html).toContain('MODELS JUST LANDED');
-    expect(html).toContain('shown, not scored');
+    expect(html).toContain('id="score"');
+    expect(html).toContain('href="/backtest"');
   });
 
   it('Dropcon flags a floor when the odds are offline', async () => {
@@ -171,7 +186,8 @@ describe('components', async () => {
   it('Signals lists early warnings with their track record and landed launches, neither scored', async () => {
     const html = await container.renderToString(Signals, { props: { d } });
     expect(html).toContain('EARLY WARNINGS');
-    expect(html).toContain('NOT SCORED');
+    // "Not scored" is said once, in the landed panel's intro; /radar's page intro says none of it moves the level.
+    expect(html).toContain('never scored');
     expect(html).toContain(d.earlyWarnings.stealth.track.summary);
     expect(html).toContain('10 of 13 resolved leaks');
     expect(html).toContain(d.earlyWarnings.broadcasts.track.summary);
@@ -212,13 +228,22 @@ describe('components', async () => {
     expect(html).not.toMatch(/race-name[^>]*>Other</);
   });
 
-  it('Feed escapes untrusted titles and lists failing sources', async () => {
+  it('Feed escapes untrusted titles and keeps the X watchlist', async () => {
     const html = await container.renderToString(Feed, { props: { d } });
     expect(html).toContain('Introducing &lt;GPT-6&gt; &amp; friends');
     expect(html).not.toContain('<GPT-6>');
+    expect(html).toContain('x.com/sama');
+    expect(html).toContain('id="feed"');
+  });
+
+  it('SourceHealth lists every source, and a failing one with its error', async () => {
+    const html = await container.renderToString(SourceHealth, { props: { d } });
     expect(html).toContain('Anthropic news');
     expect(html).toContain('timeout');
-    expect(html).toContain('x.com/sama');
+    for (const s of d.sources) expect(html).toContain(s.name);
+    const up = d.sources.filter((s) => s.ok).length;
+    expect(html).toMatch(new RegExp(`>${up}/${d.sources.length}<`));
+    expect(html).toContain('Down: ');
   });
 
   it('Labs renders every lab with its status tag, histogram and 72h/7d/30d reads', async () => {
@@ -247,7 +272,7 @@ describe('components', async () => {
   });
 
   it('Header reports status, names the site for screen readers and keeps an explicit pause control, with no ticker', async () => {
-    const html = await container.renderToString(Header, { props: { d } });
+    const html = await container.renderToString(Header, { props: { d, view: { page: 'home' } } });
     expect(html).toContain('STATUS: DEGRADED');
     expect(html).toContain('data-refresh-toggle');
     expect(html).toContain('aria-pressed="false"');

@@ -5,6 +5,7 @@ import { daysLabel, monthInitials, shortDate } from '../ui/format';
 import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue } from '../ui/odds';
 import { labInk } from '../ui/panels';
 import { leadFlags } from '../ui/signals';
+import { labPath } from '../ui/site';
 interface Props { d: Dashboard; now?: Date }
 const { d, now = new Date() } = Astro.props;
 const months = monthInitials(now);
@@ -20,15 +21,11 @@ const oddsAvailable = d.measurement.inputs.oddsAvailable;
 const note = (read: LabOddsRead | undefined) => (read || oddsAvailable ? readNote(read) : 'odds offline');
 const rank = (i: number) => String(i + 1).padStart(2, '0');
 ---
-<section class="section wrap reveal" aria-labelledby="labs-title">
-  <div class="section-head">
-    <h2 id="labs-title"><span aria-hidden="true">▦</span>LAB WATCH</h2>
-    <div class="pills">
-      {stealth > 0 && <a class="pill warn" href="#ew-stealth" title="Stealth slots are anonymous, so no lab line carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
-      <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
-    </div>
+<section class="labs-list" aria-label="Labs ranked by heat">
+  <div class="labs-meta">
+    <span class="pill">{d.labs.length} LABS MONITORED</span>
+    {stealth > 0 && <a class="pill warn" href="/radar#ew-stealth" title="Stealth slots are anonymous, so no lab line carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
   </div>
-  <p class="kicker labs-kicker">Ranked by heat. The big number is the market's odds of a drop inside seven days; open a lab for its reads, tempo and latest listing.</p>
   <ol class="labs-grid">
     {d.labs.map((l, idx) => {
       const max = Math.max(1, ...l.histogram);
@@ -40,7 +37,7 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
             <summary class="lab-row">
               <span class="rank" aria-hidden="true">{rank(idx)}</span>
               <span class="lab-id">
-                <span class="lab-title"><i class="lab-chip" aria-hidden="true">{l.glyph}</i><h3 class="lab-name">{l.name}</h3></span>
+                <span class="lab-title"><i class="lab-chip" aria-hidden="true">{l.glyph}</i><h2 class="lab-name"><a class="lab-link" href={labPath(l.id)}>{l.name}</a></h2></span>
                 <span class="lab-tags">
                   <span class:list={l.status === 'SHIPPING' ? ['stamp', 'hot', 'lab-status', 'shipping'] : ['tag', 'lab-status']}>{l.status}</span>
                   {flags.length > 0 && <span class="lab-flagged">{flags.length} LEAD FLAG{flags.length === 1 ? '' : 'S'}</span>}
@@ -63,6 +60,7 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
               <span class="lab-toggle" aria-hidden="true"></span>
             </summary>
             <div class="lab-more">
+              <a class="lab-page-link" href={labPath(l.id)}>When will {l.name} ship? The full page</a>
               <div class="more-col">
                 {flags.length > 0 && (
                   <div class="flags">
@@ -109,8 +107,11 @@ const rank = (i: number) => String(i + 1).padStart(2, '0');
   </ol>
 </section>
 <style>
-  .section-head .pills { display: flex; gap: 4px 16px; flex-wrap: wrap; }
-  .labs-kicker { margin: calc(var(--s4) * -0.5) 0 var(--s4); }
+  .labs-meta { display: flex; gap: 4px 20px; flex-wrap: wrap; margin-bottom: 10px; }
+  .lab-link { color: inherit; text-decoration: none; }
+  .lab-link:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.12em; }
+  .lab-page-link { grid-column: 1 / -1; justify-self: start; font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); }
+  .lab-page-link::after { content: ' →'; }
   .labs-grid { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
   .lab { scroll-margin-top: 16px; border-bottom: 1px solid var(--rule-soft); }
   .lab:target .lab-row { box-shadow: inset 4px 0 0 var(--pink); }

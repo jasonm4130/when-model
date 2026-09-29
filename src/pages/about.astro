@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import PageHead from '../components/PageHead.astro';
+import ScoreDetail from '../components/ScoreDetail.astro';
+import History from '../components/History.astro';
+import SourceHealth from '../components/SourceHealth.astro';
+import Disclaimer from '../components/Disclaimer.astro';
+import Footer from '../components/Footer.astro';
+import { loadDashboard } from '../app/load-dashboard';
+import { pageMeta } from '../ui/site';
+
+const d = await loadDashboard();
+Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
+const view = { page: 'about' } as const;
+const meta = pageMeta(view);
+---
+<Layout title={meta.title} description={meta.description}>
+  <Header d={d} view={view} />
+  <main id="main">
+    <PageHead title="How it works" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." />
+    <div class="wrap page-body">
+      <ScoreDetail d={d} />
+      <History />
+      <SourceHealth d={d} />
+      <Disclaimer />
+    </div>
+  </main>
+  <Footer generatedAt={d.generatedAt} />
+</Layout>

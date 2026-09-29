@@ -1,0 +1,45 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import LabDetail from '../../components/LabDetail.astro';
+import Footer from '../../components/Footer.astro';
+import NotFound from '../404.astro';
+import { loadDashboard } from '../../app/load-dashboard';
+import { labById } from '../../domain/lab';
+import { labPage } from '../../ui/lab-page';
+import { labInk } from '../../ui/panels';
+import { pageMeta } from '../../ui/site';
+
+// An id outside the registry is the site's 404, with a 404 status, and costs no dashboard read.
+const lab = labById(Astro.params.id);
+if (!lab) Astro.response.status = 404;
+const d = lab ? await loadDashboard() : undefined;
+const p = lab && d ? labPage(d, lab.id) : undefined;
+if (p) Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
+const view = lab ? ({ page: 'lab', lab: lab.id } as const) : undefined;
+const meta = view && pageMeta(view);
+const rank = p?.status ? d!.labs.indexOf(p.status) + 1 : 0;
+---
+{d && p && view && meta ? (
+  <Layout title={meta.title} description={meta.description}>
+    <Header d={d} view={view} />
+    <main id="main">
+      <div class={`wrap page-head reveal lab-head ink-${labInk(p.lab.id)}`}>
+        <p class="crumbs tiny"><a href="/labs">Lab Watch</a>{rank > 0 && <span> · No. {rank} of {d.labs.length} by heat</span>}{p.status && <span> · {p.status.status}</span>}</p>
+        <h1 id="page-title">When will {p.lab.name} ship?</h1>
+        <p class="page-intro">What Polymarket prices for {p.lab.name}'s next release, and this week's signals that name it. Crowd opinion, not a roadmap.</p>
+      </div>
+      <div class="wrap page-body">
+        <LabDetail d={d} p={p} />
+      </div>
+    </main>
+    <Footer generatedAt={d.generatedAt} />
+  </Layout>
+) : <NotFound />}
+<style>
+  /* The page's one swipe prints in the lab's ink: blue for a blue lab, else the pink (a black swipe
+     would print over the black words). */
+  .lab-head.ink-blue h1 { --swipe: var(--blue); }
+  .crumbs { margin-bottom: 14px; color: var(--ink-2); }
+  .crumbs a { color: var(--ink); }
+</style>

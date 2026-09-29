@@ -316,9 +316,11 @@ describe('backtest page', async () => {
     expect(html).not.toContain('will be published here');
     for (const anchor of ['id="trap-her"', 'id="seven-day"', 'id="negative-results"'])
       expect(html).toContain(anchor);
-    // The page wears the backtest footer: back to the dashboard, the pull time and the rebuild.
+    // The site's tab strip leads back to the dashboard and marks this page as the current one.
+    expect(html).toMatch(/<a class="tab" href="\/"[^>]*>Home</);
+    expect(html).toMatch(/<a class="tab on" href="\/backtest" aria-current="page"/);
+    // The page wears the backtest footer: the pull time and the rebuild.
     const footer = html.slice(html.indexOf('<footer'));
-    expect(footer).toContain('>DASHBOARD<');
     expect(footer).toContain(`DATA PULLED ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
     expect(footer).toContain('href="#reproduce"');
     expect(footer).not.toContain('EDGE-CACHED');
