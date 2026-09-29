@@ -33,13 +33,13 @@ const stamp = generatedAt.replace('T', ' ').slice(0, variant === 'backtest' ? 16
 ---
 <footer class="wrap foot reveal">
   <div class="panel disclaimer">
-    <div class="tiny glow-y">OPERATIONAL DISCLAIMER</div>
-    <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly. <span aria-hidden="true">▼</span></p>
+    <div class="tiny">OPERATIONAL DISCLAIMER</div>
+    <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly.</p>
     <p class="sources"><span class="tiny muted">SOURCES</span> {upstreams.map((u, i) => <><span class="src-item"><a href={u.href} target="_blank" rel="noopener">{u.name}</a>{i < upstreams.length - 1 && <span aria-hidden="true"> ·</span>}</span> </>)}</p>
   </div>
   <div class="foot-row">
     {variant === 'backtest' ? (
-      <span class="muted"><a href="/">◂ DASHBOARD</a> · DATA PULLED {stamp}Z · REPRODUCE: <a href="#reproduce"><code>pnpm backtest</code></a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
+      <span class="muted"><a href="/">DASHBOARD</a> · DATA PULLED {stamp}Z · REPRODUCE: <a href="#reproduce"><code>pnpm backtest</code></a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
     ) : (
       <span class="muted">GENERATED {stamp}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a> · <a href="/backtest">backtest</a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
     )}
@@ -47,12 +47,16 @@ const stamp = generatedAt.replace('T', ' ').slice(0, variant === 'backtest' ? 16
   </div>
 </footer>
 <style>
-  .foot { margin: 30px auto 40px; }
-  .disclaimer p { margin: 8px 0 0; font-size: var(--fs-md); color: var(--muted); }
-  .disclaimer .sources { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line2); font-size: var(--fs-sm); }
-  .sources .tiny { margin-right: 6px; }
+  .foot { margin: var(--s6) auto var(--s5); }
+  .disclaimer { border-top: 3px solid var(--ink); padding-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 48px; }
+  .disclaimer > .tiny { grid-column: 1 / -1; }
+  .disclaimer p { margin: 0; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
+  .sources .tiny { display: block; margin-bottom: 6px; color: var(--ink); }
   /* A separator trails its name so a wrapped line never starts with one. */
   .src-item { white-space: nowrap; }
-  .foot-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: var(--fs-sm); }
-  .foot-row code { font-family: var(--font-mono); color: var(--yellow); }
+  .foot-row { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--rule-soft); font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.06em; }
+  .foot-row code { font-size: 1.05em; letter-spacing: 0; }
+  @media (max-width: 720px) {
+    .disclaimer { grid-template-columns: minmax(0, 1fr); }
+  }
 </style>

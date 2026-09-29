@@ -6,155 +6,196 @@ import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue
 import { leadFlags } from '../ui/signals';
 interface Props { d: Dashboard; now?: Date }
 const { d, now = new Date() } = Astro.props;
-const statusColor: Record<string, string> = { SHIPPING: 'var(--magenta)', HOT: 'var(--orange)', WARM: 'var(--yellow)', QUIET: 'var(--muted)' };
 const months = monthInitials(now);
-const horizons: { key: 'p72' | 'p7' | 'p30'; label: string; glow: string }[] = [
-  { key: 'p72', label: '72H', glow: 'glow-m' },
-  { key: 'p7', label: '7D', glow: 'glow-y' },
-  { key: 'p30', label: '30D', glow: 'glow-c' },
+const horizons: { key: 'p72' | 'p7' | 'p30'; label: string }[] = [
+  { key: 'p72', label: '72H' },
+  { key: 'p7', label: '7D' },
+  { key: 'p30', label: '30D' },
 ];
+const minor = horizons.filter((h) => h.key !== 'p7');
 const stealth = d.earlyWarnings.stealth.items.length;
 const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'extrap' : '');
 const oddsAvailable = d.measurement.inputs.oddsAvailable;
 const note = (read: LabOddsRead | undefined) => (read || oddsAvailable ? readNote(read) : 'odds offline');
+const rank = (i: number) => String(i + 1).padStart(2, '0');
 ---
-<section class="section wrap reveal">
+<section class="section wrap reveal" aria-labelledby="labs-title">
   <div class="section-head">
-    <h2><span aria-hidden="true">▦</span>LAB WATCH <span class="sub"><span class="sub-tempo">RELEASE TEMPO · </span>ODDS · LAST DROP</span></h2>
+    <h2 id="labs-title"><span aria-hidden="true">▦</span>LAB WATCH</h2>
     <div class="pills">
-      {stealth > 0 && <a class="pill warn" href="#ew-stealth" title="Stealth slots are anonymous, so no lab card carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
+      {stealth > 0 && <a class="pill warn" href="#ew-stealth" title="Stealth slots are anonymous, so no lab line carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
       <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
     </div>
   </div>
-  <div class="grid grid-3 labs-grid">
+  <p class="kicker labs-kicker">Ranked by heat. The big number is the market's odds of a drop inside seven days; open a lab for its reads, tempo and latest listing.</p>
+  <ol class="labs-grid">
     {d.labs.map((l, idx) => {
       const max = Math.max(1, ...l.histogram);
       const flags = leadFlags(d.earlyWarnings, l.id);
+      const p7 = l.odds?.p7;
       return (
-        <article class="panel lab" id={`lab-${l.id}`} style={`--lab:${l.color}; --i:${idx}`}>
-          <div class="lab-head">
-            <h3 class="lab-name head"><span class="glyph" aria-hidden="true">{l.glyph}</span> {l.name}</h3>
-            <span class={`tag ${l.status === 'SHIPPING' ? 'pulse' : ''}`} style={`color:${statusColor[l.status]}`}>{l.status}</span>
-          </div>
-          {flags.length > 0 && (
-            <div class="flags">
-              <span class="sr-only">Lead flags, shown but not scored:</span>
-              {flags.map((f) => <a class={`flag ${f.kind}`} href={f.href} title={f.detail}>{f.label}</a>)}
+        <li class="lab" id={`lab-${l.id}`}>
+          <details class="lab-fold">
+            <summary class="lab-row">
+              <span class="rank" aria-hidden="true">{rank(idx)}</span>
+              <span class="lab-id">
+                <h3 class="lab-name">{l.name}</h3>
+                <span class="lab-tags">
+                  <span class:list={['tag', 'lab-status', { shipping: l.status === 'SHIPPING' }]}>{l.status}</span>
+                  {flags.length > 0 && <span class="lab-flagged">{flags.length} LEAD FLAG{flags.length === 1 ? '' : 'S'}</span>}
+                </span>
+              </span>
+              <span class="lab-odds" title={note(p7)}>
+                <span class={`metric-value ${extrap(p7)}`}>{readValue(p7)}</span>
+                <span class="metric-label">DROP ≤7D</span>
+              </span>
+              <span class="lab-minor">
+                {minor.map((h) => (
+                  <span class="mv" title={note(l.odds?.[h.key])}><span class="metric-label">DROP ≤{h.label}</span> <span class={`mv-v ${extrap(l.odds?.[h.key])}`}>{readValue(l.odds?.[h.key])}</span></span>
+                ))}
+                <span class="mv"><span class="metric-label">LAST DROP</span> <span class="mv-v">{daysLabel(l.daysSince)}</span></span>
+              </span>
+              <span class="lab-foot">
+                <span class="tiny heat-line" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}><span>HEAT {l.heat} ·</span> <span>{l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'}/30D</span></span>
+                <span class="bar heat" aria-hidden="true"><i style={`width:${l.heat}%`}></i></span>
+              </span>
+              <span class="lab-toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="lab-more">
+              <div class="more-col">
+                {flags.length > 0 && (
+                  <div class="flags">
+                    <span class="sr-only">Lead flags, shown but not scored:</span>
+                    {flags.map((f) => <a class={`flag ${f.kind}`} href={f.href} title={f.detail}>{f.label}</a>)}
+                  </div>
+                )}
+                {l.odds ? (
+                  <div class="reads">
+                    <div class="reads-fam metric-label">{l.odds.family} · where each read sits on its curve</div>
+                    <dl>
+                      {horizons.map((h) => {
+                        const read = l.odds![h.key];
+                        const trust = readTrust(read);
+                        return (
+                          <div class={`read ${trust}`} title={readNote(read)}>
+                            <dt>{h.label}</dt>
+                            <dd><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrap.'}</span> <span class="bracket">{readBracket(read)}</span>{read.family && <span class="rfam"> · {read.family}</span>}</dd>
+                          </div>
+                        );
+                      })}
+                    </dl>
+                  </div>
+                ) : <div class="reads-fam metric-label">{noOddsText(oddsAvailable)}</div>}
+                {l.launchedFamilies.length > 0 && <div class="odds-note">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
+                {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener">{l.odds.family} on Polymarket</a>}
+              </div>
+              <div class="more-col">
+                <div class="metric-label tempo">RELEASE TEMPO · 12 MONTHS</div>
+                <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
+                  {l.histogram.map((v, i) => <div class="col"><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
+                </div>
+                <div class="latest">
+                  <span class="metric-label">LATEST</span>
+                  {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted when">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
+                </div>
+                {l.xHandles.length > 0 && <div class="x">{l.xHandles.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</div>}
+              </div>
             </div>
-          )}
-          <div class="metrics tight">
-            {horizons.map((h) => (
-              <div title={note(l.odds?.[h.key])}><div class="metric-label">DROP ≤{h.label}</div><div class={`metric-value ${h.glow} ${extrap(l.odds?.[h.key])}`}>{readValue(l.odds?.[h.key])}</div></div>
-            ))}
-            <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(l.daysSince)}</div></div>
-          </div>
-          {l.odds ? (
-            <div class="reads">
-              <div class="reads-fam tiny muted">{l.odds.family}</div>
-              <dl>
-                {horizons.map((h) => {
-                  const read = l.odds![h.key];
-                  const trust = readTrust(read);
-                  return (
-                    <div class={`read ${trust}`} title={readNote(read)}>
-                      <dt>{h.label}</dt>
-                      <dd><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrap.'}</span> <span class="bracket">{readBracket(read)}</span>{read.family && <span class="rfam"> · {read.family}</span>}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </div>
-          ) : <div class="reads-fam tiny muted">{noOddsText(oddsAvailable)}</div>}
-          {l.launchedFamilies.length > 0 && <div class="odds-note muted">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
-          <div class="metric-label tempo">RELEASE TEMPO · 12 MONTHS</div>
-          <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
-            {l.histogram.map((v, i) => <div class="col" style={`--i:${i}`}><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
-          </div>
-          <div class="latest">
-            <span class="metric-label">LATEST</span>
-            {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted when">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
-          </div>
-          <div class="bar heat"><i style={`width:${l.heat}%`}></i></div>
-          <div class="lab-foot">
-            <span class="tiny muted heat-line" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}><span>HEAT {l.heat} ·</span> <span>{l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'}/30D</span></span>
-            <span class="x">{l.xHandles.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</span>
-          </div>
-          {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener"><span aria-hidden="true">▸</span> {l.odds.family} on Polymarket</a>}
-        </article>
+          </details>
+        </li>
       );
     })}
-  </div>
+  </ol>
 </section>
 <style>
-  .section-head .pills { display: flex; gap: 8px; flex-wrap: wrap; }
-  /* The subtitle wraps as one piece, so a line never starts with its separator. */
-  .section-head .sub { display: inline-block; white-space: nowrap; }
-  .lab { scroll-margin-top: 16px; }
-  .lab::before, .lab::after { border-color: var(--lab); }
-  .lab:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 0 0 1px rgba(0,0,0,0.6), 0 0 28px color-mix(in srgb, var(--lab) 18%, transparent), 0 14px 44px rgba(0,0,0,0.55); }
-  .lab:target { border-color: var(--lab); }
-  .lab-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .lab-name { font-size: 11px; color: var(--lab); text-shadow: 0 0 8px var(--lab); }
-  .glyph { font-family: var(--font-mono); font-size: 18px; }
-  .flags { display: flex; flex-wrap: wrap; gap: 4px; margin: -2px 0 10px; }
-  .flag { font-family: var(--font-head); font-size: var(--fs-pill); letter-spacing: 0.06em; padding: 3px 5px; border: 1px dashed currentColor; color: var(--yellow); white-space: nowrap; }
-  .flag:hover { color: #fff; border-style: solid; text-shadow: none; }
-  .reads { margin-top: 6px; }
-  .reads dl { margin: 2px 0 0; display: grid; gap: 1px; font-size: var(--fs-xs); line-height: 1.1; }
-  .read { display: grid; grid-template-columns: 4ch minmax(0, 1fr); gap: 6px; align-items: baseline; }
-  .read dt { font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
-  /* The bracket wraps rather than cutting its date off: at 1366px "held Sep 30" lost its date to an ellipsis. */
-  .read dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
-  .read .trust { white-space: nowrap; }
-  .read .trust { color: var(--green); }
-  .read.extrapolated .trust { color: var(--orange); }
-  .read.extrapolated .bracket { color: var(--muted); }
-  /* A 72-hour or 30-day read from another of the lab's families names it. */
-  .read .rfam { color: var(--cyan); }
-  .reads-fam { margin-top: 6px; }
-  .tempo { margin: 10px 0 4px; }
-  /* The latest listing wraps instead of clipping: its date and its focus ring stay visible. */
-  .latest { margin-top: 10px; font-size: var(--fs-sm); overflow-wrap: anywhere; }
-  .latest .metric-label { display: block; }
-  .latest .when { white-space: nowrap; }
-  .heat { margin-top: 10px; }
-  .heat > i { background: linear-gradient(90deg, var(--lab), var(--magenta)); }
-  /* The heat line breaks only between its two phrases, and the handle drops under it when the
-     card is narrow, so no card splits "2 LAUNCHES/30D" across lines. */
-  .lab-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 6px; margin-top: 6px; font-size: var(--fs-xs); }
+  .section-head .pills { display: flex; gap: 4px 16px; flex-wrap: wrap; }
+  .labs-kicker { margin: calc(var(--s4) * -0.5) 0 var(--s4); }
+  .labs-grid { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
+  .lab { scroll-margin-top: 16px; border-bottom: 1px solid var(--rule-soft); }
+  .lab:target .lab-row { box-shadow: inset 4px 0 0 var(--accent); }
+
+  /* One lab, one line: rank, name, the 7-day odds large, the rest small. */
+  .lab-row {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1.5fr) 136px minmax(0, 1.25fr) minmax(0, 1fr) 28px;
+    grid-template-areas: 'rank id odds minor foot toggle';
+    align-items: center;
+    column-gap: 24px;
+    padding: 18px 0;
+    color: var(--ink);
+    transition: background var(--fast) var(--ease);
+  }
+  .lab-row:hover { background: color-mix(in srgb, var(--paper-2) 60%, transparent); }
+  .lab-row:hover .lab-name { color: var(--accent-ink); }
+  .lab-row:focus-visible { outline-offset: -2px; }
+  .rank { grid-area: rank; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--line2); font-variant-numeric: tabular-nums; }
+  .lab:first-child .rank { color: var(--accent); }
+  .lab-id { grid-area: id; min-width: 0; }
+  .lab-name { font-size: clamp(28px, 1.2rem + 1.4vw, 40px); line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; transition: color var(--fast) var(--ease); }
+  .lab-tags { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-top: 8px; }
+  .lab-status { color: var(--ink-2); border-color: var(--rule-soft); }
+  .lab-status.shipping { color: var(--accent-ink); border-color: currentColor; }
+  .lab-flagged { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--accent-ink); }
+  .lab-odds { grid-area: odds; display: grid; justify-items: end; text-align: right; }
+  .lab-odds .metric-value { margin: 0; font-size: clamp(44px, 1.6rem + 2.4vw, 64px); line-height: 0.9; }
+  .lab-odds .metric-label { margin-top: 6px; }
+  /* An extrapolated read is marked by its "~" and the secondary ink, never by opacity. */
+  .metric-value.extrap, .mv-v.extrap { color: var(--muted); }
+  .lab-minor { grid-area: minor; display: grid; gap: 4px; }
+  .mv { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-bottom: 1px dotted var(--rule-soft); padding-bottom: 3px; }
+  .mv-v { font-family: var(--font-display); font-weight: 700; font-stretch: 75%; font-size: 19px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lab-foot { grid-area: foot; display: grid; gap: 8px; min-width: 0; }
+  .heat-line { color: var(--ink-2); }
   .heat-line > span { white-space: nowrap; }
-  .x { margin-left: auto; }
-  .x a { margin-left: 8px; color: var(--muted); }
-  .x a:hover { color: #fff; }
-  /* An extrapolated read is marked by its "~" and the muted colour, never by opacity: a dimmed
-     magenta 72H value fell to 1.8:1. --muted is 5.6:1 on the card. */
-  .metric-value.extrap { color: var(--muted); text-shadow: none; }
-  .odds-note { margin-top: 6px; font-size: var(--fs-xs); }
-  .mkt { display: block; margin-top: 8px; font-size: var(--fs-xs); color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
-  /* Ten labs divide into rows of five or two, never three or four: below five columns a
-     three-up grid left one card alone on its last row. */
-  @media (min-width: 641px) and (max-width: 1359px) {
-    .labs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bar.heat { height: 4px; }
+  .lab:first-child .bar.heat > i { background: var(--accent); }
+  .lab-toggle { grid-area: toggle; justify-self: end; font-family: var(--font-display); font-size: 28px; font-weight: 400; font-stretch: 100%; line-height: 1; }
+  .lab-toggle::before { content: '+'; }
+  .lab-fold[open] .lab-toggle::before { content: '−'; }
+
+  /* Opened: two quiet columns of detail under the line. */
+  .lab-more { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px 48px; padding: 4px 0 28px 88px; font-size: var(--fs-sm); }
+  .more-col { display: grid; gap: 14px; align-content: start; min-width: 0; }
+  .flags { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .flag { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--accent-ink); }
+  .reads dl { margin: 8px 0 0; display: grid; gap: 4px; line-height: 1.35; }
+  .read { display: grid; grid-template-columns: 4ch minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  .read dt { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 700; color: var(--ink-2); }
+  /* The bracket wraps rather than cutting its date off. */
+  .read dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+  .read .trust { white-space: nowrap; font-style: italic; }
+  .read.extrapolated .trust, .read.extrapolated .bracket { color: var(--ink-2); }
+  .read .rfam { color: var(--ink-2); }
+  .odds-note { color: var(--ink-2); }
+  .mkt { justify-self: start; }
+  .tempo { margin-bottom: -4px; }
+  /* The latest listing wraps instead of clipping: its date and its focus ring stay visible. */
+  .latest { overflow-wrap: anywhere; }
+  .latest .metric-label { display: block; margin-bottom: 2px; }
+  .latest .when { white-space: nowrap; }
+  .x { display: flex; gap: 14px; }
+  .x a { color: var(--ink-2); }
+
+  @media (max-width: 1100px) {
+    .lab-row { grid-template-columns: 52px minmax(0, 1.4fr) 116px minmax(0, 1.2fr) 28px; grid-template-areas: 'rank id odds minor toggle' 'rank id odds foot toggle'; row-gap: 10px; }
+    .lab-foot { align-self: start; }
   }
-  /* UI-17: five columns where they fit, so ten labs fill two rows with no orphans. */
-  @media (min-width: 1360px) {
-    .labs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .lab-name { font-size: 10px; }
-    .x a + a { display: none; }
-  }
-  /* UI-10: a compact card on phones. The histogram, tempo, X handles and market link are the
-     desktop's detail; the reads, flags, last drop and heat stay. */
-  @media (max-width: 480px) {
-    .lab .tempo, .lab .hist, .lab .mkt, .lab .x, .sub-tempo { display: none; }
-    .lab { padding-block: 12px; }
-    .lab-head { margin-bottom: 6px; }
-    .reads, .reads-fam { margin-top: 4px; }
-    .latest { margin-top: 4px; }
-    .latest .metric-label { display: inline; margin-right: 6px; }
-    .heat { margin-top: 6px; }
-    .lab-foot { margin-top: 4px; }
+  /* Phones: rank, name and the big number on the first line; the small reads under them. */
+  @media (max-width: 700px) {
+    .lab-row { grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: 'rank id odds' '. minor minor' '. foot toggle'; column-gap: 12px; row-gap: 12px; padding: 16px 0; }
+    .rank { font-size: 28px; align-self: start; }
+    .lab-name { font-size: 28px; }
+    .lab-odds .metric-value { font-size: 44px; }
+    .lab-minor { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .mv { display: grid; gap: 2px; border: 0; padding: 0; }
+    .lab-toggle { align-self: end; }
+    /* Closed, a phone's line is the name, the big number and the heat; the other reads open with it. */
+    .lab-fold:not([open]) .lab-minor { display: none; }
+    .lab-fold:not([open]) .lab-row { grid-template-areas: 'rank id odds' '. foot toggle'; }
+    .lab-more { padding-left: 48px; }
   }
   @media (max-width: 380px) {
-    .metrics.tight { grid-template-columns: repeat(2, 1fr); }
+    .lab-more { padding-left: 0; }
+    .lab-minor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 </style>

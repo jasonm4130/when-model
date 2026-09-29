@@ -117,16 +117,30 @@ describe('lab colours', () => {
     const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
     return (hi + 0.05) / (lo + 0.05);
   };
-  const background = /--bg:\s*(#[0-9a-f]{6})\b/i.exec(
-    readFileSync('src/styles/global.css', 'utf8') as string,
-  )?.[1];
+  const css = readFileSync('src/styles/global.css', 'utf8') as string;
+  const token = (name: string) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})\\b`, 'i').exec(css)?.[1];
+  const background = token('bg');
 
-  it('reach 4.5:1 against the page background', () => {
-    expect(background).toBe('#07060f');
-    for (const lab of LABS) expect(contrast(lab.color, background!), lab.id).toBeGreaterThanOrEqual(4.5);
-    // DeepSeek and Qwen were 3.85:1 and 4.43:1 on panels before #7480ff and #d24bff.
-    expect(contrast(labById('deepseek')!.color, background!)).toBeCloseTo(6.02, 2);
-    expect(contrast(labById('qwen')!.color, background!)).toBeCloseTo(5.94, 2);
+  it('text tokens reach 4.5:1 against the paper background', () => {
+    expect(background).toBe('#f1eee6');
+    expect(token('paper')).toBe(background);
+    for (const name of ['ink', 'ink-2', 'accent-ink']) {
+      expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(4.5);
+    }
+    // The full-strength accent is for display sizes and fills only: it passes the 3:1 large-text bar, not 4.5:1.
+    expect(contrast(token('accent')!, background!)).toBeGreaterThanOrEqual(3);
+    expect(contrast(token('accent')!, background!)).toBeLessThan(4.5);
+  });
+
+  it('never ink markup in a lab colour, which was tuned for the old dark page', () => {
+    // The lab palette was chosen for #07060f; on paper several fall under 4.5:1, so the page stays in its own tokens.
+    const light = LABS.filter((lab) => contrast(lab.color, background!) < 4.5);
+    expect(light.length).toBeGreaterThan(0);
+    for (const file of ['Labs', 'MarketRow', 'DropItem', 'FeedRow', 'Dropcon', 'Signals']) {
+      const src = readFileSync(`src/components/${file}.astro`, 'utf8') as string;
+      expect(src, file).not.toMatch(/\.color\b|labColor|feedColour/);
+    }
+    expect(labById('deepseek')!.color).toMatch(/^#[0-9a-f]{6}$/i);
   });
 });
 

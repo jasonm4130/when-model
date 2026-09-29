@@ -1,6 +1,7 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import Header from '../../src/components/Header.astro';
+import Labs from '../../src/components/Labs.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
@@ -23,14 +24,7 @@ function dashboard(overrides: Partial<DashboardInputs> = {}) {
 describe('Header', async () => {
   const container = await AstroContainer.create();
 
-  it('hides the ticker entirely when there is nothing to show (UI-04)', async () => {
-    const html = await container.renderToString(Header, { props: { d: dashboard() } });
-    expect(html).not.toContain('ticker-wrap');
-    expect(html).not.toContain('data-ticker-toggle');
-    expect(html).not.toContain('id="ticker-track"');
-  });
-
-  it('renders the ticker when there is at least one item', async () => {
+  it('carries no ticker, even with a new listing to announce: the hero and the lab list say it once', async () => {
     const drop: Drop = {
       id: 'anthropic/claude-fable-5.1',
       name: 'Claude Fable 5.1',
@@ -44,11 +38,12 @@ describe('Header', async () => {
       url: 'https://openrouter.ai/anthropic/claude-fable-5.1',
       free: false,
     };
-    const html = await container.renderToString(Header, {
-      props: { d: dashboard({ drops: { name: 'OpenRouter', data: [drop], ok: true } }) },
-    });
-    expect(html).toContain('class="ticker-wrap"');
-    expect(html).toContain('NEW ON OPENROUTER: CLAUDE FABLE 5.1');
+    for (const d of [dashboard(), dashboard({ drops: { name: 'OpenRouter', data: [drop], ok: true } })]) {
+      const html = await container.renderToString(Header, { props: { d } });
+      expect(html).not.toContain('ticker');
+      expect(html).not.toContain('NEW ON OPENROUTER');
+      expect(html).toMatch(/<h1 class="wordmark"[^>]*>when<span class="m"[^>]*>model<\/span>/);
+    }
   });
 
   it('exposes a PAUSE AUTO-REFRESH toggle and an empty, live reload status region (UI-11)', async () => {
@@ -81,7 +76,7 @@ describe('Header', async () => {
     expect(html).not.toMatch(/>UTC</);
   });
 
-  it('reports a degraded source in the status and keeps a ticker that has items', async () => {
+  it('reports a degraded source in the status', async () => {
     const release: Market = {
       slug: 'gpt-6',
       title: 'GPT-6 released by...?',
@@ -110,9 +105,12 @@ describe('Header', async () => {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [release], ok: false, error: 'down' } }) },
     });
     expect(html).toContain('STATUS: DEGRADED');
-    // The release market's odds are a ticker item, so the ticker renders even with a source down.
-    // Past its last rung the read is held there, a floor, and the ticker says so.
-    expect(html).toContain('OPENAI: AT LEAST 50% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
+    expect(html).toMatch(/status-live warn/);
+    // Past its last rung the read is held there, a floor, and the lab list says so where the ticker used to.
+    const labs = await container.renderToString(Labs, {
+      props: { d: dashboard({ markets: { name: 'Polymarket', data: [release], ok: false, error: 'down' } }) },
+    });
+    expect(labs).toMatch(/class="bracket"[^>]*>at least, held Sep 24</);
   });
 
   it('counts a YouTube outage but keeps the status OPERATIONAL, since the feeds are best-effort', async () => {
@@ -129,7 +127,7 @@ describe('Header', async () => {
     expect(await container.renderToString(Header, { props: { d: bothDown } })).toContain('STATUS: DEGRADED');
   });
 
-  it('names a read between near rungs plainly and a bucket-capped read as a ceiling', async () => {
+  it('has the lab list name a read between near rungs plainly and a bucket-capped read as a ceiling', async () => {
     const rung = (label: string, deadline: string, mid: number) => ({
       label,
       yes: mid,
@@ -155,10 +153,10 @@ describe('Header', async () => {
         rung('October 1', '2026-10-02T03:59:59.000Z', 0.9),
       ],
     };
-    const plain = await container.renderToString(Header, {
+    const plain = await container.renderToString(Labs, {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [ladder], ok: true } }) },
     });
-    expect(plain).toMatch(/OPENAI: \d+% ODDS GPT-6 SHIPS WITHIN 7 DAYS/);
+    expect(plain).toMatch(/class="bracket"[^>]*>Sep 24 → Oct 1</);
     const day = (d: number, ask: number) => ({
       label: `September ${d}`,
       yes: ask / 2,
@@ -176,9 +174,10 @@ describe('Header', async () => {
       title: 'GPT-6 released on...?',
       outcomes: [19, 20, 21, 22, 23, 24, 25, 26].map((d) => day(d, 0.02)),
     };
-    const capped = await container.renderToString(Header, {
+    const capped = await container.renderToString(Labs, {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [ladder, buckets], ok: true } }) },
     });
-    expect(capped).toContain('OPENAI: AT MOST 16% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
+    expect(capped).toContain('at most: bucket asks');
+    expect(capped).toMatch(/lab-odds[\s\S]*?16%/);
   });
 });

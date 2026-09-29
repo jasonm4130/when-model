@@ -22,22 +22,28 @@ test("links the hottest-lab line under the level to that lab's card", async ({ p
   }
 });
 
-test('uses the compact lab card on phones and five columns on wide screens', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await openDashboard(page);
-  const card = page.locator('.lab').first();
-  await expect(card.locator('.hist')).toBeHidden();
-  await expect(card.locator('.tempo')).toBeHidden();
-  await expect(card.locator('.reads, .reads-fam').first()).toBeVisible();
-
-  await page.setViewportSize({ width: 1440, height: 900 });
-  // Shown again on desktop, the histogram reads out month by month.
-  await expect(card.locator('.hist')).toHaveAttribute('role', 'img');
-  await expect(card.locator('.hist')).toHaveAccessibleName(/^Models listed on OpenRouter per month: /);
-  const columns = await page
-    .locator('.labs-grid')
-    .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
-  expect(columns).toBe(5);
+test('ranks labs one per line, each closed until opened, at every width', async ({ page }) => {
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await openDashboard(page);
+    const columns = await page
+      .locator('.labs-grid')
+      .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
+    expect(columns, `${width}px`).toBe(1);
+    const card = page.locator('.lab').first();
+    // Closed, a row is its rank, name, the 7-day odds and heat: the reads and the tempo wait inside.
+    await expect(card.locator('.lab-odds .metric-value')).toBeVisible();
+    await expect(card.locator('.heat-line')).toBeVisible();
+    await expect(card.locator('.hist')).toBeHidden();
+    await expect(card.locator('.reads, .reads-fam').first()).toBeHidden();
+    await card.locator('summary.lab-row').click();
+    await expect(card.locator('details.lab-fold')).toHaveAttribute('open', '');
+    await expect(card.locator('.reads, .reads-fam').first()).toBeVisible();
+    // Opened, the histogram shows and reads out month by month.
+    await expect(card.locator('.hist')).toBeVisible();
+    await expect(card.locator('.hist')).toHaveAttribute('role', 'img');
+    await expect(card.locator('.hist')).toHaveAccessibleName(/^Models listed on OpenRouter per month: /);
+  }
 });
 
 test('keeps relative ages on one line and focus rings unclipped', async ({ page }) => {
@@ -48,6 +54,9 @@ test('keeps relative ages on one line and focus rings unclipped', async ({ page 
   // unclipped check itself is in robustness.spec.ts.
   const latest = page.locator('.lab .latest a').first();
   if (await latest.count()) {
+    // The LATEST line lives inside the lab's fold: open it from the keyboard, as a keyboard reader would.
+    await page.locator('.lab summary.lab-row').first().focus();
+    await page.keyboard.press('Enter');
     await latest.focus();
     await expect(latest).toHaveCSS('outline-style', 'solid');
     await expect(page.locator('.lab .latest').first()).toHaveCSS('overflow', 'visible');

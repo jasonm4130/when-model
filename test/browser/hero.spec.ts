@@ -59,18 +59,18 @@ const bottomOf = async (page: Page, selector: string) => {
   return box!.y + box!.height;
 };
 
-// What must be on the first screen. A phone says NOT A FORECAST in the paragraph above the
-// readout; wider screens stamp it on the number. Where the masthead wraps (1024x768), the plot
-// starts under the fold but the number, what it is, and the readout do not.
-const HEAD = ['.dc-num', '.dc-name', '.sc-eq', '.dc-headline', '.sc-readout'];
-for (const { width, height, parts, nf } of [
-  { width: 390, height: 844, parts: [...HEAD, '.dc-scale', '.sc-plot', '.dc-what'], nf: '.dc-what .nf' },
-  { width: 1440, height: 900, parts: [...HEAD, '.dc-scale', '.sc-plot', '.dc-what'], nf: '.sc-eq-nf' },
-  { width: 1366, height: 768, parts: [...HEAD, '.dc-scale', '.sc-plot'], nf: '.sc-eq-nf' },
-  { width: 1024, height: 768, parts: HEAD, nf: '.sc-eq-nf' },
+// What must be on the first screen: the answer. The level (number, name, headline, NOT A FORECAST
+// on the score line), the hottest lab and the busiest release market. The week's instrument sits
+// under them: a reader who wants the history scrolls to it, and the summary does not wait on it.
+const ANSWER = ['.dc-num', '.dc-name', '.sc-eq', '.dc-headline', '.dc-hot', '.dc-lead .dc-mkt'];
+for (const { width, height, parts } of [
+  { width: 390, height: 844, parts: [...ANSWER, '.dc-rungs'] },
+  { width: 1440, height: 900, parts: [...ANSWER, '.dc-rungs'] },
+  { width: 1366, height: 768, parts: [...ANSWER, '.dc-rungs'] },
+  { width: 1024, height: 768, parts: ANSWER },
 ]) {
   for (const motion of ['reduce', 'no-preference'] as const) {
-    test(`puts the number, what it is${parts.includes('.sc-plot') ? ', the plot' : ''} and "not a forecast" on the first screen at ${width}x${height}, motion ${motion}`, async ({
+    test(`puts the level, the hottest lab, the busiest market and "not a forecast" on the first screen at ${width}x${height}, motion ${motion}`, async ({
       page,
     }) => {
       await page.emulateMedia({ reducedMotion: motion });
@@ -78,35 +78,26 @@ for (const { width, height, parts, nf } of [
       await openDashboard(page);
       // Let the load-in settle (the panel rises into place) before measuring.
       await page.waitForTimeout(motion === 'reduce' ? 0 : 1200);
-      for (const part of [...parts, nf]) {
+      for (const part of [...parts, '.sc-eq-nf']) {
         await expect(page.locator(part).first()).toBeVisible();
         expect(await bottomOf(page, part), `${part} on the first screen`).toBeLessThanOrEqual(height);
       }
-      await expect(page.locator(nf).first()).toHaveText(/NOT A FORECAST$/);
+      await expect(page.locator('.sc-eq-nf').first()).toHaveText(/NOT A FORECAST$/);
+      // The number comes first in size: nothing else in the hero is set as large.
+      const size = (sel: string) =>
+        page
+          .locator(sel)
+          .first()
+          .evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+      const num = await size('.dc-num');
+      for (const other of ['.dc-name', '.dc-headline', '.dc-hot .dc-big'])
+        expect(num, other).toBeGreaterThan(await size(other));
     });
   }
 }
 
-test('the line ends at the number: on a wide screen the number sits level with the NOW dot', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await openDashboard(page);
-  const dot = await page.locator('.sc-dot').boundingBox();
-  test.skip(!dot, 'no live reading today: the NOW dot is not drawn');
-  const num = (await page.locator('.dc-num').boundingBox())!;
-  const plot = (await page.locator('.sc-plot').boundingBox())!;
-  expect(Math.abs(dot!.x + dot!.width / 2 - (plot.x + plot.width))).toBeLessThanOrEqual(3);
-  const dotY = dot!.y + dot!.height / 2;
-  expect(dotY).toBeGreaterThanOrEqual(num.y - 1);
-  expect(dotY).toBeLessThanOrEqual(num.y + num.height + 1);
-  expect(num.x).toBeGreaterThan(plot.x + plot.width);
-  await expect(page.locator('.sc-nowtag')).toBeHidden();
-});
-
-for (const width of [390, 1024]) {
-  test(`below 1230px the number goes above the plot, which takes the width, and a NOW tag marks the edge (${width}px)`, async ({
+for (const width of [390, 1024, 1440]) {
+  test(`the number sits above the plot, which takes the width, and a NOW tag marks the edge (${width}px)`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
@@ -190,6 +181,7 @@ for (const width of [1440, 390]) {
   test(`hovering or tapping the NOW edge reads the live reading at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await openDashboard(page);
+    await page.locator('.sc-plot').scrollIntoViewIfNeeded();
     const box = (await page.locator('.sc-plot').boundingBox())!;
     const y = box.y + box.height / 2;
     // The NOW dot and leader sit over the edge but never take the pointer.
@@ -223,6 +215,7 @@ test('hovering a launch names it in the readout and lights its mark; leaving res
     return l ? { x: (l[0] - d.from) / (d.to - d.from), name: l[1] } : null;
   });
   test.skip(!launch, 'no frontier launch in the last 7 days');
+  await page.locator('.sc-plot').scrollIntoViewIfNeeded();
   const box = (await page.locator('.sc-plot').boundingBox())!;
   await page.mouse.move(box.x + box.width * launch!.x + 3, box.y + box.height * 0.6);
   await expect(page.locator('[data-r-near]')).toContainText(`near: `);
@@ -273,7 +266,7 @@ test('with reduced motion the sweep is gone and nothing on the instrument animat
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openDashboard(page);
   await expect(page.locator('.sc-sweep')).toBeHidden();
-  for (const sel of ['.sc-ink', '.sc-dot', '.seg.on', '.sc-needle-col', '.dc-num', '.sc-change', '.sc-v3']) {
+  for (const sel of ['.sc-ink', '.sc-dot', '.seg.on', '.dc-name', '.dc-num', '.sc-change', '.sc-v3']) {
     const el = page.locator(sel).first();
     if (!(await el.count())) continue;
     expect(await el.evaluate((e) => getComputedStyle(e).animationName), sel).toBe('none');
@@ -424,6 +417,7 @@ test.describe('on a touch phone', () => {
     const hint = page.locator('[data-hint]');
     await expect(hint).toBeVisible();
     await expect(hint).toHaveText(/TAP OR DRAG/);
+    await page.locator('.sc-plot').scrollIntoViewIfNeeded();
     const box = (await page.locator('.sc-plot').boundingBox())!;
     await page.touchscreen.tap(box.x + box.width * 0.5, box.y + box.height * 0.5);
     await expect(page.locator('[data-r-when]')).not.toHaveText(/^NOW/);

@@ -38,7 +38,7 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
-  source pills aging to STALE, ticker behavior, the 5-minute poll-and-offer reload, and the hero's
+  source pills aging to STALE, the 5-minute poll-and-offer reload, and the hero's
   scrubber and label fitting (progressive enhancement: the server render reads NOW without it).
 
 Rules of the house:

@@ -128,37 +128,37 @@ const toc = [
   description={`Can public signals see a frontier AI launch coming? An hourly replay of Polymarket release odds from ${longDate(meta.window.from)} to ${longDate(meta.window.until)}, scored out of sample on ${FORECAST_CONSTANTS.testedOn.events} launches, plus ${events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in its tables.`}
 >
   <header class="bt-hero wrap">
-    <a class="tiny home" href="/">&#9664; WHENMODEL DASHBOARD</a>
-    <h1 class="glow-m">BACKTEST</h1>
+    <a class="home" href="/"><span class="wm">when<span class="m">model</span></span><span class="tiny">Back to the dashboard</span></a>
+    <h1>BACKTEST</h1>
     <p class="bt-question">Can public signals see a frontier model launch coming?</p>
     <p class="bt-method">
-      <span class="tiny glow-c">METHOD</span>
+      <span class="tiny">METHOD</span>
       Polymarket's release odds, replayed hour by hour from {longDate(meta.window.from)} to {longDate(meta.window.until)} through the dashboard's own code: {meta.protocol.formulasTried} forecasts fitted on the first {FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next {FORECAST_CONSTANTS.testedOn.events}. Plus {events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in the tables below.
     </p>
     <div class="metrics headline">
       <div>
         <div class="metric-label">Best {headH}h skill</div>
-        <div class="metric-value glow-y">{signed(decision.skill, 3)}</div>
+        <div class="metric-value">{signed(decision.skill, 3)}</div>
         <div class="metric-note">needed {signed(meta.protocol.decisionMinSkill, 2)} · 95% {signed(decision.skillCi95[0])} to {signed(decision.skillCi95[1])}</div>
       </div>
       <div>
         <div class="metric-label">Priced before listing</div>
-        <div class="metric-value glow-c">{replay.pricedEvents.testPriced} / {replay.pricedEvents.test}</div>
+        <div class="metric-value">{replay.pricedEvents.testPriced} / {replay.pricedEvents.test}</div>
         <div class="metric-note">held-out launches, own lab ≥{pricedMin}</div>
       </div>
       <div>
         <div class="metric-label">Held-out launches</div>
-        <div class="metric-value glow-c">{FORECAST_CONSTANTS.testedOn.events}</div>
+        <div class="metric-value">{FORECAST_CONSTANTS.testedOn.events}</div>
         <div class="metric-note">the real sample size · fitted on {FORECAST_CONSTANTS.fittedOn.events}</div>
       </div>
       <div>
         <div class="metric-label">Level's input, 7d</div>
-        <div class="metric-value glow-y">{signed(LEAD_INPUT_SKILL_7D.skill)}</div>
+        <div class="metric-value">{signed(LEAD_INPUT_SKILL_7D.skill)}</div>
         <div class="metric-note">95% {signed(LEAD_INPUT_SKILL_7D.skillCi95[0])} to {signed(LEAD_INPUT_SKILL_7D.skillCi95[1])}</div>
       </div>
     </div>
     <p class="bt-verdict">
-      <span class="tiny glow-y">VERDICT</span>
+      <span class="tiny">VERDICT</span>
       {decision.recommendation === 'lead-score'
         ? `No formula beat the base rate at ${headH} hours, so DROPCON stays a hand-weighted lead score, not a probability.`
         : `A formula beat the base rate at ${headH} hours.`}
@@ -188,7 +188,7 @@ const toc = [
 
     <section id="replay" class="section wrap" aria-labelledby="replay-title">
       <div class="section-head">
-        <h2 id="replay-title"><span>&#9656;</span>HOW V3 WOULD HAVE READ</h2>
+        <h2 id="replay-title">HOW V3 WOULD HAVE READ</h2>
         <span class="tiny wave">V3 REPLAY · {longDate(meta.window.from)} – {longDate(meta.window.until)}</span>
       </div>
       <div class="panel">
@@ -201,7 +201,7 @@ const toc = [
 
     <section id="results" class="section wrap" aria-labelledby="results-title">
       <div class="section-head">
-        <h2 id="results-title"><span>&#9656;</span>RESULTS: FORECAST VS BASE RATE</h2>
+        <h2 id="results-title">RESULTS: FORECAST VS BASE RATE</h2>
         <span class="tiny wave">V3 REPLAY · HELD OUT {longDate(meta.split.at)} – {longDate(meta.window.until)}</span>
       </div>
       <div class="panel">
@@ -242,7 +242,7 @@ const toc = [
 
     <section id="leads" class="section wrap" aria-labelledby="leads-title">
       <div class="section-head">
-        <h2 id="leads-title"><span>&#9656;</span>LEAD TIMES</h2>
+        <h2 id="leads-title">LEAD TIMES</h2>
         <span class="tiny wave">WAVE 1 · {events.releases.length} LAUNCHES TIMED BY HAND</span>
       </div>
       <div class="panel">
@@ -258,7 +258,7 @@ const toc = [
 
     <section id="splits" class="section wrap" aria-labelledby="splits-title">
       <div class="section-head">
-        <h2 id="splits-title"><span>&#9656;</span>PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR</h2>
+        <h2 id="splits-title">PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR</h2>
         <span class="tiny wave">WAVE 1</span>
       </div>
       <div class="panel">
@@ -268,7 +268,7 @@ const toc = [
 
     <section id="false-alarms" class="section wrap" aria-labelledby="alarms-title">
       <div class="section-head">
-        <h2 id="alarms-title"><span>&#9656;</span>FALSE ALARMS</h2>
+        <h2 id="alarms-title">FALSE ALARMS</h2>
         <span class="tiny wave">WAVE 1</span>
       </div>
       <div class="panel">
@@ -278,7 +278,7 @@ const toc = [
 
     <section id="stealth" class="section wrap" aria-labelledby="stealth-title">
       <div class="section-head">
-        <h2 id="stealth-title"><span>&#9656;</span>STEALTH REVEALS</h2>
+        <h2 id="stealth-title">STEALTH REVEALS</h2>
         <span class="tiny wave">EARLY WARNING · NEVER SCORED</span>
       </div>
       <div class="panel">
@@ -287,7 +287,7 @@ const toc = [
     </section>
 
     <section id="broadcasts" class="section wrap" aria-labelledby="broadcasts-title">
-      <div class="section-head"><h2 id="broadcasts-title"><span>&#9656;</span>SCHEDULED BROADCASTS</h2></div>
+      <div class="section-head"><h2 id="broadcasts-title">SCHEDULED BROADCASTS</h2></div>
       <div class="panel">
         <p class="intro">OpenAI sometimes publishes an upcoming-livestream page hours before a launch. {archived.length} of these {broadcasts.broadcasts.length} have an archived copy proving it was up before the stream{unarchived.length ? `; ${unarchived.map((b) => b.model).join(', ')} ${unarchived.length === 1 ? 'is' : 'are'} timed from YouTube's own publishedAt, with no archive` : ''}. {openAiMisses.length} other OpenAI launches had no scheduled stream at all.</p>
         <BacktestBroadcasts broadcasts={broadcasts.broadcasts} misses={broadcasts.misses} />
@@ -295,7 +295,7 @@ const toc = [
     </section>
 
     <section id="architecture" class="section wrap" aria-labelledby="architecture-title">
-      <div class="section-head"><h2 id="architecture-title"><span>&#9656;</span>ARCHITECTURE MERGES</h2></div>
+      <div class="section-head"><h2 id="architecture-title">ARCHITECTURE MERGES</h2></div>
       <div class="panel">
         <p class="intro">Open-weight labs often add their model code to Hugging Face <code>transformers</code> before release. The merge time comes from the pull request; the announcement is the first first-party HN story.</p>
         <BacktestArchitecture rows={architecture.architecture} summary={architecture.summary} misses={architecture.misses} />
@@ -303,14 +303,14 @@ const toc = [
     </section>
 
     <section id="negative-results" class="section wrap" aria-labelledby="negatives-title">
-      <div class="section-head"><h2 id="negatives-title"><span>&#9656;</span>TESTED AND DIDN'T LEAD</h2></div>
+      <div class="section-head"><h2 id="negatives-title">TESTED AND DIDN'T LEAD</h2></div>
       <div class="panel">
         <BacktestNegatives results={negatives.results} provenance={negatives.provenance} />
       </div>
     </section>
 
     <section id="timestamp-traps" class="section wrap" aria-labelledby="traps-title">
-      <div class="section-head"><h2 id="traps-title"><span>&#9656;</span>TIMESTAMP TRAPS</h2></div>
+      <div class="section-head"><h2 id="traps-title">TIMESTAMP TRAPS</h2></div>
       <div class="panel">
         <p class="intro">Each of these timestamps looks like an early warning and isn't. Including one this site got wrong.</p>
         <BacktestTraps traps={traps.traps} />
@@ -318,7 +318,7 @@ const toc = [
     </section>
 
     <section id="reproduce" class="section wrap" aria-labelledby="reproduce-title">
-      <div class="section-head"><h2 id="reproduce-title"><span>&#9656;</span>REPRODUCE IT</h2></div>
+      <div class="section-head"><h2 id="reproduce-title">REPRODUCE IT</h2></div>
       <div class="panel">
         <BacktestReproduce pulledAt={pulledAt} example={example} />
       </div>
@@ -327,17 +327,22 @@ const toc = [
   <Footer generatedAt={pulledAt} variant="backtest" />
 </Layout>
 <style>
-  .bt-hero { padding-top: 28px; }
-  .home { display: inline-block; margin-bottom: 14px; }
-  .bt-hero h1 { font-size: clamp(26px, 6vw, 44px); margin-bottom: 14px; }
-  .bt-question { font-size: clamp(22px, 3.2vw, 30px); color: #fff; max-width: 40ch; margin-bottom: 8px; line-height: 1.15; }
-  .bt-method, .bt-verdict { max-width: 96ch; font-size: var(--fs-lg); }
-  .bt-method { color: var(--text); margin-bottom: 16px; }
-  .bt-method .tiny, .bt-verdict .tiny { margin-right: 8px; vertical-align: 2px; }
-  .bt-hero .metrics { margin-bottom: 14px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+  .bt-hero { padding-top: 20px; }
+  /* The wordmark doubles as the way home; the page title is the one poster-size word. */
+  .home { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 20px; flex-wrap: wrap; padding-bottom: 12px; margin-bottom: clamp(28px, 5vw, 64px); border-bottom: 1px solid var(--ink); color: var(--ink); text-decoration: none; }
+  .home .wm { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; text-transform: lowercase; letter-spacing: -0.01em; }
+  .home .wm .m { color: var(--accent); }
+  .home .tiny { color: var(--ink-2); }
+  .home:hover .tiny { color: var(--accent-ink); }
+  .bt-hero h1 { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d1); line-height: 0.82; letter-spacing: -0.02em; color: var(--ink); margin-bottom: clamp(20px, 3vw, 36px); overflow-wrap: anywhere; }
+  .bt-question { font-family: var(--font-text); font-size: var(--fs-lede); color: var(--ink); max-width: 30ch; margin-bottom: var(--s4); line-height: 1.2; text-wrap: balance; }
+  .bt-method, .bt-verdict { max-width: 68ch; font-size: var(--fs-body); line-height: 1.55; }
+  .bt-method { color: var(--ink-2); margin-bottom: var(--s3); }
+  .bt-method .tiny, .bt-verdict .tiny { display: block; margin-bottom: 6px; color: var(--ink); }
+  .bt-hero .metrics { margin: var(--s4) 0; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
   .bt-hero .metric-note { white-space: normal; }
-  .bt-verdict { margin-bottom: 16px; padding: 10px 12px; border-left: 3px solid var(--yellow); background: rgba(255, 226, 28, 0.05); }
-  .toc { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bt-verdict { margin-bottom: var(--s4); padding-top: 14px; border-top: 3px solid var(--ink); color: var(--ink); }
+  .toc { display: flex; flex-wrap: wrap; gap: 4px 20px; }
   .wave { color: var(--muted); line-height: 1.6; }
   .intro { max-width: 90ch; margin-bottom: 12px; }
   .table-panel, .stack-gap { margin-top: var(--gap); }
@@ -345,12 +350,12 @@ const toc = [
   .stack-gap .sub-title:not(:first-child) { margin-top: 22px; }
   .bullets { display: grid; gap: 8px; max-width: 95ch; }
   .bullets li { padding-left: 18px; position: relative; }
-  .bullets li::before { content: '\25B8'; position: absolute; left: 0; color: var(--magenta); }
-  .bullets strong { color: #fff; font-weight: 400; }
+  .bullets li::before { content: ''; position: absolute; left: 0; top: 0.62em; width: 8px; height: 2px; background: var(--accent); }
+  .bullets strong { color: var(--ink); font-weight: 400; }
   .raw { margin-top: 12px; }
   .raw summary { color: var(--muted); margin-bottom: 8px; }
   .raw .bullets { font-size: var(--fs-xs); color: var(--muted); }
-  code { font-family: var(--font-mono); color: var(--yellow); }
+  code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em; color: var(--ink); background: var(--paper-2); padding: 0 3px; }
   /* Row headers read as data, not column labels. */
   main :global(th[scope='row']) {
     font-family: var(--font-mono);
@@ -362,7 +367,7 @@ const toc = [
     vertical-align: top;
     border-bottom: 1px dotted var(--line-soft);
   }
-  main :global(tr:hover th[scope='row']) { background: rgba(0, 229, 255, 0.05); }
+  main :global(tr:hover th[scope='row']) { background: var(--paper-2); }
   /* Long column labels may wrap; on a phone the row labels keep a readable width and the table scrolls. */
   main :global(thead th.num) { white-space: normal; }
   @media (max-width: 720px) {

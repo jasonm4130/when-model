@@ -127,13 +127,13 @@ const views = panels.map((panel) => {
   .axis { stroke: var(--line2); stroke-width: 1; }
   .diag { stroke: var(--muted); stroke-width: 1; }
   .ref { stroke: var(--text); stroke-width: 2; stroke-dasharray: 2 4; stroke-linecap: round; }
-  .curve { fill: none; stroke: #2ec4d6; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-  circle { fill: #2ec4d6; stroke: var(--bg2); stroke-width: 2; }
-  .hbar { fill: #1f6f7c; }
+  .curve { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  circle { fill: var(--ink); stroke: var(--paper); stroke-width: 2; }
+  .hbar { fill: var(--line2); }
   .bin:hover circle, .bin:hover .hbar { stroke: var(--yellow); stroke-width: 2; }
   .tick, .count { fill: var(--muted); font-size: 16px; }
   .count { font-size: 14px; }
-  .note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--bg2); stroke-width: 4px; stroke-linejoin: round; }
+  .note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
   .axis-label { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
   .bins { margin-top: 10px; }
   .bins summary { color: var(--muted); margin-bottom: 8px; }

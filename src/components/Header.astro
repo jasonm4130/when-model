@@ -1,8 +1,6 @@
 ---
 import type { Dashboard } from '../domain/dashboard';
 import { dashboardFingerprint } from '../ui/fingerprint';
-import { familyPhrase } from '../domain/dropcon';
-import { pct } from '../ui/format';
 import { BEST_EFFORT_SOURCES } from '../domain/sources';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
@@ -11,119 +9,64 @@ const okCount = d.sources.filter((s) => s.ok).length;
 const core = d.sources.filter((s) => !BEST_EFFORT_SOURCES.has(s.name));
 const coreOk = core.filter((s) => s.ok).length;
 const status = coreOk === core.length ? 'OPERATIONAL' : coreOk > core.length / 2 ? 'DEGRADED' : 'IMPAIRED';
-const statusClass = status === 'OPERATIONAL' ? 'glow-g' : status === 'DEGRADED' ? 'glow-y' : 'err';
-const ticker = [
-  ...(d.landed.bannerText ? [d.landed.bannerText] : []),
-  ...d.labs
-    .filter((l) => l.odds?.p7.trusted && l.odds.p7.p > 0)
-    // A floor or a ceiling is not a point estimate, so the ticker says which it is.
-    .map((l) => `${l.name.toUpperCase()}: ${l.odds!.p7.upperBound ? 'AT MOST ' : l.odds!.p7.lowerBound ? 'AT LEAST ' : ''}${pct(l.odds!.p7.p)} ODDS ${familyPhrase(l.odds!.family).toUpperCase()} SHIPS WITHIN 7 DAYS`),
-  ...d.drops.slice(0, 6).map((x) => `NEW ON OPENROUTER: ${x.name.toUpperCase()} (${x.lab.toUpperCase()})`),
-  ...d.feed.filter((f) => f.alert).slice(0, 6).map((f) => `${f.source.toUpperCase()}: ${f.title.toUpperCase()}`),
-];
+const statusClass = status === 'OPERATIONAL' ? 'ok' : 'warn';
 /** The client polls /api/dashboard.json on this cadence and compares a fingerprint before offering a reload. */
 const REFRESH_SECONDS = 300;
 /** What this render shows, so the poll can tell data the reader has never seen from data they have. */
 const fingerprint = dashboardFingerprint(d);
 ---
-<header class="hero">
-  <div class="statusbar wrap">
-    <div class="left">
-      <span class={`tiny status-live ${statusClass}`}>STATUS: {status}</span>
-      <span class="tiny muted counts">{d.labs.length} LABS · {okCount}/{d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
+<header class="masthead">
+  <div class="wrap mast">
+    <div class="statusbar">
+      <span class="left">
+        <span class={`tiny status-live ${statusClass}`}>STATUS: {status}</span>
+        <span class="tiny muted counts">{d.labs.length} LABS · {okCount}/{d.sources.length} SOURCES · {d.markets.length} MARKETS</span>
+      </span>
+      <span class="right">
+        <span class="tiny muted sync">SYNC <span data-synced={d.generatedAt}>{d.generatedAt.slice(11, 19)}Z</span> · NEXT <span class="next" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
+        <span class="clock tiny" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
+        <button type="button" class="tiny refresh-toggle" data-refresh-toggle aria-pressed="false"><span data-refresh-verb>PAUSE</span><span class="rt-noun"> AUTO-REFRESH</span></button>
+        <span class="refresh-status" aria-live="polite" data-reload-status data-fingerprint={fingerprint}></span>
+      </span>
     </div>
-    <div class="right">
-      <span class="tiny muted sync">SYNC <span data-synced={d.generatedAt}>{d.generatedAt.slice(11, 19)}Z</span> · NEXT <span class="glow-y" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
-      <button type="button" class="tiny refresh-toggle" data-refresh-toggle aria-pressed="false"><span data-refresh-verb>PAUSE</span><span class="rt-noun"> AUTO-REFRESH</span></button>
-      <span class="refresh-status" aria-live="polite" data-reload-status data-fingerprint={fingerprint}></span>
-      <span class="clock glow-c" data-clock>{d.generatedAt.slice(11, 19)}Z</span>
-    </div>
-  </div>
-  <div class="wrap hero-inner">
-    <div class="title-block">
-      <div class="tiny glow-m"><span class="nw"><span class="bars" aria-hidden="true">▌▌ </span>FRONTIER</span> MODEL RELEASE <span class="nw">INTELLIGENCE<span class="bars" aria-hidden="true"> ▐▐</span></span></div>
-      <h1 class="logo"><span class="w">WHEN</span><span class="m">MODEL</span><span class="q">?</span></h1>
+    <div class="brand">
+      <h1 class="wordmark">when<span class="m">model</span><span class="sr-only">: frontier model release intelligence</span></h1>
       <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
     </div>
-    <div class="hero-side">
-      <div class="tiny muted">POWERED BY</div>
-      <div class="brands">
-        <a href="https://polymarket.com?utm_source=whenmodel.com" rel="noopener" target="_blank">Polymarket</a>
-        <a href="https://openrouter.ai" rel="noopener" target="_blank">OpenRouter</a>
-        <a href="https://huggingface.co" rel="noopener" target="_blank">Hugging Face</a>
-        <a href="https://news.ycombinator.com" rel="noopener" target="_blank">Hacker News</a>
-      </div>
-      <a class="pill" href="/api/dashboard.json">◈ JSON API</a>
-    </div>
   </div>
-  {ticker.length > 0 && (
-    <div class="ticker-wrap">
-      <div class="ticker-controls">
-        <button class="ticker-toggle tiny" type="button" data-ticker-toggle aria-pressed="false" aria-controls="ticker-track">PAUSE TICKER</button>
-      </div>
-      <div class="marquee mono glow-y" data-ticker>
-        <p class="sr-only">Ticker: {ticker.join('. ')}</p>
-        <div id="ticker-track" aria-hidden="true"><span class="ticker-group">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span><span class="ticker-group ticker-copy">{ticker.map((t) => <span class="ticker-item">▶ {t}</span>)}</span></div>
-      </div>
-    </div>
-  )}
 </header>
 <style>
-  /* Each end glyph pair stays with its word, so a narrow phone never wraps "▐▐" onto a line alone. */
-  /* Each bar pair stays on its word; below 380px the bars go, so the line fits on one row. */
-  .nw { white-space: nowrap; }
-  @media (max-width: 379px) { .bars { display: none; } }
-  .hero {
-    position: relative;
-    overflow: hidden;
-    background:
-      linear-gradient(180deg, rgba(7,6,15,0) 0%, rgba(7,6,15,0.2) 60%, var(--bg) 100%),
-      repeating-linear-gradient(90deg, rgba(255,43,214,0.12) 0 1px, transparent 1px 80px),
-      repeating-linear-gradient(0deg, rgba(0,229,255,0.10) 0 1px, transparent 1px 40px);
-    border-bottom: 2px solid var(--line);
-  }
-  /* A fixed horizon grid keeps the CRT character without competing with the data. */
-  .hero::before {
-    content: '';
-    position: absolute;
-    inset: -40px 0 0 0;
-    background: repeating-linear-gradient(0deg, rgba(0,229,255,0.08) 0 1px, transparent 1px 40px);
-    pointer-events: none;
-  }
-  .statusbar, .hero-inner { position: relative; }
-  .statusbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--line-soft); }
-  .statusbar .left, .statusbar .right { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
-  .clock { font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
-  .hero-inner { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding-block: 34px 26px; flex-wrap: wrap; }
-  .logo { font-size: clamp(30px, 6.5vw, 74px); line-height: 1; margin: 14px 0 12px; animation: rise 700ms var(--ease) both; }
-  .logo .w { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5), 4px 4px 0 var(--blue); }
-  .logo .m { color: var(--magenta); text-shadow: 0 0 12px var(--magenta), 4px 4px 0 var(--cyan); }
-  .logo .q { color: var(--yellow); text-shadow: 0 0 7px rgba(255, 226, 28, 0.5); }
-  .tag-line { font-size: var(--fs-lg); color: var(--cyan); letter-spacing: 0.04em; animation: rise 700ms var(--ease) 120ms both; }
-  .hero-side { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; animation: rise 700ms var(--ease) 200ms both; }
-  .brands { display: flex; gap: 14px; flex-wrap: wrap; justify-content: flex-end; font-size: var(--fs-body); }
-  .brands a { border-bottom: 1px dotted var(--line2); }
-  .status-live::before { content: '◉'; margin-right: 5px; }
-  .ticker-toggle, .refresh-toggle { min-height: 44px; padding: 6px 8px; color: var(--yellow); background: var(--bg2); border: 1px solid var(--line2); cursor: pointer; }
-  .ticker-toggle[aria-pressed="true"], .refresh-toggle[aria-pressed="true"] { color: var(--text); border-color: var(--cyan); }
+  .masthead { border-bottom: 1px solid var(--ink); }
+  .mast { display: grid; gap: 2px; padding-bottom: 14px; }
+  /* A dateline across the top, as on a newspaper, then the wordmark. */
+  .statusbar { display: flex; justify-content: space-between; align-items: center; gap: 0 24px; flex-wrap: wrap; border-bottom: 1px solid var(--rule-soft); }
+  .statusbar .left, .statusbar .right { display: flex; align-items: center; gap: 0 20px; flex-wrap: wrap; }
+  .statusbar .right { margin-left: auto; }
+  .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 4px 20px; flex-wrap: wrap; min-width: 0; padding-top: 12px; }
+  /* The wordmark is the display face at its narrowest, "model" in the one colour. */
+  .wordmark { font-size: 40px; line-height: 1; color: var(--ink); }
+  .wordmark .m { color: var(--accent); }
+  .tag-line { font-size: var(--fs-sm); font-style: italic; color: var(--ink-2); }
+  .status-live { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); }
+  .status-live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+  .status-live.warn { color: var(--accent-ink); }
+  .status-live.warn::before { background: var(--accent); }
+  .clock, .next { font-variant-numeric: tabular-nums; }
+  .clock { color: var(--ink); }
+  .refresh-toggle { min-height: 44px; padding: 0 2px; color: var(--ink); background: none; border: 0; cursor: pointer; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.35em; text-decoration-color: var(--line2); }
+  .refresh-toggle:hover { color: var(--accent-ink); text-decoration-color: currentColor; }
+  .refresh-toggle[aria-pressed="true"] { color: var(--accent-ink); }
   .refresh-status { display: inline-flex; }
-  .refresh-status .pill { cursor: pointer; }
-  @media (max-width: 700px) { .hero-side { align-items: flex-start; text-align: left; } .brands { justify-content: flex-start; } }
   @media (max-width: 480px) {
-    .statusbar { gap: 6px; padding-block: 7px; }
-    .statusbar .left, .statusbar .right { gap: 8px; }
-    /* UI-06: on a real Safari viewport (~664px tall) the header has to leave room for DROPCON above the fold,
-       so the statusbar drops everything but STATUS and the clock, and the hero drops the tag-line and brands. */
-    .counts, .sync { display: none; }
-    /* The pause toggle stays: a 44px target that reads PAUSE, while its accessible name keeps AUTO-REFRESH. */
-    .refresh-toggle { padding: 6px 10px; min-width: 44px; }
+    /* UI-06: a phone keeps the wordmark, the status, the clock and the pause, so the level starts right under them. */
+    .mast { padding-bottom: 8px; }
+    .brand { padding-top: 6px; }
+    .wordmark { font-size: 30px; }
+    .tag-line, .counts, .sync { display: none; }
+    .statusbar, .statusbar .right { gap: 0 14px; }
+    /* The pause stays: a 44px target that reads PAUSE, while its accessible name keeps AUTO-REFRESH. */
+    .refresh-toggle { min-width: 44px; }
     .rt-noun { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-    .hero-inner { padding-block: 18px 16px; gap: 10px; }
-    .logo { margin: 8px 0; }
-    .tag-line { display: none; }
-    .hero-side { width: 100%; flex-direction: row; align-items: center; }
-    .hero-side > .tiny { display: none; }
-    .brands { display: none; }
   }
 </style>
 <script>
@@ -131,8 +74,6 @@ const fingerprint = dashboardFingerprint(d);
 
   const clock = document.querySelector('[data-clock]');
   const refresh = document.querySelector<HTMLElement>('[data-refresh]');
-  const ticker = document.querySelector<HTMLElement>('[data-ticker]');
-  const tickerToggle = document.querySelector<HTMLButtonElement>('[data-ticker-toggle]');
   const refreshToggle = document.querySelector<HTMLButtonElement>('[data-refresh-toggle]');
   const reloadStatus = document.querySelector<HTMLElement>('[data-reload-status]');
   const total = Number(refresh?.dataset.refresh ?? 300);
@@ -236,13 +177,6 @@ const fingerprint = dashboardFingerprint(d);
   };
   tick();
   setInterval(tick, 1000);
-
-  tickerToggle?.addEventListener('click', () => {
-    const paused = tickerToggle.getAttribute('aria-pressed') !== 'true';
-    tickerToggle.setAttribute('aria-pressed', String(paused));
-    tickerToggle.textContent = paused ? 'RESUME TICKER' : 'PAUSE TICKER';
-    ticker?.classList.toggle('is-paused', paused);
-  });
 
   refreshToggle?.addEventListener('click', () => {
     autoRefreshPaused = !autoRefreshPaused;

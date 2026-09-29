@@ -45,8 +45,8 @@ describe('Layout head', () => {
     expect(html).toContain('twitter:image" content="https://whenmodel.com/og-card-v2.png"');
     expect(html).toContain('twitter:image:alt"');
     // self-hosted, preloaded fonts, no Google Fonts left to strip from the CSP
-    expect(html).toContain('href="/fonts/vt323.woff2"');
-    expect(html).toContain('href="/fonts/press-start-2p.woff2"');
+    expect(html).toContain('href="/fonts/archivo.woff2"');
+    expect(html).toContain('href="/fonts/source-serif-4.woff2"');
     expect(html).toMatch(/rel="preload"[^>]*as="font"/);
     expect(html).toContain('crossorigin');
     expect(html).not.toContain('fonts.googleapis.com');

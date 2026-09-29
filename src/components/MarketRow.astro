@@ -6,38 +6,42 @@ interface Props {
   m: Market;
   /** Outcomes to show. */
   limit: number;
-  /** Benchmark and other markets: no lab dot, cyan odds, bare volume. */
+  /** Benchmark and other markets: no marker, bare volume. */
   compact?: boolean;
+  /** Kept for callers; the poster palette does not colour markets by lab. */
   color?: string;
   i?: number;
   /** The build time: a release rung whose deadline is behind it is not shown (`asOfMs`). */
   asOf?: number;
 }
-const { m, limit, compact = false, color = 'var(--cyan)', i = 0, asOf } = Astro.props;
+const { m, limit, compact = false, asOf } = Astro.props;
 const THIN = 'Thin book: bid–ask range, not odds';
-const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--yellow)' : 'var(--muted)');
+const tone = (p: number) => (p >= 0.5 ? 'hi' : p >= 0.2 ? 'mid' : 'lo');
 ---
-<a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener" style={`--lab:${color}; --i:${i}`}>
+<a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener">
   <div class="mtitle">{!compact && <span class="mdot" aria-hidden="true"></span>}<span class="mname">{m.title}</span><span class="muted vol">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
   <div class="outs">
     {displayOutcomes(m, limit, asOf).map((o) => {
       const odds = outcomeOdds(o);
       if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {o.label}</span>;
-      return compact
-        ? <span class="out"><b class="glow-c">{odds.text}</b> {o.label}</span>
-        : <span class="out"><b style={`color:${oddsColor(o.yes)}`}>{odds.text}</b> {o.label}</span>;
+      return <span class="out"><b class={tone(o.yes)}>{odds.text}</b> {o.label}</span>;
     })}
   </div>
 </a>
 <style>
-  .mrow { --accent: var(--lab, var(--cyan)); }
-  .mrow:hover { border-left-color: var(--accent); }
-  /* UI-12: a grid keeps the dot on the title's first line and the volume in its own column however the title wraps. */
-  .mtitle { font-size: var(--fs-body); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
-  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-size: var(--fs-sm); }
-  .mdot { width: 8px; height: 8px; background: var(--lab); box-shadow: 0 0 8px var(--lab); display: inline-block; align-self: start; margin-top: 0.45em; }
-  .vol { font-size: var(--fs-xs); white-space: nowrap; }
-  .outs { display: flex; gap: 2px 14px; flex-wrap: wrap; margin-top: 3px; font-size: var(--fs-sm); color: var(--muted); }
-  .out b { font-weight: 400; }
-  .out b.thin { color: var(--muted); }
+  .mrow { padding: 16px 0; }
+  /* UI-12: a grid keeps the marker on the title's first line and the volume in its own column however the title wraps. */
+  .mtitle { font-size: var(--fs-lg); line-height: 1.25; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
+  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-size: var(--fs-md); }
+  .mdot { width: 7px; height: 7px; background: var(--ink); display: inline-block; align-self: start; margin-top: 0.55em; }
+  .mname { transition: color var(--fast) var(--ease); }
+  .vol { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.06em; white-space: nowrap; }
+  .outs { display: flex; gap: 4px 20px; flex-wrap: wrap; margin-top: 8px; padding-left: 19px; font-size: var(--fs-sm); color: var(--ink-2); }
+  .compact .outs { padding-left: 0; margin-top: 6px; }
+  .out { overflow-wrap: anywhere; }
+  .out b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 24px; line-height: 1; margin-right: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .compact .out b { font-size: 19px; }
+  .out b.hi { color: var(--ink); }
+  .out b.mid { color: var(--ink); font-weight: 600; }
+  .out b.lo, .out b.thin { color: var(--ink-2); font-weight: 500; }
 </style>

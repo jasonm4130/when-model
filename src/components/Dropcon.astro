@@ -2,9 +2,10 @@
 import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
 import { levelBandsText, WEIGHTS } from '../domain/dropcon';
+import { displayOutcomes } from '../domain/market';
 import { SOURCE } from '../domain/sources';
-import { dropconPill, forecastAnswer, levelBaseRateText, topReadText } from '../ui/odds';
-import { sourcePill } from '../ui/panels';
+import { dropconPill, forecastAnswer, levelBaseRateText, outcomeOdds, topReadText } from '../ui/odds';
+import { PANEL_ROWS, asOfMs, releaseRows, sourceOk, sourcePill } from '../ui/panels';
 import DropconScope from './DropconScope.astro';
 interface Props {
   d: Dashboard;
@@ -14,19 +15,22 @@ interface Props {
 }
 const { d, history, now } = Astro.props;
 const c = d.dropcon;
-const colors: Record<number, string> = { 1: 'var(--red)', 2: 'var(--orange)', 3: 'var(--yellow)', 4: 'var(--cyan)', 5: 'var(--green)' };
-// A floor or no signal is not a level reading: the number is muted, never a level's colour.
-const color = c.state === 'ok' ? colors[c.level] : 'var(--muted)';
+// A reading is the page's one colour; a floor or no signal is not a level reading, so it is muted.
+const color = c.state === 'ok' ? 'var(--accent)' : 'var(--muted)';
 // A reading wears the markets panel's own Polymarket pill, so it turns STALE with the rest of the
 // page; a floor or no signal says why there is no reading instead.
 const pill = c.state === 'ok' ? sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now ?? Date.now()) : dropconPill(c);
 const hottest = d.labs[0];
 const noLabData = c.state === 'no-signal';
+// The busiest release market, as the markets section lists it first, with the rungs it shows there.
+const lead = releaseRows(d)[0];
+const leadOutcomes = lead ? displayOutcomes(lead, PANEL_ROWS.releaseOutcomes, asOfMs(d)) : [];
+const polymarketUp = sourceOk(d.sources, SOURCE.polymarket);
 ---
 <section class="section wrap reveal dc-hero" aria-labelledby="dc-title" style={`--lvl:${color}`}>
   <div class={`panel dropcon ${c.state}`}>
-    <div class="panel-head">
-      <h2 id="dc-title"><span aria-hidden="true">▣</span>DROPCON LEVEL</h2>
+    <div class="dc-top">
+      <h2 id="dc-title" class="tiny"><span aria-hidden="true">▣</span>DROPCON LEVEL</h2>
       <div class="pills">
         {d.landed.banner && <span class="pill warn" title={d.landed.bannerText}>MODELS JUST LANDED</span>}
         {'state' in pill ? (
@@ -34,70 +38,119 @@ const noLabData = c.state === 'no-signal';
         ) : <span class={`pill ${pill.tone}`}>{pill.text}</span>}
       </div>
     </div>
-    <DropconScope d={d} history={history} now={now} />
+    <DropconScope d={d} history={history} now={now}>
+      <div class="dc-strip">
+        <div class="dc-cell">
+          {noLabData ? (
+            <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
+          ) : hottest && (
+            <a class="dc-hot" href={`#lab-${hottest.id}`}>
+              <span class="tiny">HOTTEST LAB</span> <b class="dc-big">{hottest.name}</b> <span class="dc-sub">heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}</span>
+            </a>
+          )}
+        </div>
+        <div class="dc-cell dc-lead">
+          <span class="tiny">BUSIEST RELEASE MARKET</span>
+          {lead ? (
+            <>
+              <a class="dc-mkt" href={lead.url} target="_blank" rel="noopener">{lead.title}</a>
+              <span class="dc-rungs">
+                {leadOutcomes.map((o) => {
+                  const odds = outcomeOdds(o);
+                  return <span class="rung"><b class:list={{ thin: odds.thin }}>{odds.text}</b> {o.label}</span>;
+                })}
+              </span>
+            </>
+          ) : <p class="dc-sub">{polymarketUp ? 'No open release market right now.' : 'Polymarket unreachable. Odds return when it does.'}</p>}
+        </div>
+        {d.landed.bannerText && (
+          <div class="dc-cell">
+            <p class="dc-landed"><span class="tiny">JUST LANDED</span> <b class="dc-big">{d.landed.bannerText.replace(/^[^:]*:\s*/, '')}</b> <span class="dc-sub"><span class="sr-only">{d.landed.bannerText}. </span>First listed on OpenRouter; shown, not scored.</span></p>
+          </div>
+        )}
+      </div>
+    </DropconScope>
   </div>
 
-  <div class="panel dc-detail" id="dc-adds">
-    <div class="dc-cols">
-      <div>
-        <h3 class="dc-sub tiny">HOW THE SCORE ADDS UP</h3>
-        <ul class="dc-drivers" aria-label="How the score adds up">
-          {c.provenance.map((row) => (
-            <li>
-              <span class="pts">{row.points}</span>
-              <span class="why"><span class="tag lead">{row.tag}</span> {row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
-            </li>
-          ))}
-          <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
-        </ul>
-        <p class="dc-bands muted">{levelBandsText()} Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
-        <p class="dc-blurb">{c.blurb}</p>
-      </div>
-      <div>
-        {noLabData ? (
-          <p class="dc-hot muted"><span class="tiny">HOTTEST LAB</span> No lab data: Polymarket and OpenRouter are both unreachable.</p>
-        ) : hottest && (
-          <a class="dc-hot" href={`#lab-${hottest.id}`} style={`--lab:${hottest.color}`}>
-            <span class="tiny">HOTTEST LAB</span> <b><span aria-hidden="true">{hottest.glyph}</span> {hottest.name}</b> · heat {hottest.heat} · {topReadText(hottest, d.measurement.inputs.oddsAvailable)}
-          </a>
-        )}
-        {d.landed.bannerText && <p class="dc-landed"><span aria-hidden="true">◆</span> {d.landed.bannerText} · <span class="muted">shown, not scored</span></p>}
-        <div class="dc-honest">
-          <p class="dc-q"><b>Is this a forecast?</b> No — it's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
-          <p class="dc-base">{levelBaseRateText()}</p>
-          <details class="dc-more">
-            <summary class="tiny">WHY IT'S NOT A PROBABILITY</summary>
-            <p>{forecastAnswer(d.forecast)}</p>
-            <ul>{c.notes.map((n) => <li>{n}</li>)}</ul>
-          </details>
+  <div class="dc-detail">
+    <details class="fold dc-adds">
+      <summary class="fold-summary">How the score adds up: {c.score} of 100</summary>
+      <div class="dc-cols" id="dc-adds">
+        <div>
+          <ul class="dc-drivers" aria-label="How the score adds up">
+            {c.provenance.map((row) => (
+              <li>
+                <span class="pts">{row.points}</span>
+                <span class="why"><span class="tag lead">{row.tag}</span> {row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
+              </li>
+            ))}
+            <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
+          </ul>
+        </div>
+        <div>
+          <p class="dc-bands">{levelBandsText()} Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
+          <p class="dc-blurb">{c.blurb}</p>
         </div>
       </div>
+    </details>
+    <div class="dc-honest">
+      <p class="dc-q"><b>Is this a forecast?</b> No — it's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
+      <p class="dc-base">{levelBaseRateText()}</p>
+      <details class="dc-more">
+        <summary class="tiny">WHY IT'S NOT A PROBABILITY</summary>
+        <p>{forecastAnswer(d.forecast)}</p>
+        <ul>{c.notes.map((n) => <li>{n}</li>)}</ul>
+      </details>
     </div>
   </div>
 </section>
 <style>
-  .dc-hero { display: grid; gap: var(--gap); }
+  .dc-hero { margin-top: clamp(28px, 4vw, 56px); }
+  .dc-top { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; margin-bottom: clamp(12px, 2vw, 24px); }
+  .dc-top h2 { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.12em; line-height: 1.35; color: var(--ink); }
+  .dc-top h2 > span[aria-hidden] { display: none; }
+  .dc-top .pills { display: flex; gap: 4px 16px; flex-wrap: wrap; }
 
-  .dc-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px 28px; }
-  .dc-blurb { margin-top: 10px; color: var(--muted); }
-  .dc-hot { display: block; padding: 6px 8px; border: 1px dashed var(--line2); color: var(--text); font-size: var(--fs-md); }
-  .dc-hot b { font-weight: 400; color: var(--lab, var(--text)); }
-  a.dc-hot:hover { border-color: var(--lab, var(--cyan)); color: #fff; text-shadow: none; background: rgba(0, 229, 255, 0.04); }
-  .dc-hot .tiny { color: var(--muted); margin-right: 6px; }
-  .dc-landed { margin: 8px 0 0; color: var(--yellow); font-size: var(--fs-md); }
-  .dc-sub { margin: 0 0 8px; color: var(--muted); }
-  .dc-drivers { color: var(--muted); font-size: var(--fs-sm); display: grid; gap: 4px; }
-  .dc-drivers li { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  /* The answer strip: two or three cells under one rule, each a label, a name and one line. */
+  .dc-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 28px clamp(24px, 4vw, 56px); border-top: 1px solid var(--ink); padding-top: 18px; }
+  .dc-cell { min-width: 0; }
+  /* On a wide screen the market cell takes the room its rungs need, so they sit in one row. */
+  @media (min-width: 1100px) {
+    .dc-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr); }
+    .dc-strip:has(> :nth-child(3)) { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr) minmax(0, 1fr); }
+  }
+  .dc-cell .tiny { display: block; margin-bottom: 10px; color: var(--ink-2); }
+  .dc-big { display: block; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d3); line-height: 0.98; text-transform: uppercase; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+  a.dc-big:hover { color: var(--accent-ink); }
+  .dc-sub { display: block; margin-top: 10px; font-size: var(--fs-sm); line-height: 1.4; color: var(--ink-2); }
+  .dc-hot { display: block; color: var(--ink); text-decoration: none; }
+  .dc-hot:hover .dc-big { color: var(--accent-ink); }
+  p.dc-hot { font-size: var(--fs-sm); }
+  .dc-mkt { display: block; font-size: var(--fs-lg); line-height: 1.25; color: var(--ink); text-decoration: none; }
+  .dc-mkt:hover { color: var(--accent-ink); }
+  /* The market's rungs as a small table of odds: the number large, its deadline under it. */
+  .dc-rungs { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px 20px; margin-top: 14px; font-size: var(--fs-xs); line-height: 1.3; color: var(--ink-2); }
+  .rung b { display: block; font-family: var(--font-display); font-size: var(--fs-d3); font-weight: 800; font-stretch: 62.5%; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rung b.thin { color: var(--ink-2); font-weight: 600; }
+
+  /* Below the instrument: the arithmetic, folded, and the plain answer to "is this a forecast?" */
+  .dc-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 32px clamp(24px, 4vw, 56px); align-items: start; margin-top: clamp(32px, 4vw, 56px); }
+  .dc-cols { display: grid; gap: 18px; padding-top: 16px; }
+  .dc-drivers { display: grid; gap: 6px; font-size: var(--fs-sm); line-height: 1.4; color: var(--ink-2); }
+  .dc-drivers li { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: 12px; align-items: baseline; }
   .dc-drivers .why { overflow-wrap: anywhere; }
-  .dc-drivers .pts { color: var(--lvl); text-align: right; font-variant-numeric: tabular-nums; }
-  .dc-drivers .total { border-top: 1px dotted var(--line2); padding-top: 4px; color: var(--text); }
-  .dc-bands { margin-top: 6px; font-size: var(--fs-xs); }
-  .tag.lead { color: var(--cyan); padding: 2px 4px; margin-right: 2px; vertical-align: 2px; }
-  .dc-honest { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line2); display: grid; gap: 6px; font-size: var(--fs-md); }
-  .dc-q b { font-weight: 400; color: var(--yellow); }
-  .dc-base { color: var(--muted); }
-  .dc-more summary { color: var(--cyan); padding: 4px 0; }
-  .dc-more summary::before { content: '+ '; }
-  .dc-more[open] summary::before { content: '- '; }
-  .dc-more p, .dc-more li { color: var(--muted); margin-top: 6px; }
+  .dc-drivers .pts { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 20px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+  .dc-drivers .total { border-top: 1px solid var(--ink); padding-top: 6px; color: var(--ink); }
+  .dc-drivers .total .pts { color: var(--accent-ink); }
+  .dc-bands, .dc-blurb { font-size: var(--fs-sm); line-height: 1.45; color: var(--ink-2); }
+  .tag.lead { margin-right: 2px; color: var(--ink); }
+  .dc-honest { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--ink); font-size: var(--fs-sm); line-height: 1.45; }
+  .dc-q { font-size: var(--fs-md); }
+  .dc-q b { font-weight: 650; }
+  .dc-base { color: var(--ink-2); }
+  .dc-more summary { color: var(--ink); padding: 10px 0; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+  .dc-more summary::before { content: '+'; font-family: var(--font-display); font-size: 20px; font-weight: 500; font-stretch: 100%; }
+  .dc-more[open] summary::before { content: '−'; }
+  .dc-more summary:hover { color: var(--accent-ink); }
+  .dc-more p, .dc-more li { color: var(--ink-2); margin-top: 8px; }
 </style>

@@ -242,22 +242,18 @@ describe('components', async () => {
     const html = await container.renderToString(Labs, {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [far], ok: true } }) },
     });
-    expect(html).toMatch(/metric-value glow-y extrap"[^>]*>~\d+%/);
+    expect(html).toMatch(/metric-value extrap"[^>]*>~\d+%/);
     expect(html).toContain('extrapolated to Nov 30 · not scored');
   });
 
-  it('Header reports status and exposes one accessible ticker with an explicit pause control', async () => {
+  it('Header reports status, names the site for screen readers and keeps an explicit pause control, with no ticker', async () => {
     const html = await container.renderToString(Header, { props: { d } });
     expect(html).toContain('STATUS: DEGRADED');
-    expect(html).toContain('NEW ON OPENROUTER: CLAUDE FABLE 5.1');
-    expect(html).toContain('OPENAI: AT LEAST 66% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
-    expect(html).toContain('data-ticker-toggle');
-    expect(html).toContain('PAUSE TICKER');
+    expect(html).toContain('data-refresh-toggle');
     expect(html).toContain('aria-pressed="false"');
-    expect(html).toContain('aria-controls="ticker-track"');
-    expect(html).toContain('class="sr-only"');
-    expect(html).toContain('aria-hidden="true"');
-    expect(html.match(/class="ticker-group/g) ?? []).toHaveLength(2);
-    expect(html).toContain('class="ticker-group ticker-copy"');
+    expect(html).toMatch(/class="sr-only"[^>]*>: frontier model release intelligence</);
+    // The landed model and the odds are said once each, in the hero and the lab list, not repeated in a crawl.
+    expect(html).not.toContain('ticker');
+    expect(html).not.toContain('NEW ON OPENROUTER');
   });
 });

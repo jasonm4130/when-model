@@ -20,10 +20,7 @@ async function overflowingElements(page: import('@playwright/test').Page) {
               width: Math.round(box.width),
             };
           })
-          .filter(
-            ({ left, right, element }) =>
-              !element.includes('ticker') && (left < -1 || right > window.innerWidth + 1),
-          )
+          .filter(({ left, right }) => left < -1 || right > window.innerWidth + 1)
           .slice(0, 10),
   );
 }
@@ -60,36 +57,36 @@ test('does not create horizontal overflow on narrow screens', async ({ page }) =
   }
 });
 
-test('pauses and resumes the ticker from the keyboard', async ({ page }) => {
+test('pauses and resumes auto-refresh from the keyboard, and there is no ticker to pause', async ({
+  page,
+}) => {
   await openDashboard(page);
+  await expect(page.locator('[data-ticker], #ticker-track')).toHaveCount(0);
 
-  const toggle = page.locator('[data-ticker-toggle]');
+  const toggle = page.locator('[data-refresh-toggle]');
   await toggle.focus();
   await page.keyboard.press('Enter');
-  await expect(toggle).toHaveAccessibleName('RESUME TICKER');
+  await expect(toggle).toHaveAccessibleName('RESUME AUTO-REFRESH');
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('[data-ticker]')).toHaveClass(/is-paused/);
 
   await page.keyboard.press('Space');
-  await expect(toggle).toHaveAccessibleName('PAUSE TICKER');
+  await expect(toggle).toHaveAccessibleName('PAUSE AUTO-REFRESH');
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.locator('[data-ticker]')).not.toHaveClass(/is-paused/);
 });
 
-test('uses static, readable ticker content and stable DROPCON segments with reduced motion', async ({
+test('opens a folded list from the keyboard, and keeps DROPCON segments stable with reduced motion', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openDashboard(page);
 
-  await expect(page.locator('.ticker-controls')).toBeHidden();
-  await expect(page.locator('.ticker-copy')).toBeHidden();
-  await expect(page.locator('#ticker-track')).toHaveCSS('animation-name', 'none');
-  // UI-05: reduced motion used to wrap the ticker onto many lines (~487px); it must now stay a single line.
-  await expect(page.locator('#ticker-track')).toHaveCSS('white-space', 'nowrap');
-  const trackBox = await page.locator('#ticker-track').boundingBox();
-  expect(trackBox).not.toBeNull();
-  expect(trackBox!.height).toBeLessThan(40);
+  // Secondary detail waits behind a summary; Enter on it opens the fold and shows what it held.
+  const fold = page.locator('details.fold.dc-adds');
+  await expect(fold.locator('.dc-drivers')).toBeHidden();
+  await fold.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(fold).toHaveAttribute('open', '');
+  await expect(fold.locator('.dc-drivers')).toBeVisible();
   await expect(page.locator('.seg')).toHaveCount(5);
   expect(await page.locator('.seg.on').count()).toBe(1);
   expect(await page.locator('.seg.on').evaluate((element) => getComputedStyle(element).opacity)).toBe('1');

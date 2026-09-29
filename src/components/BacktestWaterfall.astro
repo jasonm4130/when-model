@@ -151,16 +151,16 @@ const label = `Lead-time waterfall for ${rows.length} launches, on a compressed 
   .row-label { fill: var(--text); font-size: 18px; }
   .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: 16px; }
   .row-note { fill: var(--muted); font-size: 16px; }
-  .lead { stroke: #1aa0b3; stroke-width: 2; stroke-linecap: round; opacity: 0.45; }
-  circle { stroke: #0d0b1e; stroke-width: 2; }
-  .t50 { fill: #1f6f7c; }
-  .t70 { fill: #1aa0b3; }
-  .t90 { fill: #6fe3f2; }
-  circle.open { fill: #0d0b1e; }
-  circle.t50.open { stroke: #1f6f7c; }
-  circle.t70.open { stroke: #1aa0b3; }
-  circle.t90.open { stroke: #6fe3f2; }
-  .avail { fill: #d9731f; stroke: #0d0b1e; stroke-width: 2; }
+  .lead { stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; opacity: 0.45; }
+  circle { stroke: var(--paper); stroke-width: 2; }
+  .t50 { fill: var(--line2); }
+  .t70 { fill: var(--ink-2); }
+  .t90 { fill: var(--ink); }
+  circle.open { fill: var(--paper); }
+  circle.t50.open { stroke: var(--line2); }
+  circle.t70.open { stroke: var(--ink-2); }
+  circle.t90.open { stroke: var(--ink); }
+  .avail { fill: var(--accent); stroke: var(--paper); stroke-width: 2; }
   .chart circle:hover, .chart rect:hover { stroke: var(--yellow); }
   figcaption { margin-top: 10px; font-size: var(--fs-xs); max-width: 90ch; }
 </style>

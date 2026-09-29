@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The self-hosted VT323/Press Start 2P faces (src/styles/fonts.css) ship metric-matched local()
+ * The self-hosted Archivo and Source Serif 4 faces (src/styles/fonts.css) ship metric-matched local()
  * fallback faces specifically so a slow font fetch never reflows the page. Delaying /fonts/*
  * simulates that slow fetch; a real PerformanceObserver (not a synthetic estimate) measures the
  * layout-shift score the browser itself reports. With Google Fonts (display=swap, no fallback
@@ -44,29 +44,50 @@ for (const [label, viewport] of [
 /**
  * The CLS runs above only notice a fallback mismatch where this page's layout happens to be
  * sensitive to it, so pin the metric match itself: each fallback face must resolve to a local font
- * on this platform and set a sample as wide and tall as the webfont it stands in for.
- * geometricPrecision turns off hinting, which on Linux snaps some of the unhinted Press Start 2P
- * advances from 20px to 21px; the check is of the @font-face metrics, not the rasteriser.
+ * on this platform and set a sample as wide and tall as the webfont it stands in for, in the weight,
+ * width and case the page sets it in. Archivo is used two ways (small caps labels, condensed display
+ * caps), so it has a fallback for each. geometricPrecision turns off hinting; the check is of the
+ * @font-face metrics, not the rasteriser.
  */
 test('fallback faces lay text out like the webfonts they stand in for', async ({ page }) => {
   await page.goto('/');
   const pairs = await page.evaluate(async () => {
-    const sample = 'WHENMODEL dropcon 0123456789 · 87% odds — 7 days…';
-    const box = async (family: string) => {
-      const loaded = await document.fonts.load(`20px '${family}'`, sample);
+    const box = async (family: string, style: string, sample: string) => {
+      const loaded = await document.fonts.load(`${style} 20px '${family}'`, sample);
       const el = document.createElement('span');
-      el.style.cssText = `position:absolute;white-space:pre;text-rendering:geometricPrecision;font:20px/normal '${family}'`;
+      el.style.cssText = `position:absolute;white-space:pre;text-rendering:geometricPrecision;font:${style} 20px/normal '${family}'`;
       el.textContent = sample;
       document.body.append(el);
       const { width, height } = el.getBoundingClientRect();
       el.remove();
       return { loaded: loaded.length, width, height };
     };
-    return Promise.all(
+    const cases: [string, string, string, string][] = [
       [
-        ['VT323', 'VT323 Fallback'],
-        ['Press Start 2P', 'Press Start 2P Fallback'],
-      ].map(async ([font, fallback]) => ({ font, real: await box(font), fallback: await box(fallback) })),
+        'Archivo',
+        'Archivo Label Fallback',
+        '600 semi-expanded',
+        'DROPCON LEVEL · HOTTEST LAB · LIVE · POLYMARKET 0123456789',
+      ],
+      [
+        'Archivo',
+        'Archivo Display Fallback',
+        '800 extra-condensed',
+        'GPU FANS SPINNING · ANTHROPIC 47% 0123456789',
+      ],
+      [
+        'Source Serif 4',
+        'Source Serif 4 Fallback',
+        '400',
+        "Polymarket prices 3% that Meta's model ships by Sep 30, within 7 days.",
+      ],
+    ];
+    return Promise.all(
+      cases.map(async ([font, fallback, style, sample]) => ({
+        font: `${font} ${style}`,
+        real: await box(font, style, sample),
+        fallback: await box(fallback, style, sample),
+      })),
     );
   });
   for (const { font, real, fallback } of pairs) {

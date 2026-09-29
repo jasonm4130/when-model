@@ -43,17 +43,15 @@ test.describe('mobile header (UI-05, UI-06)', () => {
     // The pause stays reachable on a phone, as a 44px target (see panels.spec.ts).
     await expect(page.locator('.refresh-toggle')).toBeVisible();
     await expect(page.locator('.tag-line')).toBeHidden();
-    await expect(page.locator('.brands')).toBeHidden();
   });
 
-  test('keeps the full statusbar and brands above the 480px breakpoint', async ({ page }) => {
+  test('keeps the full statusbar and the tag line above the 480px breakpoint', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 900 });
     await openDashboard(page);
 
     await expect(page.locator('.counts')).toBeVisible();
     await expect(page.locator('.sync')).toBeVisible();
     await expect(page.locator('.tag-line')).toBeVisible();
-    await expect(page.locator('.brands')).toBeVisible();
   });
 });
 

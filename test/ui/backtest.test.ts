@@ -318,7 +318,7 @@ describe('backtest page', async () => {
       expect(html).toContain(anchor);
     // The page wears the backtest footer: back to the dashboard, the pull time and the rebuild.
     const footer = html.slice(html.indexOf('<footer'));
-    expect(footer).toContain('◂ DASHBOARD');
+    expect(footer).toContain('>DASHBOARD<');
     expect(footer).toContain(`DATA PULLED ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
     expect(footer).toContain('href="#reproduce"');
     expect(footer).not.toContain('EDGE-CACHED');

@@ -134,33 +134,36 @@ test.describe('panels on a desktop', () => {
     await openDashboard(page);
   });
 
-  test('shows every row without expanders', async ({ page }) => {
-    for (const summary of await page.locator('.fold-480 > .fold-summary, .fold-900 > .fold-summary').all()) {
-      await expect(summary).toBeHidden();
-    }
+  test('folds the long lists at every width; opening one shows its rows, which take focus', async ({
+    page,
+  }) => {
+    // Round two moved density behind disclosure on desktop too: a short list first, the rest folded.
     const rows = panel(page, 'RELEASE MARKETS').locator('.mrow');
-    expect(await visibleCount(rows)).toBe(await rows.count());
-    // Rows past the phone cap live in a closed <details>; here they must still take keyboard focus.
+    const total = await rows.count();
+    const fold = panel(page, 'RELEASE MARKETS').locator('details.fold');
+    test.skip((await fold.count()) === 0, 'too few release markets today to fold');
+    expect(await visibleCount(rows)).toBeLessThan(total);
+    await fold.locator('> .fold-summary').click();
+    expect(await visibleCount(rows)).toBe(total);
     await rows.last().focus();
     await expect(rows.last()).toBeFocused();
-    const items = page.locator('[data-feed] .item');
-    expect(await visibleCount(items)).toBe(await items.count());
   });
 
-  test('the feed fills its panel down to the watchlist beside it (UI-17)', async ({ page }) => {
+  test('the feed shows its first reports and folds the rest, with no inner scroller (UI-17)', async ({
+    page,
+  }) => {
     const feed = page.locator('[data-feed]');
     test.skip((await feed.count()) === 0, 'every feed is down');
-    const feedPanel = panel(page, 'OSINT FEED');
-    const watchPanel = panel(page, 'X WATCHLIST');
-    const [f, fp, wp] = await Promise.all([
-      feed.boundingBox(),
-      feedPanel.boundingBox(),
-      watchPanel.boundingBox(),
-    ]);
-    expect(f!.height).toBeGreaterThanOrEqual(640);
-    expect(Math.abs(fp!.y + fp!.height - (wp!.y + wp!.height))).toBeLessThanOrEqual(2);
-    // The scroller reaches the panel's padding, leaving no empty band under it.
-    expect(fp!.y + fp!.height - (f!.y + f!.height)).toBeLessThanOrEqual(20);
+    const items = page.locator('[data-feed] .item');
+    const total = await items.count();
+    const shown = await visibleCount(items);
+    expect(shown).toBeGreaterThan(0);
+    // No box that scrolls inside the page: the reader scrolls the page, and opens the fold for more.
+    expect(await feed.evaluate((e) => e.scrollHeight - e.clientHeight)).toBeLessThanOrEqual(1);
+    if (shown < total) {
+      await panel(page, 'OSINT FEED').locator('details.fold > .fold-summary').first().click();
+      expect(await visibleCount(items)).toBe(total);
+    }
   });
 
   test('each panel’s pill reads its own source’s health (UI-04)', async ({ page }) => {

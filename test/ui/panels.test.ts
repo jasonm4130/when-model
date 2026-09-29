@@ -254,12 +254,15 @@ describe('panels render', async () => {
   it('Markets derives its pill from Polymarket and folds rows past the phone cap (UI-04, UI-10)', async () => {
     const html = await container.renderToString(Markets, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*data-source-pill[^>]*>LIVE · POLYMARKET</);
-    const [before, folded] = html.split('<details class="fold fold-480"');
+    // One fold at every width now: the first MOBILE_MARKETS rows show, the rest wait behind a summary.
+    const [before, folded] = html.split('<details class="fold"');
     expect(before.match(/Model \d+ released by/g)).toHaveLength(MOBILE_MARKETS);
     expect(folded).toContain(`${9 - MOBILE_MARKETS} MORE RELEASE MARKETS`);
     expect(html).toContain(`${8 - MOBILE_MARKETS} MORE MARKETS`);
     // A single yes/no market answers "Yes" instead of repeating its question (UI-12).
-    expect(html).toMatch(/<b class="glow-c"[^>]*>37%<\/b> Yes/);
+    // Odds are toned by class (hi / mid / lo), never by a lab colour inline.
+    expect(html).toMatch(/<b class="(hi|mid|lo)"[^>]*>37%<\/b> Yes/);
+    expect(html).not.toMatch(/<b[^>]*style="color/);
     // The title row is a grid: dot, title, volume, whatever wraps.
     expect(html).toMatch(
       /class="mtitle"[^>]*><span class="mdot"[^>]*aria-hidden="true"[^>]*><\/span><span class="mname"/,
@@ -278,13 +281,15 @@ describe('panels render', async () => {
     expect(quietHtml).not.toContain('unreachable');
   });
 
-  it('Drops badges stealth slots, keeps dates on one line and stacks phone rows with a price (UI-10)', async () => {
+  it('Drops badges stealth slots, keeps dates on one line and lists rows with a price, one list at every width (UI-10)', async () => {
     const html = await container.renderToString(Drops, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · OPENROUTER</);
     expect(html).toMatch(/Space Bunny Alpha<\/a><span class="tag stealth"[^>]*>STEALTH</);
-    expect(html.match(/class="tag stealth"/g)).toHaveLength(2); // table row and phone row
-    expect(html.match(/STEALTH</g)).toHaveLength(2);
-    expect(html).toMatch(/<td class="muted landed"/);
+    // The week table is gone: each listing renders once, as a list row that grows columns from 700px.
+    expect(html.match(/class="tag stealth"/g)).toHaveLength(1);
+    expect(html.match(/STEALTH</g)).toHaveLength(1);
+    expect(html).not.toContain('<table');
+    expect(html).toMatch(/class="di-when"[^>]*title="[^"]+"/);
     const stack = html.slice(html.indexOf('class="drop-stack"'));
     const [shown, folded] = stack.split('<details class="fold"');
     expect(shown.match(/class="drop-item/g)).toHaveLength(MOBILE_DROPS);
@@ -322,13 +327,14 @@ describe('panels render', async () => {
     expect(html).toContain('Hugging Face papers unreachable.');
   });
 
-  it('Feed colours sources from LABS, shows MOBILE_FEED items, then folds the rest (UI-10, UI-15)', async () => {
+  it('Feed labels each source in ink, shows MOBILE_FEED items, then folds the rest (UI-10, UI-15)', async () => {
     const html = await container.renderToString(Feed, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · 6 FEEDS</);
-    const anthropic = LABS.find((l) => l.id === 'anthropic')!.color;
-    expect(html).toContain(`style="color:${anthropic}"`);
-    expect(html).toMatch(/style="color:var\(--yellow\)"[^>]*>HN</);
-    const [shown, folded] = html.split('<details class="fold fold-900"');
+    // Sources are named, not colour-coded: the lab palette was tuned for the old dark page.
+    expect(html).toMatch(/class="src tiny"[^>]*>HN</);
+    expect(html).toMatch(/class="src tiny"[^>]*>ANTHROPIC</);
+    expect(html).not.toContain('style="color:');
+    const [shown, folded] = html.split('<details class="fold"');
     expect(shown.match(/class="row item/g)).toHaveLength(MOBILE_FEED);
     expect(folded).toContain(`${20 - MOBILE_FEED} MORE REPORTS`);
     expect(folded.match(/class="row item/g)).toHaveLength(20 - MOBILE_FEED);

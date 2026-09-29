@@ -358,7 +358,7 @@ describe('Labs cards', () => {
     const d = { ...dashboard(), earlyWarnings: warnings() };
     const html = await render(Labs, { d });
     const card = (id: string) =>
-      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</article>', html.indexOf(`id="lab-${id}"`)));
+      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</details>', html.indexOf(`id="lab-${id}"`)));
     expect(card('openai')).toMatch(/class="flag leak" href="#ew-leaks"[^>]*>LEAK ×2</);
     expect(card('openai')).toMatch(/class="flag stream" href="#ew-streams"[^>]*>STREAM 5H</);
     expect(card('openai')).toMatch(/class="flag keynote" href="#ew-events"[^>]*>KEYNOTE 70H</);
@@ -382,7 +382,7 @@ describe('Labs cards', () => {
     expect(html).toMatch(
       /class="hist" role="img" aria-label="Models listed on OpenRouter per month: Oct 2025 \d+, [^"]*Sep 2026 \d+\."/,
     );
-    expect(html).toMatch(/<h3 class="lab-name head"[^>]*><span class="glyph" aria-hidden="true"/);
+    expect(html).toMatch(/<h3 class="lab-name"[^>]*>Anthropic<\/h3>/);
   });
 
   it('says "NO POLYMARKET RELEASE MARKET" only when the odds are up, and "1 LAUNCH" in the singular', async () => {
@@ -391,7 +391,7 @@ describe('Labs cards', () => {
     expect(html).not.toContain('ODDS OFFLINE');
     const anthropic = html.slice(
       html.indexOf('id="lab-anthropic"'),
-      html.indexOf('</article>', html.indexOf('id="lab-anthropic"')),
+      html.indexOf('</details>', html.indexOf('id="lab-anthropic"')),
     );
     expect(anthropic).toMatch(/>1 LAUNCH\/30D</);
     expect(anthropic).not.toContain('1 LAUNCHES');
@@ -437,22 +437,36 @@ describe('Labs cards', () => {
     expect(g.odds?.p7.family).toBeUndefined();
     const html = await render(Labs, { d, now: new Date(NOW) });
     const card = (id: string) =>
-      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</article>', html.indexOf(`id="lab-${id}"`)));
+      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</details>', html.indexOf(`id="lab-${id}"`)));
     expect(card('google')).toMatch(
       /<dt[^>]*>30D<\/dt><dd[^>]*>.*<span class="rfam"[^>]*> · Gemini 4\.0<\/span>/,
     );
     expect(card('google')).toMatch(/title="Gemini 4\.0: /);
     expect(card('google')).not.toMatch(/<dt[^>]*>7D<\/dt><dd[^>]*>[^\n]*?rfam[^\n]*?<dt[^>]*>30D/);
     // Extrapolated: "~" and the extrap class (muted in CSS, never dimmed by opacity).
-    expect(card('xai')).toMatch(/class="metric-value glow-y extrap"[^>]*>~\d+%</);
+    expect(card('xai')).toMatch(/class="metric-value extrap"[^>]*>~\d+%</);
   });
 
-  it('keeps the compact-card parts separable: the phone layout hides tempo, histogram, handles and market link', async () => {
-    const html = await render(Labs, { d: dashboard() });
+  it('ranks labs as closed rows: the summary answers, the fold holds the reads, tempo, handles and market link', async () => {
+    const d = dashboard();
+    const html = await render(Labs, { d });
+    expect(
+      html.match(/<li class="lab"[^>]*><details class="lab-fold"[^>]*><summary class="lab-row"/g),
+    ).toHaveLength(d.labs.length);
+    // Closed by default, so ten labs read as ten lines, ranked from 01 in heat order.
+    expect(html).not.toMatch(/<details class="lab-fold"[^>]*open/);
+    expect(html).toMatch(/class="rank"[^>]*aria-hidden="true"[^>]*>01</);
     const anthropic = html.slice(
       html.indexOf('id="lab-anthropic"'),
-      html.indexOf('</article>', html.indexOf('id="lab-anthropic"')),
+      html.indexOf('</details>', html.indexOf('id="lab-anthropic"')),
     );
+    const [summary, more] = anthropic.split('</summary>');
+    for (const part of ['class="lab-name"', 'class="lab-odds"', 'DROP ≤7D', 'heat-line'])
+      expect(summary).toContain(part);
+    for (const part of ['class="hist"', 'class="reads"', 'class="latest"']) {
+      expect(summary).not.toContain(part);
+      expect(more).toContain(part);
+    }
     for (const part of [
       'metric-label tempo',
       'class="hist"',

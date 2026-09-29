@@ -16,23 +16,22 @@ test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on 
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openDashboard(page);
-  const fit = await page
-    .getByRole('heading', { name: 'SOURCE HEALTH' })
-    .locator('xpath=ancestor::div[1]/following-sibling::ul[1]')
-    .evaluate((list) => {
-      const li = list.querySelector('li')!.cloneNode(true) as HTMLElement;
-      const muted = document.createElement('span');
-      for (const a of li.attributes) if (a.name.startsWith('data-astro-cid')) muted.setAttribute(a.name, '');
-      muted.className = 'muted';
-      muted.textContent = ` — 503 https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(80)}`;
-      li.append(muted);
-      list.append(li);
-      return {
-        page: document.documentElement.scrollWidth,
-        overflow: li.scrollWidth - li.clientWidth,
-        right: li.getBoundingClientRect().right,
-      };
-    });
+  // The per-source list waits behind its fold; the summary line above it is what shows by default.
+  await page.locator('details.health-fold > summary').click();
+  const fit = await page.locator('details.health-fold ul.health').evaluate((list) => {
+    const li = list.querySelector('li')!.cloneNode(true) as HTMLElement;
+    const muted = document.createElement('span');
+    for (const a of li.attributes) if (a.name.startsWith('data-astro-cid')) muted.setAttribute(a.name, '');
+    muted.className = 'muted';
+    muted.textContent = ` — 503 https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(80)}`;
+    li.append(muted);
+    list.append(li);
+    return {
+      page: document.documentElement.scrollWidth,
+      overflow: li.scrollWidth - li.clientWidth,
+      right: li.getBoundingClientRect().right,
+    };
+  });
   expect(fit.page).toBeLessThanOrEqual(390);
   expect(fit.overflow).toBeLessThanOrEqual(0);
   expect(fit.right).toBeLessThanOrEqual(390);
@@ -52,15 +51,20 @@ test('an extrapolated lab read is muted at full opacity, with AA contrast', asyn
           .map((v) => v / 255)
           .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
           .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-      // The darkest a lab card gets: the page background under the panel's 86% tint.
+      // Lab rows sit straight on the paper background (#f1eee6).
       const text = lum(rgb(s.color));
-      const bg = lum([13, 11, 29]);
+      const bg = lum([241, 238, 230]);
       const probe = document.createElement('span');
       probe.style.color = 'var(--muted)';
       document.body.append(probe);
       const muted = getComputedStyle(probe).color;
       probe.remove();
-      return { opacity: s.opacity, color: s.color, muted, ratio: (text + 0.05) / (bg + 0.05) };
+      return {
+        opacity: s.opacity,
+        color: s.color,
+        muted,
+        ratio: (Math.max(text, bg) + 0.05) / (Math.min(text, bg) + 0.05),
+      };
     });
   expect(read.opacity).toBe('1');
   expect(read.color).toBe(read.muted);
@@ -132,6 +136,8 @@ for (const width of [390, 1024, 1440]) {
   test(`the scrubber's time tag stays on the day axis at the NOW edge at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await openDashboard(page);
+    // The instrument sits under the answer strip: bring it into view before aiming at it.
+    await page.locator('.sc-plot').scrollIntoViewIfNeeded();
     const box = (await page.locator('.sc-plot').boundingBox())!;
     await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2);
     const tag = (await page.locator('[data-ctag]').boundingBox())!;
@@ -143,43 +149,40 @@ for (const width of [390, 1024, 1440]) {
 }
 
 for (const width of [390, 360, 320]) {
-  test(`keeps the title's bars on their words, and drops them below 380px, at ${width}px`, async ({
+  test(`the masthead fits: the wordmark on one line, the dateline inside the page, at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 740 });
     await openDashboard(page);
-    const line = page.locator('header .tiny.glow-m');
-    const parts = await line.locator('.nw').evaluateAll((els) =>
-      // A nested span splits an inline box into fragments on one line, so count distinct line tops.
-      els.map((el) => ({
-        text: (el as HTMLElement).innerText,
-        lines: new Set([...el.getClientRects()].map((r) => Math.round(r.top))).size,
-      })),
-    );
-    for (const p of parts) expect(p.lines, p.text).toBe(1);
-    const bars = await line
-      .locator('.bars')
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).display));
-    if (width >= 380) {
-      expect(parts.map((p) => p.text)).toEqual(['▌▌ FRONTIER', 'INTELLIGENCE ▐▐']);
-    } else {
-      expect(bars).toEqual(['none', 'none']);
-      expect(parts.map((p) => p.text)).toEqual(['FRONTIER', 'INTELLIGENCE']);
+    const mark = page.locator('header .wordmark');
+    // "when" and "model" share a line top; the screen-reader tail is clipped away, so it is left out.
+    const lines = await mark.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el.firstChild!);
+      const tops = [...range.getClientRects(), ...el.querySelector('.m')!.getClientRects()].map((r) =>
+        Math.round(r.top),
+      );
+      return new Set(tops).size;
+    });
+    expect(lines).toBe(1);
+    for (const sel of ['.status-live', '.clock', '.refresh-toggle', '.wordmark']) {
+      const box = (await page.locator(`header ${sel}`).boundingBox())!;
+      expect(box.x, sel).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, sel).toBeLessThanOrEqual(width);
     }
-    // At 360 the words fit on one row once the bars are gone.
-    if (width === 360) {
-      const tops = await line
-        .locator('.nw')
-        .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
-      expect(new Set(tops).size).toBe(1);
-    }
+    // The pause stays a 44px target however narrow the phone.
+    expect((await page.locator('header .refresh-toggle').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }
 
-test('focus rings inside the feed scroller and a lab card are unclipped', async ({ page }) => {
+test('focus rings inside the feed and an opened lab row are unclipped', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openDashboard(page);
-  for (const selector of ['.feed.scroll-y a', '.lab .latest a']) {
+  // A lab's LATEST link is inside its fold: open it from the keyboard.
+  await page.locator('.lab summary.lab-row').first().focus();
+  await page.keyboard.press('Enter');
+  for (const selector of ['[data-feed] a', '.lab .latest a']) {
     const link = page.locator(selector).first();
     if (!(await link.count())) continue;
     await link.focus();
