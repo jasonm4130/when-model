@@ -35,6 +35,12 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   (the scrubber's readout text) and `src/ui/labels.ts` (whole-or-nothing label placement) are pure
   and run both in the server render and in the component's browser script. The readout never
   gives a past hour the live reading, and scrubbing never changes the big number.
+- Pages: `/` (the answer and the chart), `/labs`, `/labs/[id]` (one per registry lab; an unknown id
+  renders the 404 with a 404 status and no fetch), `/markets`, `/radar`, `/about`, `/backtest`. Every
+  page reads the one memoised `loadDashboard()`; only `/` calls `loadHistoryForPage`, and
+  `test/app/load-dashboard.test.ts` renders each page and pins its fetch count. `src/ui/site.ts` holds
+  the tab strip (`NAV`), page titles (`pageMeta`) and the old single-page anchors `/` redirects
+  (`LEGACY_HASHES`); `src/ui/lab-page.ts` is a lab page's pure selection (`labPage`, `topLabs`).
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
@@ -71,9 +77,11 @@ Rules of the house:
   `DROPCON_ALGORITHM_VERSION`: history breaks its series at a version change and the repricing
   term reads only same-version rows.
 - What the markets, drops and feed panels show comes from `src/ui/panels.ts`, and the refresh fingerprint
-  (`src/ui/fingerprint.ts`) reads the same selections. A panel that starts printing a new field adds it to
-  `visibleContent` at its displayed precision; never hash raw floats or anything that moves with the clock,
-  or every poll offers NEW DATA. A panel's status pill comes from `sourcePill`, never a literal "LIVE".
+  (`src/ui/fingerprint.ts`) reads the same selections. The fingerprint is per page: `PAGE_PARTS` lists
+  the slices each page shows (a lab page hashes its `labPage` selection), and the header stamps the view
+  in `data-view` so the browser's poll hashes the same slice. A panel that starts printing a new field
+  (or moves to another page) updates its part and `PAGE_PARTS` at its displayed precision; never hash raw
+  floats or anything that moves with the clock, or every poll offers NEW DATA. A panel's status pill comes from `sourcePill`, never a literal "LIVE".
 - A number on `/backtest` comes from `data/backtest/*.json` or a domain constant, never typed
   into markup, and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
   only through `pnpm backtest` or `pnpm backtest:replay`.
