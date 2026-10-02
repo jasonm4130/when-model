@@ -27,18 +27,31 @@ test.describe('/backtest', () => {
     }
     await expect(page.locator('.bt-verdict')).toContainText('not a probability');
 
+    // The verdict and the one chart are open; every other study is a fold under Show the working.
+    for (const name of ['The verdict', 'How v3 would have read', 'Show the working']) {
+      await expect(page.getByRole('heading', { level: 2, name })).toHaveCount(1);
+    }
     for (const name of [
-      'The verdict',
-      'How v3 would have read',
+      "What this can't do",
       'Results: forecast against the base rate',
       'Lead times',
       'Stealth reveals',
       'Tested and didn’t lead',
       'Reproduce it',
     ]) {
-      await expect(page.getByRole('heading', { level: 2, name })).toHaveCount(1);
+      await expect(page.getByRole('heading', { level: 3, name })).toHaveCount(1);
     }
+    await expect(page.locator('details.work[open]')).toHaveCount(0);
     expect(await noSidewaysScroll(page)).toBe(true);
+  });
+
+  test('opens the fold a link points into', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/backtest#trap-her', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    await expect(page.locator('details#timestamp-traps')).toHaveJSProperty('open', true);
+    await expect(page.locator('#trap-her')).toBeInViewport();
+    await page.evaluate(() => (location.hash = '#seven-day'));
+    await expect(page.locator('details#splits')).toHaveJSProperty('open', true);
   });
 
   test('names the replay chart for assistive tech, with one layout per width and a table twin', async ({
@@ -75,11 +88,16 @@ test.describe('/backtest', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openBacktest(page);
     expect(await noSidewaysScroll(page)).toBe(true);
-    // Open every table twin: expanded content must not widen the page either.
-    for (const summary of await page.locator('details > summary').all()) await summary.click();
+    // Open every fold and table twin: expanded content must not widen the page either.
+    await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
     expect(await noSidewaysScroll(page)).toBe(true);
+    // On a phone a table is stacked rows, each cell under its column's name.
+    const stacked = page.locator('#false-alarms .table-scroll.stacked').first();
+    await expect(stacked).toHaveCount(1);
+    expect(await stacked.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await expect(stacked.locator('td').first()).toHaveAttribute('data-label', /\w/);
     // The verdict and the replay chart fit the phone width.
-    for (const selector of ['.bt-verdict', 'figure.replay svg.chart.narrow', '#results .panel']) {
+    for (const selector of ['.bt-verdict', 'figure.replay svg.chart.narrow', '#results .work-body']) {
       const box = await page.locator(selector).first().boundingBox();
       expect(box, selector).not.toBeNull();
       expect(box!.x).toBeGreaterThanOrEqual(0);
@@ -90,6 +108,7 @@ test.describe('/backtest', () => {
   test('keeps keyboard focus visible and unclipped inside scrolling tables', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openBacktest(page);
+    await page.locator('#stealth > summary').click();
     const link = page.locator('#stealth table a').first();
     await link.focus();
     const clipped = await link.evaluate((el) => {

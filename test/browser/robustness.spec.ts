@@ -284,16 +284,20 @@ test("focus rings inside the feed, the network and a line's announcements are un
   }
 });
 
-test('every scrolling table on /backtest is a named, focusable region with a scroll edge', async ({
+test('every table on /backtest is a named, focusable region: stacked on a phone, or scrolling with an edge', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/backtest', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  // Open every fold, so the tables lay out as a reader would see them.
+  await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const scrollers = await page.locator('.table-scroll').evaluateAll((els) =>
     els.map((el) => ({
       role: el.getAttribute('role'),
       tabindex: el.getAttribute('tabindex'),
       label: el.getAttribute('aria-label') ?? '',
+      stacked: el.classList.contains('stacked'),
+      fits: el.scrollWidth <= el.clientWidth + 1,
       layers: getComputedStyle(el).backgroundImage.split('linear-gradient').length - 1,
     })),
   );
@@ -301,6 +305,8 @@ test('every scrolling table on /backtest is a named, focusable region with a scr
   for (const s of scrollers) {
     expect(s).toMatchObject({ role: 'region', tabindex: '0' });
     expect(s.label.length).toBeGreaterThan(3);
-    expect(s.layers).toBe(4);
+    // A table stacked into rows on a phone has nothing to scroll; one that still scrolls shows its edge.
+    if (s.stacked) expect(s.fits, s.label).toBe(true);
+    else expect(s.layers, s.label).toBe(4);
   }
 });

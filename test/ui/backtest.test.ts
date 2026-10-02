@@ -292,8 +292,11 @@ describe('backtest page', async () => {
 
   it('renders every section, links home and cites the pull time', async () => {
     const html = await container.renderToString(BacktestPage);
+    // The chart is open; every other study is a fold under "Show the working".
+    expect(html).toMatch(/<section id="replay"/);
+    expect(html).toContain('Show the working');
     for (const id of [
-      'replay',
+      'limits',
       'results',
       'leads',
       'splits',
@@ -305,8 +308,7 @@ describe('backtest page', async () => {
       'timestamp-traps',
       'reproduce',
     ]) {
-      expect(html).toContain(`id="${id}"`);
-      expect(html).toContain(`href="#${id}"`);
+      expect(html).toMatch(new RegExp(`<details class="work" id="${id}"`));
     }
     expect(html).toContain('<title>Backtest · whenmodel</title>');
     expect(html).toContain('href="/"');
@@ -329,7 +331,8 @@ describe('backtest page', async () => {
 
   it('opens on the question, the method and the headline results, all from the replay and the shipped constants', async () => {
     const html = text(await container.renderToString(BacktestPage));
-    const hero = html.slice(html.indexOf('Track record'), html.indexOf("WHAT THIS CAN'T DO"));
+    const hero = html.slice(html.indexOf('Track record'), html.indexOf('Show the working'));
+    const working = html.slice(html.indexOf('Show the working'));
     expect(hero).toContain('Can public signals see a frontier model launch coming?');
     expect(hero).toContain(
       `fitted on the first ${FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next ${FORECAST_CONSTANTS.testedOn.events}`,
@@ -337,13 +340,18 @@ describe('backtest page', async () => {
     expect(hero).toContain('1 Apr 2026 to 26 Sep 2026');
     expect(hero).toContain(`Plus ${events.releases.length} launches timed by hand`);
     const d = replay.decision;
-    // The verdict is the sign's one anchored fact, said once.
+    // The sign's one anchored fact is the launches priced first, in words a visitor can read.
     expect(hero).toContain(
-      `${signed3(d.skill)} best 72-hour skill against the base rate; it needed ${signed2(replay.meta.protocol.decisionMinSkill)} (95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])})`,
+      `${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test} held-out launches had their own lab's market at 50% or more beforehand`,
+    );
+    // Three facts under the verdict, each in a word first, with its number beside it, once.
+    expect(hero).toContain(
+      `Beat the base rate, 72h No best skill ${signed3(d.skill)}; it needed ${signed2(replay.meta.protocol.decisionMinSkill)} (95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])})`,
     );
     expect(hero.split(signed3(d.skill))).toHaveLength(2);
-    expect(hero).toContain(`${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test}`);
-    expect(hero).toContain(`Level's input, 7d ${signed2(LEAD_INPUT_SKILL_7D.skill)}`);
+    expect(hero).toContain(
+      `Level's main input, 7d Worse than the base rate: skill ${signed2(LEAD_INPUT_SKILL_7D.skill)}`,
+    );
     // The fourth tile is the sample size, chosen in advance, not the two best labs after the fact.
     expect(hero).toContain(
       `Held-out launches ${FORECAST_CONSTANTS.testedOn.events} the real sample size · fitted on ${FORECAST_CONSTANTS.fittedOn.events}`,
@@ -352,20 +360,20 @@ describe('backtest page', async () => {
     expect(hero).toContain(
       'No formula beat the base rate at 72 hours, so DROPCON stays a hand-weighted lead score, not a probability.',
     );
-    // The best two labs are named as anecdotes, from the data, with their launch counts.
+    // The best two labs are named as anecdotes, in the results fold, from the data, with their counts.
     const [first, second] = [...replay.byLab].sort((a, b) => b.skill - a.skill);
     const counts = replay.byLab.map((l) => l.testEvents);
-    expect(hero).toContain(
+    expect(working).toContain(
       `Anthropic (${first.testEvents} launches) and OpenAI (${second.testEvents}) scored highest on their own launches, ${signed2(first.skill)} and ${signed2(second.skill)}`,
     );
-    expect(hero).toContain(
+    expect(working).toContain(
       `with ${Math.min(...counts)} to ${Math.max(...counts)} launches per lab these are anecdotes, not a ranking`,
     );
     expect(hero).not.toMatch(/helped/);
     // What was timed by hand, named, instead of "every signal that might have warned".
     expect(hero).toContain('timed by hand against Hacker News, lab feeds, TestingCatalog');
     expect(hero).not.toContain('every signal');
-    expect(hero).toContain(
+    expect(working).toContain(
       `${replay.pricedEvents.test - replay.pricedEvents.testPriced} of ${replay.pricedEvents.test}, had no market at 50% or more`,
     );
   });

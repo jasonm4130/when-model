@@ -22,8 +22,10 @@ interface Props {
   heldOut: number;
   /** v3 replay: a rung is readable only this many days before its deadline. */
   admitDays: number;
+  /** Its own heading; off inside a fold whose summary already names it. */
+  heading?: boolean;
 }
-const { releases, dated, medianAvailabilityLagH, early90, early90Prompted, early90Unprompted, byPrecursor, marketSkill72, marketSkill72Ci, heldOut, admitDays } = Astro.props;
+const { heading = true, releases, dated, medianAvailabilityLagH, early90, early90Prompted, early90Unprompted, byPrecursor, marketSkill72, marketSkill72Ci, heldOut, admitDays } = Astro.props;
 const quiet = byPrecursor.find((g) => g.group === 'none');
 const leaked = byPrecursor.find((g) => g.group === 'leak');
 /** One rule both ways: an interval that spans zero is "not distinguishable", whichever side the estimate is on. */
@@ -33,8 +35,8 @@ const lag = medianAvailabilityLagH === null ? 'about the same time as' : `${Math
 const launchDays = Math.round(LAUNCH_SETTLE_MS / 86_400_000);
 const signed = (n: number, d = 2) => (n > 0 ? `+${n.toFixed(d)}` : n < 0 ? `−${Math.abs(n).toFixed(d)}` : '0');
 ---
-<aside class="limits panel" aria-labelledby="limits-title">
-  <h2 id="limits-title" class="tiny">WHAT THIS CAN'T DO</h2>
+<aside class:list={['limits panel', { bare: !heading }]} aria-labelledby="limits-title">
+  <h2 id="limits-title" class:list={['tiny', { 'sr-only': !heading }]}>WHAT THIS CAN'T DO</h2>
   <ul>
     <li><strong>It mostly detects launches after they happen.</strong> The median model reached OpenRouter {lag} its announcement. Registry listings, feeds and HN confirm a launch; they rarely precede it.</li>
     <li><strong>DROPCON is a lead score, not a probability, and nothing here tests the level.</strong> It reads market release odds alone, with hand-set weights. A launch never raises it: once a model lists, its family drops out for {launchDays} days. Read on their own, the best market odds across labs scored {signed(marketSkill72, 3)} (95% interval {signed(marketSkill72Ci[0])} to {signed(marketSkill72Ci[1])}) against always guessing the base rate at 72 hours, {verdict(marketSkill72, marketSkill72Ci)} (<a href="#results">results</a>). In the same replay, the level's main input, the best 7-day read across labs, scored a Brier skill of {leadInputSkillText()} against the base rate at 7 days. The level itself has not been evaluated.</li>
@@ -47,6 +49,7 @@ const signed = (n: number, d = 2) => (n > 0 ? `+${n.toFixed(d)}` : n < 0 ? `−$
 <style>
   .limits { border-top: 3px solid var(--ink); padding-top: 16px; }
   .limits h2 { margin-bottom: 18px; color: var(--ink); }
+  .limits.bare { border-top: 0; padding-top: 0; }
   .limits ul { display: grid; gap: 14px; max-width: 72ch; }
   .limits li { padding-left: 22px; position: relative; font-size: var(--fs-body); line-height: 1.55; color: var(--ink-2); }
   .limits li::before { content: ''; position: absolute; left: 0; top: 0.72em; width: 10px; height: 2px; background: var(--accent); }
