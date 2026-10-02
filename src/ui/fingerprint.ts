@@ -79,11 +79,22 @@ const PARTS = {
       offline: board.offline,
     };
   },
-  /** Recent arrivals and the one service notice on the home page. */
-  arrivals: (d: Visible) => list(d.landed?.releases).map((r) => r.id),
+  /**
+   * Recent arrivals and the one service notice on the home page, as printed: each arrival's name,
+   * line and listing minute; the notice's slot, its name, the day it appeared and its context.
+   */
+  arrivals: (d: Visible) =>
+    list(d.landed?.releases).map((r) => [r.id, r.name, r.lab, r.firstListedAt?.slice(0, 16) ?? null]),
   notice: (d: Visible) => {
     const items = list(d.earlyWarnings?.stealth?.items);
-    return [items[0]?.id ?? null, items.length];
+    const slot = items[0];
+    return [
+      slot?.id ?? null,
+      slot?.name ?? null,
+      slot?.createdAt?.slice(0, 10) ?? null,
+      slot?.contextLength ?? null,
+      items.length,
+    ];
   },
   /** The network: each line's state, its 7-day odds when timed, its service and window. */
   network: (d: Visible) => {

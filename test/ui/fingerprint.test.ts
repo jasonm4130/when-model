@@ -314,6 +314,40 @@ describe('pageFingerprint covers only what the reader sees (UI-11)', () => {
     expect(
       pageFingerprint({ ...base, earlyWarnings: { ...w, stealth: { ...w.stealth, items: [slot] } } }, HOME),
     ).not.toBe(home);
+    // Under an id it already has, a renamed arrival or a later listing minute is new text on the page.
+    const first = {
+      id: 'anthropic@2026-09-28',
+      lab: 'Anthropic',
+      labId: 'anthropic' as const,
+      name: 'Claude Sonnet 5.5',
+      firstListedAt: '2026-09-28T18:04:00Z',
+      hoursAgo: 40,
+      models: [],
+    };
+    const arrival = (patch: object) =>
+      pageFingerprint({ ...base, landed: { ...base.landed, releases: [{ ...first, ...patch }] } }, HOME);
+    const same = arrival({});
+    expect(arrival({ name: `${first.name} Pro` })).not.toBe(same);
+    expect(arrival({ lab: 'Someone else' })).not.toBe(same);
+    expect(arrival({ firstListedAt: '2026-09-30T23:59:00Z' })).not.toBe(same);
+    expect(arrival({ firstListedAt: `${first.firstListedAt.slice(0, 16)}:59Z` })).toBe(same);
+    // The notice prints its slot's name, start day and context, not just its id.
+    const train = {
+      ...w.stealth.items[0],
+      id: 'stealth/train',
+      name: 'Space Bunny Alpha',
+      createdAt: '2026-09-23T00:00:00Z',
+      contextLength: 1_000_000,
+    };
+    const notice = (patch: object) =>
+      pageFingerprint(
+        { ...base, earlyWarnings: { ...w, stealth: { ...w.stealth, items: [{ ...train, ...patch }] } } },
+        HOME,
+      );
+    const posted = notice({});
+    expect(notice({ name: 'Renamed Alpha' })).not.toBe(posted);
+    expect(notice({ createdAt: '2026-01-01T00:00:00Z' })).not.toBe(posted);
+    expect(notice({ contextLength: 7 })).not.toBe(posted);
   });
 
   it('ignores fields the page never prints, such as source timings and raw inputs', () => {
