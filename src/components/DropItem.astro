@@ -1,9 +1,12 @@
 ---
-/** One Fresh Drops listing: stacked on a phone, a row of columns from 700px. */
+/** One Fresh Drops listing: stacked on a phone, a row of columns from 700px. A registry lab wears its line's bullet. */
+import Bullet from './Bullet.astro';
 interface Props {
   name: string;
   url: string;
   lab: string;
+  /** The registry lab, when the listing belongs to one: its bullet goes beside the name. */
+  labId?: string;
   ctx: string;
   price: string;
   free: boolean;
@@ -18,7 +21,7 @@ const p = Astro.props;
 <li class={`drop-item ${p.fresh ? 'fresh' : ''}`}>
   <span class="di-name"><a href={p.url} target="_blank" rel="noopener">{p.name}</a>{p.stealth && <span class="tag stealth">STEALTH</span>}{p.vision && <span class="tag vis">VIS</span>}</span>
   <span class="di-when" title={p.createdAt} data-time={p.fresh ? p.createdAt : undefined}>{p.when}</span>
-  <span class="di-meta"><span class="di-lab">{p.lab}</span><span class="di-ctx"><span class="sep"> · </span>{p.ctx}<span class="sep"> ctx · </span></span><span class={`di-price ${p.free ? 'free' : ''}`}>{p.price}</span></span>
+  <span class="di-meta"><span class="di-lab">{p.labId && <Bullet id={p.labId} name={p.lab} size="sm" decorative />}<span class="di-lab-name">{p.lab}</span></span><span class="di-ctx"><span class="sep"> · </span>{p.ctx}<span class="sep"> ctx · </span></span><span class={`di-price ${p.free ? 'free' : ''}`}>{p.price}</span></span>
 </li>
 <style>
   .drop-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
@@ -28,15 +31,19 @@ const p = Astro.props;
   .di-when { font-size: var(--fs-xs); white-space: nowrap; color: var(--ink-2); font-variant-numeric: tabular-nums; }
   .fresh .di-when { color: var(--accent-ink); }
   .di-meta { grid-column: 1 / -1; font-size: var(--fs-xs); color: var(--ink-2); }
-  .di-lab { color: var(--ink); }
+  .di-lab { display: inline-flex; align-items: center; gap: var(--s1); min-width: 0; color: var(--ink); }
+  .di-lab :global(.b) { --d: 18px; }
+  .di-lab-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* A chip sits clear of the name it qualifies. */
+  .di-name .tag { margin-left: var(--s2); }
   .di-price { font-variant-numeric: tabular-nums; }
   .di-price.free { color: var(--accent-ink); }
   @media (min-width: 700px) {
-    .drop-item { grid-template-columns: 76px minmax(0, 1fr) 96px 64px 104px; gap: 12px; }
+    .drop-item { grid-template-columns: 76px minmax(0, 1fr) 176px 64px 104px; gap: 12px; }
     .di-when { grid-row: 1; grid-column: 1; }
     .di-name { grid-row: 1; grid-column: 2; }
     .di-meta { display: contents; }
-    .di-lab { grid-column: 3; font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .di-lab { grid-column: 3; font-size: var(--fs-xs); }
     .di-ctx { grid-column: 4; text-align: right; font-size: var(--fs-xs); }
     .di-ctx .sep { display: none; }
     .di-price { grid-column: 5; text-align: right; font-size: var(--fs-xs); white-space: nowrap; }

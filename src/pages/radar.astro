@@ -14,12 +14,10 @@ const d = await loadDashboard();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'radar' } as const;
 const meta = pageMeta(view);
-const unmarked = d.earlyWarnings.stealth.items.length;
 const w = d.earlyWarnings;
 const warnings = w.stealth.items.length + w.leaks.items.length + w.broadcasts.items.length + w.architectures.items.length + w.events.items.length;
-const fact = unmarked
-  ? { figure: String(unmarked), caption: `unmarked train${unmarked === 1 ? '' : 's'} on the network, no operator shown`, href: '#ew-stealth' }
-  : { figure: String(warnings), caption: `early warning${warnings === 1 ? '' : 's'} posted, none scored`, href: '#warnings' };
+// The page's figure counts every notice; Early warnings names each one, the unmarked train included.
+const fact = { figure: String(warnings), caption: `early warning${warnings === 1 ? '' : 's'} posted, none scored`, href: '#warnings' };
 ---
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
@@ -28,10 +26,8 @@ const fact = unmarked
     <div class="wrap page-body">
       <Signals d={d} />
       <RadarArrivals d={d} />
-      <div class="radar-pair">
-        <Drops d={d} show="listings" />
-        <Feed d={d} show="feed" />
-      </div>
+      <Drops d={d} show="listings" />
+      <Feed d={d} show="feed" />
       <details class="fold elsewhere" id="elsewhere">
         <summary class="fold-summary"><span>Elsewhere on the network <span class="what">open weights, papers, the X watchlist</span></span></summary>
         <div class="radar-pair inner">
@@ -44,7 +40,8 @@ const fact = unmarked
   <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>
 <style>
-  /* Two across only where both columns hold a readable row; one column below that. */
+  /* Fresh drops and the feed run full width, one above the other: their lengths never match, so
+     side by side one always left a hole. The folded extras are short enough to pair. */
   .radar-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s8); }
   .radar-pair > :global(*) { min-width: 0; }
   @media (min-width: 1100px) {

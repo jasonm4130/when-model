@@ -15,7 +15,8 @@ const rows = d.drops.slice(0, PANEL_ROWS.drops).map((x) => {
   const fresh = now - Date.parse(x.createdAt) < FRESH_MS;
   return {
     x,
-    lab: lab ? lab.short : x.lab,
+    lab: lab ? lab.name : x.lab,
+    labId: lab?.id,
     fresh,
     when: fresh ? ago(x.createdAt, now) : shortDate(x.createdAt),
     price: dropPrice(x),
@@ -34,6 +35,7 @@ const item = (r: (typeof rows)[number]) => ({
   name: r.x.name,
   url: r.x.url,
   lab: r.lab,
+  labId: r.labId,
   ctx: ctx(r.x.context),
   price: r.price,
   free: r.x.free,
@@ -130,7 +132,7 @@ const TRENDING_SHOWN = 6;
   .drop-cols { display: none; }
   /* Wide enough for columns: the stacked rows line up as a table, with a header to match. */
   @media (min-width: 700px) {
-    .drop-cols { display: grid; grid-template-columns: 76px minmax(0, 1fr) 96px 64px 104px; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); color: var(--ink-2); font-size: var(--fs-pill); }
+    .drop-cols { display: grid; grid-template-columns: 76px minmax(0, 1fr) 176px 64px 104px; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); color: var(--ink-2); font-size: var(--fs-pill); }
   }
   .trend-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
   .trend { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }

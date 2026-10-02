@@ -4,10 +4,12 @@ import { LABS } from '../domain/lab';
 import { ago } from '../ui/format';
 import { sourcePill } from '../ui/panels';
 import { EARLY_WARNING_SOURCES, TRACK_LINES, daysShort } from '../ui/signals';
+import Bullet from './Bullet.astro';
 interface Props { d: Dashboard; now?: number }
 const { d, now = Date.now() } = Astro.props;
 const w = d.earlyWarnings;
-const labName = (id?: string) => LABS.find((x) => x.id === id)?.short ?? id ?? '';
+/** A lab is named the way the rest of the site names a line: its bullet and its name, never a code. */
+const labName = (id?: string) => LABS.find((x) => x.id === id)?.name ?? id ?? '';
 const LIMIT = 5;
 /** Rows each list shows before its "more" fold. */
 const SHOW = 3;
@@ -66,7 +68,7 @@ const more = (n: number) => `${n} more`;
           <a class="sig-row" href={x.url} target="_blank" rel="noopener">
             <span class="sig-main">{x.title}</span>
             <span class="sig-when" data-time={x.publishedAt}>{ago(x.publishedAt, now)}</span>
-            <span class="sig-meta">{x.sourceName}{x.labId ? ` · ${labName(x.labId)}` : ''}</span>
+            <span class="sig-meta">{x.sourceName}{x.labId && <> · <span class="sig-lab"><Bullet id={x.labId} name={labName(x.labId)} size="sm" decorative />{labName(x.labId)}</span></>}</span>
           </a>
         ))}
         {leakItems.length > SHOW && (
@@ -76,7 +78,7 @@ const more = (n: number) => `${n} more`;
               <a class="sig-row" href={x.url} target="_blank" rel="noopener">
                 <span class="sig-main">{x.title}</span>
                 <span class="sig-when" data-time={x.publishedAt}>{ago(x.publishedAt, now)}</span>
-                <span class="sig-meta">{x.sourceName}{x.labId ? ` · ${labName(x.labId)}` : ''}</span>
+                <span class="sig-meta">{x.sourceName}{x.labId && <> · <span class="sig-lab"><Bullet id={x.labId} name={labName(x.labId)} size="sm" decorative />{labName(x.labId)}</span></>}</span>
               </a>
             ))}
           </details>
@@ -117,7 +119,7 @@ const more = (n: number) => `${n} more`;
           <div class="sig-row">
             <span class="sig-main">{a.module}</span>
             <span class="sig-when">{daysShort(a.daysPending)} pending</span>
-            <span class="sig-meta">transformers · {labName(a.labId)}{a.frontier ? ' · frontier lab' : ''}</span>
+            <span class="sig-meta">transformers · <span class="sig-lab"><Bullet id={a.labId} name={labName(a.labId)} size="sm" decorative />{labName(a.labId)}</span>{a.frontier ? ' · frontier lab' : ''}</span>
           </div>
         ))}
         {archItems.length > SHOW && (
@@ -127,7 +129,7 @@ const more = (n: number) => `${n} more`;
               <div class="sig-row">
                 <span class="sig-main">{a.module}</span>
                 <span class="sig-when">{daysShort(a.daysPending)} pending</span>
-                <span class="sig-meta">transformers · {labName(a.labId)}{a.frontier ? ' · frontier lab' : ''}</span>
+                <span class="sig-meta">transformers · <span class="sig-lab"><Bullet id={a.labId} name={labName(a.labId)} size="sm" decorative />{labName(a.labId)}</span>{a.frontier ? ' · frontier lab' : ''}</span>
               </div>
             ))}
           </details>
@@ -143,7 +145,7 @@ const more = (n: number) => `${n} more`;
             <a class="sig-row" href={e.source} target="_blank" rel="noopener">
               <span class="sig-main">{e.label}</span>
               <span class="sig-when">{e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span>
-              <span class="sig-meta">{labName(e.labId)} · markets already price known keynotes</span>
+              <span class="sig-meta"><span class="sig-lab"><Bullet id={e.labId} name={labName(e.labId)} size="sm" decorative />{labName(e.labId)}</span> · markets already price known keynotes</span>
             </a>
           ))}
         </div>
@@ -152,11 +154,9 @@ const more = (n: number) => `${n} more`;
   </div>
 </section>
 <style>
-  /* The page's one primary thing: every early warning, its groups two across on a wide screen. */
-  .sig-groups { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--s8); }
-  @media (min-width: 1100px) {
-    .sig-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
+  /* The page's one primary thing: every early warning, its groups one list in a single column, so
+     a short group never leaves a hole beside a long one. */
+  .sig-groups { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 880px; }
   .sig-intro { max-width: 56ch; margin-top: var(--s3); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .sig { scroll-margin-top: 16px; margin-top: var(--s6); }
   /* Each notice names itself, then its count, then its track record in one quiet line. */
@@ -172,7 +172,9 @@ const more = (n: number) => `${n} more`;
   a.sig-row:hover { text-decoration: none; }
   a.sig-row:hover .sig-main { text-decoration: underline; text-underline-offset: 3px; }
   a.sig-row:focus-visible { outline-offset: -2px; }
-  .sig-main { grid-area: main; overflow-wrap: anywhere; }
+  .sig-main { grid-area: main; overflow-wrap: anywhere; text-wrap: pretty; }
+  .sig-lab { display: inline-flex; align-items: center; gap: var(--s1); white-space: nowrap; vertical-align: bottom; }
+  .sig-lab :global(.b) { --d: 18px; }
   .sig-meta { grid-area: meta; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .sig-when { grid-area: when; align-self: start; font-family: var(--mono); font-size: var(--t-xs); line-height: 24px; white-space: nowrap; text-align: right; color: var(--ink-2); }
 </style>
