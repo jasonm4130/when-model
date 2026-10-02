@@ -1,8 +1,9 @@
 ---
 /**
  * The site's tabs. The current page's tab is underlined, set heavier, and carries aria-current; a
- * line's own page marks Lines as its section (aria-current="true"). Always one row: where the six
- * tabs do not fit, the row scrolls sideways inside itself, never the page.
+ * line's own page marks Lines as its section (aria-current="true"). Always one row: a phone drops
+ * Backtest (the footer links it) unless it is the page, and where the tabs still do not fit, the row
+ * scrolls sideways inside itself, never the page.
  */
 import { NAV, navKey, type SiteView } from '../ui/site';
 interface Props { view: SiteView }
@@ -32,8 +33,10 @@ const exact = view.page !== 'lab';
   @media (max-width: 900px) {
     .tabs { justify-content: space-between; gap: 0 var(--s3); }
   }
+  /* A phone keeps five tabs with room between them; Backtest stays in the footer (and shows here on its own page). */
   @media (max-width: 480px) {
     .tab { font-size: 13px; }
+    .tabs > li:has(> .tab[href='/backtest']:not(.on)) { display: none; }
   }
   /* The narrowest phones: one row that scrolls, each tab a full 44px target. */
   @media (max-width: 389.98px) {

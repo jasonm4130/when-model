@@ -37,7 +37,7 @@ test.describe('mobile header (UI-05, UI-06)', () => {
     }
   });
 
-  test('reduces the header to the clock on a phone, with the auto-refresh pause in the footer', async ({
+  test('keeps the header to the date and clock on a phone, with the auto-refresh pause in the footer', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -46,7 +46,9 @@ test.describe('mobile header (UI-05, UI-06)', () => {
     const head = page.locator('header');
     await expect(head.locator('.clock')).toBeVisible();
     await expect(head.locator('.clock')).toHaveText(/^\d{2}:\d{2}Z$/);
-    await expect(head.locator('.when .day')).toBeHidden();
+    // A phone has the room for the day again (the nav sits on its own row): "Fri 2 Oct · 12:29Z".
+    await expect(head.locator('.when .day')).toBeVisible();
+    await expect(head.locator('.when')).toHaveText(/^\w{3} \d{1,2} \w{3} · \d{2}:\d{2}Z$/);
     // The header carries no control; the pause sits with the refresh it pauses, in the footer.
     await expect(head.locator('.refresh-toggle')).toHaveCount(0);
     await expect(page.locator('footer .refresh-toggle')).toHaveCount(1);

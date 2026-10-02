@@ -62,7 +62,8 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
   .when b { font-weight: 500; color: var(--ink); }
   .refresh-status { display: inline-flex; }
   .refresh-status:empty { display: none; }
-  @media (max-width: 1100px) {
+  /* The date gives way only where the nav shares the wordmark's row; a phone has the room again. */
+  @media (max-width: 1100px) and (min-width: 900.02px) {
     .when .day { display: none; }
   }
   @media (max-width: 900px) {

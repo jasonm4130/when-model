@@ -62,6 +62,9 @@ for (const width of [390, 360, 320]) {
   test(`the tab strip is one row inside ${width}px, every tab a 44px target`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await open(page, '/markets');
+    // A phone keeps five tabs: Backtest is linked from the footer instead.
+    await expect(nav(page).getByRole('link')).toHaveCount(NAV.length - 1);
+    await expect(nav(page).locator('a[href="/backtest"]')).toBeHidden();
     const strip = (await nav(page).boundingBox())!;
     expect(strip.x).toBeGreaterThanOrEqual(0);
     expect(strip.x + strip.width).toBeLessThanOrEqual(width);
@@ -69,7 +72,7 @@ for (const width of [390, 360, 320]) {
       .getByRole('link')
       .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect));
     for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(44);
-    // One row at every width: where the six tabs do not fit, the strip scrolls inside itself.
+    // One row at every width: where the tabs do not fit, the strip scrolls inside itself.
     expect(new Set(boxes.map((b) => Math.round(b.top))).size).toBe(1);
     const last = nav(page).getByRole('link').last();
     await last.scrollIntoViewIfNeeded();
