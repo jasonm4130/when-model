@@ -200,7 +200,15 @@ export function nearLine(data: ScrubData, r: Readout): string {
   return `near: ${r.near.map(launchText).join(' · ')}`;
 }
 
-/** The readout's second line at rest: this week's launches, and the latest. */
+/**
+ * The readout's second line at rest, once the script has made the plot a slider. The live level is
+ * posted in the service status and this week's launches under Recent arrivals, so at rest the
+ * readout names only the time and says how to read an hour.
+ */
+export const REST_LINE =
+  'Point at an hour, or use the arrow keys, to read its score and the launches near it.';
+
+/** This week's launches, and the latest: the plot's description for assistive tech. */
 export function launchLine(data: ScrubData): string {
   if (!data.launchesOk) return 'Launch listings offline: OpenRouter unreachable, launches not marked';
   const latest = data.launches.at(-1);

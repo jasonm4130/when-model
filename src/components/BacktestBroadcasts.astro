@@ -35,7 +35,7 @@ const { broadcasts, misses } = Astro.props;
     </tbody>
   </table>
 </div>
-<h3 class="tiny sub">Launches a broadcast watch would have missed</h3>
+<h4 class="tiny sub">Launches a broadcast watch would have missed</h4>
 <ul class="misses">
   {misses.map((m) => (
     <li><span class="miss">{m.model}</span> <span class="muted">{m.note}</span></li>
@@ -46,5 +46,5 @@ const { broadcasts, misses } = Astro.props;
   .block { display: block; }
   .sub { color: var(--muted); margin: 18px 0 8px; }
   .misses li { padding: 4px 0; border-bottom: 1px dotted var(--line-soft); }
-  .miss { color: #fff; }
+  .miss { color: var(--ink); }
 </style>

@@ -1,0 +1,73 @@
+---
+/**
+ * Recent arrivals on the home page: the same list /radar prints (`arrivalBoard`), the week's frontier
+ * launches each once, newest first, with its line's bullet: an OpenRouter listing, a lab's own post or
+ * a Hacker News launch story. Context, never scored. The rest wait behind one fold; Radar has each
+ * arrival's sources.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { dayLabel } from '../ui/departures';
+import { sourcePill } from '../ui/panels';
+import { LANDED_SOURCES, arrivalBoard, type Arrival } from '../ui/signals';
+import Bullet from './Bullet.astro';
+import Pill from './Pill.astro';
+interface Props {
+  d: Dashboard;
+  now?: number;
+  /** Rows before the fold. */
+  show?: number;
+  /** The heading level: an h2 on the home page, an h3 inside a /radar section. */
+  level?: 2 | 3;
+}
+const { d, now = Date.now(), show = 3, level = 2 } = Astro.props;
+const releases = arrivalBoard(d.landed);
+const built = Date.parse(d.generatedAt);
+const pill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');
+const openrouterDown = !d.earlyWarnings.stealth.ok;
+const arr = (a: Arrival) =>
+  `Arr. ${dayLabel(Date.parse(a.at), built)}${a.dayOnly ? '' : ` ${a.at.slice(11, 16)}Z`}${a.lab ? ` · ${a.lab}` : ''}`;
+const H = level === 2 ? 'h2' : 'h3';
+---
+<section class="arrivals" aria-labelledby="arrivals-title">
+  <div class="sec">
+    <H id="arrivals-title">Recent arrivals</H>
+    <Pill pill={pill} />
+  </div>
+  {releases.length === 0 && (
+    <p class="empty">{openrouterDown ? 'OpenRouter is unreachable, so arrivals are unknown right now.' : 'No frontier arrivals in the last 7 days.'}</p>
+  )}
+  <ol class="arr">
+    {releases.slice(0, show).map((r) => (
+      <li>
+        {r.labId ? <Bullet id={r.labId} name={r.lab ?? ''} /> : <span class="no-line" aria-hidden="true"></span>}
+        <div><a class="n" href={r.url} target="_blank" rel="noopener">{r.name}</a><p class="t mono">{arr(r)}</p></div>
+      </li>
+    ))}
+  </ol>
+  {releases.length > show && (
+    <details class="fold">
+      <summary class="fold-summary">{releases.length - show} more</summary>
+      <ol class="arr">
+        {releases.slice(show).map((r) => (
+          <li>
+            {r.labId ? <Bullet id={r.labId} name={r.lab ?? ''} /> : <span class="no-line" aria-hidden="true"></span>}
+            <div><a class="n" href={r.url} target="_blank" rel="noopener">{r.name}</a><p class="t mono">{arr(r)}</p></div>
+          </li>
+        ))}
+      </ol>
+    </details>
+  )}
+  <p class="foot-note">From OpenRouter listings, lab posts and Hacker News. Shown, not scored. <a class="keep" href="/radar#landed">Every source on Radar</a></p>
+</section>
+<style>
+  .arr li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--s4); padding: var(--s4) 0; border-bottom: 1px solid var(--rule-soft); }
+  .no-line { width: 32px; height: 32px; border: 2px dashed var(--ink-2); border-radius: 50%; }
+  .n { font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .t { font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .foot-note { margin-top: var(--s3); font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
+  @media (max-width: 640px) {
+    .arr li { gap: var(--s3); padding: var(--s3) 0; }
+    .n { font-size: var(--t-base); line-height: 24px; }
+    .t { font-size: var(--t-xs); line-height: 16px; }
+  }
+</style>

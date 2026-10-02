@@ -1,0 +1,70 @@
+---
+/**
+ * How the DROPCON score adds up and whether it is a forecast: /about's primary thing. It lived
+ * folded under the hero when everything shared one page; here it is open, and the hero links to it.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { LEVEL_BANDS, WEIGHTS } from '../domain/dropcon';
+import { LEVEL_NAMES } from '../domain/levels';
+import { dropconName } from '../ui/odds';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const c = d.dropcon;
+const ok = c.state === 'ok';
+const edges = [100, ...LEVEL_BANDS, 0];
+const bands = edges.slice(0, -1).map((top, i) => ({ level: (i + 1) as 1 | 2 | 3 | 4 | 5, top, bottom: edges[i + 1] }));
+const range = (b: { top: number; bottom: number }) =>
+  b.top === 100 ? `${b.bottom}+` : b.bottom === 0 ? `below ${b.top}` : `${b.bottom}–${b.top - 1}`;
+---
+<section class="about-score" id="score" aria-labelledby="score-title">
+  <div class="panel-head"><h2 id="score-title">How the score adds up</h2></div>
+  <div class="dc-cols">
+    <div>
+      {!ok && <p class="dc-now">Right now: {dropconName(c)}. {c.state === 'floor' ? 'With the odds offline the level holds a floor and is not a measurement.' : 'With the odds and listings both down there is no reading.'}</p>}
+      <ul class="dc-drivers" aria-label="How the score adds up">
+        {c.provenance.map((row) => (
+          <li>
+            <span class="pts">{row.points}</span>
+            <span class="why">{row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
+          </li>
+        ))}
+        <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
+      </ul>
+      <p class="dc-blurb">{c.blurb}</p>
+    </div>
+    <div>
+      <ol class="bands" aria-label="Levels by score">
+        {bands.map((b) => (
+          <li class:list={{ on: ok && b.level === c.level }}><b>{b.level}</b><span class="band-name">{LEVEL_NAMES[b.level]}</span><span class="band-range">{range(b)}</span></li>
+        ))}
+      </ol>
+      <p class="dc-bands">Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
+    </div>
+  </div>
+</section>
+<section class="about-forecast" id="forecast" aria-labelledby="forecast-title">
+  <div class="panel-head"><h2 id="forecast-title">Is this a forecast?</h2></div>
+  <p class="dc-q"><b>No.</b> It's a hand-weighted lead score, not a probability: a fitted forecast was tested and did not beat the base rate. <a href="/backtest">The evidence is on the backtest</a>.</p>
+</section>
+<style>
+  .about-score, .about-forecast { scroll-margin-top: 16px; }
+  .dc-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr)); gap: 32px clamp(24px, 4vw, 64px); align-items: start; }
+  .dc-now { margin-bottom: 16px; font-size: var(--fs-lede); line-height: 1.3; }
+  .dc-now b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 1.3em; }
+  .dc-drivers { display: grid; gap: 8px; font-size: var(--fs-md); line-height: 1.4; color: var(--ink-2); }
+  .dc-drivers li { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: 14px; align-items: baseline; }
+  .dc-drivers .why { overflow-wrap: anywhere; }
+  .dc-drivers .pts { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 24px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+  .dc-drivers .total { border-top: 1px solid var(--ink); padding-top: 8px; color: var(--ink); }
+  .dc-blurb, .dc-bands { margin-top: 16px; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); max-width: 60ch; }
+  /* The five bands as a ruled ladder, the live one printed in the blue. */
+  .bands { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
+  .bands li { display: grid; grid-template-columns: 2.2ch minmax(0, 1fr) auto; gap: 14px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule-soft); }
+  .bands b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 28px; line-height: 1; color: var(--ink-2); }
+  .band-name { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink-2); }
+  .band-range { font-size: var(--fs-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .bands li.on b { color: var(--ink); }
+  .bands li.on .band-name { color: var(--ink); font-weight: 800; }
+  .dc-q { max-width: 60ch; font-size: var(--fs-lede); line-height: 1.4; }
+  .dc-q b { font-weight: 650; }
+</style>

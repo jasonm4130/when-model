@@ -1,32 +1,45 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
-import Dropcon from '../components/Dropcon.astro';
-import Labs from '../components/Labs.astro';
-import Markets from '../components/Markets.astro';
-import Drops from '../components/Drops.astro';
-import Feed from '../components/Feed.astro';
-import History from '../components/History.astro';
+import ServiceStatus from '../components/ServiceStatus.astro';
+import DepartureSign from '../components/DepartureSign.astro';
+import DepartureBoard from '../components/DepartureBoard.astro';
+import Arrivals from '../components/Arrivals.astro';
+import NetworkNotice from '../components/NetworkNotice.astro';
 import Footer from '../components/Footer.astro';
-import Signals from '../components/Signals.astro';
-import { loadDashboard, loadHistoryForPage } from '../app/load-dashboard';
+import { loadDashboard } from '../app/load-dashboard';
 import { dropconTitle } from '../ui/odds';
 
-// History shares /api/history.json's 15-minute memo and never throws; it only feeds the strip.
-const [d, history] = await Promise.all([loadDashboard(), loadHistoryForPage()]);
+// The answer only: the level's week is drawn on /about, beside how the score adds up.
+const d = await loadDashboard();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const title = dropconTitle(d.dropcon);
 ---
-<Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket release odds read into one DROPCON level, with early warnings and fresh launches from OpenRouter, Hacker News, lab blogs, YouTube and the transformers registry.">
-  <Header d={d} />
+<Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket release odds read into the next model departing and one DROPCON level, with early warnings and fresh launches from OpenRouter, Hacker News, lab blogs, YouTube and the transformers registry.">
+  <Header d={d} view={{ page: 'home' }} />
+  <ServiceStatus c={d.dropcon} />
   <main id="main">
-    <Dropcon d={d} history={history} />
-    <Signals d={d} />
-    <Labs d={d} />
-    <Markets d={d} />
-    <Drops d={d} />
-    <Feed d={d} />
-    <History />
+    <DepartureSign d={d} />
+    <div class="wrap page-body">
+      <div class="cols">
+        <DepartureBoard d={d} />
+        <div class="side">
+          <Arrivals d={d} />
+          <NetworkNotice d={d} />
+        </div>
+      </div>
+    </div>
   </main>
-  <Footer generatedAt={d.generatedAt} />
+  <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>
+<style>
+  .side { display: grid; gap: var(--s7); align-content: start; }
+</style>
+<script>
+  // The site was one long page whose sections had hash anchors. A hash never reaches the server,
+  // so an old link (#lab-anthropic, #markets) moves on to the page that now holds it.
+  import { legacyHashTarget } from '../ui/site';
+
+  const target = legacyHashTarget(location.hash);
+  if (target) location.replace(target);
+</script>

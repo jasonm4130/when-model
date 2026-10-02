@@ -2,73 +2,151 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Layout and contrast rules that only matter on data the local Worker may not have today: a failed
- * source, an extrapolated read, crowded launch names on the instrument. Each test writes that state into the page
+ * source, a line with no times, each service level, crowded launch names on the instrument. Each test writes that state into the page
  * with the component's own scoped attribute, so the CSS under test is what styles it.
  */
 
 async function openDashboard(page: Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
+}
+
+/** The level's week, drawn on /about under how the score adds up. */
+async function openHistory(page: Page) {
+  await page.goto('/about', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await expect(page.getByRole('heading', { name: 'Service history · last 7 days' })).toBeVisible();
 }
 
 test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on a phone', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openDashboard(page);
-  const fit = await page
-    .getByRole('heading', { name: 'SOURCE HEALTH' })
-    .locator('xpath=ancestor::div[1]/following-sibling::ul[1]')
-    .evaluate((list) => {
-      const li = list.querySelector('li')!.cloneNode(true) as HTMLElement;
-      const muted = document.createElement('span');
-      for (const a of li.attributes) if (a.name.startsWith('data-astro-cid')) muted.setAttribute(a.name, '');
-      muted.className = 'muted';
-      muted.textContent = ` — 503 https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(80)}`;
-      li.append(muted);
-      list.append(li);
-      return {
-        page: document.documentElement.scrollWidth,
-        overflow: li.scrollWidth - li.clientWidth,
-        right: li.getBoundingClientRect().right,
-      };
-    });
+  // /about lists every source in full, unfolded.
+  await page.goto('/about#health', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await expect(page.locator('#health ul.health')).toBeVisible();
+  const fit = await page.locator('#health ul.health').evaluate((list) => {
+    const li = list.querySelector('li')!.cloneNode(true) as HTMLElement;
+    const muted = document.createElement('span');
+    for (const a of li.attributes) if (a.name.startsWith('data-astro-cid')) muted.setAttribute(a.name, '');
+    muted.className = 'muted';
+    muted.textContent = ` — 503 https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(80)}`;
+    li.append(muted);
+    list.append(li);
+    return {
+      page: document.documentElement.scrollWidth,
+      overflow: li.scrollWidth - li.clientWidth,
+      right: li.getBoundingClientRect().right,
+    };
+  });
   expect(fit.page).toBeLessThanOrEqual(390);
   expect(fit.overflow).toBeLessThanOrEqual(0);
   expect(fit.right).toBeLessThanOrEqual(390);
 });
 
-test('an extrapolated lab read is muted at full opacity, with AA contrast', async ({ page }) => {
-  await openDashboard(page);
-  const read = await page
-    .locator('.lab .metric-value')
-    .first()
-    .evaluate((el) => {
-      el.classList.add('extrap');
-      const s = getComputedStyle(el);
-      const rgb = (c: string) => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
-      const lum = ([r, g, b]: number[]) =>
-        [r, g, b]
-          .map((v) => v / 255)
-          .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
-          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-      // The darkest a lab card gets: the page background under the panel's 86% tint.
-      const text = lum(rgb(s.color));
-      const bg = lum([13, 11, 29]);
-      const probe = document.createElement('span');
-      probe.style.color = 'var(--muted)';
-      document.body.append(probe);
-      const muted = getComputedStyle(probe).color;
-      probe.remove();
-      return { opacity: s.opacity, color: s.color, muted, ratio: (text + 0.05) / (bg + 0.05) };
-    });
-  expect(read.opacity).toBe('1');
-  expect(read.color).toBe(read.muted);
-  expect(read.ratio).toBeGreaterThanOrEqual(4.5);
+type Contrast = (fg: string, bg: string) => number;
+/** Installs `window.contrast(fg, bg)`: the WCAG ratio of two computed colours, read in the page. */
+function installContrast() {
+  const rgb = (c: string) => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
+  const lum = ([r, g, b]: number[]) =>
+    [r, g, b]
+      .map((v) => v / 255)
+      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+      .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+  (window as unknown as { contrast: Contrast }).contrast = (fg, bg) => {
+    const [x, y] = [lum(rgb(fg)), lum(rgb(bg))];
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+}
+
+test('a line with no times says so quietly, at full opacity and AA contrast, never as odds', async ({
+  page,
+}) => {
+  for (const [path, sel, cls, text] of [
+    ['/labs', '.lrow .odds', 'quiet', 'times unavailable'],
+    ['/labs/anthropic', '.next .big', 'none-word', 'Times unavailable'],
+  ] as const) {
+    await page.addInitScript(installContrast);
+    await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    const read = await page
+      .locator(sel)
+      .first()
+      .evaluate(
+        (el, [c, t]) => {
+          el.classList.add(c);
+          el.textContent = t;
+          const ratio = (window as unknown as { contrast: Contrast }).contrast;
+          const s = getComputedStyle(el);
+          const probe = document.createElement('span');
+          probe.style.color = 'var(--ink-2)';
+          document.body.append(probe);
+          const ink2 = getComputedStyle(probe).color;
+          probe.remove();
+          return {
+            opacity: s.opacity,
+            color: s.color,
+            ink2,
+            ratio: ratio(s.color, getComputedStyle(document.body).backgroundColor),
+          };
+        },
+        [cls, text] as const,
+      );
+    expect(read.opacity, path).toBe('1');
+    expect(read.color, path).toBe(read.ink2);
+    expect(read.ratio, path).toBeGreaterThanOrEqual(4.5);
+  }
 });
 
+// Today's data shows one level; each treatment is written into the status strip with its own class.
+for (const [level, treatment, name] of [
+  [1, 'alert', 'RELEASE SURGE'],
+  [3, 'notice', 'GPU FANS SPINNING'],
+  [5, 'calm', 'QUIET ORBIT'],
+] as const) {
+  test(`posts level ${level} on its ${treatment} treatment with 7:1 text and one lit rung`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.addInitScript(installContrast);
+    await openDashboard(page);
+    const out = await page.locator('section.ss').evaluate(
+      (ss, [lvl, cls, nm]) => {
+        ss.setAttribute('class', ss.getAttribute('class')!.replace(/is-[a-z]+/, `is-${cls}`));
+        ss.querySelector('.ss-name')!.lastChild!.textContent = nm;
+        ss.querySelector('.ss-num')!.textContent = String(lvl);
+        for (const r of ss.querySelectorAll('.rung')) r.classList.toggle('on', r.textContent === String(lvl));
+        for (const r of ss.querySelectorAll('.rung')) r.classList.remove('held');
+        const ratio = (window as unknown as { contrast: Contrast }).contrast;
+        const ground = getComputedStyle(ss).backgroundColor;
+        const of = (sel: string) => ratio(getComputedStyle(ss.querySelector(sel)!).color, ground);
+        const on = ss.querySelector('.rung.on')!;
+        const r = getComputedStyle(on);
+        return {
+          ground,
+          name: of('.ss-name'),
+          phrase: of('.ss-phrase'),
+          detail: of('.ss-detail'),
+          meta: of('.ss-meta'),
+          rung: ratio(r.color, r.backgroundColor),
+          lit: ss.querySelectorAll('.rung.on').length,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      },
+      [level, treatment, name] as const,
+    );
+    for (const k of ['name', 'phrase', 'detail', 'meta'] as const)
+      expect(out[k], k).toBeGreaterThanOrEqual(7);
+    expect(out.rung).toBeGreaterThanOrEqual(4.5);
+    expect(out.lit).toBe(1);
+    expect(out.overflow).toBeLessThanOrEqual(0);
+    // Every level is a board of its own, never the page's paper: the calm one is paper-2, so level 5
+    // does not read as part of the header.
+    expect(out.ground).not.toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+    if (treatment === 'calm') expect(out.ground).toBe('rgb(235, 232, 223)');
+  });
+}
+
 test('the instrument strokes its trace and never fills it', async ({ page }) => {
-  await openDashboard(page);
+  await openHistory(page);
   const lines = await page.locator('.sc-ink svg').evaluate((svg) => {
     const cid = [...svg.attributes].find((a) => a.name.startsWith('data-astro-cid'))!;
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -80,7 +158,8 @@ test('the instrument strokes its trace and never fills it', async ({ page }) => 
     return { fill: s.fill, stroke: s.stroke };
   });
   expect(lines.fill).toBe('none');
-  expect(lines.stroke).toMatch(/url\("?#sc-level-ink"?\)/);
+  // One ink at every level: the band tints carry the level, the NOW tag is the one yellow mark.
+  expect(lines.stroke).toBe('rgb(17, 17, 17)');
 });
 
 for (const width of [390, 1024, 1440]) {
@@ -88,7 +167,7 @@ for (const width of [390, 1024, 1440]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
+    await openHistory(page);
     await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
     // Six long names a few hours apart near the NOW edge, where labels read leftward.
     await page.locator('.sc-plot').evaluate((el) => {
@@ -99,7 +178,7 @@ for (const width of [390, 1024, 1440]) {
         f.setAttribute('data-label', 'flag');
         f.className = `sc-flag${i > 2 ? ' flip' : ''}`;
         f.style.cssText = `left:${80 + i * 3}%; --row:0; --lab:#ff7a1a`;
-        f.textContent = `✱ A very long frontier launch name ${i}`;
+        f.textContent = `A very long frontier launch name ${i}`;
         el.append(f);
       }
     });
@@ -131,7 +210,9 @@ for (const width of [390, 1024, 1440]) {
 
   test(`the scrubber's time tag stays on the day axis at the NOW edge at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
+    await openHistory(page);
+    // The instrument sits under the arithmetic: bring it into view before aiming at it.
+    await page.locator('.sc-plot').scrollIntoViewIfNeeded();
     const box = (await page.locator('.sc-plot').boundingBox())!;
     await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2);
     const tag = (await page.locator('[data-ctag]').boundingBox())!;
@@ -143,43 +224,41 @@ for (const width of [390, 1024, 1440]) {
 }
 
 for (const width of [390, 360, 320]) {
-  test(`keeps the title's bars on their words, and drops them below 380px, at ${width}px`, async ({
+  test(`the masthead fits: the wordmark on one line, the dateline inside the page, at ${width}px`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 740 });
     await openDashboard(page);
-    const line = page.locator('header .tiny.glow-m');
-    const parts = await line.locator('.nw').evaluateAll((els) =>
-      // A nested span splits an inline box into fragments on one line, so count distinct line tops.
-      els.map((el) => ({
-        text: (el as HTMLElement).innerText,
-        lines: new Set([...el.getClientRects()].map((r) => Math.round(r.top))).size,
-      })),
-    );
-    for (const p of parts) expect(p.lines, p.text).toBe(1);
-    const bars = await line
-      .locator('.bars')
-      .evaluateAll((els) => els.map((el) => getComputedStyle(el).display));
-    if (width >= 380) {
-      expect(parts.map((p) => p.text)).toEqual(['▌▌ FRONTIER', 'INTELLIGENCE ▐▐']);
-    } else {
-      expect(bars).toEqual(['none', 'none']);
-      expect(parts.map((p) => p.text)).toEqual(['FRONTIER', 'INTELLIGENCE']);
+    const mark = page.locator('header .wordmark');
+    // "when" and "model" share a line top; the screen-reader tail is clipped away, so it is left out.
+    const lines = await mark.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el.firstChild!);
+      return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
+    });
+    expect(lines).toBe(1);
+    for (const sel of ['.clock', '.wordmark']) {
+      const box = (await page.locator(`header ${sel}`).boundingBox())!;
+      expect(box.x, sel).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, sel).toBeLessThanOrEqual(width);
     }
-    // At 360 the words fit on one row once the bars are gone.
-    if (width === 360) {
-      const tops = await line
-        .locator('.nw')
-        .evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
-      expect(new Set(tops).size).toBe(1);
-    }
+    // The pause, in the footer, stays a 44px target however narrow the phone.
+    expect((await page.locator('footer .refresh-toggle').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }
 
-test('focus rings inside the feed scroller and a lab card are unclipped', async ({ page }) => {
+test("focus rings inside the feed, the network and a line's announcements are unclipped", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openDashboard(page);
-  for (const selector of ['.feed.scroll-y a', '.lab .latest a']) {
+  const cases: [string, string][] = [
+    ['/radar', '[data-feed] a'],
+    ['/labs', 'a.lrow'],
+    ['/labs/anthropic', '.ann a'],
+  ];
+  for (const [path, selector] of cases) {
+    await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     const link = page.locator(selector).first();
     if (!(await link.count())) continue;
     await link.focus();
@@ -206,16 +285,20 @@ test('focus rings inside the feed scroller and a lab card are unclipped', async 
   }
 });
 
-test('every scrolling table on /backtest is a named, focusable region with a scroll edge', async ({
+test('every table on /backtest is a named, focusable region: stacked on a phone, or scrolling with an edge', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/backtest', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  // Open every fold, so the tables lay out as a reader would see them.
+  await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
   const scrollers = await page.locator('.table-scroll').evaluateAll((els) =>
     els.map((el) => ({
       role: el.getAttribute('role'),
       tabindex: el.getAttribute('tabindex'),
       label: el.getAttribute('aria-label') ?? '',
+      stacked: el.classList.contains('stacked'),
+      fits: el.scrollWidth <= el.clientWidth + 1,
       layers: getComputedStyle(el).backgroundImage.split('linear-gradient').length - 1,
     })),
   );
@@ -223,6 +306,8 @@ test('every scrolling table on /backtest is a named, focusable region with a scr
   for (const s of scrollers) {
     expect(s).toMatchObject({ role: 'region', tabindex: '0' });
     expect(s.label.length).toBeGreaterThan(3);
-    expect(s.layers).toBe(4);
+    // A table stacked into rows on a phone has nothing to scroll; one that still scrolls shows its edge.
+    if (s.stacked) expect(s.fits, s.label).toBe(true);
+    else expect(s.layers, s.label).toBe(4);
   }
 });

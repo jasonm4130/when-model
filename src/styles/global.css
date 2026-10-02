@@ -1,582 +1,206 @@
-/* ───────────────────────────── tokens ───────────────────────────── */
+/* ───────────────────────────── tokens ─────────────────────────────
+   Transit wayfinding: paper and ink, a black station sign, one yellow for service status and
+   notices, and a coloured bullet per line that only ever names the line. src/ui/palette.ts holds the
+   same values for the contrast tests (test/ui/lines.test.ts keeps the two in step). */
 :root {
-  --bg: #07060f;
-  --bg2: #0d0b1e;
-  --panel: rgba(14, 12, 31, 0.86);
-  --panel-hover: rgba(18, 15, 40, 0.92);
-  --line: #2a2450;
-  --line2: #4b3f8a;
-  --line-soft: rgba(74, 63, 138, 0.4);
-  --text: #dcd8ff;
-  --muted: #8a84b8;
-  --magenta: #ff2bd6;
-  --cyan: #00e5ff;
-  --yellow: #ffe21c;
-  --green: #39ff14;
-  --orange: #ff7a1a;
-  --red: #ff3355;
-  /* Every text colour clears WCAG AA (4.5:1) on --bg and --bg2; the lowest is --red at 5.4:1 on --bg2.
-     #4b59ff, the old blue, was 3.85:1; #7480ff is 5.8:1. */
-  --blue: #7480ff;
-  /* neutral foreground alias for consumers that want plain text rather than a themed colour */
-  --fg: var(--text);
-  --font-head: 'Press Start 2P', 'VT323', ui-monospace, monospace;
-  --font-mono: 'VT323', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  /* surfaces */
+  --paper: #f4f2ec;
+  --paper-2: #ebe8df;
+  --sign: #141414;
+  /* words: ink 16.9:1 on paper, ink-2 7.9:1 (7.4:1 on paper-2) */
+  --ink: #111111;
+  --ink-2: #4a4a4a;
+  --sign-ink: #ffffff;
+  /* 9.3:1 on the sign */
+  --sign-ink-2: #b8b8b8;
+  --rule: #141414;
+  --rule-soft: #d9d5cb;
+  /* One job: service status and service notices. A level-1 surge is the same yellow at double
+     height, so no status colour is ever mistaken for a line's colour. */
+  --notice: #fccc0a;
 
-  /* type scale: one set of sizes for the whole dashboard */
-  --fs-body: 20px;
-  --fs-lg: 22px;
-  --fs-sm: 18px;
-  --fs-md: calc(var(--fs-body) - 1px);
-  --fs-xs: 16px;
-  --fs-metric: 30px;
-  --fs-metric-sm: 26px;
-  /* Press Start 2P is drawn on an 8px grid: other sizes land its pixels between device pixels and blur. */
-  --fs-head: 16px;
-  --fs-head-lg: 16px;
-  --fs-tiny: 8px;
-  --fs-pill: 8px;
+  /* Space: a 4px grid. */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --s9: 96px;
 
-  --gap: 16px;
-  --pad: 16px;
+  /* Type: a 1.333 scale from 16px, every line height on the 4px grid. */
+  --t-xs: 12px;
+  --t-sm: 14px;
+  --t-base: 16px;
+  --t-md: 21px;
+  --t-lg: 28px;
+  --t-xl: 37px;
+  --t-2xl: 50px;
+  --t-3xl: 67px;
+  --t-4xl: 89px;
+  --t-5xl: 118px;
+
+  /* fonts.css re-points these at the webfonts and their metric-matched fallbacks. */
+  --sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, Menlo, monospace;
+
+  --gutter: 48px;
+  --max: 1248px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --fast: 160ms;
-  --slow: 700ms;
+  --fast: 140ms;
+
+  /* The names the backtest and the history chart still use, mapped onto the tokens above. */
+  --muted: var(--ink-2);
+  --text: var(--ink);
+  --accent: var(--ink);
+  --accent-ink: var(--ink);
+  --line: var(--rule-soft);
+  --line2: #8a867c;
+  --line-soft: var(--rule-soft);
+  --font-display: var(--sans);
+  --font-label: var(--sans);
+  --font-text: var(--sans);
+  --font-head: var(--sans);
+  --font-mono: var(--mono);
+  --fs-tiny: var(--t-xs);
+  --fs-pill: var(--t-xs);
+  --fs-xs: var(--t-sm);
+  --fs-sm: var(--t-sm);
+  --fs-md: var(--t-base);
+  --fs-body: var(--t-base);
+  --fs-lg: var(--t-md);
+  --fs-lede: var(--t-md);
+  --fs-d3: var(--t-lg);
+  --fs-d2: var(--t-xl);
+  --fs-d1: var(--t-2xl);
+  --fs-metric: var(--t-lg);
+  --gap: var(--s5);
+  --bg2: var(--paper-2);
+}
+@media (max-width: 900px) {
+  :root {
+    --gutter: 16px;
+  }
 }
 
-* {
+/* ───────────────────────────── base ───────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 html {
-  background: var(--bg);
-  color-scheme: dark;
-  scroll-behavior: smooth;
+  background: var(--paper);
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
 }
 body {
   margin: 0;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: var(--fs-body);
-  line-height: 1.25;
-  background:
-    radial-gradient(ellipse at 50% -10%, rgba(255, 43, 214, 0.18), transparent 55%),
-    radial-gradient(ellipse at 80% 110%, rgba(0, 229, 255, 0.12), transparent 50%), var(--bg);
   min-height: 100vh;
   overflow-x: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: var(--t-base);
+  line-height: 24px;
+  /* Proportional figures by default: a display "11" set tabular opens a digit-wide hole. Columns
+     that must line up (tables, mono times, .num) opt into tabular figures below. */
+  font-variant-numeric: proportional-nums;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
 }
-
-/* CRT: light scanlines and vignette preserve the texture without obscuring copy. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 4px);
-  mix-blend-mode: multiply;
+::selection {
+  background: var(--notice);
+  color: var(--ink);
 }
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 51;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 66%, rgba(0, 0, 0, 0.32) 100%);
-}
-a {
-  color: var(--cyan);
-  text-decoration: none;
-  transition:
-    color var(--fast) var(--ease),
-    text-shadow var(--fast) var(--ease);
-}
-a:hover {
-  color: #fff;
-  text-shadow: 0 0 8px var(--cyan);
-}
-:focus-visible {
-  outline: 2px solid var(--yellow);
-  outline-offset: 2px;
+h1,
+h2,
+h3,
+h4,
+p,
+ol,
+ul,
+dl,
+dd,
+figure {
+  margin: 0;
 }
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-head);
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
+/* No one-word last lines in running text. */
 p {
-  margin: 0;
+  text-wrap: pretty;
 }
+ol,
 ul {
-  list-style: none;
-  margin: 0;
   padding: 0;
+  list-style: none;
+}
+b,
+strong {
+  font-weight: 600;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+/* A link inside running text says so before it is hovered. */
+p a,
+li > a:only-child:not([class]) {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
 }
 .wrap {
-  max-width: 1400px;
+  max-width: var(--max);
   margin: 0 auto;
-  padding: 0 clamp(12px, 3vw, 28px);
+  padding: 0 var(--gutter);
 }
 .mono {
-  font-family: var(--font-mono);
-}
-.head {
-  font-family: var(--font-head);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
 .muted {
-  color: var(--muted);
+  color: var(--ink-2);
 }
+.num,
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+/* The label voice: small capitals, a little tracked. Everything quiet on the page speaks in it. */
+.label,
 .tiny {
-  font-family: var(--font-head);
-  font-size: var(--fs-tiny);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.glow-m {
-  color: var(--magenta);
-  text-shadow: 0 0 5px rgba(255, 43, 214, 0.45);
-}
-.glow-c {
-  color: var(--cyan);
-  text-shadow: 0 0 5px rgba(0, 229, 255, 0.4);
-}
-.glow-y {
-  color: var(--yellow);
-  text-shadow: 0 0 4px rgba(255, 226, 28, 0.38);
-}
-.glow-g {
-  color: var(--green);
-  text-shadow: 0 0 4px rgba(57, 255, 20, 0.38);
-}
-.err {
-  color: var(--red);
-}
-
-/* ───────────────────────────── layout ───────────────────────────── */
-.section {
-  margin-block: 28px;
-}
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-.section-head h2 {
-  font-size: var(--fs-head-lg);
-  color: #fff;
-}
-.section-head h2 > span:first-child {
-  color: var(--magenta);
-  margin-right: 8px;
-}
-.section-head .sub {
-  color: var(--muted);
-  font-size: var(--fs-tiny);
-  margin-left: 8px;
-}
-.grid {
-  display: grid;
-  gap: var(--gap);
-}
-.grid > * {
-  min-width: 0;
-}
-.grid-2 {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-}
-.grid-3 {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-}
-.stack {
-  display: grid;
-  gap: var(--gap);
-  align-content: start;
-}
-
-/* ───────────────────────────── panels ───────────────────────────── */
-.panel {
-  position: relative;
-  background: var(--panel);
-  border: 2px solid var(--line);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 0 0 1px rgba(0, 0, 0, 0.6),
-    0 10px 40px rgba(0, 0, 0, 0.5);
-  padding: 14px var(--pad);
-  transition:
-    border-color var(--fast) var(--ease),
-    background var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease);
-}
-.panel:hover {
-  border-color: var(--line2);
-  background: var(--panel-hover);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 0 0 1px rgba(0, 0, 0, 0.6),
-    0 0 24px rgba(255, 43, 214, 0.08),
-    0 14px 44px rgba(0, 0, 0, 0.55);
-}
-.panel::before,
-.panel::after {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border: 2px solid var(--magenta);
-  transition:
-    width var(--fast) var(--ease),
-    height var(--fast) var(--ease);
-}
-.panel:hover::before,
-.panel:hover::after {
-  width: 16px;
-  height: 16px;
-}
-.panel::before {
-  top: -2px;
-  left: -2px;
-  border-right: 0;
-  border-bottom: 0;
-}
-.panel::after {
-  bottom: -2px;
-  right: -2px;
-  border-left: 0;
-  border-top: 0;
-}
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  border-bottom: 1px dashed var(--line2);
-  padding-bottom: 8px;
-  margin-bottom: 12px;
-}
-.panel-head.sub-head {
-  margin-top: var(--pad);
-}
-.panel-head h2 {
-  font-size: var(--fs-head);
-  color: #fff;
-}
-.panel-head h2 span {
-  color: var(--magenta);
-  margin-right: 8px;
-}
-.panel-head .pills {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.empty {
-  color: var(--muted);
-  padding: 6px 0;
-}
-
-/* ───────────────────────────── pills & tags ───────────────────────────── */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-head);
-  font-size: var(--fs-pill);
-  letter-spacing: 0.06em;
-  padding: 5px 8px;
-  border: 1px solid var(--line2);
-  color: var(--muted);
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition:
-    border-color var(--fast) var(--ease),
-    color var(--fast) var(--ease),
-    box-shadow var(--fast) var(--ease);
-}
-a.pill:hover {
-  color: #fff;
-  border-color: var(--cyan);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
-  text-shadow: none;
-}
-.pill.live {
-  color: var(--green);
-  border-color: rgba(57, 255, 20, 0.5);
-}
-.pill.warn {
-  color: var(--yellow);
-  border-color: rgba(255, 226, 28, 0.5);
-}
-.pill.err {
-  color: var(--red);
-  border-color: rgba(255, 51, 85, 0.5);
-}
-.tag {
-  display: inline-block;
-  font-family: var(--font-head);
-  font-size: var(--fs-pill);
-  padding: 3px 5px;
-  border: 1px solid currentColor;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  vertical-align: middle;
-}
-
-/* ───────────────────────────── metrics ───────────────────────────── */
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 12px;
-}
-.metrics.tight {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-.metric-label {
-  font-family: var(--font-head);
-  font-size: var(--fs-tiny);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.metric-value {
-  font-size: var(--fs-metric);
-  line-height: 1.1;
-  margin: 4px 0 2px;
-  font-variant-numeric: tabular-nums;
-}
-.metrics.tight .metric-value {
-  font-size: var(--fs-metric-sm);
-}
-.metric-note {
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ───────────────────────────── bars & histograms ───────────────────────────── */
-.bar {
-  height: 10px;
-  background: #15122b;
-  border: 1px solid var(--line);
-  position: relative;
-  overflow: hidden;
-}
-.bar > i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(90deg, var(--cyan), var(--magenta));
-  box-shadow: 0 0 10px rgba(255, 43, 214, 0.6);
-  transform-origin: left center;
-  animation: grow-x var(--slow) var(--ease) both;
-}
-@keyframes grow-x {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-.hist {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 3px;
-  height: 54px;
-  align-items: end;
-}
-.hist .col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-}
-.hist .col i {
-  display: block;
-  width: 100%;
-  background: var(--lab, var(--cyan));
-  opacity: 0.8;
-  box-shadow: 0 0 6px var(--lab, var(--cyan));
-  transform-origin: bottom center;
-  animation: grow-y var(--slow) var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 40ms);
-  transition: opacity var(--fast) var(--ease);
-}
-.hist .col:hover i {
-  opacity: 1;
-}
-.hist .col span {
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  line-height: 1;
-  margin-top: 3px;
-}
-@keyframes grow-y {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-/* ───────────────────────────── lists & rows ───────────────────────────── */
-.row {
-  display: block;
-  padding: 8px 6px;
-  border-bottom: 1px dotted var(--line-soft);
-  color: var(--text);
-  border-left: 2px solid transparent;
-  transition:
-    background var(--fast) var(--ease),
-    border-color var(--fast) var(--ease),
-    padding-left var(--fast) var(--ease);
-}
-.row:hover {
-  background: rgba(0, 229, 255, 0.05);
-  border-left-color: var(--cyan);
-  padding-left: 10px;
-  text-shadow: none;
-  color: var(--text);
-}
-.row.alert {
-  border-left-color: var(--magenta);
-}
-.row.alert:hover {
-  background: rgba(255, 43, 214, 0.06);
-}
-.list li {
-  padding: 5px 0;
-  border-bottom: 1px dotted var(--line-soft);
-}
-
-/* ───────────────────────────── tables ───────────────────────────── */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-md);
-}
-th {
-  font-family: var(--font-head);
-  font-size: var(--fs-pill);
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
   letter-spacing: 0.08em;
-  text-align: left;
-  color: var(--muted);
-  padding: 6px;
-  border-bottom: 1px solid var(--line);
   text-transform: uppercase;
-}
-td {
-  padding: 6px;
-  border-bottom: 1px dotted var(--line-soft);
-  vertical-align: top;
-  transition: background var(--fast) var(--ease);
-}
-tr:hover td {
-  background: rgba(0, 229, 255, 0.05);
-}
-tr.fresh td {
-  background: rgba(255, 43, 214, 0.06);
-}
-tr.fresh:hover td {
-  background: rgba(255, 43, 214, 0.1);
-}
-.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.table-scroll {
-  overflow-x: auto;
-}
-
-/* ───────────────────────────── marquee ───────────────────────────── */
-.marquee {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.35);
-  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
-}
-.ticker-wrap {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-}
-.ticker-controls {
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--bg2);
-}
-.marquee > div {
-  display: inline-block;
-  padding: 6px 0;
-  animation: scroll 90s linear infinite;
-}
-.marquee.is-paused > div {
-  animation-play-state: paused;
-}
-.ticker-group {
-  display: inline-block;
-}
-.marquee .ticker-item {
-  margin: 0 28px;
-}
-@keyframes scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-/* ───────────────────────────── entrance ───────────────────────────── */
-main > .section:nth-child(1) {
-  --i: 0;
-}
-main > .section:nth-child(2) {
-  --i: 1;
-}
-main > .section:nth-child(3) {
-  --i: 2;
-}
-main > .section:nth-child(4) {
-  --i: 3;
-}
-main > .section:nth-child(5) {
-  --i: 4;
-}
-main > .section:nth-child(6) {
-  --i: 5;
-}
-.reveal {
-  animation: rise 600ms var(--ease) both;
-  animation-delay: calc(var(--i, 0) * 70ms);
-}
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 .sr-only {
   position: absolute;
@@ -589,8 +213,394 @@ main > .section:nth-child(6) {
   white-space: nowrap;
   border: 0;
 }
+.empty {
+  padding: var(--s3) 0;
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
 
-/* ───────────────────────────── misc ───────────────────────────── */
+/* ───────────────────────────── line bullets ─────────────────────────────
+   A disc of the line's colour with its letter. Bullet.astro sets --c and --fg from src/ui/lines.ts.
+   Identity only: nothing about a bullet changes with the data. */
+.b {
+  --c: var(--ink);
+  --fg: #fff;
+  --d: 32px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--d);
+  height: var(--d);
+  border-radius: 50%;
+  background: var(--c);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: calc(var(--d) * 0.6);
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: 0;
+  text-decoration: none;
+}
+.b.sm {
+  --d: 24px;
+}
+.b.lg {
+  --d: 40px;
+}
+.b.xl {
+  --d: 88px;
+}
+a.b:hover {
+  text-decoration: none;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+/* The black xAI disc keeps a white ring on the black sign. */
+.sign .b.dark {
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
+/* ───────────────────────────── the station sign ─────────────────────────────
+   Every page opens on a black sign under an inset white rule: the page's name, and the one line
+   that says what it is for. */
+.sign {
+  background: var(--sign);
+  color: var(--sign-ink);
+}
+.sign > .wrap {
+  position: relative;
+  padding-top: var(--s7);
+  padding-bottom: var(--s7);
+}
+.sign > .wrap::before {
+  content: '';
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: var(--s4);
+  border-top: 2px solid var(--sign-ink);
+}
+.sign .label {
+  color: var(--sign-ink-2);
+}
+.sign a {
+  color: var(--sign-ink);
+}
+.sign :focus-visible {
+  outline-color: var(--sign-ink);
+}
+.page-sign h1 {
+  margin-top: var(--s4);
+  font-size: var(--t-2xl);
+  line-height: 56px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+/* A short trailing link ("Source on GitHub", "More on Radar") moves to the next line whole. */
+a.keep {
+  white-space: nowrap;
+}
+.page-sign .intro {
+  margin-top: var(--s3);
+  max-width: 60ch;
+  text-wrap: pretty;
+  font-size: var(--t-md);
+  line-height: 28px;
+  color: var(--sign-ink-2);
+}
+@media (max-width: 900px) {
+  .sign > .wrap {
+    padding-top: var(--s7);
+    padding-bottom: var(--s6);
+  }
+  .page-sign h1 {
+    font-size: var(--t-xl);
+    line-height: 44px;
+  }
+  .page-sign .intro {
+    font-size: var(--t-base);
+    line-height: 24px;
+  }
+}
+
+/* ───────────────────────────── sections ───────────────────────────── */
+.grid {
+  display: grid;
+  gap: var(--s7) var(--s8);
+}
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 960px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.page-body {
+  display: grid;
+  gap: var(--s8);
+  padding-top: var(--s8);
+  padding-bottom: var(--s8);
+}
+.page-body > * {
+  min-width: 0;
+}
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s8);
+}
+.cols > * {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .page-body {
+    gap: var(--s7);
+    padding-top: var(--s6);
+    padding-bottom: var(--s6);
+  }
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s7);
+  }
+}
+/* A section's name over a heavy rule, with one quiet label pushed right. */
+.sec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s4);
+  padding-bottom: var(--s3);
+  border-bottom: 2px solid var(--rule);
+}
+.sec h2,
+.sec h3 {
+  font-size: var(--t-lg);
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.sec .label {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.panel {
+  position: relative;
+  min-width: 0;
+}
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s4);
+  flex-wrap: wrap;
+  padding-bottom: var(--s3);
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--rule);
+}
+.panel-head h2,
+.panel-head h3 {
+  font-size: var(--t-lg);
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.panel-head .pills {
+  display: flex;
+  gap: var(--s2) var(--s4);
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.lede {
+  max-width: 64ch;
+  margin-top: var(--s3);
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+
+/* ───────────────────────────── status chips ─────────────────────────────
+   A source pill: a small square and the word. Its text comes from sourcePill; the square fills when
+   the source is live and turns to the notice yellow when it is stale, partial or down. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 2px 0;
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  text-decoration: none;
+}
+.pill::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+}
+.pill.live {
+  color: var(--ink);
+}
+.pill.live::before {
+  background: currentColor;
+}
+.pill.warn,
+.pill.err {
+  color: var(--ink);
+}
+.pill.warn::before,
+.pill.err::before {
+  background: var(--notice);
+  border-color: var(--ink);
+}
+.sign .pill,
+.sign .pill.live,
+.sign .pill.warn {
+  color: var(--sign-ink-2);
+}
+.sign .pill.live::before {
+  background: var(--sign-ink-2);
+}
+a.pill:hover {
+  text-decoration: underline;
+}
+button.pill {
+  min-height: 44px;
+  padding: 0 var(--s4);
+  cursor: pointer;
+  color: var(--ink);
+  background: var(--notice);
+}
+button.pill::before {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+@media (max-width: 640px) {
+  .pill {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+.tag {
+  display: inline-block;
+  padding: 0 6px;
+  font-size: var(--t-xs);
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid currentColor;
+  vertical-align: 1px;
+}
+
+/* ───────────────────────────── notices ─────────────────────────────
+   A service notice: a ruled box with the yellow label. Used where the page has news a rider must
+   not miss (an unmarked train, a line's early warnings), and nowhere else. */
+.notice {
+  border: 2px solid var(--rule);
+  padding: var(--s5);
+}
+.notice-label {
+  display: inline-block;
+  margin-bottom: var(--s3);
+  padding: 2px 6px;
+  background: var(--notice);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.notice h3,
+.notice h4 {
+  font-size: var(--t-md);
+  line-height: 28px;
+  font-weight: 700;
+}
+.notice p {
+  margin-top: var(--s2);
+}
+.notice .quiet {
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+
+/* ───────────────────────────── rows ─────────────────────────────
+   One layout for a listed item: what, then when (never wrapped), then where from. */
+.rows > li,
+.rows > .r {
+  border-bottom: 1px solid var(--rule-soft);
+}
+.r {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'main when' 'meta meta';
+  column-gap: var(--s4);
+  row-gap: 2px;
+  padding: var(--s3) 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+a.r:hover {
+  text-decoration: none;
+}
+a.r:hover .r-main {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+a.r:focus-visible {
+  outline-offset: -2px;
+}
+.r-main {
+  grid-area: main;
+  overflow-wrap: anywhere;
+}
+.r-when {
+  grid-area: when;
+  align-self: start;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: 24px;
+  color: var(--ink-2);
+}
+.r-meta {
+  grid-area: meta;
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.row {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.row:hover {
+  text-decoration: none;
+}
+.list li {
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* ───────────────────────────── disclosure ─────────────────────────────
+   Everything past a list's first few rows waits behind one of these: a line of type under a rule,
+   with a plus that turns to a minus. */
 details summary {
   cursor: pointer;
   list-style: none;
@@ -598,36 +608,128 @@ details summary {
 details summary::-webkit-details-marker {
   display: none;
 }
-hr.neon {
-  border: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--magenta), var(--cyan), transparent);
-  margin: 30px 0;
+.fold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: 44px;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
-.scroll-y {
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line2) transparent;
+.fold-summary::after {
+  content: '+';
+  font-size: var(--t-md);
+  font-weight: 400;
+  line-height: 1;
 }
-.scroll-y::-webkit-scrollbar {
-  width: 8px;
+.fold[open] > .fold-summary::after {
+  content: '−';
 }
-.scroll-y::-webkit-scrollbar-thumb {
-  background: var(--line2);
-  border: 2px solid var(--bg2);
+.fold-summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-@media (max-width: 640px) {
-  :root {
-    --fs-body: 18px;
-    --fs-metric: 26px;
-  }
-  /* table's font-size is var(--fs-md), derived from --fs-body, so it re-narrows to 17px here on its own. */
-  .pill {
-    max-width: 100%;
-    white-space: normal;
-  }
+/* ───────────────────────────── tables ───────────────────────────── */
+table {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  line-height: 20px;
 }
+th {
+  padding: var(--s3) var(--s3) var(--s3) 0;
+  text-align: left;
+  vertical-align: bottom;
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+}
+td {
+  padding: var(--s3) var(--s3) var(--s3) 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule-soft);
+}
+th:last-child,
+td:last-child {
+  padding-right: 0;
+}
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+/* A table wider than its column shows a soft shadow on the side that still scrolls. The two covers
+   (paper-coloured, attached to the content) sit over the edge shades (attached to the box) when that
+   side is fully in view, so a table that fits shows nothing. */
+.table-scroll {
+  --scroll-cover: var(--paper);
+  background:
+    linear-gradient(90deg, var(--scroll-cover) 40%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(270deg, var(--scroll-cover) 40%, transparent) right center / 32px 100% no-repeat local,
+    linear-gradient(90deg, rgba(17, 17, 17, 0.2), transparent) left center / 12px 100% no-repeat scroll,
+    linear-gradient(270deg, rgba(17, 17, 17, 0.2), transparent) right center / 12px 100% no-repeat scroll;
+}
+.scroll-y a:focus-visible,
+.table-scroll a:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ───────────────────────────── figures ─────────────────────────────
+   The backtest's metric tiles and bars, on the same scale. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s5);
+}
+.metric-label {
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.metric-value {
+  margin: var(--s2) 0 var(--s1);
+  font-size: var(--t-lg);
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.metric-note {
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.bar {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+.bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ink);
+}
+
+/* ───────────────────────────── motion ─────────────────────────────
+   One moment per page, each gated in its component by prefers-reduced-motion; this is the backstop. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -638,112 +740,4 @@ hr.neon {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  /* UI-05: a wrapped, multi-line ticker grew to ~487px and pushed the page below the fold.
-     Reduced motion instead gets a static single-line strip: nowrap, a left gutter, a right-edge fade. */
-  .marquee > div {
-    display: block;
-    white-space: nowrap;
-    animation: none !important;
-  }
-  .marquee {
-    white-space: nowrap;
-    padding-left: var(--pad);
-    mask-image: linear-gradient(90deg, #000 92%, transparent);
-  }
-  .marquee .ticker-copy {
-    display: none;
-  }
-  .ticker-wrap {
-    display: block;
-  }
-  .ticker-controls {
-    display: none;
-  }
 }
-
-/* == wp9b == */
-/* Panel expanders (UI-10). A <details class="fold"> holds the rows past a phone's cap. `fold-480` and
-   `fold-900` are expanders only below that width: above it the summary goes and the rows flow inline, where
-   ::details-content is supported. Elsewhere the expander simply shows at every width. */
-.fold-summary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  border: 1px dashed var(--line2);
-  background: rgba(0, 229, 255, 0.04);
-  color: var(--cyan);
-  transition:
-    border-color var(--fast) var(--ease),
-    color var(--fast) var(--ease);
-}
-.fold-summary::after {
-  content: '▼';
-}
-.fold[open] > .fold-summary::after {
-  content: '▲';
-}
-.fold-summary:hover {
-  border-color: var(--cyan);
-  color: #fff;
-}
-@supports selector(::details-content) {
-  @media (min-width: 481px) {
-    .fold-480 {
-      display: contents;
-    }
-    .fold-480 > .fold-summary {
-      display: none;
-    }
-    .fold-480::details-content {
-      display: contents;
-      content-visibility: visible;
-    }
-  }
-  @media (min-width: 901px) {
-    .fold-900 {
-      display: contents;
-    }
-    .fold-900 > .fold-summary {
-      display: none;
-    }
-    .fold-900::details-content {
-      display: contents;
-      content-visibility: visible;
-    }
-  }
-}
-/* Listing badges, shared by the Fresh Drops table and its phone rows. */
-.tag.vis,
-.tag.stealth {
-  margin-left: 6px;
-}
-.tag.vis {
-  color: var(--cyan);
-}
-.tag.stealth {
-  color: var(--yellow);
-}
-/* == /wp9b == */
-
-/* == fix == */
-/* Focus rings inside a scroller draw inside their link: the scroller clips anything outside it. */
-.scroll-y a:focus-visible,
-.table-scroll a:focus-visible {
-  outline-offset: -2px;
-}
-/* A table wider than its panel shows a cyan edge on the side that still scrolls. The two covers
-   (panel-coloured, attached to the content) sit over the edge glows (attached to the box) when that
-   side is fully in view, so a table that fits shows nothing. */
-.table-scroll {
-  --scroll-cover: rgb(13, 11, 29);
-  background:
-    linear-gradient(90deg, var(--scroll-cover) 40%, transparent) left center / 32px 100% no-repeat local,
-    linear-gradient(270deg, var(--scroll-cover) 40%, transparent) right center / 32px 100% no-repeat local,
-    linear-gradient(90deg, rgba(0, 229, 255, 0.34), transparent) left center / 12px 100% no-repeat scroll,
-    linear-gradient(270deg, rgba(0, 229, 255, 0.34), transparent) right center / 12px 100% no-repeat scroll;
-}
-/* == /fix == */

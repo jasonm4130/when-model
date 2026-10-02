@@ -1,0 +1,89 @@
+---
+/**
+ * "Then": every other line with a time, in the board's order (src/ui/departures.ts), each with its
+ * service and its odds of departing by the 7-day date ("By Fri 9 Oct"): one timing fact per row, so
+ * no row prints a window that opens after the date its odds are for (a line's page has its window).
+ * Long shots, under `QUIET_BELOW`, are set small and grey so a 2% never reads as loud as the 46% above it. Lines the board cannot time
+ * follow as bullets with one plain sentence: a thin market is "times unavailable" and never shows its
+ * odds; no market is "no timetable"; Polymarket down is "offline".
+ */
+import type { Dashboard } from '../domain/dashboard';
+import type { LabStatus } from '../domain/lab-status';
+import { dayLabel, departureBoard, isDeparture } from '../ui/departures';
+import { pct } from '../ui/format';
+import { lineName, serviceName } from '../ui/lines';
+import { labPath } from '../ui/site';
+import Bullet from './Bullet.astro';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const board = departureBoard(d);
+const built = Date.parse(d.generatedAt);
+const names = (ls: LabStatus[]) => ls.map((l) => l.name).join(', ');
+const hasNext = isDeparture(board.next);
+/** Odds under this are a long shot: printed quiet. */
+const QUIET_BELOW = 0.1;
+const by = dayLabel(built + 7 * 86_400_000, built);
+---
+<section aria-labelledby="then-title">
+  <div class="sec">
+    <h2 id="then-title">{hasNext ? 'Then' : 'Lines'}</h2>
+    <span class="label">Odds of departing by {by}</span>
+  </div>
+  {board.later.length > 0 && (
+    <ol class="then" aria-label="Other lines with a time">
+      <li class="then-head" aria-hidden="true"><span>Line · service</span><span>Odds</span></li>
+      {board.later.map((dep) => (
+        <li>
+          <a class="dep" href={labPath(dep.lab.id)}>
+            <Bullet id={dep.lab.id} name={dep.lab.name} size="lg" decorative />
+            <span class="n">{serviceName(dep.family)}</span>
+            <span class="f">{lineName(dep.lab.name)}</span>
+            <span class:list={['p', 'mono', { quiet: dep.p7 < QUIET_BELOW }]}>{pct(dep.p7)}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  )}
+  {board.later.length === 0 && hasNext && <p class="empty">No other line has a time within 7 days.</p>}
+  {board.unavailable.length > 0 && (
+    <div class="untimed">
+      <div class="bul">{board.unavailable.map((l) => <Bullet id={l.id} name={l.name} size="sm" href={labPath(l.id)} />)}</div>
+      <p><b>{names(board.unavailable)}:</b> times unavailable. Their markets are too thin for a 7-day estimate.</p>
+    </div>
+  )}
+  {board.untimed.length > 0 && (
+    <div class="untimed">
+      <div class="bul">{board.untimed.map((l) => <Bullet id={l.id} name={l.name} size="sm" href={labPath(l.id)} />)}</div>
+      <p>
+        <b>{names(board.untimed)}:</b>{' '}
+        {board.offline ? 'times unavailable while Polymarket is unreachable.' : 'no timetable. Nobody is betting on these lines.'}
+      </p>
+    </div>
+  )}
+</section>
+<style>
+  .then-head { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--s4); padding: var(--s3) 0; font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .then-head span + span { text-align: right; }
+  .then > li + li { border-top: 1px solid var(--rule-soft); }
+  .then > li:last-child { border-bottom: 1px solid var(--rule-soft); }
+  .dep { display: grid; grid-template-columns: 40px minmax(0, 1fr) 96px; grid-template-areas: 'b n p' 'b f p'; column-gap: var(--s4); align-items: center; padding: var(--s4) 0; color: var(--ink); text-decoration: none; }
+  .dep:hover { text-decoration: none; }
+  .dep:hover .n { text-decoration: underline; text-underline-offset: 3px; }
+  .dep :global(.b) { grid-area: b; }
+  .n { grid-area: n; font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .f { grid-area: f; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .p { grid-area: p; text-align: right; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
+  .p.quiet { font-size: var(--t-md); line-height: 28px; font-weight: 400; color: var(--ink-2); }
+  .untimed { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
+  .bul { display: flex; flex-wrap: wrap; gap: var(--s1); }
+  .untimed p { margin-top: var(--s2); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .untimed b { font-weight: 600; color: var(--ink); }
+  @media (max-width: 640px) {
+    .then-head { display: none; }
+    .dep { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: 'b n p' 'b f p'; column-gap: var(--s3); row-gap: 2px; padding: var(--s3) 0; }
+    .dep :global(.b.lg) { --d: 32px; }
+    .n { font-size: var(--t-base); line-height: 24px; }
+    .p { font-size: var(--t-md); line-height: 24px; }
+    .p.quiet { font-size: var(--t-base); }
+  }
+</style>

@@ -6,7 +6,6 @@
 import type { Dashboard } from '../domain/dashboard';
 import type { Drop } from '../domain/drop';
 import type { FeedSource } from '../domain/feed';
-import { LABS, type LabId } from '../domain/lab';
 import { displayOutcomes, isPlaceholderOutcome, type Market, type Outcome } from '../domain/market';
 import { perMillion } from './format';
 
@@ -42,6 +41,15 @@ export function releaseRows(d: MarketsView): Market[] {
   return (d.markets ?? [])
     .filter((m) => m.kind === 'release' && displayOutcomes(m, PANEL_ROWS.releaseOutcomes, asOf).length > 0)
     .slice(0, PANEL_ROWS.releases);
+}
+
+/** Rungs the home page's busiest-market ticket shows; /markets shows the ladder. */
+export const HOME_RUNGS = 2;
+
+/** The busiest release market with the rungs the home page shows, or undefined with none open. */
+export function leadMarket(d: MarketsView): { market: Market; outcomes: Outcome[] } | undefined {
+  const market = releaseRows(d)[0];
+  return market && { market, outcomes: displayOutcomes(market, HOME_RUNGS, asOfMs(d)) };
 }
 
 /** Leaderboard markets other than the best-model race, then everything else model-relevant. */
@@ -90,24 +98,6 @@ export const FEED_LABELS: Readonly<Record<FeedSource, string>> = {
   github: 'GITHUB',
   xai: 'XAI',
 };
-
-/** A lab's own feed wears the lab's colour from `LABS`, so the feed and the lab cards agree. */
-const FEED_LAB: Readonly<Partial<Record<FeedSource, LabId>>> = {
-  openai: 'openai',
-  deepmind: 'google',
-  anthropic: 'anthropic',
-  xai: 'xai',
-};
-/** Hacker News and GitHub are nobody's lab. HN was orange, the same as Anthropic. */
-const FEED_OWN: Readonly<Partial<Record<FeedSource, string>>> = {
-  hn: 'var(--yellow)',
-  github: 'var(--muted)',
-};
-
-export function feedColour(source: FeedSource): string {
-  const lab = FEED_LAB[source];
-  return (lab && LABS.find((l) => l.id === lab)?.color) || FEED_OWN[source] || 'var(--muted)';
-}
 
 // ─── source pills ────────────────────────────────────────────────────────────
 
@@ -188,6 +178,21 @@ export function sourceErrorText(error: string | undefined): string {
     .replace(/^(\d{3}) (https?:\/\/\S+)/, (_, status: string, url: string) => `${status} · ${hostOf(url)}`)
     .replace(/https?:\/\/\S+/g, (url) => hostOf(url));
   return short.length > SOURCE_ERROR_MAX ? `${short.slice(0, SOURCE_ERROR_MAX - 1)}…` : short;
+}
+
+/**
+ * Why a source is down, in plain words for /about's health list: never a raw database or HTTP
+ * error. The ledger is retried on the next 15-minute capture; every other source on the next build.
+ * The raw text (`sourceErrorText`) goes in the row's title for whoever wants it.
+ */
+export function sourceStatusText(name: string, error: string | undefined): string {
+  const retry = /ledger/i.test(name) ? 'retrying each capture' : 'retrying each build';
+  const e = error ?? '';
+  const status = /^(\d{3})\b/.exec(e)?.[1];
+  if (/time(d)?\s?out|abort/i.test(e)) return `timed out; ${retry}`;
+  if (status) return `${status.startsWith('5') ? 'answered with an error' : 'refused the request'}; ${retry}`;
+  if (/pars|valid|json|xml|unexpected/i.test(e)) return `sent something unreadable; ${retry}`;
+  return `unavailable; ${retry}`;
 }
 
 /** True when the named source answered this build; a missing result counts as down. */

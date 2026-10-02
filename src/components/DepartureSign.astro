@@ -1,0 +1,166 @@
+---
+/**
+ * The home page's station sign: the next model departing (src/ui/departures.ts `nextDeparture`), its
+ * line and service, the market's 7-day odds and the boarding window read off its dated rungs. With
+ * no line on a trusted 7-day read it says "No departures scheduled" and why. The page's one moment:
+ * the destination flips once, like a split-flap board, after the fonts load (never with reduced
+ * motion). The server HTML holds the final name; the flap only replays it.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { SOURCE } from '../domain/sources';
+import { dayLabel, isDeparture, nextDeparture, windowNote, windowText } from '../ui/departures';
+import { pct } from '../ui/format';
+import { lineName, serviceName } from '../ui/lines';
+import { sourcePill } from '../ui/panels';
+import { labPath } from '../ui/site';
+import Bullet from './Bullet.astro';
+import Pill from './Pill.astro';
+interface Props {
+  d: Dashboard;
+  now?: number;
+}
+const { d, now = Date.now() } = Astro.props;
+const next = nextDeparture(d);
+const built = Date.parse(d.generatedAt);
+const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now);
+const dep = isDeparture(next) ? next : undefined;
+const name = dep ? serviceName(dep.family) : 'No departures scheduled';
+---
+<section class="sign dep" aria-labelledby="next-title">
+  <div class="wrap">
+    <p class="label">Next model departing</p>
+    <div class:list={['hero', { none: !dep }]}>
+      <div class="left">
+        <div class="dest">
+          {dep && <Bullet id={dep.lab.id} name={dep.lab.name} size="xl" href={labPath(dep.lab.id)} />}
+          <h1 id="next-title" class="flap" data-flap>{name}</h1>
+        </div>
+        {dep ? (
+          <p class="svc"><a href={labPath(dep.lab.id)}><b>{lineName(dep.lab.name)}</b></a> · service <b>{dep.family}</b></p>
+        ) : (
+          <p class="svc">
+            {!isDeparture(next) && next.reason === 'offline'
+              ? 'Polymarket is unreachable, so no line has a time. Times return when it does.'
+              : 'No line has a 7-day market deep enough to time. The lines below show what there is.'}
+          </p>
+        )}
+        <p class="plate"><b>NOT A FORECAST</b> · times are crowd estimates</p>
+      </div>
+      {dep && (
+        <div class="odds">
+          <p class="big" aria-label={`${pct(dep.p7)} chance it departs within 7 days`}><span aria-hidden="true">{pct(dep.p7).replace('%', '')}<small>%</small></span></p>
+          <p class="cap">chance it departs within 7 days</p>
+          <div class="board">
+            <p class="board-label">Boarding window</p>
+            <p class="win mono">{windowText(dep.window, built)}</p>
+            <p class="note">{windowNote(dep.window, built)}</p>
+            <p class="src"><Pill pill={pill} /> <span class="as-of mono">as of {dayLabel(built, built, false)} {d.generatedAt.slice(11, 16)}Z</span></p>
+          </div>
+        </div>
+      )}
+      {!dep && (
+        <div class="odds">
+          <p class="src"><Pill pill={pill} /></p>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--s7); align-items: start; margin-top: var(--s6); }
+  .left { display: flex; flex-direction: column; gap: var(--s6); align-self: stretch; min-width: 0; }
+  .left > .svc { margin-top: calc(var(--s4) - var(--s6)); }
+  .dest { display: flex; align-items: center; gap: var(--s5); min-width: 0; }
+  .flap { font-size: var(--t-5xl); line-height: 112px; font-weight: 700; letter-spacing: -0.035em; overflow-wrap: break-word; min-width: 0; }
+  .none .flap { font-size: var(--t-3xl); line-height: 72px; color: var(--sign-ink-2); }
+  /* The flap keeps each word whole while its letters turn. */
+  .flap :global(.w) { display: inline-block; white-space: nowrap; }
+  .flap :global(.c) { display: inline-block; text-align: center; }
+  .svc { margin-top: var(--s4); margin-left: calc(88px + var(--s5)); font-size: var(--t-md); line-height: 28px; color: var(--sign-ink-2); }
+  .none .svc { margin-left: 0; max-width: 44ch; }
+  .svc b { color: var(--sign-ink); font-weight: 600; }
+  .plate { margin-top: auto; padding: 6px 10px; align-self: flex-start; border: 1px solid #5a5a5a; font-family: var(--mono); font-size: var(--t-xs); line-height: 16px; letter-spacing: 0.04em; color: var(--sign-ink-2); }
+  .plate b { color: var(--sign-ink); font-weight: 600; }
+  .odds { padding-left: var(--s5); border-left: 2px solid var(--sign-ink); }
+  .big { font-size: var(--t-4xl); line-height: 96px; font-weight: 700; letter-spacing: -0.03em; }
+  .big small { font-size: var(--t-xl); letter-spacing: -0.01em; }
+  .cap { font-size: var(--t-base); line-height: 24px; color: var(--sign-ink); }
+  .board { margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid #3a3a3a; font-size: var(--t-sm); line-height: 20px; color: var(--sign-ink-2); }
+  .win { margin: var(--s1) 0; font-size: var(--t-md); line-height: 28px; color: var(--sign-ink); }
+  .src { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s3); margin-top: var(--s3); }
+  .as-of { font-size: var(--t-xs); line-height: 16px; }
+  .none .odds { border-left-color: #3a3a3a; }
+  @media (max-width: 1100px) {
+    .flap { font-size: var(--t-4xl); line-height: 96px; }
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: minmax(0, 1fr); gap: var(--s5); margin-top: var(--s4); }
+    .dest { gap: var(--s3); align-items: flex-start; }
+    .dest :global(.b.xl) { --d: 48px; margin-top: 2px; }
+    .flap { font-size: var(--t-2xl); line-height: 52px; }
+    .none .flap { font-size: var(--t-xl); line-height: 44px; }
+    .svc { margin-left: 0; margin-top: var(--s3); font-size: var(--t-base); line-height: 24px; }
+    .left { gap: var(--s4); }
+    .left > .svc { margin-top: calc(var(--s3) - var(--s4)); }
+    .odds { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s4); align-items: end; padding-left: 0; padding-top: var(--s4); border-left: 0; border-top: 2px solid var(--sign-ink); }
+    .big { font-size: var(--t-3xl); line-height: 64px; }
+    .cap { margin-bottom: 6px; }
+    .board, .src { grid-column: 1 / -1; }
+  }
+  @media (max-width: 359.98px) {
+    .flap { font-size: var(--t-xl); line-height: 44px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .flap :global(.c.turning) { color: var(--sign-ink-2); }
+  }
+</style>
+<script>
+  // One split-flap pass over the destination, after the fonts load so each cell keeps its final width.
+  const el = document.querySelector<HTMLElement>('[data-flap]');
+  const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const run = () => {
+    if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const text = el.textContent ?? '';
+    if (!text.trim()) return;
+    el.setAttribute('aria-label', text);
+    el.textContent = '';
+    const cells: { s: HTMLElement; final: string; end: number }[] = [];
+    let i = 0;
+    for (const word of text.split(/(\s+)/)) {
+      if (/^\s+$/.test(word)) {
+        el.append(word);
+        continue;
+      }
+      const w = document.createElement('span');
+      w.className = 'w';
+      w.setAttribute('aria-hidden', 'true');
+      for (const ch of word) {
+        const s = document.createElement('span');
+        s.className = 'c';
+        s.textContent = ch;
+        w.append(s);
+        cells.push({ s, final: ch, end: 220 + i++ * 28 });
+      }
+      el.append(w);
+    }
+    for (const c of cells) c.s.style.width = `${c.s.getBoundingClientRect().width}px`;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      let done = true;
+      for (const c of cells) {
+        if (t - t0 < c.end) {
+          done = false;
+          c.s.textContent = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+          c.s.classList.add('turning');
+        } else if (c.s.textContent !== c.final) {
+          c.s.textContent = c.final;
+          c.s.classList.remove('turning');
+        }
+      }
+      if (!done) requestAnimationFrame(tick);
+      else for (const c of cells) c.s.style.width = '';
+    };
+    requestAnimationFrame(tick);
+  };
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(run).catch(() => {});
+</script>

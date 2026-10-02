@@ -1,13 +1,14 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import Disclaimer from '../../src/components/Disclaimer.astro';
 import Drops from '../../src/components/Drops.astro';
 import Feed from '../../src/components/Feed.astro';
 import Footer from '../../src/components/Footer.astro';
 import Markets from '../../src/components/Markets.astro';
+import SourceHealth from '../../src/components/SourceHealth.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { FeedItem, FeedSource } from '../../src/domain/feed';
-import { LABS } from '../../src/domain/lab';
 import type { Market } from '../../src/domain/market';
 import { FEED_SOURCE_NAME, SOURCE } from '../../src/domain/sources';
 import {
@@ -20,10 +21,10 @@ import {
   STALE_AFTER_MS,
   asOfMs,
   dropPrice,
-  feedColour,
   otherRows,
   releaseRows,
   sourceErrorText,
+  sourceStatusText,
   sourcePill,
   stealthIds,
 } from '../../src/ui/panels';
@@ -122,6 +123,25 @@ function inputs(overrides: Partial<DashboardInputs> = {}): DashboardInputs {
 }
 const dashboard = (overrides: Partial<DashboardInputs> = {}) => assembleDashboard(inputs(overrides), NOW);
 
+describe('sourceStatusText', () => {
+  it('says why a source is down in plain words, never the raw error', () => {
+    expect(sourceStatusText('First-seen ledger', 'D1_ERROR: no such table: first_seen: SQLITE_ERROR')).toBe(
+      'unavailable; retrying each capture',
+    );
+    expect(sourceStatusText('Hacker News', 'timeout')).toBe('timed out; retrying each build');
+    expect(sourceStatusText('Polymarket', '503 https://gamma-api.polymarket.com/events')).toBe(
+      'answered with an error; retrying each build',
+    );
+    expect(sourceStatusText('xAI news', '403 https://x.ai/news')).toBe(
+      'refused the request; retrying each build',
+    );
+    expect(sourceStatusText('OpenAI news', 'https://openai.com/news/rss.xml failed validation')).toBe(
+      'sent something unreadable; retrying each build',
+    );
+    expect(sourceStatusText('HF papers', undefined)).toBe('unavailable; retrying each build');
+  });
+});
+
 describe('sourceErrorText', () => {
   it('cuts each URL to its host, keeps a status, and clips at SOURCE_ERROR_MAX', () => {
     expect(sourceErrorText(undefined)).toBe('down');
@@ -213,8 +233,9 @@ describe('panel selections', () => {
     });
     const container = await AstroContainer.create();
     const html = await container.renderToString(Markets, { props: { d: { ...base, markets: [rungs] } } });
-    expect(html).toContain('September 30');
-    expect(html).not.toContain('September 18');
+    // Rung labels print day first, as the rest of the site does.
+    expect(html).toContain('30 Sep');
+    expect(html).not.toContain('18 Sep');
   });
 
   it('flags stealth slots from the listing itself and from early warnings', () => {
@@ -229,14 +250,7 @@ describe('panel selections', () => {
     expect(dropPrice(listing(1))).toBe('$1 / $4');
   });
 
-  it('colours a lab’s own feed from LABS, and Hacker News apart from every lab (UI-15)', () => {
-    const color = (id: string) => LABS.find((l) => l.id === id)!.color;
-    expect(feedColour('openai')).toBe(color('openai'));
-    expect(feedColour('deepmind')).toBe(color('google'));
-    expect(feedColour('anthropic')).toBe(color('anthropic'));
-    expect(feedColour('xai')).toBe(color('xai'));
-    expect(feedColour('hn')).toBe('var(--yellow)');
-    expect(feedColour('hn')).not.toBe(feedColour('anthropic'));
+  it('names every feed source (UI-15); a line is told apart by its bullet, tested in lines.test.ts', () => {
     for (const source of SOURCES) expect(FEED_LABELS[source]).toBeTruthy();
   });
 });
@@ -254,16 +268,24 @@ describe('panels render', async () => {
   it('Markets derives its pill from Polymarket and folds rows past the phone cap (UI-04, UI-10)', async () => {
     const html = await container.renderToString(Markets, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*data-source-pill[^>]*>LIVE · POLYMARKET</);
-    const [before, folded] = html.split('<details class="fold fold-480"');
+    // One fold at every width now: the first MOBILE_MARKETS rows show, the rest wait behind a summary.
+    const [before, folded] = html.split('<details class="fold"');
     expect(before.match(/Model \d+ released by/g)).toHaveLength(MOBILE_MARKETS);
-    expect(folded).toContain(`${9 - MOBILE_MARKETS} MORE RELEASE MARKETS`);
-    expect(html).toContain(`${8 - MOBILE_MARKETS} MORE MARKETS`);
+    expect(folded).toContain(`${9 - MOBILE_MARKETS} more release markets`);
+    expect(html).toContain(`${8 - MOBILE_MARKETS} more markets`);
     // A single yes/no market answers "Yes" instead of repeating its question (UI-12).
-    expect(html).toMatch(/<b class="glow-c"[^>]*>37%<\/b> Yes/);
-    // The title row is a grid: dot, title, volume, whatever wraps.
+    // Every quoted price is set at one weight: only a thin book (its range) is set quiet, and the
+    // strip says so in its key. Never toned by value, nor by a lab colour inline.
+    expect(html).toMatch(/<b data-astro-cid-[a-z0-9]+>37%<\/b> Yes/);
+    expect(html).not.toMatch(/<b class="(hi|mid|lo)"/);
+    expect(html).toContain('shows its bid–ask range in grey, never one price');
+    expect(html).not.toMatch(/<b[^>]*style="color/);
+    // Release markets sit under their line's heading (its bullet and name, or a plain ring for no
+    // line), one row each: the row itself carries no second bullet.
     expect(html).toMatch(
-      /class="mtitle"[^>]*><span class="mdot"[^>]*aria-hidden="true"[^>]*><\/span><span class="mname"/,
+      /<h3 class="line-head"[^>]*>(?:<a href="\/labs\/[a-z]+"[^>]*><span class="b"[^>]*>[A-Z]<\/span>[^<]+ line<\/a>|<span[^>]*><span class="mdot")/,
     );
+    expect(html).toMatch(/class="row mrow grouped"[^>]*><div class="mtitle"[^>]*><span class="mname"/);
   });
 
   it('Markets says the source is down, or that there is simply nothing, from the source result', async () => {
@@ -278,13 +300,15 @@ describe('panels render', async () => {
     expect(quietHtml).not.toContain('unreachable');
   });
 
-  it('Drops badges stealth slots, keeps dates on one line and stacks phone rows with a price (UI-10)', async () => {
+  it('Drops badges stealth slots, keeps dates on one line and lists rows with a price, one list at every width (UI-10)', async () => {
     const html = await container.renderToString(Drops, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · OPENROUTER</);
     expect(html).toMatch(/Space Bunny Alpha<\/a><span class="tag stealth"[^>]*>STEALTH</);
-    expect(html.match(/class="tag stealth"/g)).toHaveLength(2); // table row and phone row
-    expect(html.match(/STEALTH</g)).toHaveLength(2);
-    expect(html).toMatch(/<td class="muted landed"/);
+    // The week table is gone: each listing renders once, as a list row that grows columns from 700px.
+    expect(html.match(/class="tag stealth"/g)).toHaveLength(1);
+    expect(html.match(/STEALTH</g)).toHaveLength(1);
+    expect(html).not.toContain('<table');
+    expect(html).toMatch(/class="di-when"[^>]*title="[^"]+"/);
     const stack = html.slice(html.indexOf('class="drop-stack"'));
     const [shown, folded] = stack.split('<details class="fold"');
     expect(shown.match(/class="drop-item/g)).toHaveLength(MOBILE_DROPS);
@@ -322,13 +346,14 @@ describe('panels render', async () => {
     expect(html).toContain('Hugging Face papers unreachable.');
   });
 
-  it('Feed colours sources from LABS, shows MOBILE_FEED items, then folds the rest (UI-10, UI-15)', async () => {
+  it('Feed labels each source in ink, shows MOBILE_FEED items, then folds the rest (UI-10, UI-15)', async () => {
     const html = await container.renderToString(Feed, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · 6 FEEDS</);
-    const anthropic = LABS.find((l) => l.id === 'anthropic')!.color;
-    expect(html).toContain(`style="color:${anthropic}"`);
-    expect(html).toMatch(/style="color:var\(--yellow\)"[^>]*>HN</);
-    const [shown, folded] = html.split('<details class="fold fold-900"');
+    // Sources are named, not colour-coded: the lab palette was tuned for the old dark page.
+    expect(html).toMatch(/class="src"[^>]*>HN</);
+    expect(html).toMatch(/class="src"[^>]*>ANTHROPIC</);
+    expect(html).not.toContain('style="color:');
+    const [shown, folded] = html.split('<details class="fold"');
     expect(shown.match(/class="row item/g)).toHaveLength(MOBILE_FEED);
     expect(folded).toContain(`${20 - MOBILE_FEED} MORE REPORTS`);
     expect(folded.match(/class="row item/g)).toHaveLength(20 - MOBILE_FEED);
@@ -352,30 +377,41 @@ describe('panels render', async () => {
     const url = `https://hn.algolia.com/api/v1/search_by_date?query=${'leak%20'.repeat(60)}`;
     const failing = inputs();
     failing.feeds[3] = { name: FEED_SOURCE_NAME.anthropic, data: [], ok: false, error: `503 ${url}` };
-    const html = await container.renderToString(Feed, { props: { d: assembleDashboard(failing, NOW) } });
-    expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}<span class="muted"`);
-    expect(html).toMatch(/> — 503 · hn\.algolia\.com<\/span>/);
+    const d = assembleDashboard(failing, NOW);
+    const html = await container.renderToString(Feed, { props: { d } });
     expect(html).not.toContain('search_by_date');
-    // The pill's hover title uses the same short text.
+    // The pill's hover title uses the short text.
     expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}: 503 · hn.algolia.com`);
+    // /about's source health list prints it the same way.
+    const health = await container.renderToString(SourceHealth, { props: { d } });
+    expect(health).toContain(`${FEED_SOURCE_NAME.anthropic}<span class="muted"`);
+    // In plain words; the short error is the row's title, for whoever wants it.
+    expect(health).toMatch(
+      /title="503 · hn\.algolia\.com"[^>]*>: answered with an error; retrying each build<\/span>/,
+    );
+    expect(health).not.toContain('search_by_date');
   });
 
-  it('Footer lists every upstream named in SOURCE, and the backtest variant links home and to the rebuild', async () => {
-    const html = await container.renderToString(Footer, { props: { generatedAt: GENERATED } });
+  it('Disclaimer lists every upstream named in SOURCE; the footer points to it and, on /backtest, to the rebuild', async () => {
+    const disclaimer = await container.renderToString(Disclaimer, {});
     for (const [key, name] of Object.entries(SOURCE)) {
-      if (key === 'ledger') expect(html).not.toContain(`>${name}<`);
-      else expect(html).toContain(`>${name}</a>`);
+      if (key === 'ledger') expect(disclaimer).not.toContain(`>${name}<`);
+      else expect(disclaimer).toContain(`>${name}</a>`);
     }
-    expect(html).toContain('GENERATED 2026-09-19 12:00:00Z');
+    expect(disclaimer).toMatch(/<h2 id="disclaimer-title"[^>]*>Disclaimer</);
+    expect(disclaimer).toContain('id="disclaimer"');
+
+    const html = await container.renderToString(Footer, { props: { generatedAt: GENERATED } });
+    expect(html).toMatch(/data-synced="2026-09-19T12:00:00[^"]*"[^>]*>19 Sep 12:00:00Z</);
     expect(html).toContain('href="/backtest"');
+    expect(html).toContain('href="/about#disclaimer"');
 
     const bt = await container.renderToString(Footer, {
       props: { generatedAt: GENERATED, variant: 'backtest' },
     });
-    expect(bt).toContain('href="/"');
-    expect(bt).toContain('DATA PULLED 2026-09-19 12:00Z');
+    expect(bt).toContain('Data pulled 2026-09-19 12:00Z');
     expect(bt).toMatch(/href="#reproduce"[^>]*><code[^>]*>pnpm backtest</);
     expect(bt).not.toContain('EDGE-CACHED');
-    expect(bt).toContain('OPERATIONAL DISCLAIMER');
+    expect(bt).toContain('href="/about#disclaimer"');
   });
 });

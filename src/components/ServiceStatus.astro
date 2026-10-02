@@ -1,0 +1,74 @@
+---
+/**
+ * The DROPCON level, posted the way a station posts service status: the level's name, one deadpan
+ * line, what the markets say, and the 5-to-1 ladder with the current level lit. The strip's
+ * treatment escalates with the level (src/ui/service-status.ts): calm at 5 and 4, the notice yellow
+ * at 3, inverted at 2 and, at 1, the notice yellow again at double height with the name set large. The page's number for the level is here
+ * (`data-num`); the history's scrubber never changes it.
+ */
+import type { Dropcon } from '../domain/dropcon';
+import { LEVEL_NAMES } from '../domain/levels';
+import { dropconNumber } from '../ui/odds';
+import { LADDER, serviceStatus } from '../ui/service-status';
+interface Props {
+  c: Pick<Dropcon, 'level' | 'name' | 'state' | 'score' | 'blurb'>;
+}
+const { c } = Astro.props;
+const s = serviceStatus(c);
+const label =
+  s.level === undefined
+    ? 'DROPCON: no signal'
+    : c.state === 'floor'
+      ? `DROPCON floor: ${s.level} of 5 with the odds offline`
+      : `DROPCON level ${s.level} of 5`;
+---
+<section class={`ss is-${s.treatment}`} aria-labelledby="status-title" data-level={s.level ?? ''}>
+  <div class="wrap ss-row">
+    <h2 id="status-title" class="ss-name"><span class="sr-only">Service status: </span>{s.name}</h2>
+    <p class="ss-line"><b class="ss-phrase">{s.phrase}</b> <span class="ss-detail">{s.detail}</span></p>
+    <div class="ss-side">
+      <ol class="ladder" role="img" aria-label={label}>
+        {LADDER.map((n) => (
+          <li class:list={['rung', { on: n === s.level, held: n === s.level && c.state !== 'ok' }]} title={`${n} · ${LEVEL_NAMES[n]}`}>{n}</li>
+        ))}
+      </ol>
+      <a class="ss-meta" href="/about#score" title="How the level is set">Level <b class="ss-num" data-num>{dropconNumber(c)}</b> of 5{s.score !== undefined && <> · lead score <b class="mono">{s.score}</b>/100</>}</a>
+    </div>
+  </div>
+</section>
+<style>
+  /* Calm (5 and 4) is a deliberate quiet: the paper-2 board under a hairline, so it never reads as more header. */
+  .ss { --ground: var(--paper-2); --text: var(--ink); --soft: var(--ink); --lit: var(--ink); --lit-text: var(--paper); color: var(--text); background: var(--ground); border-bottom: 1px solid var(--rule); }
+  .ss.is-offline { --ground: var(--paper); border-bottom-width: 2px; --text: var(--ink-2); --soft: var(--ink-2); --lit: var(--ink-2); }
+  .ss.is-notice { --ground: var(--notice); --lit-text: var(--notice); border-bottom-color: var(--notice); }
+  .ss.is-inverted { --ground: var(--sign); --text: var(--notice); --soft: var(--sign-ink); --lit: var(--notice); --lit-text: var(--ink); border-bottom-color: var(--notice); }
+  /* A surge: the notice yellow at double height, the name set large in black. The words carry it. */
+  .ss.is-alert { --ground: var(--notice); --lit-text: var(--notice); border-bottom: 2px solid var(--rule); }
+  .ss.is-alert .ss-row { min-height: 128px; padding-top: var(--s5); padding-bottom: var(--s5); }
+  .ss.is-alert .ss-name { font-size: var(--t-xl); line-height: 44px; letter-spacing: -0.02em; }
+  .ss.is-alert .ss-phrase { font-size: var(--t-md); line-height: 28px; }
+  .ss-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s2) var(--s5); align-items: center; min-height: 64px; padding-top: var(--s3); padding-bottom: var(--s3); }
+  .ss-name { font-size: var(--t-md); line-height: 28px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  /* The posted line, then what the markets say under it: two set lines, never a one-word orphan. */
+  .ss-line { font-size: var(--t-sm); line-height: 20px; color: var(--soft); text-wrap: pretty; }
+  .ss-phrase { display: block; font-size: var(--t-base); line-height: 24px; font-weight: 700; color: var(--text); }
+  .ss-detail { display: block; }
+  .ss-side { display: flex; align-items: center; gap: var(--s3); white-space: nowrap; }
+  .ladder { display: flex; gap: var(--s1); }
+  .rung { display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid var(--soft); font-family: var(--mono); font-size: 12px; line-height: 1; font-weight: 600; color: var(--soft); }
+  .rung.on { color: var(--lit-text); background: var(--lit); border-color: var(--lit); }
+  .rung.held { color: var(--ink-2); background: none; border-color: var(--ink-2); border-style: dashed; }
+  .ss-meta { font-size: var(--t-sm); line-height: 20px; color: var(--soft); text-decoration: none; }
+  .ss-meta:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .ss-meta b { font-weight: 700; color: var(--text); }
+  .ss :focus-visible { outline-color: currentColor; }
+  @media (max-width: 1100px) {
+    .ss-row { grid-template-columns: auto minmax(0, 1fr); }
+    .ss-side { grid-column: 1 / -1; }
+  }
+  @media (max-width: 900px) {
+    .ss-row { grid-template-columns: minmax(0, 1fr); gap: var(--s1); }
+    .ss-name { white-space: normal; }
+    .ss-side { grid-column: auto; margin-top: var(--s2); flex-wrap: wrap; }
+  }
+</style>

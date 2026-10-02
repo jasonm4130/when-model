@@ -117,16 +117,49 @@ describe('lab colours', () => {
     const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
     return (hi + 0.05) / (lo + 0.05);
   };
-  const background = /--bg:\s*(#[0-9a-f]{6})\b/i.exec(
-    readFileSync('src/styles/global.css', 'utf8') as string,
-  )?.[1];
+  const css = readFileSync('src/styles/global.css', 'utf8') as string;
+  const token = (name: string) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})\\b`, 'i').exec(css)?.[1];
+  const background = token('paper');
 
-  it('reach 4.5:1 against the page background', () => {
-    expect(background).toBe('#07060f');
-    for (const lab of LABS) expect(contrast(lab.color, background!), lab.id).toBeGreaterThanOrEqual(4.5);
-    // DeepSeek and Qwen were 3.85:1 and 4.43:1 on panels before #7480ff and #d24bff.
-    expect(contrast(labById('deepseek')!.color, background!)).toBeCloseTo(6.02, 2);
-    expect(contrast(labById('qwen')!.color, background!)).toBeCloseTo(5.94, 2);
+  it('text tokens reach 7:1 against the paper and the sign, and the notice yellow is a field under ink', () => {
+    expect(background).toBe('#f4f2ec');
+    // Running text clears 7:1 on paper and on paper-2; the sign's two inks clear it on the sign.
+    for (const name of ['ink', 'ink-2']) {
+      expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(7);
+      expect(contrast(token(name)!, token('paper-2')!), `${name} on paper-2`).toBeGreaterThanOrEqual(7);
+    }
+    for (const name of ['sign-ink', 'sign-ink-2']) {
+      expect(contrast(token(name)!, token('sign')!), name).toBeGreaterThanOrEqual(7);
+    }
+    // The notice yellow cannot carry type on paper: it is only ever a field with ink on it.
+    expect(contrast(token('notice')!, background!)).toBeLessThan(3);
+    expect(contrast(token('ink')!, token('notice')!)).toBeGreaterThanOrEqual(7);
+    // A surge is the sign with the notice yellow on it, never a red a line could own.
+    expect(token('alert')).toBeUndefined();
+    expect(contrast(token('notice')!, token('sign')!)).toBeGreaterThanOrEqual(7);
+  });
+
+  it('never ink markup in a lab colour, which was tuned for the old dark page', () => {
+    // The lab palette was chosen for #07060f; on paper several fall under 4.5:1. A line's colour on the
+    // page comes from its bullet (src/ui/lines.ts), never from the registry's colour.
+    const light = LABS.filter((lab) => contrast(lab.color, background!) < 4.5);
+    expect(light.length).toBeGreaterThan(0);
+    for (const file of [
+      'Labs',
+      'MarketRow',
+      'DropItem',
+      'FeedRow',
+      'Signals',
+      'Bullet',
+      'DepartureSign',
+      'DepartureBoard',
+      'Arrivals',
+      'LabDetail',
+    ]) {
+      const src = readFileSync(`src/components/${file}.astro`, 'utf8') as string;
+      expect(src, file).not.toMatch(/\.color\b|labColor|feedColour/);
+    }
+    expect(labById('deepseek')!.color).toMatch(/^#[0-9a-f]{6}$/i);
   });
 });
 

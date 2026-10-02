@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import LabDetail from '../../components/LabDetail.astro';
+import Bullet from '../../components/Bullet.astro';
+import Footer from '../../components/Footer.astro';
+import NotFound from '../404.astro';
+import { loadDashboard } from '../../app/load-dashboard';
+import { labById } from '../../domain/lab';
+import { labPage } from '../../ui/lab-page';
+import { lineName } from '../../ui/lines';
+import { pageMeta } from '../../ui/site';
+
+// An id outside the registry is the site's 404, with a 404 status, and costs no dashboard read.
+const lab = labById(Astro.params.id);
+if (!lab) Astro.response.status = 404;
+const d = lab ? await loadDashboard() : undefined;
+const p = lab && d ? labPage(d, lab.id) : undefined;
+if (p) Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
+const view = lab ? ({ page: 'lab', lab: lab.id } as const) : undefined;
+const meta = view && pageMeta(view);
+const rank = p?.status ? d!.labs.indexOf(p.status) + 1 : 0;
+---
+{d && p && view && meta ? (
+  <Layout title={meta.title} description={meta.description}>
+    <Header d={d} view={view} />
+    <main id="main">
+      <div class="sign line-sign">
+        <div class="wrap">
+          <p class="label crumbs"><a href="/labs">All lines</a>{rank > 0 && <span> · Line {rank} of {d.labs.length} · busiest by heat</span>}</p>
+          <div class="station">
+            <Bullet id={p.lab.id} name={p.lab.name} size="xl" decorative />
+            <div class="names">
+              <p class="line-name" aria-hidden="true">{lineName(p.lab.name)}</p>
+              {p.status && <span class="chip mono">{p.status.status}</span>}
+            </div>
+            <div class="q">
+              <h1 id="page-title">When will {p.lab.name} ship?</h1>
+              <p>What Polymarket prices for its next release.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="wrap page-body">
+        <LabDetail d={d} p={p} />
+      </div>
+    </main>
+    <Footer generatedAt={d.generatedAt} d={d} />
+  </Layout>
+) : <NotFound />}
+<style>
+  .crumbs a { text-decoration: underline; text-underline-offset: 3px; }
+  .station { display: flex; align-items: center; gap: var(--s5); margin-top: var(--s4); }
+  .names { min-width: 0; }
+  .line-name { font-size: var(--t-3xl); line-height: 68px; font-weight: 700; letter-spacing: -0.03em; overflow-wrap: anywhere; }
+  .chip { display: inline-block; margin-top: var(--s2); padding: 2px 8px; border: 1px solid #5a5a5a; font-size: var(--t-xs); line-height: 16px; letter-spacing: 0.04em; color: var(--sign-ink); }
+  .q { margin-left: auto; max-width: 32ch; text-align: right; font-size: var(--t-base); line-height: 24px; color: var(--sign-ink-2); }
+  .q h1 { font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; color: var(--sign-ink); }
+  @media (max-width: 900px) {
+    .station { flex-wrap: wrap; gap: var(--s3); }
+    .station :global(.b.xl) { --d: 48px; }
+    .line-name { font-size: var(--t-xl); line-height: 44px; }
+    .q { width: 100%; max-width: none; margin-left: 0; text-align: left; }
+  }
+</style>

@@ -31,7 +31,7 @@ const TICKS = [
  * on narrow ones, so the phone view needs no sideways scrolling. CSS shows one of them.
  */
 const LAYOUTS = [
-  { name: 'wide', W: 1000, left: 250, right: 24, top: 44, row: 30, bottom: 40, labelAbove: false, ticks: TICKS },
+  { name: 'wide', W: 1000, left: 300, right: 24, top: 44, row: 30, bottom: 40, labelAbove: false, ticks: TICKS },
   {
     name: 'narrow',
     W: 380,
@@ -44,6 +44,14 @@ const LAYOUTS = [
     ticks: TICKS.filter((t) => [-240, -24, 0, 24].includes(t.h)),
   },
 ];
+
+/** Label size in chart units (the wide chart draws at about 1:1, so this is --t-sm). */
+const LABEL_PX = 14;
+/** A name that would not fit its column is cut with an ellipsis; the full name is its title. */
+const fit = (name: string, room: number) => {
+  const max = Math.floor(room / (LABEL_PX * 0.6));
+  return name.length <= max ? name : `${name.slice(0, max - 1).trimEnd()}…`;
+};
 
 const views = LAYOUTS.map((l) => {
   const x = symlogScale(D0, D1, l.left, l.W - l.right);
@@ -111,10 +119,13 @@ const label = `Lead-time waterfall for ${rows.length} launches, on a compressed 
       <text class="axis-note" x={v.W - v.right} y={v.top - 18} text-anchor="end">AFTER</text>
       {v.plotted.map((p) => (
         <g>
-          <text class="row-label" x={v.labelAbove ? v.left : v.left - 12} y={p.labelY} text-anchor={v.labelAbove ? 'start' : 'end'}>{p.release.model}</text>
+          <text class="row-label" x={v.labelAbove ? v.left : v.left - 12} y={p.labelY} text-anchor={v.labelAbove ? 'start' : 'end'}>
+            <title>{p.release.model}</title>
+            {fit(p.release.model, v.labelAbove ? v.W - v.left - v.right : v.left - 20)}
+          </text>
           {p.bar && <line class="lead" x1={p.bar.x1} x2={p.bar.x2} y1={p.y} y2={p.y} />}
           {p.note && (
-            <text class="row-note" x={v.labelAbove ? v.W - v.right : v.left + 6} y={v.labelAbove ? p.labelY : p.y + 5} text-anchor={v.labelAbove ? 'end' : 'start'}>{p.note}</text>
+            <text class="row-note" x={v.left + 6} y={p.y + 5}>{p.note}</text>
           )}
           {p.marks.map((m) => (
             <circle class={`${m.cls}${m.open ? ' open' : ''}`} cx={m.cx} cy={p.y} r={m.open ? 4.5 : 5}>
@@ -146,21 +157,21 @@ const label = `Lead-time waterfall for ${rows.length} launches, on a compressed 
   }
   .grid { stroke: var(--line); stroke-width: 1; }
   .zero { stroke: var(--text); stroke-width: 1; opacity: 0.7; }
-  .tick { fill: var(--muted); font-size: 16px; }
+  .tick { fill: var(--muted); font-size: 14px; }
   .axis-note { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; }
-  .row-label { fill: var(--text); font-size: 18px; }
-  .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: 16px; }
-  .row-note { fill: var(--muted); font-size: 16px; }
-  .lead { stroke: #1aa0b3; stroke-width: 2; stroke-linecap: round; opacity: 0.45; }
-  circle { stroke: #0d0b1e; stroke-width: 2; }
-  .t50 { fill: #1f6f7c; }
-  .t70 { fill: #1aa0b3; }
-  .t90 { fill: #6fe3f2; }
-  circle.open { fill: #0d0b1e; }
-  circle.t50.open { stroke: #1f6f7c; }
-  circle.t70.open { stroke: #1aa0b3; }
-  circle.t90.open { stroke: #6fe3f2; }
-  .avail { fill: #d9731f; stroke: #0d0b1e; stroke-width: 2; }
-  .chart circle:hover, .chart rect:hover { stroke: var(--yellow); }
+  .row-label { fill: var(--text); font-size: 14px; }
+  .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: 14px; }
+  .row-note { fill: var(--muted); font-size: 14px; }
+  .lead { stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; opacity: 0.45; }
+  circle { stroke: var(--paper); stroke-width: 2; }
+  .t50 { fill: var(--line2); }
+  .t70 { fill: var(--ink-2); }
+  .t90 { fill: var(--ink); }
+  circle.open { fill: var(--paper); }
+  circle.t50.open { stroke: var(--line2); }
+  circle.t70.open { stroke: var(--ink-2); }
+  circle.t90.open { stroke: var(--ink); }
+  .avail { fill: var(--accent); stroke: var(--paper); stroke-width: 2; }
+  .chart circle:hover, .chart rect:hover { stroke: var(--ink); }
   figcaption { margin-top: 10px; font-size: var(--fs-xs); max-width: 90ch; }
 </style>

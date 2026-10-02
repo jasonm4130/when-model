@@ -1,0 +1,27 @@
+---
+/** Every source and whether it answered this build: /about lists them in full. */
+import type { Dashboard } from '../domain/dashboard';
+import { sourceErrorText, sourceStatusText } from '../ui/panels';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
+const up = d.sources.filter((s) => s.ok).length;
+---
+<section class="panel health-panel" id="health" aria-labelledby="health-title">
+  <div class="panel-head"><h2 id="health-title">Source health</h2></div>
+  <p class="health-sum"><b class="health-n">{up}/{d.sources.length}</b> sources answered this build. Each panel's pill reads the health of its own sources.</p>
+  <ul class="list health">
+    {d.sources.map((s) => (
+      <li><span class={s.ok ? 'dot' : 'err dot'} aria-hidden="true">{s.ok ? '●' : '○'}</span><span class="sr-only">{s.ok ? 'Up: ' : 'Down: '}</span>{s.name}{!s.ok && <span class="muted" title={sourceErrorText(s.error)}>: {sourceStatusText(s.name, s.error)}</span>}</li>
+    ))}
+  </ul>
+</section>
+<style>
+  .health-panel { scroll-margin-top: 16px; }
+  .health-sum { max-width: 60ch; font-size: var(--fs-sm); color: var(--ink-2); margin-bottom: 12px; }
+  .health-n { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--ink); margin-right: 8px; }
+  .health { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); column-gap: var(--s4); font-size: var(--fs-sm); line-height: 1.4; border-top: 1px solid var(--ink); }
+  /* A long error breaks anywhere rather than running off a phone's screen. */
+  .health li { overflow-wrap: anywhere; }
+  .dot { display: inline-block; width: 1.2em; color: var(--ink); }
+  .dot.err { color: var(--accent-ink); }
+</style>

@@ -1,12 +1,19 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
-import Dropcon from '../../src/components/Dropcon.astro';
+import DepartureBoard from '../../src/components/DepartureBoard.astro';
+import DepartureSign from '../../src/components/DepartureSign.astro';
 import Drops from '../../src/components/Drops.astro';
 import Feed from '../../src/components/Feed.astro';
 import Header from '../../src/components/Header.astro';
 import Labs from '../../src/components/Labs.astro';
 import Markets from '../../src/components/Markets.astro';
+import ScoreDetail from '../../src/components/ScoreDetail.astro';
+import RadarArrivals from '../../src/components/RadarArrivals.astro';
 import Signals from '../../src/components/Signals.astro';
+import ServiceStatus from '../../src/components/ServiceStatus.astro';
+import SourceHealth from '../../src/components/SourceHealth.astro';
+import { LEVEL_NAMES } from '../../src/domain/levels';
+import { SERVICE_PHRASES } from '../../src/ui/service-status';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
@@ -124,61 +131,127 @@ describe('components', async () => {
   const container = await AstroContainer.create();
   const d = dashboard();
 
-  it('Dropcon shows the level, the headline, a provenance that adds up and the hottest lab', async () => {
-    const html = await container.renderToString(Dropcon, { props: { d, now: Date.parse(d.generatedAt) } });
-    expect(html).toContain(`DROPCON LEVEL`);
-    expect(html).toContain(`>${d.dropcon.level}<`);
-    // A reading wears the markets panel's Polymarket pill, which ages to STALE on an open page.
+  it('ServiceStatus posts the level, its name and line, and links to how it adds up', async () => {
+    const html = await container.renderToString(ServiceStatus, { props: { c: d.dropcon } });
+    const level = d.dropcon.level;
+    expect(html).toMatch(new RegExp(`data-num[^>]*>${level}<`));
+    expect(html).toContain(LEVEL_NAMES[level]);
+    expect(html).toContain(SERVICE_PHRASES[level]);
+    expect(html).toContain(d.dropcon.blurb);
+    expect(html).toMatch(new RegExp(`class="rung on"[^>]*>${level}<`));
+    expect((html.match(/class="rung/g) ?? []).length).toBe(5);
+    expect(html).toContain(`lead score <b class="mono"`);
+    expect(html).toContain('href="/about#score"');
+  });
+
+  it('DepartureSign names the next model departing, its line, the 7-day odds and the boarding window', async () => {
+    const html = await container.renderToString(DepartureSign, {
+      props: { d, now: Date.parse(d.generatedAt) },
+    });
+    expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by 24 Sep');
+    expect(html).toMatch(/<h1 id="next-title"[^>]*data-flap[^>]*>GPT-6<\/h1>/);
+    expect(html).toContain('href="/labs/openai"');
+    expect(html).toContain('OpenAI line');
+    expect(html).toMatch(/66<small[^>]*>%<\/small>/);
+    expect(html).toContain('chance it departs within 7 days');
+    // Its only rung is already past even odds: the window is "by" that day.
+    expect(html).toContain('by Thu 24 Sep');
+    expect(html).toContain('NOT A FORECAST');
+    // The odds wear the markets panel's Polymarket pill, which ages to STALE on an open page.
     expect(html).toMatch(
       /data-source-pill data-stale-at="[^"]+" data-stale-text="STALE · POLYMARKET"[^>]*>LIVE · POLYMARKET</,
     );
-    const later = await container.renderToString(Dropcon, {
+    const later = await container.renderToString(DepartureSign, {
       props: { d, now: Date.parse(d.generatedAt) + STALE_AFTER_MS },
     });
     expect(later).toContain('>STALE · POLYMARKET<');
-    expect(html).not.toContain('ODDS OFFLINE');
-    expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by Sep 24');
-    expect(html).toContain(d.dropcon.headline);
+  });
+
+  it("DepartureBoard never prints a thin market's odds: that line is 'times unavailable'", async () => {
+    const far: Market = {
+      ...release,
+      slug: 'flash',
+      title: 'Next Gemini Flash released by...?',
+      labId: 'google',
+      outcomes: [
+        { ...release.outcomes[0], yes: 0.4, label: 'November 30', deadline: '2026-12-01T04:59:59.000Z' },
+      ],
+    };
+    const both = dashboard({ markets: { name: 'Polymarket', data: [release, far], ok: true } });
+    const google = both.labs.find((l) => l.id === 'google')!;
+    expect(google.odds?.p7.trusted).toBe(false);
+    const html = await container.renderToString(DepartureBoard, { props: { d: both } });
+    expect(html).toMatch(/Google DeepMind<\/b>:? ?times unavailable|Google DeepMind:<\/b> times unavailable/);
+    expect(html).not.toContain(`>${Math.round(google.odds!.p7.p * 100)}%<`);
+    expect(html).toContain('no timetable. Nobody is betting on these lines.');
+  });
+
+  it('ScoreDetail shows a provenance that adds up and answers whether it is a forecast', async () => {
+    const html = await container.renderToString(ScoreDetail, { props: { d } });
     const pts = [...html.matchAll(/<span class="pts"[^>]*>(\d+)<\/span>/g)].map((m) => Number(m[1]));
     expect(pts).toEqual([...d.dropcon.provenance.map((r) => r.points), d.dropcon.score]);
     expect(pts.slice(0, -1).reduce((a, b) => a + b, 0)).toBe(d.dropcon.score);
     expect(html).toContain('href="https://polymarket.com/event/gpt-6"');
     expect(html).toContain('Is this a forecast?');
-    expect(html).toContain(d.labs[0].name);
-    // A frontier listing under 48 hours old raises the banner, which is never scored.
-    expect(html).toContain('MODELS JUST LANDED');
-    expect(html).toContain('shown, not scored');
+    expect(html).toContain('id="score"');
+    expect(html).toContain('href="/backtest"');
   });
 
-  it('Dropcon flags a floor when the odds are offline', async () => {
+  it('ServiceStatus calls a floor a signal failure, never a calm level 5, and the sign has no departure', async () => {
     const degraded = dashboard({ markets: { name: 'Polymarket', data: [], ok: false, error: 'down' } });
-    const html = await container.renderToString(Dropcon, { props: { d: degraded } });
-    expect(html).toContain('FLOOR · ODDS OFFLINE');
+    const html = await container.renderToString(ServiceStatus, { props: { c: degraded.dropcon } });
+    expect(html).toContain('SIGNAL FAILURE');
+    expect(html).toContain('Odds offline.');
+    // The heading never wears level 5's name (the ladder's hover titles still name every level).
+    expect(html.match(/<h2[^>]*>[\s\S]*?<\/h2>/)?.[0]).not.toContain(LEVEL_NAMES[5]);
+    expect(html).not.toMatch(/class="rung on"/);
+    expect(html).toMatch(/class="rung on held"|class="rung held"/);
+    const sign = await container.renderToString(DepartureSign, { props: { d: degraded } });
+    expect(sign).toMatch(/data-flap[^>]*>No departures scheduled</);
+    expect(sign).toContain('Polymarket is unreachable');
   });
 
-  it('Dropcon shows a question mark and no lit segment with no signal at all', async () => {
+  it('ServiceStatus shows a question mark and no lit rung with no signal at all', async () => {
     const dark = dashboard({
       markets: { name: 'Polymarket', data: [], ok: false, error: 'down' },
       drops: { name: 'OpenRouter', data: [], ok: false, error: 'down' },
     });
-    const html = await container.renderToString(Dropcon, { props: { d: dark } });
-    expect(html).toContain('>?<');
+    const html = await container.renderToString(ServiceStatus, { props: { c: dark.dropcon } });
+    expect(html).toMatch(/data-num[^>]*>\?</);
     expect(html).toContain('NO SIGNAL');
-    expect(html).not.toMatch(/class="seg on/);
+    expect(html).not.toMatch(/class="rung on/);
     expect(html).toContain('aria-label="DROPCON: no signal"');
   });
 
-  it('Signals lists early warnings with their track record and landed launches, neither scored', async () => {
+  it('Signals lists early warnings with their track record, and Recent arrivals the landed launches, never scored', async () => {
     const html = await container.renderToString(Signals, { props: { d } });
-    expect(html).toContain('EARLY WARNINGS');
-    expect(html).toContain('NOT SCORED');
+    expect(html).toContain('Early warnings');
+    expect(html).toContain('id="warnings"');
     expect(html).toContain(d.earlyWarnings.stealth.track.summary);
     expect(html).toContain('10 of 13 resolved leaks');
     expect(html).toContain(d.earlyWarnings.broadcasts.track.summary);
     expect(html).toContain(d.earlyWarnings.architectures.track.summary);
-    expect(html).toContain('LANDED');
-    expect(html).toContain('Claude Fable 5.1');
-    expect(html).toContain('HACKER NEWS LAUNCH STORIES');
+    expect(html).not.toContain('Recent arrivals');
+    const arrivals = await container.renderToString(RadarArrivals, { props: { d } });
+    // "Not scored" is said once, in the arrivals' lede; /radar's page intro says none of it moves the level.
+    expect(arrivals).toContain('never scored');
+    expect(arrivals).toContain('Recent arrivals');
+    expect(arrivals).toContain('Claude Fable 5.1');
+    expect(arrivals).toContain('>OPENROUTER<');
+  });
+
+  it('Drops and Feed render one half each when /radar splits them', async () => {
+    const listings = await container.renderToString(Drops, { props: { d, show: 'listings' } });
+    expect(listings).toContain('Fresh drops');
+    expect(listings).not.toContain('Open weights trending');
+    const open = await container.renderToString(Drops, { props: { d, show: 'open' } });
+    expect(open).not.toContain('Fresh drops');
+    expect(open).toContain('Scaling Laws Revisited');
+    const feed = await container.renderToString(Feed, { props: { d, show: 'feed' } });
+    expect(feed).not.toContain('X watchlist');
+    const watch = await container.renderToString(Feed, { props: { d, show: 'watch' } });
+    expect(watch).toContain('x.com/sama');
+    expect(watch).not.toContain('The feed');
   });
 
   it('Drops renders integer prices without stripping zeros and marks vision models', async () => {
@@ -198,6 +271,31 @@ describe('components', async () => {
     expect(html).not.toContain('class="thin"');
   });
 
+  it('Markets groups release markets in network order, not by volume', async () => {
+    const quiet: Market = {
+      ...release,
+      slug: 'claude-x',
+      title: 'Claude X released by...?',
+      labId: 'anthropic',
+      volume: 1,
+      vol24: 1,
+    };
+    const base = dashboard({ markets: { name: 'Polymarket', data: [release, quiet, board], ok: true } });
+    const heads = (html: string) =>
+      [...html.matchAll(/class="line-head"[^>]*>([\s\S]*?)<\/h3>/g)].map((m) =>
+        m[1].replace(/<[^>]+>/g, '').trim(),
+      );
+    const ids = (labs: typeof base.labs) => labs.map((l) => l.id);
+    for (const labs of [base.labs, [...base.labs].reverse()]) {
+      const html = await container.renderToString(Markets, { props: { d: { ...base, labs } } });
+      const order = heads(html).map((h) =>
+        h.includes('Anthropic') ? 'anthropic' : h.includes('OpenAI') ? 'openai' : h,
+      );
+      const expected = ids(labs).filter((id) => id === 'anthropic' || id === 'openai');
+      expect(order.filter((h) => h === 'anthropic' || h === 'openai')).toEqual(expected);
+    }
+  });
+
   it('Markets shows a thin book as a muted bid-ask range, not odds', async () => {
     const thin: Market = {
       ...release,
@@ -206,32 +304,46 @@ describe('components', async () => {
     const html = await container.renderToString(Markets, {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [thin, board], ok: true } }) },
     });
-    expect(html).toMatch(/<b class="thin"[^>]*>27–84¢<\/b> September 24/);
+    expect(html).toMatch(/<b class="thin"[^>]*>27–84%<\/b> 24 Sep/);
     expect(html).not.toContain('56%');
     expect(html).toContain('Google');
     expect(html).not.toMatch(/race-name[^>]*>Other</);
   });
 
-  it('Feed escapes untrusted titles and lists failing sources', async () => {
+  it('Feed escapes untrusted titles and keeps the X watchlist', async () => {
     const html = await container.renderToString(Feed, { props: { d } });
     expect(html).toContain('Introducing &lt;GPT-6&gt; &amp; friends');
     expect(html).not.toContain('<GPT-6>');
+    expect(html).toContain('x.com/sama');
+    expect(html).toContain('id="feed"');
+  });
+
+  it('SourceHealth lists every source, and a failing one with its error', async () => {
+    const html = await container.renderToString(SourceHealth, { props: { d } });
     expect(html).toContain('Anthropic news');
     expect(html).toContain('timeout');
-    expect(html).toContain('x.com/sama');
+    for (const s of d.sources) expect(html).toContain(s.name);
+    const up = d.sources.filter((s) => s.ok).length;
+    expect(html).toMatch(new RegExp(`>${up}/${d.sources.length}<`));
+    expect(html).toContain('Down: ');
   });
 
-  it('Labs renders every lab with its status tag, histogram and 72h/7d/30d reads', async () => {
+  it('Labs lists every line, ranked, with its bullet, status and heat, each linking to its page', async () => {
     const html = await container.renderToString(Labs, { props: { d } });
-    for (const lab of d.labs) expect(html).toContain(lab.name);
+    for (const lab of d.labs) {
+      expect(html).toContain(`${lab.name} line`);
+      expect(html).toContain(`href="/labs/${lab.id}"`);
+    }
+    const order = [...html.matchAll(/class="lrow"[^>]*href="\/labs\/([a-z]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(d.labs.map((l) => l.id));
     expect(html).toContain('SHIPPING');
-    expect((html.match(/class="col"/g) ?? []).length).toBe(d.labs.length * 12);
-    expect(html).toContain('DROP ≤72H');
-    expect(html).toContain('GPT-6 on Polymarket');
-    expect(html).toContain('burstiness prior');
+    expect(html).toMatch(/>66%</);
+    // One timing fact per row: the odds by the 7-day date, never a window that may open after it.
+    expect(html).toContain('Odds by 26 Sep');
+    expect(html).not.toContain('by 24 Sep');
   });
 
-  it('Labs marks an extrapolated read with a tilde and keeps it dim', async () => {
+  it('Labs says "times unavailable" for an extrapolated read and never prints its odds', async () => {
     const far: Market = {
       ...release,
       slug: 'flash',
@@ -239,25 +351,20 @@ describe('components', async () => {
       labId: 'google',
       outcomes: [{ ...release.outcomes[0], label: 'November 30', deadline: '2026-12-01T04:59:59.000Z' }],
     };
-    const html = await container.renderToString(Labs, {
-      props: { d: dashboard({ markets: { name: 'Polymarket', data: [far], ok: true } }) },
-    });
-    expect(html).toMatch(/metric-value glow-y extrap"[^>]*>~\d+%/);
-    expect(html).toContain('extrapolated to Nov 30 · not scored');
+    const fd = dashboard({ markets: { name: 'Polymarket', data: [far], ok: true } });
+    const html = await container.renderToString(Labs, { props: { d: fd } });
+    const google = html.slice(html.indexOf('href="/labs/google"'));
+    expect(google.slice(0, google.indexOf('</a>'))).toContain('times unavailable');
+    expect(html).not.toMatch(/~\d+%/);
+    expect(html).not.toContain(`>${Math.round(fd.labs.find((l) => l.id === 'google')!.odds!.p7.p * 100)}%<`);
   });
 
-  it('Header reports status and exposes one accessible ticker with an explicit pause control', async () => {
-    const html = await container.renderToString(Header, { props: { d } });
-    expect(html).toContain('STATUS: DEGRADED');
-    expect(html).toContain('NEW ON OPENROUTER: CLAUDE FABLE 5.1');
-    expect(html).toContain('OPENAI: AT LEAST 66% ODDS GPT-6 SHIPS WITHIN 7 DAYS');
-    expect(html).toContain('data-ticker-toggle');
-    expect(html).toContain('PAUSE TICKER');
-    expect(html).toContain('aria-pressed="false"');
-    expect(html).toContain('aria-controls="ticker-track"');
-    expect(html).toContain('class="sr-only"');
-    expect(html).toContain('aria-hidden="true"');
-    expect(html.match(/class="ticker-group/g) ?? []).toHaveLength(2);
-    expect(html).toContain('class="ticker-group ticker-copy"');
+  it('Header reports a degraded status, names the site for screen readers, with no ticker', async () => {
+    const html = await container.renderToString(Header, { props: { d, view: { page: 'home' } } });
+    expect(html).toMatch(/status-live warn[^>]*>(?:<span[^>]*>Sources <\/span>)?DEGRADED</);
+    expect(html).toMatch(/class="sr-only"[^>]*>: frontier model release intelligence, home</);
+    // The landed model and the odds are said once each, in the hero and the lab list, not repeated in a crawl.
+    expect(html).not.toContain('ticker');
+    expect(html).not.toContain('NEW ON OPENROUTER');
   });
 });

@@ -2,42 +2,64 @@
 import { displayOutcomes, type Market } from '../domain/market';
 import { usd } from '../ui/format';
 import { outcomeOdds } from '../ui/odds';
+import { labById } from '../domain/lab';
+import { rungLabel } from '../domain/dates';
+import Bullet from './Bullet.astro';
 interface Props {
   m: Market;
   /** Outcomes to show. */
   limit: number;
-  /** Benchmark and other markets: no lab dot, cyan odds, bare volume. */
+  /** Benchmark and other markets: no marker, bare volume. */
   compact?: boolean;
+  /** Kept for callers; a release market wears its line's bullet instead. */
   color?: string;
+  /** Listed under its line's heading: no bullet of its own, and on a wide screen one row, title then stops. */
+  grouped?: boolean;
   i?: number;
   /** The build time: a release rung whose deadline is behind it is not shown (`asOfMs`). */
   asOf?: number;
 }
-const { m, limit, compact = false, color = 'var(--cyan)', i = 0, asOf } = Astro.props;
+const { m, limit, compact = false, grouped = false, asOf } = Astro.props;
 const THIN = 'Thin book: bid–ask range, not odds';
-const oddsColor = (p: number) => (p >= 0.5 ? 'var(--green)' : p >= 0.2 ? 'var(--yellow)' : 'var(--muted)');
+const lab = !compact && !grouped && m.labId ? labById(m.labId) : undefined;
 ---
-<a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener" style={`--lab:${color}; --i:${i}`}>
-  <div class="mtitle">{!compact && <span class="mdot" aria-hidden="true"></span>}<span class="mname">{m.title}</span><span class="muted vol">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
+<a class:list={['row mrow', { compact, grouped }]} href={m.url} target="_blank" rel="noopener">
+  <div class="mtitle">{!compact && !grouped && (lab ? <Bullet id={lab.id} name={lab.name} size="sm" /> : <span class="mdot" aria-hidden="true"></span>)}<span class="mname">{m.title}</span><span class="vol mono">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
   <div class="outs">
     {displayOutcomes(m, limit, asOf).map((o) => {
       const odds = outcomeOdds(o);
-      if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {o.label}</span>;
-      return compact
-        ? <span class="out"><b class="glow-c">{odds.text}</b> {o.label}</span>
-        : <span class="out"><b style={`color:${oddsColor(o.yes)}`}>{odds.text}</b> {o.label}</span>;
+      if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {rungLabel(o.label)}</span>;
+      return <span class="out"><b>{odds.text}</b> {rungLabel(o.label)}</span>;
     })}
   </div>
 </a>
 <style>
-  .mrow { --accent: var(--lab, var(--cyan)); }
-  .mrow:hover { border-left-color: var(--accent); }
-  /* UI-12: a grid keeps the dot on the title's first line and the volume in its own column however the title wraps. */
-  .mtitle { font-size: var(--fs-body); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
-  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-size: var(--fs-sm); }
-  .mdot { width: 8px; height: 8px; background: var(--lab); box-shadow: 0 0 8px var(--lab); display: inline-block; align-self: start; margin-top: 0.45em; }
-  .vol { font-size: var(--fs-xs); white-space: nowrap; }
-  .outs { display: flex; gap: 2px 14px; flex-wrap: wrap; margin-top: 3px; font-size: var(--fs-sm); color: var(--muted); }
-  .out b { font-weight: 400; }
-  .out b.thin { color: var(--muted); }
+  .mrow { padding: var(--s4) 0; }
+  /* A grid keeps the bullet on the title's first line and the volume in its own column however the title wraps. */
+  .mtitle { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s3); align-items: start; font-size: var(--t-base); line-height: 24px; font-weight: 600; }
+  .compact .mtitle, .grouped .mtitle { grid-template-columns: minmax(0, 1fr) auto; }
+  .compact .mtitle { font-weight: 500; }
+  .mdot { width: 24px; height: 24px; border: 2px solid var(--ink); border-radius: 50%; }
+  .mrow:hover .mname { text-decoration: underline; text-underline-offset: 3px; }
+  .mname { overflow-wrap: anywhere; text-wrap: balance; }
+  .vol { font-size: var(--t-xs); line-height: 24px; font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+  .outs { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin-top: var(--s2); padding-left: 36px; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .compact .outs, .grouped .outs { padding-left: 0; }
+  /* Under its line on a wide screen a market is one timetable row: its question, then its stops. */
+  @media (min-width: 1100px) {
+    .grouped { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); column-gap: var(--s6); align-items: baseline; }
+    .grouped .outs { margin-top: 0; }
+  }
+  .out { overflow-wrap: anywhere; }
+  @media (min-width: 481px) {
+    .out { white-space: nowrap; }
+  }
+  /* A phone sets the stops two to a row, so a strip never ends on one stray stop. */
+  @media (max-width: 480px) {
+    .outs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .out b { margin-right: 2px; font-family: var(--mono); font-size: var(--t-md); line-height: 24px; font-weight: 500; white-space: nowrap; color: var(--ink); }
+  .compact .out b { font-size: var(--t-base); }
+  /* A thin book is a range, not odds: never set at full weight. */
+  .out b.thin { font-size: var(--t-sm); font-weight: 400; color: var(--ink-2); }
 </style>

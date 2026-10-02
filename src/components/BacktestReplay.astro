@@ -95,7 +95,9 @@ const MONTHS = Array.from({ length: 12 }, (_, m) => Date.UTC(new Date(t0).getUTC
 
 const LAYOUTS = [
   { name: 'wide', W: 1200, left: 52, right: 150, top: 40, panel: 150, gap: 40, bottom: 30, inside: false },
-  { name: 'narrow', W: 340, left: 34, right: 10, top: 40, panel: 120, gap: 36, bottom: 28, inside: true },
+  // A phone: a left margin wide enough for "100%", and the reference rates printed above each
+  // panel rather than on its trace.
+  { name: 'narrow', W: 340, left: 46, right: 10, top: 56, panel: 120, gap: 52, bottom: 28, inside: true },
 ];
 const views = LAYOUTS.map((l) => {
   const plotW = l.W - l.left - l.right;
@@ -165,7 +167,7 @@ const weeks = (() => {
       <text class="zone-note" x={v.x(split) + 6} y={v.top - 22}>HELD OUT{!v.inside && ` · ${constants.testedOn.events} LAUNCHES`} &#9654;</text>
       {v.panels.map((p) => (
         <g>
-          <text class="panel-title" x={v.left} y={p.top - 7}>{p.title}</text>
+          <text class="panel-title" x={v.left} y={p.top - (v.inside ? 24 : 7)}>{p.title}</text>
           {[0, 0.5, 1].map((g) => (
             <g>
               <line class="grid" x1={v.left} x2={v.left + v.plotW} y1={p.y(g)} y2={p.y(g)} />
@@ -183,8 +185,8 @@ const weeks = (() => {
           <line class="held" x1={v.x(split)} x2={v.left + v.plotW} y1={p.y(p.held)} y2={p.y(p.held)} />
           {v.inside ? (
             <>
-              <text class="ref-note" x={v.left + 4} y={p.y(p.fit) + 16}>fit {pct(p.fit)}</text>
-              <text class="ref-note" x={v.left + v.plotW - 4} y={p.y(p.held) + 16} text-anchor="end">held out {pct(p.held)}</text>
+              <text class="ref-note" x={v.left} y={p.top - 7}>fit {pct(p.fit)}</text>
+              <text class="ref-note" x={v.left + v.plotW} y={p.top - 7} text-anchor="end">held out {pct(p.held)}</text>
             </>
           ) : (
             <>
@@ -265,25 +267,26 @@ const weeks = (() => {
     .chart.wide { display: none; }
     .chart.narrow { display: block; }
   }
-  .held-zone { fill: rgba(0, 229, 255, 0.045); }
+  .held-zone { fill: rgba(20, 19, 18, 0.04); }
   .split { stroke: var(--text); stroke-width: 1; opacity: 0.6; }
   .zone-note, .panel-title { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; }
   .panel-title { fill: var(--text); }
   .grid { stroke: var(--line); stroke-width: 1; }
   .month { stroke: var(--line2); stroke-width: 1; }
   .tick { fill: var(--muted); font-size: 16px; }
-  .wash { fill: rgba(26, 160, 179, 0.16); stroke: none; }
-  .line { fill: none; stroke: #2ec4d6; stroke-width: 1.5; stroke-linejoin: round; }
+  .wash { fill: rgba(20, 19, 18, 0.07); stroke: none; }
+  .line { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
   .narrow .line { stroke-width: 1; }
-  line.fit { stroke: #d9731f; stroke-width: 2; stroke-dasharray: 7 5; }
+  .narrow .tick, .narrow .ref-note { font-size: 13px; }
+  line.fit { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 7 5; }
   line.held { stroke: var(--text); stroke-width: 2; stroke-dasharray: 2 4; stroke-linecap: round; }
-  .ref-note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--bg2); stroke-width: 4px; stroke-linejoin: round; }
-  .alarm line { stroke: var(--yellow); stroke-width: 2; }
+  .ref-note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+  .alarm line { stroke: var(--accent); stroke-width: 2; }
   .alarm text { fill: var(--text); font-size: 16px; }
   .launch { fill: var(--bg2); stroke: var(--muted); stroke-width: 1.5; }
-  .launch.priced { fill: var(--yellow); stroke: var(--bg2); }
+  .launch.priced { fill: var(--accent); stroke: var(--paper); }
   .hit { fill: transparent; }
-  .mark:hover .launch { stroke: #fff; }
+  .mark:hover .launch { stroke: var(--ink); }
   figcaption { margin-top: 10px; font-size: var(--fs-xs); max-width: 95ch; }
   .weeks { margin-top: 10px; }
   .weeks summary { color: var(--muted); margin-bottom: 8px; }

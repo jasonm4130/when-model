@@ -1,14 +1,27 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import PageHead from '../components/PageHead.astro';
+import Bullet from '../components/Bullet.astro';
+import { LABS } from '../domain/lab';
+import { labPath } from '../ui/site';
 ---
-<Layout title="404 — whenmodel" description="Not found" robots="noindex">
-  <main class="wrap nf reveal">
-    <h1 class="glow-m">404</h1>
-    <p>This model has not been released yet. <a href="/">Back to the dashboard</a>.</p>
+<Layout title="Line not found — whenmodel" description="Not found" robots="noindex">
+  <Header view={{ page: 'not-found' }} />
+  <main id="main">
+    <PageHead kicker="404" title="Line not found" intro="This model has not been released yet. No service runs from this address." />
+    <div class="wrap nf">
+      <p>Back to <a href="/">the departures</a>, or pick a line:</p>
+      <div class="map">{LABS.map((l) => <Bullet id={l.id} name={l.name} size="lg" href={labPath(l.id)} />)}</div>
+    </div>
   </main>
 </Layout>
 <style>
-  .nf { padding: 80px 0; text-align: center; }
-  .nf h1 { font-size: 40px; }
-  .nf p { font-size: 24px; margin-top: 16px; }
+  .nf { padding-top: var(--s7); padding-bottom: var(--s8); font-size: var(--t-md); line-height: 28px; }
+  .map { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s4); }
+  /* All ten lines on one row on a phone. */
+  @media (max-width: 480px) {
+    .map { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--s1); justify-items: center; }
+    .map :global(.b) { --d: min(30px, calc((100vw - 2 * var(--gutter) - 9 * var(--s1)) / 10)); }
+  }
 </style>

@@ -4,8 +4,9 @@ import { SOURCE } from '../domain/sources';
 import { ago, ctx, num, shortDate } from '../ui/format';
 import { MOBILE_DROPS, PANEL_ROWS, dropPrice, sourceOk, sourcePill, stealthIds } from '../ui/panels';
 import DropItem from './DropItem.astro';
-interface Props { d: Dashboard }
-const { d } = Astro.props;
+/** `listings` is OpenRouter's new models alone, `open` the open weights and papers; both by default. */
+interface Props { d: Dashboard; show?: 'all' | 'listings' | 'open' }
+const { d, show = 'all' } = Astro.props;
 const now = Date.now();
 const FRESH_MS = 3 * 86_400_000;
 const stealth = stealthIds(d);
@@ -14,8 +15,8 @@ const rows = d.drops.slice(0, PANEL_ROWS.drops).map((x) => {
   const fresh = now - Date.parse(x.createdAt) < FRESH_MS;
   return {
     x,
-    lab: lab ? lab.short : x.lab,
-    labColor: lab?.color ?? 'var(--muted)',
+    lab: lab ? lab.name : x.lab,
+    labId: lab?.id,
     fresh,
     when: fresh ? ago(x.createdAt, now) : shortDate(x.createdAt),
     price: dropPrice(x),
@@ -34,7 +35,7 @@ const item = (r: (typeof rows)[number]) => ({
   name: r.x.name,
   url: r.x.url,
   lab: r.lab,
-  labColor: r.labColor,
+  labId: r.labId,
   ctx: ctx(r.x.context),
   price: r.price,
   free: r.x.free,
@@ -44,99 +45,105 @@ const item = (r: (typeof rows)[number]) => ({
   when: r.when,
   createdAt: r.x.createdAt,
 });
+/** Trending repos shown before the fold. */
+const TRENDING_SHOWN = 6;
 ---
-<section class="section wrap reveal">
-  <div class="grid grid-2">
-    <div class="panel">
+<section class={`drops show-${show}`} id={show === 'open' ? 'open-weights' : 'drops'} aria-label={show === 'listings' ? 'New listings' : show === 'open' ? 'Open weights and papers' : 'New listings and open weights'}>
+  <div class="grid dr-grid">
+    {show !== 'open' && <div class="panel">
       <div class="panel-head">
-        <h2><span aria-hidden="true">▼</span>FRESH DROPS</h2>
+        <h2>Fresh drops</h2>
         <span class={`pill ${pills.drops.tone}`} title={pills.drops.title} data-source-pill data-stale-at={pills.drops.staleAt} data-stale-text={pills.drops.staleText}>{pills.drops.text}</span>
       </div>
       {rows.length ? (
-        <>
-          <div class="table-scroll drop-table" tabindex="0" role="region" aria-label="Newest listings table">
-            <table>
-              <caption class="sr-only">Newest OpenRouter listings</caption>
-              <thead><tr><th scope="col">Landed</th><th scope="col">Model</th><th scope="col">Lab</th><th scope="col" class="num">Ctx</th><th scope="col" class="num">$/M in / out</th></tr></thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr class={r.fresh ? 'fresh' : ''}>
-                    <td class="muted landed" title={r.x.createdAt}>{r.fresh ? <span class="glow-m" data-time={r.x.createdAt}>{r.when}</span> : r.when}</td>
-                    <td><a href={r.x.url} target="_blank" rel="noopener">{r.x.name}</a>{r.stealth && <span class="tag stealth">STEALTH</span>}{r.vision && <span class="tag vis">VIS</span>}</td>
-                    <td style={`color:${r.labColor}`}>{r.lab}</td>
-                    <td class="num muted">{ctx(r.x.context)}</td>
-                    <td class={`num ${r.x.free ? 'glow-g' : ''}`}>{r.price}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div class="drop-stack">
-            <ol class="drop-list">
-              {rows.slice(0, MOBILE_DROPS).map((r) => <DropItem {...item(r)} />)}
-            </ol>
-            {rows.length > MOBILE_DROPS && (
-              <details class="fold">
-                <summary class="fold-summary tiny">{rows.length - MOBILE_DROPS} MORE LISTINGS</summary>
-                <ol class="drop-list" start={MOBILE_DROPS + 1}>
-                  {rows.slice(MOBILE_DROPS).map((r) => <DropItem {...item(r)} />)}
-                </ol>
-              </details>
-            )}
-          </div>
-        </>
+        <div class="drop-stack">
+          <div class="drop-cols tiny" aria-hidden="true"><span>Landed</span><span>Model</span><span>Lab</span><span class="num">Ctx</span><span class="num">$/M in / out</span></div>
+          <ol class="drop-list">
+            {rows.slice(0, MOBILE_DROPS).map((r) => <DropItem {...item(r)} />)}
+          </ol>
+          {rows.length > MOBILE_DROPS && (
+            <details class="fold">
+              <summary class="fold-summary">{rows.length - MOBILE_DROPS} MORE LISTINGS</summary>
+              <ol class="drop-list" start={MOBILE_DROPS + 1}>
+                {rows.slice(MOBILE_DROPS).map((r) => <DropItem {...item(r)} />)}
+              </ol>
+            </details>
+          )}
+        </div>
       ) : <p class="empty">{sourceOk(d.sources, SOURCE.openrouter) ? 'No new listings on OpenRouter.' : 'OpenRouter unreachable. Listings return when it does.'}</p>}
-    </div>
+    </div>}
 
-    <div class="panel">
+    {show !== 'listings' && <div class="panel">
       <div class="panel-head">
-        <h2><span aria-hidden="true">▲</span>OPEN WEIGHTS TRENDING</h2>
+        <h2>Open weights trending</h2>
         <span class={`pill ${pills.trending.tone}`} title={pills.trending.title} data-source-pill data-stale-at={pills.trending.staleAt} data-stale-text={pills.trending.staleText}>{pills.trending.text}</span>
       </div>
       {d.trending.length ? (
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Trending repos table">
-          <table>
-            <caption class="sr-only">Trending text-generation repos on Hugging Face</caption>
-            <thead><tr><th scope="col">#</th><th scope="col">Repo</th><th scope="col" class="num"><span aria-hidden="true">♥</span><span class="sr-only">Likes</span></th><th scope="col" class="num">DLs</th><th scope="col" class="num">Age</th></tr></thead>
-            <tbody>
-              {d.trending.map((t, i) => (
-                <tr>
-                  <td class="muted">{i + 1}</td>
-                  <td class="repo"><a href={t.url} target="_blank" rel="noopener">{t.id}</a></td>
-                  <td class="num glow-m">{num(t.likes)}</td>
-                  <td class="num muted">{num(t.downloads)}</td>
-                  <td class="num muted">{ago(t.createdAt, now).replace(' ago', '')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <ol class="trend-list">
+            {d.trending.slice(0, TRENDING_SHOWN).map((t, i) => (
+              <li class="trend">
+                <span class="t-rank">{i + 1}</span>
+                <a class="repo" href={t.url} target="_blank" rel="noopener">{t.id}</a>
+                <span class="t-meta"><span class="t-likes">{num(t.likes)}<span class="sr-only"> likes</span><span aria-hidden="true"> ♥</span></span> <span class="muted">{num(t.downloads)} DLs · {ago(t.createdAt, now).replace(' ago', '')}</span></span>
+              </li>
+            ))}
+          </ol>
+          {d.trending.length > TRENDING_SHOWN && (
+            <details class="fold">
+              <summary class="fold-summary">{d.trending.length - TRENDING_SHOWN} MORE REPOS</summary>
+              <ol class="trend-list" start={TRENDING_SHOWN + 1}>
+                {d.trending.slice(TRENDING_SHOWN).map((t, i) => (
+                  <li class="trend">
+                    <span class="t-rank">{i + TRENDING_SHOWN + 1}</span>
+                    <a class="repo" href={t.url} target="_blank" rel="noopener">{t.id}</a>
+                    <span class="t-meta"><span class="t-likes">{num(t.likes)}<span class="sr-only"> likes</span><span aria-hidden="true"> ♥</span></span> <span class="muted">{num(t.downloads)} DLs · {ago(t.createdAt, now).replace(' ago', '')}</span></span>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )}
+        </>
       ) : <p class="empty">{sourceOk(d.sources, SOURCE.hfTrending) ? 'Nothing trending right now.' : 'Hugging Face unreachable.'}</p>}
       {(papers.length > 0 || !papersUp) && (
         <>
           <div class="panel-head sub-head">
-            <h2><span aria-hidden="true">§</span>PAPERS OF THE DAY</h2>
+            <h2>Papers of the day</h2>
             <span class={`pill ${pills.papers.tone}`} title={pills.papers.title} data-source-pill data-stale-at={pills.papers.staleAt} data-stale-text={pills.papers.staleText}>{pills.papers.text}</span>
           </div>
           {papers.length ? (
             <ul class="list papers">
-              {papers.map((p) => <li><span class="glow-y">▲{p.upvotes}</span> <a href={p.url} target="_blank" rel="noopener">{p.title}</a></li>)}
+              {papers.map((p) => <li><span class="up">▲{p.upvotes}</span> <a href={p.url} target="_blank" rel="noopener">{p.title}</a></li>)}
             </ul>
           ) : <p class="empty">Hugging Face papers unreachable.</p>}
         </>
       )}
-    </div>
+    </div>}
   </div>
 </section>
 <style>
-  .landed { white-space: nowrap; }
-  .repo { overflow-wrap: anywhere; }
-  .papers { font-size: var(--fs-md); }
-  .drop-list { list-style: none; margin: 0; padding: 0; }
-  .drop-stack { display: none; }
-  /* UI-10: on a phone the five-column table cut off its price column; stacked rows keep every field. */
-  @media (max-width: 480px) {
-    .drop-table { display: none; }
-    .drop-stack { display: block; }
+  .drops { scroll-margin-top: 16px; }
+  .dr-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .show-listings .dr-grid, .show-open .dr-grid { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 960px) {
+    .dr-grid { grid-template-columns: minmax(0, 1fr); }
   }
+  .drop-list { list-style: none; margin: 0; padding: 0; }
+  .drop-cols { display: none; }
+  /* Wide enough for columns: the stacked rows line up as a table, with a header to match. */
+  @media (min-width: 700px) {
+    .drop-cols { display: grid; grid-template-columns: 76px minmax(0, 1fr) 176px 64px 104px; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); color: var(--ink-2); font-size: var(--fs-pill); }
+  }
+  .trend-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+  .trend { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
+  .t-rank { grid-row: span 2; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 22px; line-height: 1; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .repo { overflow-wrap: anywhere; font-size: var(--fs-md); text-decoration: none; }
+  .repo:hover { text-decoration: underline; }
+  .t-meta { font-size: var(--fs-xs); color: var(--ink-2); }
+  .t-likes { color: var(--ink); }
+  .papers { font-size: var(--fs-sm); line-height: 1.4; border-top: 1px solid var(--ink); }
+  .papers li { padding: 10px 0; }
+  .papers a { text-decoration: none; }
+  .papers a:hover { text-decoration: underline; }
+  .up { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 700; margin-right: 6px; color: var(--ink-2); }
 </style>

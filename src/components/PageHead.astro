@@ -1,0 +1,57 @@
+---
+/**
+ * A page's station sign: the black band under an inset white rule, the page's name, the one line
+ * that says what the page is for, and on the right the page's one anchored fact, set like a
+ * departure board (`fact`: a big figure over a small caption, with an optional bullet). Optional
+ * slotted content (a source pill, a count) sits under the intro.
+ */
+interface Props {
+  title: string;
+  intro: string;
+  /** The heading's id, for aria-labelledby. */
+  id?: string;
+  /** A small label over the name ("Line", "Notices"…). */
+  kicker?: string;
+  /** The page's anchored fact: a figure, its caption, and where it links. */
+  fact?: { figure: string; unit?: string; caption: string; href?: string };
+}
+const { title, intro, id = 'page-title', kicker, fact } = Astro.props;
+const Fact = fact?.href ? 'a' : 'div';
+---
+<div class="sign page-sign">
+  <div class:list={['wrap', { 'has-fact': fact }]}>
+    <div class="ph-main">
+      {kicker && <p class="label kicker">{kicker}</p>}
+      <h1 id={id}>{title}</h1>
+      <p class="intro">{intro}</p>
+      {Astro.slots.has('default') && <div class="page-meta"><slot /></div>}
+    </div>
+    {fact && (
+      <Fact class="ph-fact" href={fact.href}>
+        <span class="ph-fig"><slot name="bullet" /><b class="mono">{fact.figure}</b>{fact.unit && <small>{fact.unit}</small>}</span>
+        <span class="ph-cap">{fact.caption}</span>
+      </Fact>
+    )}
+  </div>
+</div>
+<style>
+  .kicker { margin-top: var(--s4); }
+  .kicker + h1 { margin-top: var(--s2); }
+  .page-meta { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin-top: var(--s4); }
+  .has-fact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s6) var(--s8); align-items: end; }
+  /* The fact sits on the right like the board's odds: a rule on its left, the figure large. */
+  .ph-fact { display: grid; justify-items: start; gap: var(--s2); min-width: 220px; padding-left: var(--s6); border-left: 2px solid var(--sign-ink); color: var(--sign-ink); text-decoration: none; }
+  a.ph-fact:hover { text-decoration: none; }
+  a.ph-fact:hover .ph-cap { text-decoration: underline; text-underline-offset: 3px; }
+  .ph-fig { display: flex; align-items: center; gap: var(--s3); }
+  .ph-fig b { font-family: var(--sans); font-variant-numeric: proportional-nums; font-size: var(--t-3xl); line-height: 64px; font-weight: 700; letter-spacing: -0.04em; }
+  .ph-fig small { align-self: flex-end; margin-bottom: 8px; margin-left: -6px; font-size: var(--t-lg); line-height: 32px; font-weight: 700; }
+  .ph-cap { max-width: 22ch; text-wrap: balance; font-size: var(--t-base); line-height: 24px; color: var(--sign-ink-2); }
+  @media (max-width: 900px) {
+    .has-fact { grid-template-columns: minmax(0, 1fr); }
+    .ph-fact { min-width: 0; padding-left: 0; padding-top: var(--s4); border-left: 0; border-top: 2px solid var(--sign-ink); grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--s4); }
+    .ph-fig b { font-size: var(--t-2xl); line-height: 52px; }
+    .ph-fig small { font-size: var(--t-md); line-height: 28px; margin-bottom: 4px; }
+    .ph-cap { max-width: none; }
+  }
+</style>

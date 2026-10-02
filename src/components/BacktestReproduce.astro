@@ -45,8 +45,11 @@ pnpm backtest --refresh  # re-pull Gamma, CLOB, HN and OpenRouter first</code></
   </div>
 </div>
 <style>
-  p { margin-bottom: 10px; max-width: 70ch; }
-  pre { background: rgba(0, 0, 0, 0.45); border: 1px solid var(--line); padding: 10px 12px; overflow-x: auto; font-size: 17px; line-height: 1.3; margin: 0 0 10px; }
-  pre code { color: var(--green); white-space: pre; }
-  .files li { padding: 3px 0; }
+  .grid > div { min-width: 0; }
+  p { margin-bottom: var(--s3); max-width: 70ch; font-size: var(--t-sm); line-height: 20px; }
+  /* Long commands wrap inside the column instead of pushing the page sideways. */
+  pre { background: var(--paper-2); border: 1px solid var(--rule-soft); padding: var(--s3); font-size: var(--t-xs); line-height: 18px; margin: 0 0 var(--s3); white-space: pre-wrap; overflow-wrap: anywhere; }
+  pre code { color: var(--ink); white-space: inherit; background: none; padding: 0; }
+  .files { font-size: var(--t-sm); }
+  .files li { padding: var(--s1) 0; overflow-wrap: anywhere; }
 </style>

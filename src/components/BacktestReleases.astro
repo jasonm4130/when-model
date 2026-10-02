@@ -90,7 +90,7 @@ const rungLabel = (s: SeriesCrossings) =>
 </p>
 <style>
   .releases { min-width: 980px; }
-  .releases th[scope='row'] { color: #fff; white-space: nowrap; position: sticky; left: 0; z-index: 1; background: #0e0c1f; }
+  .releases th[scope='row'] { color: var(--ink); white-space: nowrap; position: sticky; left: 0; z-index: 1; background: var(--paper); }
   .lab { display: block; font-size: var(--fs-xs); }
   @media (max-width: 720px) {
     .releases th[scope='row'] { white-space: normal; min-width: 8em; max-width: 9em; }
@@ -98,8 +98,8 @@ const rungLabel = (s: SeriesCrossings) =>
   .num-inline { display: block; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .src { display: block; font-size: var(--fs-xs); }
   .ctx { display: block; font-size: var(--fs-xs); color: var(--text); margin-top: 2px; max-width: 42ch; }
-  .tag.pre-announced { color: var(--cyan); }
-  .tag.pre-leak { color: var(--yellow); }
+  .tag.pre-announced { color: var(--ink); }
+  .tag.pre-leak { color: var(--ink); border-color: var(--ink); font-weight: 700; }
   .tag.pre-none { color: var(--muted); }
   .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 90ch; }
 </style>

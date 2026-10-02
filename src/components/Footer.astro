@@ -1,58 +1,92 @@
 ---
-import { SOURCE } from '../domain/sources';
+/**
+ * Every page's foot: the one-line disclaimer and a link to the full one, when the data was made and
+ * when the page checks again, the network's bullets as a map of every line, and the way on.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { LABS } from '../domain/lab';
+import { dayLabel } from '../ui/departures';
+import { labPath } from '../ui/site';
+import Bullet from './Bullet.astro';
 interface Props {
   /** When the data on this page was produced: the dashboard build, or the backtest's raw pulls. */
   generatedAt: string;
-  /** `backtest` links back to the dashboard and says how to rebuild the page's data. */
+  /** `backtest` says how to rebuild the page's data. */
   variant?: 'dashboard' | 'backtest';
+  /** The dashboard, for the counts and the refresh countdown. */
+  d?: Dashboard;
+  /** The one-line disclaimer; /about prints the full one just above, so it leaves this out. */
+  note?: boolean;
 }
-const { generatedAt, variant = 'dashboard' } = Astro.props;
+const { generatedAt, variant = 'dashboard', d, note = true } = Astro.props;
 const REPO = 'https://github.com/jasonm4130/when-model';
-/** Every upstream in `SOURCE` needs a home here, or this stops type-checking. The first-seen ledger is our own D1. */
-type Upstream = Exclude<keyof typeof SOURCE, 'ledger'>;
-const HOME: Readonly<Record<Upstream, string>> = {
-  polymarket: 'https://polymarket.com?utm_source=whenmodel.com',
-  openrouter: 'https://openrouter.ai/models',
-  hfTrending: 'https://huggingface.co/models?pipeline_tag=text-generation&sort=trending',
-  hfPapers: 'https://huggingface.co/papers',
-  hackerNews: 'https://news.ycombinator.com',
-  openai: 'https://openai.com/news/',
-  deepmind: 'https://deepmind.google/discover/blog/',
-  anthropic: 'https://www.anthropic.com/news',
-  xai: 'https://docs.x.ai/developers/release-notes',
-  // Three SDK repos; the adapter lists which.
-  github: `${REPO}/blob/main/src/adapters/github-releases.ts`,
-  hnLaunches: 'https://hn.algolia.com',
-  hnLeaks: 'https://hn.algolia.com',
-  testingCatalog: 'https://www.testingcatalog.com',
-  youtube: 'https://www.youtube.com',
-  transformers: 'https://github.com/huggingface/transformers',
-};
-const upstreams = (Object.keys(HOME) as Upstream[]).map((key) => ({ name: SOURCE[key], href: HOME[key] }));
-const stamp = generatedAt.replace('T', ' ').slice(0, variant === 'backtest' ? 16 : 19);
+/** The client polls /api/dashboard.json on this cadence; the Header's script runs the countdown. */
+const REFRESH_SECONDS = 300;
+const t = Date.parse(generatedAt);
+// The backtest cites its pull to the minute, as the raw files name it; a dashboard build to the second.
+const stamp = !Number.isFinite(t)
+  ? generatedAt
+  : variant === 'backtest'
+    ? `${generatedAt.replace('T', ' ').slice(0, 16)}Z`
+    : `${dayLabel(t, t, false)} ${generatedAt.slice(11, 19)}Z`;
+const ok = d ? d.sources.filter((s) => s.ok).length : 0;
 ---
-<footer class="wrap foot reveal">
-  <div class="panel disclaimer">
-    <div class="tiny glow-y">OPERATIONAL DISCLAIMER</div>
-    <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly. <span aria-hidden="true">▼</span></p>
-    <p class="sources"><span class="tiny muted">SOURCES</span> {upstreams.map((u, i) => <><span class="src-item"><a href={u.href} target="_blank" rel="noopener">{u.name}</a>{i < upstreams.length - 1 && <span aria-hidden="true"> ·</span>}</span> </>)}</p>
-  </div>
-  <div class="foot-row">
-    {variant === 'backtest' ? (
-      <span class="muted"><a href="/">◂ DASHBOARD</a> · DATA PULLED {stamp}Z · REPRODUCE: <a href="#reproduce"><code>pnpm backtest</code></a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
-    ) : (
-      <span class="muted">GENERATED {stamp}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a> · <a href="/backtest">backtest</a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
-    )}
-    <span class="muted">whenmodel.com · built on Astro + Cloudflare Workers</span>
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div>
+      <p class="foot-title">Crowd opinion, not a timetable.</p>
+      {note && <p class="foot-note">For information and entertainment only. The level is a hand-weighted lead score read from Polymarket odds; odds are crowd opinion, not lab roadmaps, and whenmodel is not affiliated with any line. <a href="/about#disclaimer">The full disclaimer and every source</a>.</p>}
+      {variant === 'backtest' ? (
+        <p class="foot-meta mono">Data pulled {stamp} · reproduce: <a href="#reproduce"><code>pnpm backtest</code></a></p>
+      ) : (
+        <>
+          {d && <p class="foot-meta mono counts">{d.labs.length} lines · {ok}/{d.sources.length} sources · {d.markets.length} markets</p>}
+          <p class="foot-meta mono foot-sync">
+            <span class="sync">Updated <span data-synced={generatedAt}>{stamp}</span> · next check <span class="next" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
+            {d && <button type="button" class="refresh-toggle" data-refresh-toggle aria-pressed="false"><span data-refresh-verb>PAUSE</span> AUTO-REFRESH</button>}
+          </p>
+        </>
+      )}
+    </div>
+    <div>
+      <p class="label">All lines</p>
+      <div class="map">
+        {LABS.map((l) => <Bullet id={l.id} name={l.name} size="lg" href={labPath(l.id)} />)}
+      </div>
+      <nav class="links" aria-label="More">
+        <a href="/markets">Markets</a><a href="/radar">Radar</a><a href="/about#score">How it works</a><a href="/backtest">Backtest</a><a href="/api/dashboard.json">dashboard.json</a>
+      </nav>
+      <p class="tag-line">Intel by the weights. Watching the labs so you don't have&nbsp;to. <a class="keep" href={REPO} target="_blank" rel="noopener">Source on GitHub</a></p>
+    </div>
   </div>
 </footer>
 <style>
-  .foot { margin: 30px auto 40px; }
-  .disclaimer p { margin: 8px 0 0; font-size: var(--fs-md); color: var(--muted); }
-  .disclaimer .sources { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line2); font-size: var(--fs-sm); }
-  .sources .tiny { margin-right: 6px; }
-  /* A separator trails its name so a wrapped line never starts with one. */
-  .src-item { white-space: nowrap; }
-  .foot-row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: var(--fs-sm); }
-  .foot-row code { font-family: var(--font-mono); color: var(--yellow); }
+  .foot { border-top: 2px solid var(--rule); }
+  .foot-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s8); padding-top: var(--s6); padding-bottom: var(--s7); }
+  .foot-title { font-size: var(--t-md); line-height: 28px; font-weight: 800; letter-spacing: -0.01em; }
+  .foot-note { max-width: 60ch; margin-top: var(--s2); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .foot-meta { margin-top: var(--s4); font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
+  .foot-meta .next, .foot-meta span[data-synced] { color: var(--ink); }
+  .counts + .foot-sync { margin-top: var(--s1); }
+  /* The sync line and the pause it governs share a row; the button keeps its 44px target without spacing the text. */
+  .foot-sync { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s4); }
+  .foot-sync .refresh-toggle { margin: -14px 0 -14px calc(-1 * var(--s1)); }
+  /* The page's one control sits with the refresh it pauses (the Header's script drives it). */
+  .refresh-toggle { min-height: 44px; min-width: 44px; padding: 0 var(--s1); background: none; border: 0; cursor: pointer; font-family: var(--sans); font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--rule-soft); }
+  .refresh-toggle:hover { text-decoration-color: currentColor; }
+  .refresh-toggle[aria-pressed='true'] { background: var(--notice); text-decoration: none; padding: 0 var(--s2); }
+  .label { color: var(--ink); }
+  .map { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+  .map :global(.b) { --d: 36px; }
+  .links { display: flex; flex-wrap: wrap; gap: 0 var(--s4); margin-top: var(--s4); font-size: var(--t-sm); line-height: 20px; font-weight: 500; }
+  .links a { display: inline-flex; align-items: center; min-height: 32px; }
+  .tag-line { margin-top: var(--s3); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  @media (max-width: 900px) {
+    .foot-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+  }
+  /* All ten lines on one row down to a 320px phone: never eight and a stray two. */
+  @media (max-width: 480px) {
+    .map { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--s1); justify-items: center; }
+    .map :global(.b) { --d: min(30px, calc((100vw - 2 * var(--gutter) - 9 * var(--s1)) / 10)); }
+  }
 </style>

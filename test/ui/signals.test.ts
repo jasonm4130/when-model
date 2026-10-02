@@ -7,6 +7,7 @@ import {
   EARLY_WARNING_SOURCES,
   LANDED_SOURCES,
   TRACK_LINES,
+  arrivalBoard,
   daysShort,
   hoursAgo,
   leadFlags,
@@ -23,18 +24,18 @@ describe('lead flags', () => {
         label: 'LEAK ×2',
         detail:
           'OpenAI tests GPT-6.1 ahead of release (TestingCatalog); GPT-6.1 spotted in the API (Hacker News)',
-        href: '#ew-leaks',
+        href: '/radar#ew-leaks',
       },
       {
         kind: 'stream',
         label: 'STREAM 5H',
         detail: 'OpenAI: OpenAI DevDay 2026 keynote',
-        href: '#ew-streams',
+        href: '/radar#ew-streams',
       },
-      { kind: 'keynote', label: 'KEYNOTE 70H', detail: 'OpenAI DevDay 2026', href: '#ew-events' },
+      { kind: 'keynote', label: 'KEYNOTE 70H', detail: 'OpenAI DevDay 2026', href: '/radar#ew-events' },
     ]);
     expect(leadFlags(w, 'qwen')).toEqual([
-      { kind: 'arch', label: 'ARCH', detail: 'qwen4_exp, 31d pending', href: '#ew-arch' },
+      { kind: 'arch', label: 'ARCH', detail: 'qwen4_exp, 31d pending', href: '/radar#ew-arch' },
     ]);
     expect(leadFlags(w, 'anthropic')).toEqual([]);
   });
@@ -103,5 +104,76 @@ describe('row ages', () => {
     expect(hoursAgo(50)).toBe('2d ago');
     expect(daysShort(2.61)).toBe('2.6d');
     expect(daysShort(31.2)).toBe('31d');
+  });
+});
+
+describe('arrivalBoard', () => {
+  const release = (name: string, ids: string[], at: string) => ({
+    id: `${ids[0]}@${at}`,
+    lab: 'Anthropic',
+    labId: 'anthropic' as const,
+    name,
+    firstListedAt: at,
+    hoursAgo: 1,
+    models: ids.map((id) => ({ id, name, url: `https://openrouter.ai/${id}` })) as never,
+  });
+  const post = (title: string, modelIds: string[], seenAt: string) => ({
+    source: 'anthropic' as const,
+    title,
+    url: `https://anthropic.com/${modelIds[0] ?? 'x'}`,
+    publishedAt: seenAt,
+    seenAt,
+    precision: 'instant' as const,
+    modelIds,
+  });
+  const story = (title: string, modelIds: string[], score: number, at: string) => ({
+    title,
+    url: `https://news.ycombinator.com/${title.length}`,
+    score,
+    publishedAt: at,
+    modelIds,
+  });
+
+  it('lists a launch once, with its listing, its post and the story that names its tail', () => {
+    const board = arrivalBoard({
+      releases: [release('Claude Sonnet 5.5', ['anthropic/claude-sonnet-5.5'], '2026-09-28T18:04:00Z')],
+      announcements: [post('Introducing Claude Sonnet 5.5', ['claude-sonnet-5.5'], '2026-09-28T17:00:00Z')],
+      stories: [
+        story('Sonnet 5.5', ['sonnet-5.5'], 883, '2026-09-28T19:00:00Z'),
+        story('Gemini 4 Argon', ['gemini-4'], 1656, '2026-09-30T10:00:00Z'),
+      ],
+    });
+    expect(board.map((a) => [a.name, a.sightings.map((s) => s.label)])).toEqual([
+      // A story no listing claims stands alone, and the newest arrival leads.
+      ['Gemini 4 Argon', ['HN']],
+      ['Claude Sonnet 5.5', ['OPENROUTER', 'ANTHROPIC POST', 'HN']],
+    ]);
+    expect(board[1].url).toBe('https://openrouter.ai/anthropic/claude-sonnet-5.5');
+    expect(board[1].sightings[2].title).toBe('883 points on Hacker News');
+    // A story no listing claims still rides its line, from the model it names.
+    expect(board[0].labId).toBe('google');
+  });
+
+  it('tags a launch post and the story that links that same post', () => {
+    const p = post('Introducing Claude Sonnet 5.5', ['claude-sonnet-5.5'], '2026-09-28T17:00:00Z');
+    const board = arrivalBoard({
+      releases: [release('Claude Sonnet 5.5', ['anthropic/claude-sonnet-5.5'], '2026-09-28T18:04:00Z')],
+      announcements: [p],
+      stories: [
+        { ...story('Claude Sonnet 5.5', ['claude-sonnet-5.5'], 883, '2026-09-28T19:00:00Z'), url: p.url },
+      ],
+    });
+    expect(board.map((a) => a.sightings.map((s) => s.label))).toEqual([
+      ['OPENROUTER', 'ANTHROPIC POST', 'HN'],
+    ]);
+  });
+
+  it('never folds a sibling into a release whose ids do not end with it', () => {
+    const board = arrivalBoard({
+      releases: [release('GPT-6.1 Sol Pro', ['openai/gpt-6.1-sol-pro'], '2026-09-29T17:28:00Z')],
+      announcements: [],
+      stories: [story('GPT 6.1 Sol', ['gpt-6.1-sol'], 1061, '2026-09-29T18:00:00Z')],
+    });
+    expect(board).toHaveLength(2);
   });
 });
