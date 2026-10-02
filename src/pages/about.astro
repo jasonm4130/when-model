@@ -14,11 +14,16 @@ const d = await loadDashboard();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'about' } as const;
 const meta = pageMeta(view);
+const c = d.dropcon;
+const fact =
+  c.state === 'ok'
+    ? { figure: String(c.score), unit: '/100', caption: `lead score now: level ${c.level}, ${c.name}`, href: '#score' }
+    : undefined;
 ---
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="How the service works" kicker="About" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." />
+    <PageHead title="How the service works" kicker="About" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." fact={fact} />
     <div class="wrap page-body">
       <ScoreDetail d={d} />
       <History />

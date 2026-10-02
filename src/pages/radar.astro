@@ -13,11 +13,17 @@ const d = await loadDashboard();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'radar' } as const;
 const meta = pageMeta(view);
+const unmarked = d.earlyWarnings.stealth.items.length;
+const w = d.earlyWarnings;
+const warnings = w.stealth.items.length + w.leaks.items.length + w.broadcasts.items.length + w.architectures.items.length + w.events.items.length;
+const fact = unmarked
+  ? { figure: String(unmarked), caption: `unmarked train${unmarked === 1 ? '' : 's'} on the network, no operator shown`, href: '#ew-stealth' }
+  : { figure: String(warnings), caption: `early warning${warnings === 1 ? '' : 's'} posted, none scored`, href: '#warnings' };
 ---
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="Service notices" kicker="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." />
+    <PageHead title="Service notices" kicker="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." fact={fact} />
     <div class="wrap page-body">
       <Signals d={d} />
       <Drops d={d} />
