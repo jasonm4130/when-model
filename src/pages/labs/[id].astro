@@ -32,11 +32,11 @@ const rank = p?.status ? d!.labs.indexOf(p.status) + 1 : 0;
             <Bullet id={p.lab.id} name={p.lab.name} size="xl" decorative />
             <div class="names">
               <p class="line-name" aria-hidden="true">{lineName(p.lab.name)}</p>
-              {p.status && <span class="chip mono">{p.status.status} · heat {p.status.heat}</span>}
+              {p.status && <span class="chip mono">{p.status.status}</span>}
             </div>
             <div class="q">
               <h1 id="page-title">When will {p.lab.name} ship?</h1>
-              <p>What Polymarket prices for its next release. Crowd opinion, not a roadmap.</p>
+              <p>What Polymarket prices for its next release.</p>
             </div>
           </div>
         </div>

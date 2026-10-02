@@ -22,8 +22,6 @@ import {
   readSentence,
   stripStops,
   timetableState,
-  windowText,
-  boardingWindow,
 } from '../ui/departures';
 import { lineBullet } from '../ui/lines';
 import FeedRow from './FeedRow.astro';
@@ -61,9 +59,7 @@ const stopSub = (s: (typeof stops)[number]) =>
   s.kind === 'now'
     ? dayLabel(s.day, built)
     : s.kind === 'tick'
-      ? s.horizon === '7 days'
-        ? `${dayLabel(s.day, built)} · the ${pct(l!.odds!.p7.p)}`
-        : dayLabel(s.day, built)
+      ? dayLabel(s.day, built)
       : s.horizon
         ? `market stop · ${s.horizon}`
         : 'market stop';
@@ -97,7 +93,6 @@ const stopSub = (s: (typeof stops)[number]) =>
       <p class="src">
         Chance the service has departed by each stop.{' '}
         {headMarket ? <>Polymarket, <a href={headMarket.url} target="_blank" rel="noopener">{headMarket.title}</a>, {usd(headMarket.vol24)} traded in 24h.</> : 'Polymarket.'}
-        {rungs.length > 0 && <> Window {windowText(boardingWindow(rungs), built)}.</>}
         {l.launchedFamilies.length > 0 && <> Left out, just launched: {l.launchedFamilies.join(', ')}.</>}
         {' '}<Pill pill={pill} />
       </p>

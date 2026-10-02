@@ -20,7 +20,7 @@ const traded = d.markets.reduce((sum, m) => sum + (m.vol24 || 0), 0);
     <PageHead
       title="Markets"
       kicker="Polymarket"
-      intro="Every release market on Polymarket, by line: what traders will pay to be right about a launch date. Crowd opinion, not a roadmap."
+      intro="Every release market on Polymarket, by line: what traders will pay to be right about a launch date."
       fact={d.markets.length ? { figure: usd(traded), caption: `traded in 24 hours across ${d.markets.length} markets` } : undefined}
     />
     <div class="wrap page-body">
