@@ -20,7 +20,7 @@ const range = (b: { top: number; bottom: number }) =>
   <div class="panel-head"><h2 id="score-title">How the score adds up</h2></div>
   <div class="dc-cols">
     <div>
-      <p class="dc-now">{ok ? <>Right now: <b>{c.score}</b> of 100, level {c.level}, {dropconName(c)}.</> : <>Right now: {dropconName(c)}. {c.state === 'floor' ? 'With the odds offline the level holds a floor and is not a measurement.' : 'With the odds and listings both down there is no reading.'}</>}</p>
+      {!ok && <p class="dc-now">Right now: {dropconName(c)}. {c.state === 'floor' ? 'With the odds offline the level holds a floor and is not a measurement.' : 'With the odds and listings both down there is no reading.'}</p>}
       <ul class="dc-drivers" aria-label="How the score adds up">
         {c.provenance.map((row) => (
           <li>

@@ -1,14 +1,24 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * The home page: the service status posts the level, the station sign names the next departure,
- * and "Service history · last 7 days" is the level's week. The plot is a server-rendered picture
- * with a summary; the script makes it a slider whose readout names each hour. The posted level is
- * NOW, always: scrubbing writes to the readout, never to the status or the sign.
+ * The home page: the service status posts the level and the station sign names the next departure.
+ * "Service history · last 7 days", the level's week, sits on /about under how the score adds up.
+ * The plot is a server-rendered picture with a summary; the script makes it a slider whose readout
+ * names each hour. The posted level is NOW, always: scrubbing writes to the readout, never to the
+ * page's figure or its lit band.
  */
 async function openDashboard(page: Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
+  await expect(page.locator('.sc-plot')).toHaveCount(0);
+}
+
+const HISTORY_PATH = '/about';
+/** /about's posted level: the lit band beside the arithmetic. */
+const POSTED = '.bands li.on b';
+
+async function openHistory(page: Page) {
+  await page.goto(HISTORY_PATH, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.getByRole('heading', { name: 'Service history · last 7 days' })).toBeVisible();
   await expect(page.locator('.sc-plot')).toHaveAttribute('role', 'slider');
 }
@@ -20,7 +30,7 @@ async function withScopeData(
   html: (body: string) => string = (body) => body,
 ) {
   await page.route(
-    (url) => url.pathname === '/',
+    (url) => url.pathname === HISTORY_PATH,
     async (route) => {
       const res = await route.fetch();
       const body = html(await res.text()).replace(/data-scope="([^"]*)"/, (_, raw: string) => {
@@ -106,21 +116,17 @@ for (const { width, height, parts } of [
 }
 
 for (const width of [390, 1024, 1440]) {
-  test(`the status sits above the plot, which takes the width, and a NOW tag marks the edge (${width}px)`, async ({
-    page,
-  }) => {
+  test(`the plot takes the width, and a NOW tag marks the edge (${width}px)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await openDashboard(page);
-    const status = (await page.locator('.ss').boundingBox())!;
+    await openHistory(page);
     const plot = (await page.locator('.sc-plot').boundingBox())!;
-    expect(status.y + status.height).toBeLessThan(plot.y);
     expect(plot.width).toBeGreaterThan(width * 0.7);
     const dot = await page.locator('.sc-dot').boundingBox();
     test.skip(!dot, 'no live reading today');
     const tag = (await page.locator('.sc-nowtag').boundingBox())!;
     await expect(page.locator('.sc-nowtag')).toHaveText(/^NOW \d$/);
-    await expect(page.locator('.sc-nowtag b')).toHaveText((await page.locator('.ss-num').textContent())!);
+    await expect(page.locator('.sc-nowtag b')).toHaveText((await page.locator(POSTED).textContent())!);
     expect(tag.x + tag.width).toBeLessThanOrEqual(plot.x + plot.width);
     expect(Math.abs(tag.x + tag.width - (dot!.x + dot!.width / 2))).toBeLessThan(24);
   });
@@ -129,9 +135,9 @@ for (const width of [390, 1024, 1440]) {
 test('scrubs with the keys, reads each hour into the readout, and never touches the posted level', async ({
   page,
 }) => {
-  await openDashboard(page);
+  await openHistory(page);
   const plot = page.locator('.sc-plot');
-  const num = page.locator('.ss-num');
+  const num = page.locator(POSTED);
   const when = page.locator('[data-r-when]');
   const rest = await num.textContent();
   await plot.focus();
@@ -172,7 +178,7 @@ test('ArrowLeft from NOW with the history offline does not report a score', asyn
     data.pts = [];
     delete data.recordFrom;
   });
-  await openDashboard(page);
+  await openHistory(page);
   const plot = page.locator('.sc-plot');
   await plot.focus();
   await expect(plot).toHaveAttribute('aria-valuetext', /^NOW, /);
@@ -190,7 +196,7 @@ test('ArrowLeft from NOW with the history offline does not report a score', asyn
 for (const width of [1440, 390]) {
   test(`hovering or tapping the NOW edge reads the live reading at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
+    await openHistory(page);
     await page.locator('.sc-plot').scrollIntoViewIfNeeded();
     const box = (await page.locator('.sc-plot').boundingBox())!;
     const y = box.y + box.height / 2;
@@ -214,7 +220,7 @@ test('hovering a launch names it in the readout and lights its mark; leaving res
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openDashboard(page);
+  await openHistory(page);
   const launch = await page.locator('[data-scope]').evaluate((el) => {
     const d = JSON.parse((el as HTMLElement).dataset.scope!) as {
       from: number;
@@ -245,23 +251,23 @@ test("an older version's hour reads as old scale, never as a number in the hero"
     const h = Math.floor((d.to - 30 * 3_600_000) / 3_600_000) * 3_600_000;
     d.pts = [['o', h, h + 3_600_000, 88, 0, 0, 2], ...d.pts.filter((p) => (p[1] as number) !== h)];
   });
-  await openDashboard(page);
-  const rest = await page.locator('.ss-num').textContent();
-  const eq = await page.locator('.ss-meta').textContent();
+  await openHistory(page);
+  const rest = await page.locator(POSTED).textContent();
+  const eq = await page.locator('.ph-fig').textContent();
   const plot = page.locator('.sc-plot');
   await plot.focus();
   for (let i = 0; i < 30; i++) await page.keyboard.press('ArrowLeft');
   await expect(page.locator('[data-r-what]')).toHaveText('v2 · old scale, not comparable');
   await expect(plot).not.toHaveAttribute('aria-valuetext', /88/);
-  await expect(page.locator('.ss-num')).toHaveText(rest!);
-  await expect(page.locator('.ss-meta')).toHaveText(eq!);
+  await expect(page.locator(POSTED)).toHaveText(rest!);
+  await expect(page.locator('.ph-fig')).toHaveText(eq!);
   await expect(page.locator('.sc-readout')).toHaveAttribute('data-tone', 'old');
 });
 
 test('names the chart for assistive tech, describes it once, and keeps a table of every reading', async ({
   page,
 }) => {
-  await openDashboard(page);
+  await openHistory(page);
   const plot = page.locator('.sc-plot');
   await expect(plot).toHaveAccessibleName(/^DROPCON history, last 7 days/);
   await expect(plot).toHaveAccessibleDescription(/^DROPCON history, the lead score over the last 7 days/);
@@ -274,25 +280,21 @@ test('names the chart for assistive tech, describes it once, and keeps a table o
 
 test('with reduced motion the sweep and the split-flap are gone and nothing animates', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const still = async (sels: string[]) => {
+    for (const sel of sels) {
+      const el = page.locator(sel).first();
+      if (!(await el.count())) continue;
+      expect(await el.evaluate((e) => getComputedStyle(e).animationName), sel).toBe('none');
+    }
+  };
   await openDashboard(page);
-  await expect(page.locator('.sc-sweep')).toBeHidden();
   // The destination is never split into letters to turn over: it is the server's text, whole.
   await page.waitForTimeout(800);
   await expect(page.locator('#next-title .c')).toHaveCount(0);
-  for (const sel of [
-    '.sc-ink',
-    '.sc-dot',
-    '.seg.on',
-    '.ss',
-    '.ss-num',
-    '#next-title',
-    '.sc-change',
-    '.sc-v3',
-  ]) {
-    const el = page.locator(sel).first();
-    if (!(await el.count())) continue;
-    expect(await el.evaluate((e) => getComputedStyle(e).animationName), sel).toBe('none');
-  }
+  await still(['.ss', '.ss-num', '#next-title']);
+  await openHistory(page);
+  await expect(page.locator('.sc-sweep')).toBeHidden();
+  await still(['.sc-ink', '.sc-dot', '.seg.on', '.sc-change', '.sc-v3']);
   expect(
     await page
       .locator('.sc-dot')
@@ -357,7 +359,7 @@ for (const width of [360, 390, 700, 768, 1024, 1440]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 800 });
-    await openDashboard(page);
+    await openHistory(page);
     await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     const report = await labelReport(page);
@@ -372,7 +374,7 @@ for (const width of [360, 390, 700, 768, 1024, 1440]) {
 test.describe('at 200% zoom (1440x900 is 720x450 CSS pixels)', () => {
   test.use({ viewport: { width: 720, height: 450 }, deviceScaleFactor: 2 });
   test('the day axis and the plot labels do not collide, and the reading is whole', async ({ page }) => {
-    await openDashboard(page);
+    await openHistory(page);
     await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
     const report = await labelReport(page);
     expect(report.clash).toEqual([]);
@@ -391,7 +393,7 @@ for (const width of [360, 390]) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     // With the history offline, a phone's card fills the plot and the names give way to it.
     await withRecordedHistory(page);
-    await openDashboard(page);
+    await openHistory(page);
     await page.addInitScript(() => {
       Object.defineProperty(FontFaceSet.prototype, 'ready', { get: () => new Promise(() => {}) });
     });
@@ -415,7 +417,7 @@ for (const width of [360, 390]) {
 for (const width of [768, 1024, 1280]) {
   test(`the readout shows the reading whole at ${width}px; the hint gives way`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
+    await openHistory(page);
     const what = page.locator('.sc-what');
     const clipped = () => what.evaluate((e) => e.scrollWidth - e.clientWidth);
     expect(await clipped()).toBeLessThanOrEqual(1);
@@ -435,7 +437,7 @@ for (const width of [768, 1024, 1280]) {
 test.describe('on a touch phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   test('the readout carries a tap hint, gone after the first tap', async ({ page }) => {
-    await openDashboard(page);
+    await openHistory(page);
     const hint = page.locator('[data-hint]');
     await expect(hint).toBeVisible();
     await expect(hint).toHaveText(/TAP OR DRAG/);

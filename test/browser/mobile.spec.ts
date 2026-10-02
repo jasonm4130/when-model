@@ -104,10 +104,11 @@ async function pollOnce(page: Page) {
  * Open with a fake clock, then pause it: a running clock lets the page's 5-second idle check fire on
  * its own between two steps of a test, which would make "has it reloaded yet?" a race.
  */
-async function openWithClock(page: Page) {
+async function openWithClock(page: Page, path = '/') {
   await page.clock.install({ time: Date.now() });
   await page.setViewportSize({ width: 1280, height: 900 });
-  await openDashboard(page);
+  if (path === '/') await openDashboard(page);
+  else await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await page.waitForLoadState('load');
   await page.clock.pauseAt(Date.now() + 1_000);
 }
@@ -215,12 +216,13 @@ test.describe('polling refresh (UI-11)', () => {
   test('does not auto-reload while a details panel is open or a control has focus', async ({ page }) => {
     await serveChangedDashboard(page);
     const loadCount = countLoads(page);
-    await openWithClock(page);
+    // /about shows the level too, and its instrument's hourly table is a fold to hold open.
+    await openWithClock(page, '/about');
 
     await pollOnce(page); // new data arrives
     await expect(page.locator('[data-reload-status] .pill')).toBeVisible();
 
-    const details = page.locator('details.sc-table'); // the instrument's hourly table: the one fold on the home page
+    const details = page.locator('details.sc-table');
     await details.locator('summary').click();
     await expect(details).toHaveJSProperty('open', true);
 

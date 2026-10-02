@@ -148,11 +148,12 @@ describe('the pages', () => {
     expect(titles.size).toBe(5);
   });
 
-  it('reads the history only on the page that draws the chart', async () => {
-    const home = await render('/');
-    expect(home.history).toHaveBeenCalledTimes(1);
-    expect(home.html).toContain('data-plot');
-    for (const path of ['/labs', '/markets', '/radar', '/about']) {
+  it('reads the history only on the page that draws the chart: /about, not the home page', async () => {
+    const about = await render('/about');
+    expect(about.history).toHaveBeenCalledTimes(1);
+    expect(about.html).toContain('data-plot');
+    expect(about.html).toContain('id="service-history"');
+    for (const path of ['/', '/labs', '/markets', '/radar']) {
       vi.resetModules();
       const page = await render(path);
       expect(page.history).not.toHaveBeenCalled();
@@ -161,17 +162,15 @@ describe('the pages', () => {
   });
 
   it('says in one line, with no chart, that the history is offline or has no readings yet', async () => {
-    const off = await render('/', undefined, () => ({ ok: false, points: [] }));
+    const off = await render('/about', undefined, () => ({ ok: false, points: [] }));
     expect(off.html).not.toContain('data-plot');
     expect(off.html).not.toContain('Service history · last 7 days');
-    expect(off.html).toMatch(
-      /class="history-off"[^>]*>\s*Service history is offline; the level above is live\./,
-    );
+    expect(off.html).toMatch(/class="history-off"[^>]*>\s*Service history is offline; the level is live\./);
     vi.resetModules();
-    const empty = await render('/', undefined, () => ({ ok: true, points: [] }));
+    const empty = await render('/about', undefined, () => ({ ok: true, points: [] }));
     expect(empty.html).not.toContain('data-plot');
-    expect(empty.html).toContain('Service history has no readings this week yet; the level above is live.');
-    expect(empty.html).toContain('href="/about#score"');
+    expect(empty.html).toContain('Service history has no readings this week yet; the level is live.');
+    expect(empty.html).toContain('href="#score"');
   });
 
   it('has the home page answer: the service status, the next departure, the other lines and the way on', async () => {
@@ -184,7 +183,8 @@ describe('the pages', () => {
     expect(board.untimed.length).toBe(d.labs.length);
     for (const l of board.untimed) expect(html).toContain(`href="/labs/${l.id}"`);
     expect(html).toContain('no timetable. Nobody is betting on these lines.');
-    expect(html).toContain('Service history · last 7 days');
+    // One bold moment: the level's week is drawn on /about, not here.
+    expect(html).not.toContain('Service history · last 7 days');
     for (const href of ['/labs', '/markets', '/radar', '/about#score'])
       expect(html).toContain(`href="${href}"`);
     // The rest of the old single page is gone from it.

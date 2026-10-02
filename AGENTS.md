@@ -26,7 +26,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   snapshot, score rollup and first-seen writes, then `src/app/capture-availability.ts`, the
   availability ledger, from the build's own source results (`buildCapture`) plus the cron-only
   sources. A page render never polls those: `test/app/load-dashboard.test.ts` pins its fetch count.
-- `src/domain/instrument.ts` draws "Service history · last 7 days" on the home page: `buildInstrument` turns the history, the live level
+- `src/domain/instrument.ts` draws "Service history · last 7 days" on /about, under how the score
+  adds up (the home page keeps one bold moment, the departure sign): `buildInstrument` turns the history, the live level
   and LANDED's launches into the 7-day trace, zones, level-change flags and scrubber data
   `DropconScope.astro` renders. It draws the last 7 days but reads the record's start, the current
   version's first hour and the last reading from the whole 30-day series it is given, so never
@@ -35,9 +36,10 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   (the scrubber's readout text) and `src/ui/labels.ts` (whole-or-nothing label placement) are pure
   and run both in the server render and in the component's browser script. The readout never
   gives a past hour the live reading, and scrubbing never changes the posted level.
-- Pages: `/` (the service status, the next departure, the departure board, arrivals and the chart, drawn only when the week has a reading, else one quiet line), `/labs`, `/labs/[id]` (one per registry lab; an unknown id
-  renders the 404 with a 404 status and no fetch), `/markets`, `/radar`, `/about`, `/backtest`. Every
-  page reads the one memoised `loadDashboard()`; only `/` calls `loadHistoryForPage`, and
+- Pages: `/` (the service status, the next departure, the departure board and arrivals), `/labs`, `/labs/[id]` (one per registry lab; an unknown id
+  renders the 404 with a 404 status and no fetch), `/markets`, `/radar`, `/about` (the arithmetic, then
+  the week's chart, drawn only when the week has a reading, else one quiet line), `/backtest`. Every
+  page reads the one memoised `loadDashboard()`; only `/about` calls `loadHistoryForPage`, and
   `test/app/load-dashboard.test.ts` renders each page and pins its fetch count. `src/ui/site.ts` holds
   the tab strip (`NAV`), page titles (`pageMeta`) and the old single-page anchors `/` redirects
   (`LEGACY_HASHES`); `src/ui/lab-page.ts` is a lab page's pure selection (`labPage`).

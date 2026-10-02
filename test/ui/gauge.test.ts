@@ -277,7 +277,8 @@ describe('DROPCON for a first-time reader', () => {
     const d = dashboard();
     const html = await render(ScoreDetail, { d });
     const at = (s: string) => html.indexOf(s);
-    expect(at('dc-now')).toBeLessThan(at('dc-drivers'));
+    // The sum row carries the score; no "Right now" line repeats it when the reading is live.
+    expect(html).not.toContain('dc-now');
     // Every row is a lead input, so no row wears a LEAD chip.
     expect(html).not.toContain('class="tag lead"');
     const pts = [...html.matchAll(/<span class="pts"[^>]*>(\d+)<\/span>/g)].map((m) => Number(m[1]));
@@ -294,15 +295,15 @@ describe('DROPCON for a first-time reader', () => {
     expect(html).toContain('Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.');
   });
 
-  it('posts the level above the week, explains the chart plainly and links to how it adds up', async () => {
+  it('posts the level on the status strip, explains the chart plainly and links to how it adds up', async () => {
     const d = dashboard();
     const status = await render(ServiceStatus, { c: d.dropcon });
     expect(status).toContain('href="/about#score"');
     expect(status).toMatch(/<h2 id="status-title"[^>]*>/);
     const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
-    // The arithmetic is one link away on /about, not on the home page.
+    // The week sits on /about under the arithmetic, so the chart links up the page to it.
     expect(html).not.toContain('dc-drivers');
-    expect(html).toContain('href="/about#score"');
+    expect(html).toContain('href="#score"');
     // What the reader is looking at, long and short, and what it is not.
     expect(html).toContain(
       "The line is DROPCON's lead score, 0 to 100, read hourly from Polymarket's release odds",

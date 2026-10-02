@@ -4,21 +4,27 @@ import Header from '../components/Header.astro';
 import PageHead from '../components/PageHead.astro';
 import ScoreDetail from '../components/ScoreDetail.astro';
 import History from '../components/History.astro';
+import DropconScope from '../components/DropconScope.astro';
 import SourceHealth from '../components/SourceHealth.astro';
 import Disclaimer from '../components/Disclaimer.astro';
 import Footer from '../components/Footer.astro';
-import { loadDashboard } from '../app/load-dashboard';
+import { loadDashboard, loadHistoryForPage } from '../app/load-dashboard';
+import { weekReadings } from '../domain/instrument';
 import { pageMeta } from '../ui/site';
 
-const d = await loadDashboard();
+// History shares /api/history.json's 15-minute memo and never throws; only this page draws the week.
+const [d, history] = await Promise.all([loadDashboard(), loadHistoryForPage()]);
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'about' } as const;
 const meta = pageMeta(view);
 const c = d.dropcon;
 const fact =
   c.state === 'ok'
-    ? { figure: String(c.score), unit: '/100', caption: `lead score now: level ${c.level}, ${c.name}`, href: '#score' }
+    ? { figure: String(c.score), unit: '/100', caption: `lead score now, level ${c.level} of 5`, href: '#score' }
     : undefined;
+// The week is drawn only when there is a reading in it. With the series unreadable or empty, one
+// quiet line says so: the level is live either way.
+const drawn = weekReadings(history, Date.now()).length > 0;
 ---
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
@@ -26,10 +32,27 @@ const fact =
     <PageHead title="How the service works" kicker="About" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." fact={fact} />
     <div class="wrap page-body">
       <ScoreDetail d={d} />
+      {drawn ? (
+        <section id="service-history" aria-labelledby="history-title">
+          <div class="sec">
+            <h2 id="history-title">Service history · last 7 days</h2>
+            <span class="label">DROPCON lead score, hourly</span>
+          </div>
+          <DropconScope d={d} history={history} />
+        </section>
+      ) : (
+        <p class="history-off" id="service-history">
+          {history?.ok ? 'Service history has no readings this week yet' : 'Service history is offline'}; the level is live. <a href="#score">How the level is read</a>
+        </p>
+      )}
       <History />
       <SourceHealth d={d} />
       <Disclaimer />
     </div>
   </main>
-  <Footer generatedAt={d.generatedAt} d={d} />
+  <Footer generatedAt={d.generatedAt} d={d} note={false} />
 </Layout>
+<style>
+  #service-history { scroll-margin-top: var(--s4); }
+  .history-off { padding-top: var(--s3); border-top: 1px solid var(--rule-soft); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+</style>

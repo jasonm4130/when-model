@@ -15,8 +15,10 @@ interface Props {
   variant?: 'dashboard' | 'backtest';
   /** The dashboard, for the counts and the refresh countdown. */
   d?: Dashboard;
+  /** The one-line disclaimer; /about prints the full one just above, so it leaves this out. */
+  note?: boolean;
 }
-const { generatedAt, variant = 'dashboard', d } = Astro.props;
+const { generatedAt, variant = 'dashboard', d, note = true } = Astro.props;
 const REPO = 'https://github.com/jasonm4130/when-model';
 /** The client polls /api/dashboard.json on this cadence; the Header's script runs the countdown. */
 const REFRESH_SECONDS = 300;
@@ -33,7 +35,7 @@ const ok = d ? d.sources.filter((s) => s.ok).length : 0;
   <div class="wrap foot-grid">
     <div>
       <p class="foot-title">Crowd opinion, not a timetable.</p>
-      <p class="foot-note">For information and entertainment only. The level is a hand-weighted lead score read from Polymarket odds; odds are crowd opinion, not lab roadmaps, and whenmodel is not affiliated with any line. <a href="/about#disclaimer">The full disclaimer and every source</a>.</p>
+      {note && <p class="foot-note">For information and entertainment only. The level is a hand-weighted lead score read from Polymarket odds; odds are crowd opinion, not lab roadmaps, and whenmodel is not affiliated with any line. <a href="/about#disclaimer">The full disclaimer and every source</a>.</p>}
       {variant === 'backtest' ? (
         <p class="foot-meta mono">Data pulled {stamp} · reproduce: <a href="#reproduce"><code>pnpm backtest</code></a></p>
       ) : (

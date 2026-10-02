@@ -11,6 +11,12 @@ async function openDashboard(page: Page) {
   await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
 }
 
+/** The level's week, drawn on /about under how the score adds up. */
+async function openHistory(page: Page) {
+  await page.goto('/about', { waitUntil: 'domcontentloaded', timeout: 45_000 });
+  await expect(page.getByRole('heading', { name: 'Service history · last 7 days' })).toBeVisible();
+}
+
 test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on a phone', async ({
   page,
 }) => {
@@ -140,7 +146,7 @@ for (const [level, treatment, name] of [
 }
 
 test('the instrument strokes its trace and never fills it', async ({ page }) => {
-  await openDashboard(page);
+  await openHistory(page);
   const lines = await page.locator('.sc-ink svg').evaluate((svg) => {
     const cid = [...svg.attributes].find((a) => a.name.startsWith('data-astro-cid'))!;
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -160,7 +166,7 @@ for (const width of [390, 1024, 1440]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
+    await openHistory(page);
     await page.waitForFunction(() => document.querySelector('.scope.fitted') !== null);
     // Six long names a few hours apart near the NOW edge, where labels read leftward.
     await page.locator('.sc-plot').evaluate((el) => {
@@ -203,8 +209,8 @@ for (const width of [390, 1024, 1440]) {
 
   test(`the scrubber's time tag stays on the day axis at the NOW edge at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await openDashboard(page);
-    // The instrument sits under the answer strip: bring it into view before aiming at it.
+    await openHistory(page);
+    // The instrument sits under the arithmetic: bring it into view before aiming at it.
     await page.locator('.sc-plot').scrollIntoViewIfNeeded();
     const box = (await page.locator('.sc-plot').boundingBox())!;
     await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2);
