@@ -72,7 +72,8 @@ test('every source status pill reads LIVE, PARTIAL, DOWN or STALE with what it c
   const texts: string[] = [];
   for (const path of ['/', '/markets', '/radar', '/labs/anthropic']) {
     await open(page, path);
-    texts.push(...(await page.locator('[data-source-pill]').allInnerTexts()));
+    // textContent, not innerText: /radar folds open weights and papers under "Elsewhere on the network".
+    texts.push(...(await page.locator('[data-source-pill]').allTextContents()).map((t) => t.trim()));
   }
   expect(texts.length).toBeGreaterThanOrEqual(9);
   for (const text of texts) expect(text).toMatch(/^(LIVE|PARTIAL|DOWN|STALE) · \S/);

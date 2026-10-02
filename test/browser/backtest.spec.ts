@@ -28,12 +28,13 @@ test.describe('/backtest', () => {
     await expect(page.locator('.bt-verdict')).toContainText('not a probability');
 
     for (const name of [
-      'HOW V3 WOULD HAVE READ',
-      'RESULTS: FORECAST VS BASE RATE',
-      'LEAD TIMES',
-      'STEALTH REVEALS',
-      "TESTED AND DIDN'T LEAD",
-      'REPRODUCE IT',
+      'The verdict',
+      'How v3 would have read',
+      'Results: forecast against the base rate',
+      'Lead times',
+      'Stealth reveals',
+      'Tested and didn’t lead',
+      'Reproduce it',
     ]) {
       await expect(page.getByRole('heading', { level: 2, name })).toHaveCount(1);
     }

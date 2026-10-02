@@ -189,6 +189,8 @@ test.describe('panels on a desktop', () => {
     ];
     for (const [heading, source, label] of cases) {
       await open(page, heading === 'Release timetables' ? '/markets' : '/radar');
+      // Open weights wait under "Elsewhere on the network".
+      if (heading === 'OPEN WEIGHTS TRENDING') await page.locator('#elsewhere > summary').click();
       const pill = panel(page, heading).locator('[data-source-pill]').first();
       await expect(pill).toHaveText(ok(source) ? new RegExp(`^(LIVE|STALE) · ${label}$`) : `DOWN · ${label}`);
     }
