@@ -10,11 +10,15 @@ import DropconScope from '../components/DropconScope.astro';
 import Footer from '../components/Footer.astro';
 import { loadDashboard, loadHistoryForPage } from '../app/load-dashboard';
 import { dropconTitle } from '../ui/odds';
+import { weekReadings } from '../domain/instrument';
 
 // History shares /api/history.json's 15-minute memo and never throws; only this page draws the week.
 const [d, history] = await Promise.all([loadDashboard(), loadHistoryForPage()]);
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const title = dropconTitle(d.dropcon);
+// The week is drawn only when there is a reading in it. With the series unreadable or empty, one
+// quiet line says so: the level above is live either way.
+const drawn = weekReadings(history, Date.now()).length > 0;
 ---
 <Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket release odds read into the next model departing and one DROPCON level, with early warnings and fresh launches from OpenRouter, Hacker News, lab blogs, YouTube and the transformers registry.">
   <Header d={d} view={{ page: 'home' }} />
@@ -29,19 +33,26 @@ const title = dropconTitle(d.dropcon);
           <NetworkNotice d={d} />
         </div>
       </div>
-      <section aria-labelledby="history-title">
-        <div class="sec">
-          <h2 id="history-title">Service history · last 7 days</h2>
-          <span class="label">DROPCON lead score, hourly</span>
-        </div>
-        <DropconScope d={d} history={history} />
-      </section>
+      {drawn ? (
+        <section aria-labelledby="history-title">
+          <div class="sec">
+            <h2 id="history-title">Service history · last 7 days</h2>
+            <span class="label">DROPCON lead score, hourly</span>
+          </div>
+          <DropconScope d={d} history={history} />
+        </section>
+      ) : (
+        <p class="history-off">
+          {history?.ok ? 'Service history has no readings this week yet' : 'Service history is offline'}; the level above is live. <a href="/about#score">How the level is read</a>
+        </p>
+      )}
     </div>
   </main>
   <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>
 <style>
   .side { display: grid; gap: var(--s7); align-content: start; }
+  .history-off { padding-top: var(--s3); border-top: 1px solid var(--rule-soft); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
 </style>
 <script>
   // The site was one long page whose sections had hash anchors. A hash never reaches the server,

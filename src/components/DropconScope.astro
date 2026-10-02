@@ -15,7 +15,7 @@ import { SOURCE } from '../domain/sources';
 import { estimateFlagWidth, flagCandidates, placeLabels, type Box } from '../ui/labels';
 import { dropconNumber } from '../ui/odds';
 import { lineBullet } from '../ui/lines';
-import { launchLine, nowReadout, type ScrubData, type ScrubKind } from '../ui/readout';
+import { nowReadout, type ScrubData, type ScrubKind } from '../ui/readout';
 interface Props {
   d: Dashboard;
   history?: HistoryResponseBody;
@@ -80,7 +80,6 @@ const data: ScrubData = {
   live: { state: c.state, at: Date.parse(d.generatedAt), score: c.score, level: c.level },
 };
 const rest = nowReadout(data);
-const restNear = launchLine(data);
 
 // The current version's start: a quiet tag once its line explains itself, a callout while it is young.
 const cur = inst.current;
@@ -120,11 +119,11 @@ const tableRows = inst.scrub.slice().reverse();
     <p class="sc-r1">
       <span class="sc-rw">
         <b class="sc-when" data-r-when>{rest.when}</b>
-        <span class="sc-what"><span data-r-what>{rest.what}</span><span class="sc-rname" data-r-name>{rest.name ? ` · ${rest.name}` : ''}</span></span>
+        <span class="sc-what"><span data-r-what></span><span class="sc-rname" data-r-name></span></span>
       </span>
       <span class="sc-hint tiny" data-hint hidden aria-hidden="true"><span class="h-long">◀ ▶ HOVER, DRAG OR ARROW KEYS</span><span class="h-short">◀ TAP<span class="h-drag"> OR DRAG</span> ▶</span></span>
     </p>
-    <p class="sc-r2" data-r-near>{restNear}</p>
+    <p class="sc-r2" data-r-near></p>
   </div>
 
   <span class="sc-cap sc-cap-level tiny" aria-hidden="true">LEVEL</span>
@@ -297,11 +296,11 @@ const tableRows = inst.scrub.slice().reverse();
 </div>
 
 <style>
-  /* The level ramp on paper. A surge is the alert red, a strong lead ink, a lead the notice yellow's
-     dark twin (the yellow itself is too light for a line on paper), and the quiet levels grey. Each
-     clears 3:1 as a line on paper. */
+  /* The level ramp on paper, in ink and greys so no level reads as a line's colour: a surge and a
+     strong lead in ink (a surge's marks are filled), a lead the notice yellow's dark twin (the yellow
+     itself is too light for a line on paper), and the quiet levels grey. Each clears 3:1 on paper. */
   .scope {
-    --l1: var(--alert);
+    --l1: var(--ink);
     --l2: var(--ink);
     --l3: #7a6200;
     --l4: var(--ink-2);
@@ -359,7 +358,7 @@ const tableRows = inst.scrub.slice().reverse();
   .seg { display: grid; place-items: center; font-size: var(--t-xs); font-weight: 700; color: var(--ink-2); background: var(--paper-2); outline: 2px solid transparent; outline-offset: 1px; transition: outline-color var(--fast) var(--ease); }
   .seg.on { background: var(--ink); color: var(--paper); }
   .seg.on.l3 { background: var(--notice); color: var(--ink); }
-  .seg.on.l1 { background: var(--alert); color: #fff; }
+  .seg.on.l1 { background: var(--ink); color: var(--notice); }
   .seg.dim { background: transparent; border: 1px dashed var(--line2); }
   .seg.floor { border: 2px solid var(--ink-2); }
   .seg.is-probe { outline-color: var(--ink); }
@@ -374,7 +373,7 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-plot svg, .sc-ink { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   /* Level bands: the busy levels tinted faintly, the current band a little more. */
   .sc-band { fill: transparent; }
-  .sc-band.l1 { fill: var(--alert); opacity: 0.06; }
+  .sc-band.l1 { fill: var(--ink); opacity: 0.06; }
   .sc-band.l2 { fill: var(--ink); opacity: 0.04; }
   .sc-band.l3 { fill: var(--notice); opacity: 0.16; }
   .sc-band.on { opacity: 0.3; }
@@ -416,7 +415,7 @@ const tableRows = inst.scrub.slice().reverse();
 
   /* Which way is busy, at the plot's top and bottom edges. */
   .sc-dir { position: absolute; left: 8px; padding: 2px 4px; font-size: 11px; color: var(--ink-2); background: var(--paper); white-space: nowrap; }
-  .sc-dir.l1 { color: var(--alert); }
+  .sc-dir.l1 { color: var(--ink); }
   .sc-dir.top { top: 6px; }
   .sc-dir.bottom { bottom: 6px; }
 
@@ -440,7 +439,7 @@ const tableRows = inst.scrub.slice().reverse();
   /* Level changes on the line: where it crossed a band and stayed. A tick joins the label to the step. */
   .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)); padding: 2px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; background: var(--paper); border: 2px solid var(--lc); }
   .sc-change.l3 { background: var(--notice); border-color: var(--ink); }
-  .sc-change.l1 { color: #fff; background: var(--alert); border-color: var(--alert); }
+  .sc-change.l1 { color: var(--notice); background: var(--ink); border-color: var(--ink); }
   .sc-change.right { --tx: 0px; }
   .sc-change[data-side='below'] { --ty: 8px; }
   .sc-change::after { content: ''; position: absolute; right: -2px; top: 100%; height: 8px; border-right: 2px solid var(--lc); }
@@ -579,7 +578,7 @@ const tableRows = inst.scrub.slice().reverse();
 
 <script>
   import { FLAG_PITCH, placeLabels, type Box } from '../ui/labels';
-  import { launchLine, nearLine, nowReadout, readout, readoutText, type Readout, type ScrubData } from '../ui/readout';
+  import { REST_LINE, launchLine, nearLine, nowReadout, readout, readoutText, type Readout, type ScrubData } from '../ui/readout';
 
   const HOUR = 3_600_000;
   /** A pointer this close to the NOW edge (px) reads NOW; anywhere else reads the record. */
@@ -626,10 +625,13 @@ const tableRows = inst.scrub.slice().reverse();
     one('[data-hint]').hidden = false;
 
     const paint = (r: Readout, x: number | null) => {
+      // At rest the readout names the time only: the level is posted above the sign, and the
+      // week's launches are listed under Recent arrivals. A cursor on any hour, NOW included, reads it.
+      const resting = x === null;
       rWhen.textContent = r.when;
-      rWhat.textContent = r.what;
-      rName.textContent = r.name ? ` · ${r.name}` : '';
-      rNear.textContent = x === null || r.now ? launchLine(data) : nearLine(data, r);
+      rWhat.textContent = resting ? '' : r.what;
+      rName.textContent = !resting && r.name ? ` · ${r.name}` : '';
+      rNear.textContent = resting ? REST_LINE : r.now ? launchLine(data) : nearLine(data, r);
       box.dataset.tone = r.tone;
       if (r.tone === 'ok' && r.level) box.style.setProperty('--rl', `var(--l${r.level})`);
       else box.style.removeProperty('--rl');

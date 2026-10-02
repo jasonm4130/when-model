@@ -79,7 +79,24 @@ describe('Layout head', () => {
 
 describe('the pages', () => {
   const NOW = Date.parse('2026-09-19T12:00:00Z');
-  async function render(path: string, params?: Record<string, string>) {
+  /** One reading an hour ago: enough for the home page to draw the week. */
+  const reading = () => {
+    const at = new Date(Date.now() - 3_600_000).toISOString();
+    return {
+      slot: at,
+      observedAt: at,
+      algorithmVersion: 3,
+      score: 10,
+      level: 5,
+      displayLevel: 5,
+      degraded: false,
+    };
+  };
+  async function render(
+    path: string,
+    params?: Record<string, string>,
+    historyBody: () => { ok: boolean; points: unknown[] } = () => ({ ok: true, points: [reading()] }),
+  ) {
     const { assembleDashboard } = await import('../src/domain/dashboard');
     const { warnings } = await import('./fixtures/warnings');
     const d = {
@@ -95,7 +112,7 @@ describe('the pages', () => {
       ),
       earlyWarnings: warnings(),
     };
-    const history = vi.fn(async () => ({ ok: true, points: [] }));
+    const history = vi.fn(async () => historyBody());
     vi.doMock('../src/app/load-dashboard', () => ({
       loadDashboard: async () => d,
       loadHistoryForPage: history,
@@ -141,6 +158,20 @@ describe('the pages', () => {
       expect(page.history).not.toHaveBeenCalled();
       expect(page.html).not.toContain('data-plot');
     }
+  });
+
+  it('says in one line, with no chart, that the history is offline or has no readings yet', async () => {
+    const off = await render('/', undefined, () => ({ ok: false, points: [] }));
+    expect(off.html).not.toContain('data-plot');
+    expect(off.html).not.toContain('Service history · last 7 days');
+    expect(off.html).toMatch(
+      /class="history-off"[^>]*>\s*Service history is offline; the level above is live\./,
+    );
+    vi.resetModules();
+    const empty = await render('/', undefined, () => ({ ok: true, points: [] }));
+    expect(empty.html).not.toContain('data-plot');
+    expect(empty.html).toContain('Service history has no readings this week yet; the level above is live.');
+    expect(empty.html).toContain('href="/about#score"');
   });
 
   it('has the home page answer: the service status, the next departure, the other lines and the way on', async () => {

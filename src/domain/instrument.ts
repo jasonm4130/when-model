@@ -194,6 +194,22 @@ const byTime = (a: DisplayPoint, b: DisplayPoint) =>
   a.observedAt < b.observedAt ? -1 : a.observedAt > b.observedAt ? 1 : 0;
 const range = (a: number, b: number) => (a === b ? `${a}` : `${a} to ${b}`);
 
+/**
+ * The readings that overlap the 7-day window ending `now`: none when the read failed. The home page
+ * draws the instrument only when there is at least one; otherwise it says so in one line.
+ */
+export function weekReadings<P extends Pick<DisplayPoint, 'observedAt'>>(
+  history: { ok: boolean; points: readonly P[] } | undefined,
+  now: number,
+): P[] {
+  if (!history?.ok) return [];
+  const from = now - INSTRUMENT_WINDOW_MS;
+  return history.points.filter((p) => {
+    const t = Date.parse(p.observedAt);
+    return t <= now && hourStart(p.observedAt) + HOUR_MS > from;
+  });
+}
+
 export function buildInstrument(input: InstrumentInput): Instrument {
   const { now, currentVersion, live } = input;
   const from = now - INSTRUMENT_WINDOW_MS;

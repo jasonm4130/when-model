@@ -20,8 +20,15 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // The Worker's local D1 gets the schema and a seeded week of readings first, so the home page
+  // draws its service history from a real read (test/browser/fixtures/seed-history.sql). CI=1 keeps
+  // the migration step from asking for confirmation.
   webServer: {
-    command: `pnpm exec wrangler dev --local --ip 127.0.0.1 --port ${port}`,
+    command: [
+      'CI=1 pnpm exec wrangler d1 migrations apply whenmodel-history --local',
+      'pnpm exec wrangler d1 execute whenmodel-history --local --file test/browser/fixtures/seed-history.sql',
+      `pnpm exec wrangler dev --local --ip 127.0.0.1 --port ${port}`,
+    ].join(' && '),
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !isCI,
     timeout: 120_000,

@@ -121,9 +121,11 @@ describe('DropconScope: service history, the week of the level', () => {
     expect(html).not.toContain('data-num');
     expect(html).toMatch(new RegExp(`class="sc-nowtag tiny"[^>]*>NOW <b[^>]*>${d.dropcon.level}</b>`));
     expect(html).toContain(`--y:${100 - d.dropcon.score}`);
-    // The readout starts at NOW, from the same function the browser runs.
+    // The readout starts at NOW, from the same function the browser runs. At rest it names the time
+    // only: the level is posted in the service status, so the readout never repeats it.
     expect(html).toMatch(/data-r-when[^>]*>NOW · 26 SEP 12:00Z</);
-    expect(html).toMatch(new RegExp(`data-r-what[^>]*>score ${d.dropcon.score} → level ${d.dropcon.level}<`));
+    expect(html).toMatch(/data-r-what[^>]*><\/span>/);
+    expect(html).toMatch(/data-r-near[^>]*><\/p>/);
     expect(scopeData(html)).toMatchObject({ history: 'empty', pts: [], launchesOk: true });
   });
 
@@ -205,9 +207,8 @@ describe('DropconScope: service history, the week of the level', () => {
     );
     expect(html).toMatch(new RegExp(`class="sc-flag[^"]*"[^>]*>.*${release.name}`, 's'));
     expect(html).toContain('<caption class="sr-only"');
-    expect(html).toMatch(
-      /data-r-near[^>]*>1 frontier launch in 7 days · latest A Claude Opus 5\.5 \(Anthropic\), 22 Sep</,
-    );
+    // The week's launches are listed under Recent arrivals; the readout at rest does not repeat them.
+    expect(html).not.toContain('1 frontier launch in 7 days');
     expect(scopeData(html).launches).toHaveLength(d.landed.releases.length);
     // Each launch carries its line's bullet: the letter in the readout and on the flag, in the line's colour.
     const b = lineBullet('anthropic');
@@ -221,7 +222,6 @@ describe('DropconScope: service history, the week of the level', () => {
     const down = dashboard({ drops: { name: SOURCE.openrouter, data: [], ok: false, error: 'down' } });
     const html = await render(DropconScope, { d: down, history: { ok: true, points: series(v3) }, now: NOW });
     expect(html).toContain('LAUNCH LISTINGS OFFLINE');
-    expect(html).toContain('Launch listings offline: OpenRouter unreachable, launches not marked');
     expect(scopeData(html).launchesOk).toBe(false);
   });
 
@@ -328,7 +328,7 @@ describe('DROPCON for a first-time reader', () => {
     expect(status).toContain('aria-label="DROPCON floor: 5 of 5 with the odds offline"');
     const html = await render(DropconScope, { d, now: NOW });
     expect(html).toContain('class="sc-dot"');
-    expect(html).toMatch(/data-r-what[^>]*>floor · odds offline, not measured</);
+    expect(html).toMatch(/data-r-what[^>]*><\/span>/);
     expect(html).not.toMatch(/class="seg on/);
     expect(html.match(/class="seg dim/g)).toHaveLength(5);
     expect(html).toContain('class="seg dim floor l5"');
@@ -348,7 +348,7 @@ describe('DROPCON for a first-time reader', () => {
     const html = await render(DropconScope, { d, now: NOW });
     expect(html).not.toContain('class="sc-dot');
     expect(html).not.toContain('class="sc-nowtag');
-    expect(html).toMatch(/data-r-what[^>]*>no signal · odds and listings down</);
+    expect(html).toMatch(/data-r-what[^>]*><\/span>/);
     expect(html.match(/class="seg dim l\d"/g)).toHaveLength(5);
     const page = await container.renderToString(Layout, {
       props: { title: dropconTitle(d.dropcon), description: 'd' },
