@@ -4,54 +4,68 @@ import type { Page } from '@playwright/test';
 async function openDashboard(page: Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.locator('main')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
 }
 
 test.describe('mobile header (UI-05, UI-06)', () => {
-  test('keeps DROPCON above the fold at 390x844 with reduced motion', async ({ page }) => {
+  test('keeps the level and the next departure above the fold at 390x844 with reduced motion', async ({
+    page,
+  }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width: 390, height: 844 });
     await openDashboard(page);
 
-    const num = page.locator('.dc-num');
-    await expect(num).toBeVisible();
-    const box = await num.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+    for (const sel of ['.ss-num', '#next-title']) {
+      const el = page.locator(sel);
+      await expect(el).toBeVisible();
+      const box = await el.boundingBox();
+      expect(box, sel).not.toBeNull();
+      expect(box!.y + box!.height, sel).toBeLessThanOrEqual(844);
+    }
   });
 
-  test('keeps the DROPCON number above the fold on a ~664px-tall Safari viewport', async ({ page }) => {
+  test('keeps the service status and the next departure named on a ~664px-tall Safari viewport', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 664 });
     await openDashboard(page);
 
-    const box = await page.locator('.dc-num').boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.y + box!.height).toBeLessThanOrEqual(664);
+    for (const sel of ['.ss-name', '.ss-num', '#next-title']) {
+      const box = await page.locator(sel).boundingBox();
+      expect(box, sel).not.toBeNull();
+      expect(box!.y + box!.height, sel).toBeLessThanOrEqual(664);
+    }
   });
 
-  test('reduces the statusbar to STATUS, the auto-refresh pause and the clock, and hides the tag-line and brands, at 480px and below', async ({
+  test('reduces the header to the source status, the clock and the auto-refresh pause on a phone', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openDashboard(page);
 
-    await expect(page.locator('.status-live')).toBeVisible();
-    await expect(page.locator('.clock')).toBeVisible();
-    await expect(page.locator('.counts')).toBeHidden();
-    await expect(page.locator('.sync')).toBeHidden();
-    await expect(page.locator('.clock')).toHaveText(/^\d{2}:\d{2}:\d{2}Z$/);
+    const head = page.locator('header');
+    await expect(head.locator('.status-live')).toBeVisible();
+    await expect(head.locator('.clock')).toBeVisible();
+    await expect(head.locator('.clock')).toHaveText(/^\d{2}:\d{2}Z$/);
+    await expect(head.locator('.when .day')).toBeHidden();
     // The pause stays reachable on a phone, as a 44px target (see panels.spec.ts).
-    await expect(page.locator('.refresh-toggle')).toBeVisible();
-    await expect(page.locator('.tag-line')).toBeHidden();
+    await expect(head.locator('.refresh-toggle')).toBeVisible();
+    // The counts and the last sync are said once, in the footer.
+    await expect(head.locator('.counts, .sync')).toHaveCount(0);
+    await expect(page.locator('footer .sync')).toHaveCount(1);
   });
 
-  test('keeps the full statusbar and the tag line above the 480px breakpoint', async ({ page }) => {
-    await page.setViewportSize({ width: 900, height: 900 });
+  test('names the day beside the clock on a wide screen, and keeps the counts and tag line in the footer', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await openDashboard(page);
 
-    await expect(page.locator('.counts')).toBeVisible();
-    await expect(page.locator('.sync')).toBeVisible();
-    await expect(page.locator('.tag-line')).toBeVisible();
+    await expect(page.locator('header .when .day')).toBeVisible();
+    await expect(page.locator('header .when .day')).toHaveText(/^[A-Z][a-z]{2} \d{1,2} [A-Z][a-z]{2} ·\s*$/);
+    await expect(page.locator('footer .counts')).toBeVisible();
+    await expect(page.locator('footer .sync')).toBeVisible();
+    await expect(page.locator('footer .tag-line')).toBeVisible();
   });
 });
 

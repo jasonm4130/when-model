@@ -554,6 +554,9 @@ const tableRows = inst.scrub.slice().reverse();
       column-gap: 4px;
     }
     .sc-readout { height: 80px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 16px 24px 32px; gap: 2px 8px; padding-left: 10px; }
+    /* Inter Tight's caps run wider than the riso face's did: at 11px "▲ 1 · RELEASE SURGE" took the
+       top row's room from a launch name on a 360px phone. */
+    .sc-dir { font-size: 10px; padding: 2px 3px; }
     .sc-r1, .sc-rw { display: contents; }
     .sc-when { grid-area: 1 / 1; min-width: 0; overflow: hidden; }
     .sc-hint { grid-area: 1 / 2; margin-left: 0; align-self: center; }

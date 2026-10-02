@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 async function openDashboard(page: import('@playwright/test').Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.locator('main')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
 }
 
 async function overflowingElements(page: import('@playwright/test').Page) {
@@ -31,9 +31,7 @@ test('keeps the wide page body, FAQ and footer aligned to the shared container',
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto('/about', { waitUntil: 'domcontentloaded', timeout: 45_000 });
 
-  const faq = page
-    .getByRole('heading', { name: 'FREQUENTLY ASKED QUESTIONS' })
-    .locator('xpath=ancestor::section');
+  const faq = page.getByRole('heading', { name: 'Questions riders ask' }).locator('xpath=ancestor::section');
   const [faqBox, footerBox] = await Promise.all([
     faq.boundingBox(),
     // The footer's text, not its padded box: both start at the shared container's content edge.
@@ -45,7 +43,7 @@ test('keeps the wide page body, FAQ and footer aligned to the shared container',
   expect(Math.abs(faqBox!.x - footerBox!.x)).toBeLessThanOrEqual(1);
   await expect(faq).toBeVisible();
   // The full disclaimer is on /about; every footer carries one line of it and a link there.
-  await expect(page.getByRole('heading', { name: 'OPERATIONAL DISCLAIMER' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Disclaimer', exact: true })).toBeVisible();
   await expect(page.locator('footer a[href="/about#disclaimer"]')).toHaveCount(1);
 });
 
@@ -82,7 +80,7 @@ test('pauses and resumes auto-refresh from the keyboard, and there is no ticker 
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('opens a folded list from the keyboard, and keeps DROPCON segments stable with reduced motion', async ({
+test('opens a folded list from the keyboard, and keeps the status ladder and chart segments stable with reduced motion', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -99,6 +97,9 @@ test('opens a folded list from the keyboard, and keeps DROPCON segments stable w
   await expect(fold.locator('.faq-a, p').first()).toBeVisible();
 
   await openDashboard(page);
+  // The status ladder lights its one rung, as does the chart's scale.
+  await expect(page.locator('.ladder .rung')).toHaveCount(5);
+  expect(await page.locator('.ladder .rung.on').count()).toBe(1);
   await expect(page.locator('.seg')).toHaveCount(5);
   expect(await page.locator('.seg.on').count()).toBe(1);
   expect(await page.locator('.seg.on').evaluate((element) => getComputedStyle(element).opacity)).toBe('1');

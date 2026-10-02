@@ -87,7 +87,9 @@ for (const lab of LABS) {
       'href',
       `https://whenmodel.com/labs/${lab.id}`,
     );
-    await expect(page.getByRole('heading', { name: 'The odds' })).toBeVisible();
+    // The next departure, or why there is none, heads the page under the line's sign.
+    await expect(page.locator('#reads-title')).toBeVisible();
+    await expect(page.locator('.line-name')).toHaveText(`${lab.name} line`);
     await expect(page.locator('[data-fingerprint]')).toHaveAttribute('data-fingerprint', /^[0-9a-f]{8}$/);
   });
 }
@@ -95,7 +97,8 @@ for (const lab of LABS) {
 test('an unknown lab is the site 404, with a 404 status', async ({ page }) => {
   const res = await page.goto('/labs/not-a-lab', { waitUntil: 'domcontentloaded' });
   expect(res?.status()).toBe(404);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('404');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Line not found');
+  await expect(page).toHaveTitle('Line not found — whenmodel');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
   await expect(nav(page).locator('[aria-current]')).toHaveCount(0);
 });
@@ -122,7 +125,7 @@ test.describe('old single-page links', () => {
 
   test('a hash that still means something on / stays put', async ({ page }) => {
     await page.goto('/#main', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
     await page.waitForTimeout(300);
     expect(new URL(page.url()).pathname).toBe('/');
     expect(new URL(page.url()).hash).toBe('#main');

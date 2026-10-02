@@ -46,7 +46,7 @@ test.describe('panels on a phone (UI-10)', () => {
 
   test('release markets show six rows, then an expander', async ({ page }) => {
     await open(page, '/markets');
-    const markets = panel(page, 'RELEASE MARKETS');
+    const markets = panel(page, 'Release timetables');
     const rows = markets.locator('.mrow');
     const total = await rows.count();
     test.skip(total === 0, 'Polymarket returned no release markets');
@@ -55,10 +55,10 @@ test.describe('panels on a phone (UI-10)', () => {
       await markets.locator('.fold-summary').click();
       expect(await visibleCount(rows)).toBe(total);
     }
-    // UI-12: the dot sits on the title's first line, never alone above it.
+    // UI-12: the line's bullet (or a plain market's dot) sits on the title's first line, never alone above it.
     const first = rows.first();
     const [dot, name] = await Promise.all([
-      first.locator('.mdot').boundingBox(),
+      first.locator('.b, .mdot').first().boundingBox(),
       first.locator('.mname').boundingBox(),
     ]);
     expect(dot!.y).toBeGreaterThanOrEqual(name!.y);
@@ -148,9 +148,9 @@ test.describe('panels on a desktop', () => {
   }) => {
     await open(page, '/markets');
     // Round two moved density behind disclosure on desktop too: a short list first, the rest folded.
-    const rows = panel(page, 'RELEASE MARKETS').locator('.mrow');
+    const rows = panel(page, 'Release timetables').locator('.mrow');
     const total = await rows.count();
-    const fold = panel(page, 'RELEASE MARKETS').locator('details.fold');
+    const fold = panel(page, 'Release timetables').locator('details.fold');
     test.skip((await fold.count()) === 0, 'too few release markets today to fold');
     expect(await visibleCount(rows)).toBeLessThan(total);
     await fold.locator('> .fold-summary').click();
@@ -172,7 +172,7 @@ test.describe('panels on a desktop', () => {
     // No box that scrolls inside the page: the reader scrolls the page, and opens the fold for more.
     expect(await feed.evaluate((e) => e.scrollHeight - e.clientHeight)).toBeLessThanOrEqual(1);
     if (shown < total) {
-      await panel(page, 'OSINT FEED').locator('details.fold > .fold-summary').first().click();
+      await panel(page, 'The feed').locator('details.fold > .fold-summary').first().click();
       expect(await visibleCount(items)).toBe(total);
     }
   });
@@ -183,16 +183,16 @@ test.describe('panels on a desktop', () => {
     };
     const ok = (name: string) => body.sources.find((s) => s.name === name)?.ok;
     const cases: [string, string, string][] = [
-      ['RELEASE MARKETS', 'Polymarket', 'POLYMARKET'],
+      ['Release timetables', 'Polymarket', 'POLYMARKET'],
       ['FRESH DROPS', 'OpenRouter', 'OPENROUTER'],
       ['OPEN WEIGHTS TRENDING', 'HF trending', 'HF TRENDING'],
     ];
     for (const [heading, source, label] of cases) {
-      await open(page, heading === 'RELEASE MARKETS' ? '/markets' : '/radar');
+      await open(page, heading === 'Release timetables' ? '/markets' : '/radar');
       const pill = panel(page, heading).locator('[data-source-pill]').first();
       await expect(pill).toHaveText(ok(source) ? new RegExp(`^(LIVE|STALE) · ${label}$`) : `DOWN · ${label}`);
     }
-    await expect(panel(page, 'OSINT FEED').locator('[data-source-pill]')).toHaveText(
+    await expect(panel(page, 'The feed').locator('[data-source-pill]')).toHaveText(
       /^(LIVE · 6|PARTIAL · \d\/6|STALE · (\d\/)?6|DOWN · 6) FEEDS$/,
     );
   });

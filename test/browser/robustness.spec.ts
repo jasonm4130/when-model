@@ -2,13 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Layout and contrast rules that only matter on data the local Worker may not have today: a failed
- * source, an extrapolated read, crowded launch names on the instrument. Each test writes that state into the page
+ * source, a line with no times, each service level, crowded launch names on the instrument. Each test writes that state into the page
  * with the component's own scoped attribute, so the CSS under test is what styles it.
  */
 
 async function openDashboard(page: Page) {
   await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  await expect(page.getByRole('heading', { name: 'DROPCON LEVEL' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Service status: / })).toBeVisible();
 }
 
 test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on a phone', async ({
@@ -37,39 +37,108 @@ test('a failed source with a long, unbroken error stays inside SOURCE HEALTH on 
   expect(fit.right).toBeLessThanOrEqual(390);
 });
 
-test('an extrapolated lab read is muted at full opacity, with AA contrast', async ({ page }) => {
-  await page.goto('/labs', { waitUntil: 'domcontentloaded', timeout: 45_000 });
-  const read = await page
-    .locator('.lab .metric-value')
-    .first()
-    .evaluate((el) => {
-      el.classList.add('extrap');
-      const s = getComputedStyle(el);
-      const rgb = (c: string) => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
-      const lum = ([r, g, b]: number[]) =>
-        [r, g, b]
-          .map((v) => v / 255)
-          .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
-          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-      // Lab rows sit straight on the paper background (#f1eee6).
-      const text = lum(rgb(s.color));
-      const bg = lum([241, 238, 230]);
-      const probe = document.createElement('span');
-      probe.style.color = 'var(--muted)';
-      document.body.append(probe);
-      const muted = getComputedStyle(probe).color;
-      probe.remove();
-      return {
-        opacity: s.opacity,
-        color: s.color,
-        muted,
-        ratio: (Math.max(text, bg) + 0.05) / (Math.min(text, bg) + 0.05),
-      };
-    });
-  expect(read.opacity).toBe('1');
-  expect(read.color).toBe(read.muted);
-  expect(read.ratio).toBeGreaterThanOrEqual(4.5);
+type Contrast = (fg: string, bg: string) => number;
+/** Installs `window.contrast(fg, bg)`: the WCAG ratio of two computed colours, read in the page. */
+function installContrast() {
+  const rgb = (c: string) => (c.match(/\d+(\.\d+)?/g) ?? []).slice(0, 3).map(Number);
+  const lum = ([r, g, b]: number[]) =>
+    [r, g, b]
+      .map((v) => v / 255)
+      .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
+      .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+  (window as unknown as { contrast: Contrast }).contrast = (fg, bg) => {
+    const [x, y] = [lum(rgb(fg)), lum(rgb(bg))];
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+}
+
+test('a line with no times says so quietly, at full opacity and AA contrast, never as odds', async ({
+  page,
+}) => {
+  for (const [path, sel, cls, text] of [
+    ['/labs', '.lrow .odds', 'quiet', 'times unavailable'],
+    ['/labs/anthropic', '.next .big', 'none-word', 'Times unavailable'],
+  ] as const) {
+    await page.addInitScript(installContrast);
+    await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    const read = await page
+      .locator(sel)
+      .first()
+      .evaluate(
+        (el, [c, t]) => {
+          el.classList.add(c);
+          el.textContent = t;
+          const ratio = (window as unknown as { contrast: Contrast }).contrast;
+          const s = getComputedStyle(el);
+          const probe = document.createElement('span');
+          probe.style.color = 'var(--ink-2)';
+          document.body.append(probe);
+          const ink2 = getComputedStyle(probe).color;
+          probe.remove();
+          return {
+            opacity: s.opacity,
+            color: s.color,
+            ink2,
+            ratio: ratio(s.color, getComputedStyle(document.body).backgroundColor),
+          };
+        },
+        [cls, text] as const,
+      );
+    expect(read.opacity, path).toBe('1');
+    expect(read.color, path).toBe(read.ink2);
+    expect(read.ratio, path).toBeGreaterThanOrEqual(4.5);
+  }
 });
+
+// Today's data shows one level; each treatment is written into the status strip with its own class.
+for (const [level, treatment, name] of [
+  [1, 'alert', 'RELEASE SURGE'],
+  [3, 'notice', 'GPU FANS SPINNING'],
+  [5, 'calm', 'QUIET ORBIT'],
+] as const) {
+  test(`posts level ${level} on its ${treatment} treatment with 7:1 text and one lit rung`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.addInitScript(installContrast);
+    await openDashboard(page);
+    const out = await page.locator('section.ss').evaluate(
+      (ss, [lvl, cls, nm]) => {
+        ss.setAttribute('class', ss.getAttribute('class')!.replace(/is-[a-z]+/, `is-${cls}`));
+        ss.querySelector('.ss-name')!.lastChild!.textContent = nm;
+        ss.querySelector('.ss-num')!.textContent = String(lvl);
+        for (const r of ss.querySelectorAll('.rung')) r.classList.toggle('on', r.textContent === String(lvl));
+        for (const r of ss.querySelectorAll('.rung')) r.classList.remove('held');
+        const ratio = (window as unknown as { contrast: Contrast }).contrast;
+        const ground = getComputedStyle(ss).backgroundColor;
+        const of = (sel: string) => ratio(getComputedStyle(ss.querySelector(sel)!).color, ground);
+        const on = ss.querySelector('.rung.on')!;
+        const r = getComputedStyle(on);
+        return {
+          ground,
+          name: of('.ss-name'),
+          phrase: of('.ss-phrase'),
+          detail: of('.ss-detail'),
+          meta: of('.ss-meta'),
+          rung: ratio(r.color, r.backgroundColor),
+          lit: ss.querySelectorAll('.rung.on').length,
+          overflow: document.documentElement.scrollWidth - window.innerWidth,
+        };
+      },
+      [level, treatment, name] as const,
+    );
+    for (const k of ['name', 'phrase', 'detail', 'meta'] as const)
+      expect(out[k], k).toBeGreaterThanOrEqual(7);
+    expect(out.rung).toBeGreaterThanOrEqual(4.5);
+    expect(out.lit).toBe(1);
+    expect(out.overflow).toBeLessThanOrEqual(0);
+    // The notice and the alert are coloured grounds; the calm level sits on the paper.
+    if (treatment === 'calm')
+      expect(out.ground).toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+    else
+      expect(out.ground).not.toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+  });
+}
 
 test('the instrument strokes its trace and never fills it', async ({ page }) => {
   await openDashboard(page);
@@ -103,7 +172,7 @@ for (const width of [390, 1024, 1440]) {
         f.setAttribute('data-label', 'flag');
         f.className = `sc-flag${i > 2 ? ' flip' : ''}`;
         f.style.cssText = `left:${80 + i * 3}%; --row:0; --lab:#ff7a1a`;
-        f.textContent = `✱ A very long frontier launch name ${i}`;
+        f.textContent = `A very long frontier launch name ${i}`;
         el.append(f);
       }
     });
@@ -159,10 +228,7 @@ for (const width of [390, 360, 320]) {
     const lines = await mark.evaluate((el) => {
       const range = document.createRange();
       range.selectNodeContents(el.firstChild!);
-      const tops = [...range.getClientRects(), ...el.querySelector('.m')!.getClientRects()].map((r) =>
-        Math.round(r.top),
-      );
-      return new Set(tops).size;
+      return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
     });
     expect(lines).toBe(1);
     for (const sel of ['.status-live', '.clock', '.refresh-toggle', '.wordmark']) {
@@ -176,19 +242,17 @@ for (const width of [390, 360, 320]) {
   });
 }
 
-test('focus rings inside the feed and an opened lab row are unclipped', async ({ page }) => {
+test("focus rings inside the feed, the network and a line's announcements are unclipped", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const cases: [string, string][] = [
     ['/radar', '[data-feed] a'],
-    ['/labs', '.lab .latest a'],
+    ['/labs', 'a.lrow'],
+    ['/labs/anthropic', '.ann a'],
   ];
   for (const [path, selector] of cases) {
     await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-    // A lab's LATEST link is inside its fold: open it from the keyboard.
-    if (path === '/labs') {
-      await page.locator('.lab summary.lab-row').first().focus();
-      await page.keyboard.press('Enter');
-    }
     const link = page.locator(selector).first();
     if (!(await link.count())) continue;
     await link.focus();
