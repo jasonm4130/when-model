@@ -170,7 +170,11 @@ const names = (ids: readonly string[], models: readonly string[]) =>
  * one of its models, and a post or story no listing claims stands as its own arrival. Newest first.
  * A launch seen three ways is one row with three tags, never three rows.
  */
-export function arrivalBoard(l: Pick<Landed, 'releases' | 'announcements' | 'stories'>): Arrival[] {
+export function arrivalBoard(l: {
+  releases: readonly Landed['releases'][number][];
+  announcements: readonly Landed['announcements'][number][];
+  stories: readonly Landed['stories'][number][];
+}): Arrival[] {
   // Posts and stories are claimed separately: a story often links the very post it discusses.
   const usedPosts = new Set<string>();
   const usedStories = new Set<string>();
