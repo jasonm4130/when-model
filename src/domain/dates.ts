@@ -26,3 +26,11 @@ export function monthName(ms: number | string | Date): string {
 export function dayMonth(ms: number | string | Date): string {
   return `${new Date(ms).getUTCDate()} ${monthName(ms)}`;
 }
+
+/** Weekday names, Sunday first as `getUTCDay` counts them, spelled by hand for the same reason. */
+export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+/** A UTC weekday's three-letter name, e.g. "Wed". */
+export function weekdayName(ms: number | string | Date): string {
+  return WEEKDAYS[new Date(ms).getUTCDay()];
+}
