@@ -182,9 +182,9 @@ const stopSub = (s: (typeof stops)[number]) =>
 </div>
 
 <section aria-labelledby="heard-title">
-  <div class="sec"><h2 id="heard-title">Station announcements</h2><span class="label">This week</span></div>
+  <div class="sec"><h2 id="heard-title">Station announcements</h2><span class="label">Latest</span></div>
   {heard === 0 ? (
-    <p class="empty">Nothing from or about {name} this week in the listings, the lab feeds or Hacker News.</p>
+    <p class="empty">Nothing recent from or about {name} in the listings, the lab feeds or Hacker News.</p>
   ) : (
     <div class="ann">
       {p.announcements.map((a) => <a class="row item" href={a.url} target="_blank" rel="noopener"><span class="ttl">{a.title}</span><span class="when mono" data-time={a.seenAt}>{ago(a.seenAt, nowMs)}</span><span class="meta mono">{a.source.toUpperCase()} · LAUNCH POST · {shortDate(a.seenAt)}</span></a>)}

@@ -324,6 +324,22 @@ describe('stripStops', () => {
     const kept = stripStops(twin, [rung(31, 0.93)], NOW);
     expect(kept.filter((s) => s.horizon === '30 days').map((s) => s.kind)).toEqual(['tick']);
   });
+
+  it('never lets the line fall: a curve tick below an earlier stop gives its name to that stop', () => {
+    const l = lab('anthropic', read(0.46));
+    // 94% by 31 Oct, then a 30-day read of 93% on 1 Nov: a cumulative chance cannot go down.
+    l.odds!.p30 = read(0.93);
+    const stops = stripStops(l, [rung(15, 0.75), rung(31, 0.94)], NOW);
+    expect(stops.map((s) => [s.kind, s.horizon ?? null, s.p ?? null])).toEqual([
+      ['now', null, null],
+      ['tick', '72 hours', 0.46],
+      ['tick', '7 days', null],
+      ['rung', null, 0.75],
+      ['rung', '30 days', 0.94],
+    ]);
+    const ps = stops.flatMap((s) => (s.p === undefined ? [] : [s.p]));
+    expect(ps).toEqual([...ps].sort((a, b) => a - b));
+  });
 });
 
 describe('otherServices', () => {

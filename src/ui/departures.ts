@@ -313,7 +313,27 @@ export function stripStops(
       else stops.push({ kind: 'tick', at, day, horizon: h.label, ...(h.key === 'p7' ? {} : { p: read.p }) });
     }
   stops.sort((a, b) => a.at - b.at);
-  return [{ kind: 'now', at: now, day: utcDay(now) }, ...stops];
+  return [{ kind: 'now', at: now, day: utcDay(now) }, ...monotonic(stops)];
+}
+
+/**
+ * A cumulative chance never falls along the line. A horizon tick read off the curve that prints
+ * below a stop before it (94% by Sat 31 Oct, then 93% at 30 days on Sun 1 Nov) is dropped; when a
+ * market stop sits within two days before it, that stop carries the horizon's name instead.
+ */
+function monotonic(stops: StripStop[]): StripStop[] {
+  const out: StripStop[] = [];
+  let best = -1;
+  for (const s of stops) {
+    if (s.kind === 'tick' && s.p !== undefined && Math.round(s.p * 100) < best) {
+      const prev = [...out].reverse().find((x) => x.kind === 'rung');
+      if (prev && s.day - prev.day <= 2 * DAY_MS) prev.horizon ??= s.horizon;
+      continue;
+    }
+    if (s.p !== undefined) best = Math.max(best, Math.round(s.p * 100));
+    out.push(s);
+  }
+  return out;
 }
 
 /** Another family a line runs: its name, busiest market and the stop the board quotes. */
