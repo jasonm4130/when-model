@@ -49,9 +49,9 @@ const ok = d ? d.sources.filter((s) => s.ok).length : 0;
         {LABS.map((l) => <Bullet id={l.id} name={l.name} size="lg" href={labPath(l.id)} />)}
       </div>
       <nav class="links" aria-label="More">
-        <a href="/markets">Markets</a><a href="/radar">Radar</a><a href="/about#score">How the score works</a><a href="/backtest">Backtest</a><a href="/api/dashboard.json">dashboard.json</a><a href={REPO} target="_blank" rel="noopener">Source</a>
+        <a href="/markets">Markets</a><a href="/radar">Radar</a><a href="/about#score">How it works</a><a href="/backtest">Backtest</a><a href="/api/dashboard.json">dashboard.json</a>
       </nav>
-      <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
+      <p class="tag-line">Intel by the weights. Watching the labs so you don't have to. <a href={REPO} target="_blank" rel="noopener">Source on GitHub</a></p>
     </div>
   </div>
 </footer>
@@ -70,5 +70,10 @@ const ok = d ? d.sources.filter((s) => s.ok).length : 0;
   .tag-line { margin-top: var(--s3); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   @media (max-width: 900px) {
     .foot-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+  }
+  /* All ten lines on one row down to a 320px phone: never eight and a stray two. */
+  @media (max-width: 480px) {
+    .map { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--s1); justify-items: center; }
+    .map :global(.b) { --d: min(30px, calc((100vw - 2 * var(--gutter) - 9 * var(--s1)) / 10)); }
   }
 </style>

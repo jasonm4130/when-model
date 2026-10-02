@@ -19,4 +19,9 @@ import { labPath } from '../ui/site';
 <style>
   .nf { padding-top: var(--s7); padding-bottom: var(--s8); font-size: var(--t-md); line-height: 28px; }
   .map { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s4); }
+  /* All ten lines on one row on a phone. */
+  @media (max-width: 480px) {
+    .map { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: var(--s1); justify-items: center; }
+    .map :global(.b) { --d: min(30px, calc((100vw - 2 * var(--gutter) - 9 * var(--s1)) / 10)); }
+  }
 </style>
