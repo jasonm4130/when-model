@@ -276,7 +276,6 @@ describe('DROPCON for a first-time reader', () => {
   it('on /about, adds the score up row by row, says plainly it is no forecast and lists the bands', async () => {
     const d = dashboard();
     const html = await render(ScoreDetail, { d });
-    const at = (s: string) => html.indexOf(s);
     // The sum row carries the score; no "Right now" line repeats it when the reading is live.
     expect(html).not.toContain('dc-now');
     // Every row is a lead input, so no row wears a LEAD chip.
