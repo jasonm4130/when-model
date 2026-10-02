@@ -35,8 +35,10 @@
 
    Inter Tight is narrower than Arial by a different amount at each weight, so its fallback is five
    faces, one per weight band, each Arial (or its metric twin Liberation Sans) regular or bold scaled
-   to Inter Tight's width there, measured in Chromium on running text and display text: 95.5% at
-   400, 97.5% at 500, 94.8% at 600, 96.8% at 700 and 98.75% at 800. Geist Mono and Courier New (or
+   to Inter Tight's width there, measured in Chromium as the mean of a mixed-case title and a running
+   sentence: 95.31% at 400, 97.54% at 500, 93.18% at 600, 95.26% at 700 and 97.35% at 800. Arial's
+   capitals run wider than Inter Tight's, so an all-caps label sets 2 to 6% wider in the fallback;
+   one scale per face cannot match both, and the page's text is mostly mixed case. Geist Mono and Courier New (or
    Liberation Mono) share a 0.6 em advance, so its fallback is Courier New at 100%. size-adjust also
    scales the override descriptors, so each override is the webfont's own metric divided by
    size-adjust: Inter Tight's 1984/494 per 2048 em, Geist Mono's 1005/295 per 1000. */
@@ -44,18 +46,18 @@
   font-family: 'Inter Tight Fallback';
   src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
   font-weight: 100 449;
-  size-adjust: 95.5%;
-  ascent-override: 101.44%;
-  descent-override: 25.26%;
+  size-adjust: 95.31%;
+  ascent-override: 101.64%;
+  descent-override: 25.31%;
   line-gap-override: 0%;
 }
 @font-face {
   font-family: 'Inter Tight Fallback';
   src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans'), local('Arimo');
   font-weight: 450 549;
-  size-adjust: 97.5%;
-  ascent-override: 99.36%;
-  descent-override: 24.74%;
+  size-adjust: 97.54%;
+  ascent-override: 99.32%;
+  descent-override: 24.73%;
   line-gap-override: 0%;
 }
 @font-face {
@@ -64,9 +66,9 @@
     local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('LiberationSans-Bold'),
     local('Arimo Bold');
   font-weight: 550 649;
-  size-adjust: 94.8%;
-  ascent-override: 102.19%;
-  descent-override: 25.44%;
+  size-adjust: 93.18%;
+  ascent-override: 103.97%;
+  descent-override: 25.89%;
   line-gap-override: 0%;
 }
 @font-face {
@@ -75,9 +77,9 @@
     local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('LiberationSans-Bold'),
     local('Arimo Bold');
   font-weight: 650 749;
-  size-adjust: 96.8%;
-  ascent-override: 100.08%;
-  descent-override: 24.92%;
+  size-adjust: 95.26%;
+  ascent-override: 101.7%;
+  descent-override: 25.32%;
   line-gap-override: 0%;
 }
 @font-face {
@@ -86,9 +88,9 @@
     local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('LiberationSans-Bold'),
     local('Arimo Bold');
   font-weight: 750 900;
-  size-adjust: 98.75%;
-  ascent-override: 98.1%;
-  descent-override: 24.43%;
+  size-adjust: 97.35%;
+  ascent-override: 99.51%;
+  descent-override: 24.78%;
   line-gap-override: 0%;
 }
 @font-face {

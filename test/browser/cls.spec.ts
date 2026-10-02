@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The self-hosted Archivo and Source Serif 4 faces (src/styles/fonts.css) ship metric-matched local()
+ * The self-hosted Inter Tight and Geist Mono faces (src/styles/fonts.css) ship metric-matched local()
  * fallback faces specifically so a slow font fetch never reflows the page. Delaying /fonts/*
  * simulates that slow fetch; a real PerformanceObserver (not a synthetic estimate) measures the
  * layout-shift score the browser itself reports. With Google Fonts (display=swap, no fallback
@@ -45,9 +45,9 @@ for (const [label, viewport] of [
  * The CLS runs above only notice a fallback mismatch where this page's layout happens to be
  * sensitive to it, so pin the metric match itself: each fallback face must resolve to a local font
  * on this platform and set a sample as wide and tall as the webfont it stands in for, in the weight,
- * width and case the page sets it in. Archivo is used two ways (small caps labels, condensed display
- * caps), so it has a fallback for each. geometricPrecision turns off hinting; the check is of the
- * @font-face metrics, not the rasteriser.
+ * width and case the page sets it in. Inter Tight is narrower than Arial by a different amount at each
+ * weight, so its fallback is one face per weight band and each band is checked at the weight the page
+ * uses. geometricPrecision turns off hinting; the check is of the @font-face metrics, not the rasteriser.
  */
 test('fallback faces lay text out like the webfonts they stand in for', async ({ page }) => {
   await page.goto('/');
@@ -62,29 +62,28 @@ test('fallback faces lay text out like the webfonts they stand in for', async ({
       el.remove();
       return { loaded: loaded.length, width, height };
     };
+    // Inter Tight's fallback is matched on mixed case: a title and a running sentence at each weight.
+    // Arial's capitals run 2 to 6% wider than Inter Tight's, which no single scale can also match;
+    // the CLS runs above measure what that costs the page.
+    const TITLE = 'Claude Haiku · Anthropic line · Next Gemini Flash-Lite released';
+    const SENTENCE = 'Markets put a named frontier release at roughly even odds within 7 days.';
     const cases: [string, string, string, string][] = [
-      [
-        'Archivo',
-        'Archivo Label Fallback',
-        '600 semi-expanded',
-        'DROPCON LEVEL · HOTTEST LAB · LIVE · POLYMARKET 0123456789',
-      ],
-      [
-        'Archivo',
-        'Archivo Display Fallback',
-        '800 extra-condensed',
-        'GPU FANS SPINNING · ANTHROPIC 47% 0123456789',
-      ],
-      [
-        'Source Serif 4',
-        'Source Serif 4 Fallback',
-        '400',
-        "Polymarket prices 3% that Meta's model ships by Sep 30, within 7 days.",
-      ],
+      ['Inter Tight', 'Inter Tight Fallback', '400', TITLE],
+      ['Inter Tight', 'Inter Tight Fallback', '400', SENTENCE],
+      ['Inter Tight', 'Inter Tight Fallback', '500', TITLE],
+      ['Inter Tight', 'Inter Tight Fallback', '500', SENTENCE],
+      ['Inter Tight', 'Inter Tight Fallback', '600', TITLE],
+      ['Inter Tight', 'Inter Tight Fallback', '600', SENTENCE],
+      ['Inter Tight', 'Inter Tight Fallback', '700', TITLE],
+      ['Inter Tight', 'Inter Tight Fallback', '700', SENTENCE],
+      ['Inter Tight', 'Inter Tight Fallback', '800', TITLE],
+      ['Inter Tight', 'Inter Tight Fallback', '800', SENTENCE],
+      ['Geist Mono', 'Geist Mono Fallback', '400', '30 Sep – 2 Oct · 11:01Z · LIVE · POLYMARKET 0123456789'],
+      ['Geist Mono', 'Geist Mono Fallback', '600', 'NOT A FORECAST · 46% · 42/100'],
     ];
     return Promise.all(
       cases.map(async ([font, fallback, style, sample]) => ({
-        font: `${font} ${style}`,
+        font: `${font} ${style} "${sample.slice(0, 12)}…"`,
         real: await box(font, style, sample),
         fallback: await box(fallback, style, sample),
       })),
