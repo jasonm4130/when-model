@@ -35,15 +35,18 @@ test('keeps the wide page body, FAQ and footer aligned to the shared container',
   const [faqBox, footerBox] = await Promise.all([
     faq.boundingBox(),
     // The footer's text, not its padded box: both start at the shared container's content edge.
-    page.locator('footer .foot-note').boundingBox(),
+    page.locator('footer .foot-title').boundingBox(),
   ]);
   expect(faqBox).not.toBeNull();
   expect(footerBox).not.toBeNull();
   expect(faqBox!.width).toBeLessThanOrEqual(1400);
   expect(Math.abs(faqBox!.x - footerBox!.x)).toBeLessThanOrEqual(1);
   await expect(faq).toBeVisible();
-  // The full disclaimer is on /about; every footer carries one line of it and a link there.
+  // The full disclaimer is on /about, so its footer does not repeat it; every other footer carries
+  // one line of it and a link there.
   await expect(page.getByRole('heading', { name: 'Disclaimer', exact: true })).toBeVisible();
+  await expect(page.locator('footer .foot-note')).toHaveCount(0);
+  await page.goto('/', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.locator('footer a[href="/about#disclaimer"]')).toHaveCount(1);
 });
 
@@ -97,9 +100,11 @@ test('opens a folded list from the keyboard, and keeps the status ladder and cha
   await expect(fold.locator('.faq-a, p').first()).toBeVisible();
 
   await openDashboard(page);
-  // The status ladder lights its one rung, as does the chart's scale.
+  // The status ladder lights its one rung, as does the service history's scale on /about.
   await expect(page.locator('.ladder .rung')).toHaveCount(5);
   expect(await page.locator('.ladder .rung.on').count()).toBe(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.goto('/about', { waitUntil: 'domcontentloaded', timeout: 45_000 });
   await expect(page.locator('.seg')).toHaveCount(5);
   expect(await page.locator('.seg.on').count()).toBe(1);
   expect(await page.locator('.seg.on').evaluate((element) => getComputedStyle(element).opacity)).toBe('1');

@@ -367,7 +367,7 @@ const inputWord =
     main :global(.stacked tr) { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
     main :global(.stacked th[scope='row']) { padding: 0 0 var(--s1); border: 0; font-weight: 600; white-space: normal; }
     /* The column's name hangs in a left gutter, so a cell's own inline content stays one flow. */
-    main :global(.stacked td) { position: relative; padding: 2px 0 2px calc(10em + var(--s3)); border: 0; text-align: left; white-space: normal; }
+    main :global(.stacked td) { position: relative; padding: 2px 0 2px calc(10em + var(--s3)); border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
     main :global(.stacked td::before) { content: attr(data-label); position: absolute; left: 0; top: 2px; width: 10em; font-family: var(--sans); font-size: var(--t-xs); line-height: 20px; color: var(--ink-2); }
     main :global(.stacked td[colspan]) { padding-left: 0; }
     main :global(.stacked td[colspan]::before) { content: none; }

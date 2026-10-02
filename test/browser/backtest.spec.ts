@@ -108,7 +108,8 @@ test.describe('/backtest', () => {
   test('keeps keyboard focus visible and unclipped inside scrolling tables', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openBacktest(page);
-    await page.locator('#stealth > summary').click();
+    // Opened without a pointer, so the link's focus that follows is keyboard focus (:focus-visible).
+    await page.locator('#stealth').evaluate((d) => ((d as HTMLDetailsElement).open = true));
     const link = page.locator('#stealth table a').first();
     await link.focus();
     const clipped = await link.evaluate((el) => {
