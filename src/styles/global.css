@@ -15,9 +15,9 @@
   --sign-ink-2: #b8b8b8;
   --rule: #141414;
   --rule-soft: #d9d5cb;
-  /* One job each. Notice: service status and service notices. Alert: a level-1 notice. */
+  /* One job: service status and service notices. A level-1 surge is the sign black with the
+     platform-edge stripe, so no status colour is ever mistaken for a line's colour. */
   --notice: #fccc0a;
-  --alert: #a50021;
 
   /* Space: a 4px grid. */
   --s1: 4px;
@@ -77,11 +77,6 @@
   --fs-d1: var(--t-2xl);
   --fs-metric: var(--t-lg);
   --gap: var(--s5);
-  /* The backtest's good, bad and highlight marks. */
-  --green: #00843d;
-  --red: var(--alert);
-  --yellow: var(--notice);
-  --cyan: #0039a6;
   --bg2: var(--paper-2);
 }
 @media (max-width: 900px) {

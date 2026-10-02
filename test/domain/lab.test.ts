@@ -134,8 +134,9 @@ describe('lab colours', () => {
     // The notice yellow cannot carry type on paper: it is only ever a field with ink on it.
     expect(contrast(token('notice')!, background!)).toBeLessThan(3);
     expect(contrast(token('ink')!, token('notice')!)).toBeGreaterThanOrEqual(7);
-    // The alert red carries white type at 7:1.
-    expect(contrast('#ffffff', token('alert')!)).toBeGreaterThanOrEqual(7);
+    // A surge is the sign with the notice yellow on it, never a red a line could own.
+    expect(token('alert')).toBeUndefined();
+    expect(contrast(token('notice')!, token('sign')!)).toBeGreaterThanOrEqual(7);
   });
 
   it('never ink markup in a lab colour, which was tuned for the old dark page', () => {

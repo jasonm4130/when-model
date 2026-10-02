@@ -132,11 +132,10 @@ for (const [level, treatment, name] of [
     expect(out.rung).toBeGreaterThanOrEqual(4.5);
     expect(out.lit).toBe(1);
     expect(out.overflow).toBeLessThanOrEqual(0);
-    // The notice and the alert are coloured grounds; the calm level sits on the paper.
-    if (treatment === 'calm')
-      expect(out.ground).toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
-    else
-      expect(out.ground).not.toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+    // Every level is a board of its own, never the page's paper: the calm one is paper-2, so level 5
+    // does not read as part of the header.
+    expect(out.ground).not.toBe(await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
+    if (treatment === 'calm') expect(out.ground).toBe('rgb(235, 232, 223)');
   });
 }
 

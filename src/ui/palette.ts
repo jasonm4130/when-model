@@ -5,7 +5,8 @@
  * - paper, ink, ink-2: the page and its words. ink-2 is the quiet line, still 7.9:1 on paper.
  * - sign, sign-ink, sign-ink-2: the black station sign and the type on it.
  * - notice: the yellow of service status and service notices, and nothing else.
- * - alert: the red of a level-1 service notice, and nothing else.
+ * A level-1 surge is the sign black with the notice yellow's platform-edge stripe: no status colour
+ * may be mistaken for a line's.
  * - rule-soft: hairlines between rows.
  * Line colours (identity, never status) live with the bullets in `lines.ts`.
  */
@@ -19,7 +20,6 @@ export const PALETTE = {
   'sign-ink': '#ffffff',
   'sign-ink-2': '#b8b8b8',
   notice: '#fccc0a',
-  alert: '#a50021',
 } as const;
 
 export type PaletteToken = keyof typeof PALETTE;
