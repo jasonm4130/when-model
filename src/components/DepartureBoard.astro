@@ -1,15 +1,15 @@
 ---
 /**
  * "Then": every other line with a time, in the board's order (src/ui/departures.ts), each with its
- * service, its odds of departing by the 7-day date ("By Fri 9 Oct") and its boarding window (when
- * its market reaches even odds, which can be weeks out). Long shots, under `QUIET_BELOW`, are set
- * small and grey so a 2% never reads as loud as the 46% above it. Lines the board cannot time
+ * service and its odds of departing by the 7-day date ("By Fri 9 Oct"): one timing fact per row, so
+ * no row prints a window that opens after the date its odds are for (a line's page has its window).
+ * Long shots, under `QUIET_BELOW`, are set small and grey so a 2% never reads as loud as the 46% above it. Lines the board cannot time
  * follow as bullets with one plain sentence: a thin market is "times unavailable" and never shows its
  * odds; no market is "no timetable"; Polymarket down is "offline".
  */
 import type { Dashboard } from '../domain/dashboard';
 import type { LabStatus } from '../domain/lab-status';
-import { dayLabel, departureBoard, isDeparture, windowText } from '../ui/departures';
+import { dayLabel, departureBoard, isDeparture } from '../ui/departures';
 import { pct } from '../ui/format';
 import { lineName, serviceName } from '../ui/lines';
 import { labPath } from '../ui/site';
@@ -31,7 +31,7 @@ const by = dayLabel(built + 7 * 86_400_000, built);
   </div>
   {board.later.length > 0 && (
     <ol class="then" aria-label="Other lines with a time">
-      <li class="then-head" aria-hidden="true"><span>Line · service</span><span>Odds</span><span>Boarding window</span></li>
+      <li class="then-head" aria-hidden="true"><span>Line · service</span><span>Odds</span></li>
       {board.later.map((dep) => (
         <li>
           <a class="dep" href={labPath(dep.lab.id)}>
@@ -39,7 +39,6 @@ const by = dayLabel(built + 7 * 86_400_000, built);
             <span class="n">{serviceName(dep.family)}</span>
             <span class="f">{lineName(dep.lab.name)}</span>
             <span class:list={['p', 'mono', { quiet: dep.p7 < QUIET_BELOW }]}>{pct(dep.p7)}</span>
-            <span class="w mono">{windowText(dep.window, built, true)}</span>
           </a>
         </li>
       ))}
@@ -63,11 +62,11 @@ const by = dayLabel(built + 7 * 86_400_000, built);
   )}
 </section>
 <style>
-  .then-head { display: grid; grid-template-columns: minmax(0, 1fr) 96px 136px; gap: var(--s4); padding: var(--s3) 0; font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .then-head { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--s4); padding: var(--s3) 0; font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
   .then-head span + span { text-align: right; }
   .then > li + li { border-top: 1px solid var(--rule-soft); }
   .then > li:last-child { border-bottom: 1px solid var(--rule-soft); }
-  .dep { display: grid; grid-template-columns: 40px minmax(0, 1fr) 96px 136px; grid-template-areas: 'b n p w' 'b f p w'; column-gap: var(--s4); align-items: center; padding: var(--s4) 0; color: var(--ink); text-decoration: none; }
+  .dep { display: grid; grid-template-columns: 40px minmax(0, 1fr) 96px; grid-template-areas: 'b n p' 'b f p'; column-gap: var(--s4); align-items: center; padding: var(--s4) 0; color: var(--ink); text-decoration: none; }
   .dep:hover { text-decoration: none; }
   .dep:hover .n { text-decoration: underline; text-underline-offset: 3px; }
   .dep :global(.b) { grid-area: b; }
@@ -75,18 +74,16 @@ const by = dayLabel(built + 7 * 86_400_000, built);
   .f { grid-area: f; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .p { grid-area: p; text-align: right; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
   .p.quiet { font-size: var(--t-md); line-height: 28px; font-weight: 400; color: var(--ink-2); }
-  .w { grid-area: w; text-align: right; font-size: var(--t-sm); line-height: 20px; white-space: nowrap; }
   .untimed { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
   .bul { display: flex; flex-wrap: wrap; gap: var(--s1); }
   .untimed p { margin-top: var(--s2); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .untimed b { font-weight: 600; color: var(--ink); }
   @media (max-width: 640px) {
     .then-head { display: none; }
-    .dep { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: 'b n p' 'b f w'; column-gap: var(--s3); row-gap: 2px; padding: var(--s3) 0; }
+    .dep { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: 'b n p' 'b f p'; column-gap: var(--s3); row-gap: 2px; padding: var(--s3) 0; }
     .dep :global(.b.lg) { --d: 32px; }
     .n { font-size: var(--t-base); line-height: 24px; }
     .p { font-size: var(--t-md); line-height: 24px; }
     .p.quiet { font-size: var(--t-base); }
-    .w { font-size: var(--t-xs); line-height: 20px; }
   }
 </style>

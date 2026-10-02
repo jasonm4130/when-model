@@ -398,7 +398,7 @@ describe('The network and a line page', () => {
       html.indexOf('id="lab-anthropic"'),
       html.indexOf('</li>', html.indexOf('id="lab-anthropic"')),
     );
-    expect(anthropic).toMatch(/ · 1\/30d</);
+    expect(anthropic).toMatch(/>· 1\/30d</);
   });
 
   it("never prints an extrapolated read on the network, and keeps another family off the line's strip", async () => {

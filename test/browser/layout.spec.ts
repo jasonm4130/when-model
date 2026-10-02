@@ -31,9 +31,7 @@ for (const width of [1440, 1280, 1024, 768, 390]) {
 }
 
 for (const width of [1440, 1366, 1024]) {
-  test(`keeps the network's odds, timetable and last arrival in aligned columns at ${width}px`, async ({
-    page,
-  }) => {
+  test(`keeps the network's odds and last arrival in aligned columns at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page, '/labs');
     // Every row gets the longest text a cell can carry, so the check does not depend on today's numbers.
@@ -41,11 +39,10 @@ for (const width of [1440, 1366, 1024]) {
       for (const row of rows) {
         const odds = row.querySelector('.odds')!;
         odds.textContent = odds.classList.contains('quiet') ? 'times unavailable' : '100%';
-        row.querySelector('.win')!.textContent = '29 Sep – 30 Sep';
         row.querySelector('.last')!.textContent = 'none listed · 12/30d';
       }
     });
-    for (const cell of ['.odds', '.win', '.last']) {
+    for (const cell of ['.odds', '.last']) {
       const boxes = await page.locator(`.lrow ${cell}`).evaluateAll((els) =>
         els.map((e) => {
           const r = e.getBoundingClientRect();

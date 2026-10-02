@@ -18,7 +18,6 @@ import type { LabStatus } from '../domain/lab-status';
 import { displayOutcomes, type Market } from '../domain/market';
 import { pct } from './format';
 import {
-  boardingWindow,
   datedRungs,
   departureBoard,
   familyMarkets,
@@ -59,19 +58,16 @@ const PARTS = {
   /** How the score adds up, row by row, as /about prints it. */
   provenance: (d: Visible) => list(d.dropcon?.provenance).map((r) => [r.points, r.label, r.detail]),
   /**
-   * The home page's departure board as printed: the next departure and the "Then" rows (line,
-   * service, 7-day odds, boarding window), and which lines are untimed and why.
+   * The home page's departure board as printed: the next departure (with its boarding window) and
+   * the "Then" rows (line, service, 7-day odds), and which lines are untimed and why.
    */
   departures: (d: Visible) => {
     const board = departureBoard(d);
     const t = Date.parse(d.generatedAt ?? '');
-    const row = (x: Departure, short: boolean) => [
-      x.lab.id,
-      x.family,
-      pct(x.p7),
-      windowText(x.window, t, short),
-      short ? null : windowNote(x.window, t),
-    ];
+    const row = (x: Departure, later: boolean) =>
+      later
+        ? [x.lab.id, x.family, pct(x.p7)]
+        : [x.lab.id, x.family, pct(x.p7), windowText(x.window, t), windowNote(x.window, t)];
     return {
       next: isDeparture(board.next) ? row(board.next, false) : board.next.reason,
       later: board.later.map((x) => row(x, true)),
@@ -82,10 +78,20 @@ const PARTS = {
   },
   /**
    * Recent arrivals and the one service notice on the home page, as printed: each arrival's name,
-   * line and listing minute; the notice's slot, its name, the day it appeared and its context.
+   * line and minute (the same list as /radar's, without its source tags); the notice's slot, its
+   * name, the day it appeared and its context.
    */
-  arrivals: (d: Visible) =>
-    list(d.landed?.releases).map((r) => [r.id, r.name, r.lab, r.firstListedAt?.slice(0, 16) ?? null]),
+  arrivals: (d: Visible) => {
+    const l = d.landed;
+    return (
+      l &&
+      arrivalBoard({
+        releases: list(l.releases),
+        announcements: list(l.announcements),
+        stories: list(l.stories),
+      }).map((a) => [a.name, a.lab ?? null, a.at?.slice(0, 16) ?? null])
+    );
+  },
   notice: (d: Visible) => {
     const items = list(d.earlyWarnings?.stealth?.items);
     const slot = items[0];
@@ -97,23 +103,16 @@ const PARTS = {
       items.length,
     ];
   },
-  /** The network: each line's state, its 7-day odds when timed, its service and window. */
+  /** The network: each line's state, its 7-day odds when timed, and its service. */
   network: (d: Visible) => {
     const up = d.measurement?.inputs?.oddsAvailable ?? true;
-    const t = Date.parse(d.generatedAt ?? '');
-    const asOf = asOfMs(d);
     return list(d.labs).map((l) => {
       const state = timetableState(l, up);
-      const w =
-        state === 'scheduled'
-          ? windowText(boardingWindow(datedRungs(familyMarkets(d, l), asOf)), t, true)
-          : null;
       return [
         l.id,
         state,
         state === 'scheduled' ? pct(l.odds?.p7.p) : null,
         l.odds?.family ?? null,
-        w,
         l.status,
         l.releases30d,
       ];

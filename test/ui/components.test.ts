@@ -313,7 +313,9 @@ describe('components', async () => {
     expect(order).toEqual(d.labs.map((l) => l.id));
     expect(html).toContain('SHIPPING');
     expect(html).toMatch(/>66%</);
-    expect(html).toContain('by 24 Sep');
+    // One timing fact per row: the odds by the 7-day date, never a window that may open after it.
+    expect(html).toContain('Odds by 26 Sep');
+    expect(html).not.toContain('by 24 Sep');
   });
 
   it('Labs says "times unavailable" for an extrapolated read and never prints its odds', async () => {
