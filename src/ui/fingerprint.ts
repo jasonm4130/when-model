@@ -5,7 +5,7 @@
  * Every page reads the same /api/dashboard.json, but each shows a different slice of it, so each
  * hashes only its own slice (`PAGE_PARTS`): a new feed item offers NEW DATA on /radar and on the
  * lab it names, never on `/`. A slice holds only what a reader can see, at the precision the page
- * shows it: the level and headline, market prices as the panels render them ("66%", "27–84¢"), lab
+ * shows it: the level and headline, market prices as the panels render them ("66%", a thin book's "27–84%"), lab
  * reads, listing ids and prices, feed, trending and early-warning ids. It leaves out everything
  * that moves with the clock alone: `generatedAt`, raw probabilities (a curve read drifts as its
  * horizon slides), heat, days in stealth, hours ago, timings. `generatedAt` only decides which

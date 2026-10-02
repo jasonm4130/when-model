@@ -18,26 +18,30 @@ const down = 'Polymarket unreachable. Odds return when it does.';
 const leader = bestRows[0]?.yes ?? 0;
 ---
 <section class="markets" aria-label="Markets">
-  <div class="cols">
-    <div class="panel">
+  <!-- The page's one primary thing: every release timetable, full width, two rows a line on a wide screen. -->
+  <div class="panel">
       <div class="panel-head">
         <h2>Release timetables</h2>
         <Pill pill={pill} href="https://polymarket.com?utm_source=whenmodel.com" />
       </div>
       {releases.length ? (
         <div class="mlist">
-          {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i} />)}
+          <div class="mgrid">
+            {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i} />)}
+          </div>
           {releases.length > MOBILE_MARKETS && (
             <details class="fold">
               <summary class="fold-summary">{releases.length - MOBILE_MARKETS} more release markets</summary>
-              {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i + MOBILE_MARKETS} />)}
+              <div class="mgrid">
+                {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i + MOBILE_MARKETS} />)}
+              </div>
             </details>
           )}
         </div>
       ) : <p class="empty">{up ? 'No open release market right now.' : down}</p>}
-    </div>
+  </div>
 
-    <div class="stack">
+  <div class="cols lower">
       <div class="panel">
         <div class="panel-head"><h2>Best model race</h2>{best && <span class="label vol">{usd(best.vol24)} 24h</span>}</div>
         {best ? (
@@ -70,11 +74,18 @@ const leader = bestRows[0]?.yes ?? 0;
           </div>
         ) : <p class="empty">{up ? 'Nothing else on the board.' : down}</p>}
       </div>
-    </div>
   </div>
 </section>
 <style>
-  .stack { display: grid; gap: var(--s7); align-content: start; }
+  .markets { display: grid; gap: var(--s8); }
+  .lower { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .mgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 1100px) {
+    .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s8); }
+  }
+  @media (max-width: 900px) {
+    .lower { grid-template-columns: minmax(0, 1fr); }
+  }
   .mlist { display: flex; flex-direction: column; }
   .vol { color: var(--ink-2); }
   .best-title { display: block; margin: var(--s4) 0; font-weight: 600; }

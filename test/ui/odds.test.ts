@@ -174,16 +174,16 @@ describe('outcomeOdds', () => {
   it('shows a thin book as its bid-ask range, never one number', () => {
     const o = { label: 'September 28', yes: 0.555, closed: false, vol24: 1, bestBid: 0.27, bestAsk: 0.84 };
     // Live 2026-09-26: Sonnet's Sep 28 rung, 27¢ bid / 84¢ ask, had been shown as "56%" LIVE ODDS.
-    expect(outcomeOdds({ ...o, thin: true })).toEqual({ text: '27–84¢', thin: true });
-    expect(outcomeOdds({ ...o, thin: true, bestBid: undefined })).toEqual({ text: '0–84¢', thin: true });
+    expect(outcomeOdds({ ...o, thin: true })).toEqual({ text: '27–84%', thin: true });
+    expect(outcomeOdds({ ...o, thin: true, bestBid: undefined })).toEqual({ text: '0–84%', thin: true });
     expect(outcomeOdds({ ...o, thin: false })).toEqual({ text: '56%', thin: false });
   });
 
-  it('reads a book with no bid and a sub-cent ask as "<1¢", never "0–0¢"', () => {
+  it('reads a book with no bid and a sub-cent ask as "<1%", never "0–0%"', () => {
     const o = { label: 'September 25', yes: 0.0015, closed: false, vol24: 1, thin: true };
-    expect(outcomeOdds({ ...o, bestAsk: 0.003 })).toEqual({ text: '<1¢', thin: true });
-    expect(outcomeOdds({ ...o, bestBid: 0.001, bestAsk: 0.004 })).toEqual({ text: '<1¢', thin: true });
+    expect(outcomeOdds({ ...o, bestAsk: 0.003 })).toEqual({ text: '<1%', thin: true });
+    expect(outcomeOdds({ ...o, bestBid: 0.001, bestAsk: 0.004 })).toEqual({ text: '<1%', thin: true });
     // One cent either side of the rounding still shows the range.
-    expect(outcomeOdds({ ...o, bestAsk: 0.006 })).toEqual({ text: '0–1¢', thin: true });
+    expect(outcomeOdds({ ...o, bestAsk: 0.006 })).toEqual({ text: '0–1%', thin: true });
   });
 });
