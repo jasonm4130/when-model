@@ -35,7 +35,7 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   (the scrubber's readout text) and `src/ui/labels.ts` (whole-or-nothing label placement) are pure
   and run both in the server render and in the component's browser script. The readout never
   gives a past hour the live reading, and scrubbing never changes the posted level.
-- Pages: `/` (the service status, the next departure, the departure board, arrivals and the chart), `/labs`, `/labs/[id]` (one per registry lab; an unknown id
+- Pages: `/` (the service status, the next departure, the departure board, arrivals and the chart, drawn only when the week has a reading, else one quiet line), `/labs`, `/labs/[id]` (one per registry lab; an unknown id
   renders the 404 with a 404 status and no fetch), `/markets`, `/radar`, `/about`, `/backtest`. Every
   page reads the one memoised `loadDashboard()`; only `/` calls `loadHistoryForPage`, and
   `test/app/load-dashboard.test.ts` renders each page and pins its fetch count. `src/ui/site.ts` holds
@@ -116,6 +116,8 @@ Rules of the house:
   For UI changes, run `pnpm test:e2e` against the built Worker for desktop, narrow mobile,
   keyboard controls and reduced motion. Install Chromium first with `pnpm exec playwright install chromium`. Set `E2E_PORT` when another
   checkout's Worker already holds 8787; locally Playwright reuses whatever server answers on the port.
+  Its webServer first applies the D1 migrations locally and seeds a week of history
+  (`test/browser/fixtures/seed-history.sql`); a server you start yourself needs the same.
   Restart a running `wrangler dev` after `pnpm build`: its reload can keep serving the old server
   bundle (seen as HTML linking an `/_astro/*.css` that 404s), and the tests then pass or fail on old code.
   A browser test for a state today's data may not show (a failed source, an extrapolated read, a
