@@ -233,8 +233,9 @@ describe('panel selections', () => {
     });
     const container = await AstroContainer.create();
     const html = await container.renderToString(Markets, { props: { d: { ...base, markets: [rungs] } } });
-    expect(html).toContain('September 30');
-    expect(html).not.toContain('September 18');
+    // Rung labels print day first, as the rest of the site does.
+    expect(html).toContain('30 Sep');
+    expect(html).not.toContain('18 Sep');
   });
 
   it('flags stealth slots from the listing itself and from early warnings', () => {
@@ -276,10 +277,12 @@ describe('panels render', async () => {
     // Odds are toned by class (hi / mid / lo), never by a lab colour inline.
     expect(html).toMatch(/<b class="(hi|mid|lo)"[^>]*>37%<\/b> Yes/);
     expect(html).not.toMatch(/<b[^>]*style="color/);
-    // The title row is a grid: the line's bullet (or a plain ring for no line), title, volume.
+    // Release markets sit under their line's heading (its bullet and name, or a plain ring for no
+    // line), one row each: the row itself carries no second bullet.
     expect(html).toMatch(
-      /class="mtitle"[^>]*>(?:<span class="b sm"[^>]*role="img"[^>]*aria-label="[^"]+ line"[^>]*>[A-Z]<\/span>|<span class="mdot"[^>]*aria-hidden="true"[^>]*><\/span>)<span class="mname"/,
+      /<h3 class="line-head"[^>]*>(?:<a href="\/labs\/[a-z]+"[^>]*><span class="b"[^>]*>[A-Z]<\/span>[^<]+ line<\/a>|<span[^>]*><span class="mdot")/,
     );
+    expect(html).toMatch(/class="row mrow grouped"[^>]*><div class="mtitle"[^>]*><span class="mname"/);
   });
 
   it('Markets says the source is down, or that there is simply nothing, from the source result', async () => {

@@ -3,6 +3,11 @@ import type { Dashboard } from '../domain/dashboard';
 import { SOURCE } from '../domain/sources';
 import { pct, usd } from '../ui/format';
 import { MOBILE_MARKETS, PANEL_ROWS, asOfMs, otherRows, raceRows, releaseRows, sourceOk, sourcePill } from '../ui/panels';
+import { labById } from '../domain/lab';
+import type { Market } from '../domain/market';
+import { lineName } from '../ui/lines';
+import { labPath } from '../ui/site';
+import Bullet from './Bullet.astro';
 import MarketRow from './MarketRow.astro';
 import Pill from './Pill.astro';
 interface Props { d: Dashboard }
@@ -16,6 +21,17 @@ const up = sourceOk(d.sources, SOURCE.polymarket);
 const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, Date.now());
 const down = 'Polymarket unreachable. Odds return when it does.';
 const leader = bestRows[0]?.yes ?? 0;
+/** Release markets in line order (busiest line first), grouped under each line's heading. */
+const byLine = (ms: Market[]) => {
+  const by = new Map<string, Market[]>();
+  for (const m of ms) by.set(m.labId ?? '', [...(by.get(m.labId ?? '') ?? []), m]);
+  return [...by.entries()].map(([id, markets]) => ({ lab: id ? labById(id) : undefined, markets }));
+};
+const ordered = byLine(releases).flatMap((g) => g.markets);
+// The first MOBILE_MARKETS show; the rest wait behind one fold, still under their line's heading.
+const open = byLine(ordered.slice(0, MOBILE_MARKETS));
+const folded = byLine(ordered.slice(MOBILE_MARKETS));
+const foldedCount = ordered.length - MOBILE_MARKETS;
 ---
 <section class="markets" aria-label="Markets">
   <!-- The page's one primary thing: every release timetable, full width, two rows a line on a wide screen. -->
@@ -26,22 +42,40 @@ const leader = bestRows[0]?.yes ?? 0;
       </div>
       {releases.length ? (
         <div class="mlist">
-          <div class="mgrid">
-            {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i} />)}
-          </div>
-          {releases.length > MOBILE_MARKETS && (
+          {open.map((g) => (
+            <div class="line-group">
+              <h3 class="line-head">
+                {g.lab ? (
+                  <a href={labPath(g.lab.id)}><Bullet id={g.lab.id} name={g.lab.name} decorative />{lineName(g.lab.name)}</a>
+                ) : (
+                  <span><span class="mdot" aria-hidden="true"></span>Other lines</span>
+                )}
+              </h3>
+              {g.markets.map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i} grouped />)}
+            </div>
+          ))}
+          {foldedCount > 0 && (
             <details class="fold">
-              <summary class="fold-summary">{releases.length - MOBILE_MARKETS} more release markets</summary>
-              <div class="mgrid">
-                {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i + MOBILE_MARKETS} />)}
-              </div>
+              <summary class="fold-summary">{foldedCount} more release markets</summary>
+              {folded.map((g) => (
+                <div class="line-group">
+                  <h3 class="line-head">
+                    {g.lab ? (
+                      <a href={labPath(g.lab.id)}><Bullet id={g.lab.id} name={g.lab.name} decorative />{lineName(g.lab.name)}</a>
+                    ) : (
+                      <span><span class="mdot" aria-hidden="true"></span>Other lines</span>
+                    )}
+                  </h3>
+                  {g.markets.map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i} grouped />)}
+                </div>
+              ))}
             </details>
           )}
         </div>
       ) : <p class="empty">{up ? 'No open release market right now.' : down}</p>}
   </div>
 
-  <div class="cols lower">
+  <div class="lower">
       <div class="panel">
         <div class="panel-head"><h2>Best model race</h2>{best && <span class="label vol">{usd(best.vol24)} 24h</span>}</div>
         {best ? (
@@ -64,11 +98,15 @@ const leader = bestRows[0]?.yes ?? 0;
         <div class="panel-head"><h2>Benchmark and other markets</h2></div>
         {others.length ? (
           <div class="mlist">
-            {others.slice(0, MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
+            <div class="mgrid">
+              {others.slice(0, MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
+            </div>
             {others.length > MOBILE_MARKETS && (
               <details class="fold">
                 <summary class="fold-summary">{others.length - MOBILE_MARKETS} more markets</summary>
-                {others.slice(MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
+                <div class="mgrid">
+                  {others.slice(MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
+                </div>
               </details>
             )}
           </div>
@@ -78,14 +116,22 @@ const leader = bestRows[0]?.yes ?? 0;
 </section>
 <style>
   .markets { display: grid; gap: var(--s8); }
-  .lower { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  /* The race, then the benchmarks, each full width: two columns of unequal length left a hole. */
+  .lower { display: grid; gap: var(--s8); }
+  .race { max-width: 760px; }
   .mgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 1100px) {
     .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s8); }
   }
-  @media (max-width: 900px) {
-    .lower { grid-template-columns: minmax(0, 1fr); }
-  }
+  /* A line's markets sit under its bullet and name, like a timetable's line heading. */
+  .line-group { padding-top: var(--s5); }
+  .line-group + .line-group { border-top: 1px solid var(--rule-soft); }
+  .line-head { font-size: var(--t-md); line-height: 28px; font-weight: 700; }
+  .line-head a, .line-head > span { display: inline-flex; align-items: center; gap: var(--s3); color: var(--ink); text-decoration: none; }
+  .line-head a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .line-head .mdot { width: 32px; height: 32px; border: 2px solid var(--ink); border-radius: 50%; }
+  .line-group :global(.mrow) { border-bottom: 0; }
+  .line-group :global(.mrow + .mrow) { border-top: 1px dotted var(--rule-soft); }
   .mlist { display: flex; flex-direction: column; }
   .vol { color: var(--ink-2); }
   .best-title { display: block; margin: var(--s4) 0; font-weight: 600; }

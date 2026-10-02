@@ -279,7 +279,7 @@ describe('components', async () => {
     const html = await container.renderToString(Markets, {
       props: { d: dashboard({ markets: { name: 'Polymarket', data: [thin, board], ok: true } }) },
     });
-    expect(html).toMatch(/<b class="thin"[^>]*>27–84%<\/b> September 24/);
+    expect(html).toMatch(/<b class="thin"[^>]*>27–84%<\/b> 24 Sep/);
     expect(html).not.toContain('56%');
     expect(html).toContain('Google');
     expect(html).not.toMatch(/race-name[^>]*>Other</);

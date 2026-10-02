@@ -55,14 +55,15 @@ test.describe('panels on a phone (UI-10)', () => {
       await markets.locator('.fold-summary').click();
       expect(await visibleCount(rows)).toBe(total);
     }
-    // UI-12: the line's bullet (or a plain market's dot) sits on the title's first line, never alone above it.
-    const first = rows.first();
-    const [dot, name] = await Promise.all([
-      first.locator('.b, .mdot').first().boundingBox(),
-      first.locator('.mname').boundingBox(),
+    // UI-12: markets sit under their line's heading, its bullet on the same line as its name.
+    const head = markets.locator('.line-head').first();
+    const [dot, text] = await Promise.all([
+      head.locator('.b, .mdot').first().boundingBox(),
+      head.boundingBox(),
     ]);
-    expect(dot!.y).toBeGreaterThanOrEqual(name!.y);
-    expect(dot!.y + dot!.height).toBeLessThanOrEqual(name!.y + name!.height);
+    expect(dot!.y).toBeGreaterThanOrEqual(text!.y - 1);
+    expect(dot!.y + dot!.height).toBeLessThanOrEqual(text!.y + text!.height + 1);
+    await expect(rows.first().locator('.b')).toHaveCount(0);
   });
 
   test('the feed drops its inner scroller and shows twelve reports, then an expander', async ({ page }) => {

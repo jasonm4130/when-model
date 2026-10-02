@@ -3,6 +3,7 @@ import { displayOutcomes, type Market } from '../domain/market';
 import { usd } from '../ui/format';
 import { outcomeOdds } from '../ui/odds';
 import { labById } from '../domain/lab';
+import { rungLabel } from '../domain/dates';
 import Bullet from './Bullet.astro';
 interface Props {
   m: Market;
@@ -12,22 +13,24 @@ interface Props {
   compact?: boolean;
   /** Kept for callers; a release market wears its line's bullet instead. */
   color?: string;
+  /** Listed under its line's heading: no bullet of its own, and on a wide screen one row, title then stops. */
+  grouped?: boolean;
   i?: number;
   /** The build time: a release rung whose deadline is behind it is not shown (`asOfMs`). */
   asOf?: number;
 }
-const { m, limit, compact = false, asOf } = Astro.props;
+const { m, limit, compact = false, grouped = false, asOf } = Astro.props;
 const THIN = 'Thin book: bid–ask range, not odds';
 const tone = (p: number) => (p >= 0.5 ? 'hi' : p >= 0.2 ? 'mid' : 'lo');
-const lab = !compact && m.labId ? labById(m.labId) : undefined;
+const lab = !compact && !grouped && m.labId ? labById(m.labId) : undefined;
 ---
-<a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener">
-  <div class="mtitle">{!compact && (lab ? <Bullet id={lab.id} name={lab.name} size="sm" /> : <span class="mdot" aria-hidden="true"></span>)}<span class="mname">{m.title}</span><span class="vol mono">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
+<a class:list={['row mrow', { compact, grouped }]} href={m.url} target="_blank" rel="noopener">
+  <div class="mtitle">{!compact && !grouped && (lab ? <Bullet id={lab.id} name={lab.name} size="sm" /> : <span class="mdot" aria-hidden="true"></span>)}<span class="mname">{m.title}</span><span class="vol mono">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
   <div class="outs">
     {displayOutcomes(m, limit, asOf).map((o) => {
       const odds = outcomeOdds(o);
-      if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {o.label}</span>;
-      return <span class="out"><b class={tone(o.yes)}>{odds.text}</b> {o.label}</span>;
+      if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {rungLabel(o.label)}</span>;
+      return <span class="out"><b class={tone(o.yes)}>{odds.text}</b> {rungLabel(o.label)}</span>;
     })}
   </div>
 </a>
@@ -35,13 +38,19 @@ const lab = !compact && m.labId ? labById(m.labId) : undefined;
   .mrow { padding: var(--s4) 0; }
   /* A grid keeps the bullet on the title's first line and the volume in its own column however the title wraps. */
   .mtitle { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s3); align-items: start; font-size: var(--t-base); line-height: 24px; font-weight: 600; }
-  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-weight: 500; }
+  .compact .mtitle, .grouped .mtitle { grid-template-columns: minmax(0, 1fr) auto; }
+  .compact .mtitle { font-weight: 500; }
   .mdot { width: 24px; height: 24px; border: 2px solid var(--ink); border-radius: 50%; }
   .mrow:hover .mname { text-decoration: underline; text-underline-offset: 3px; }
-  .mname { overflow-wrap: anywhere; }
+  .mname { overflow-wrap: anywhere; text-wrap: balance; }
   .vol { font-size: var(--t-xs); line-height: 24px; font-weight: 400; color: var(--ink-2); white-space: nowrap; }
   .outs { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin-top: var(--s2); padding-left: 36px; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
-  .compact .outs { padding-left: 0; }
+  .compact .outs, .grouped .outs { padding-left: 0; }
+  /* Under its line on a wide screen a market is one timetable row: its question, then its stops. */
+  @media (min-width: 1100px) {
+    .grouped { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--s6); align-items: baseline; }
+    .grouped .outs { margin-top: 0; }
+  }
   .out { overflow-wrap: anywhere; }
   @media (min-width: 481px) {
     .out { white-space: nowrap; }
