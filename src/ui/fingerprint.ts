@@ -30,6 +30,7 @@ import {
   type Departure,
 } from './departures';
 import { labPage } from './lab-page';
+import { arrivalBoard } from './signals';
 import { outcomeOdds, readValue } from './odds';
 import { PANEL_ROWS, asOfMs, dropPrice, otherRows, raceRows, releaseRows } from './panels';
 import type { PageView } from './site';
@@ -143,15 +144,16 @@ const PARTS = {
       ]
     );
   },
+  // /radar's Recent arrivals as printed: each launch once, its time to the minute and its source tags.
   landed: (d: Visible) => {
     const l = d.landed;
     return (
-      l && [
-        l.bannerText ?? null,
-        list(l.releases).map((r) => r.id),
-        list(l.announcements).map((a) => a.url),
-        list(l.stories).map((s) => s.url),
-      ]
+      l &&
+      arrivalBoard({
+        releases: list(l.releases),
+        announcements: list(l.announcements),
+        stories: list(l.stories),
+      }).map((a) => [a.name, a.at?.slice(0, 16) ?? null, a.sightings.map((s) => [s.label, s.url])])
     );
   },
   drops: (d: Visible) =>

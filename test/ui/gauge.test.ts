@@ -5,6 +5,7 @@ import LabDetail from '../../src/components/LabDetail.astro';
 import Labs from '../../src/components/Labs.astro';
 import ScoreDetail from '../../src/components/ScoreDetail.astro';
 import ServiceStatus from '../../src/components/ServiceStatus.astro';
+import RadarArrivals from '../../src/components/RadarArrivals.astro';
 import Signals from '../../src/components/Signals.astro';
 import Layout from '../../src/layouts/Layout.astro';
 import { assembleDashboard, type Dashboard, type DashboardInputs } from '../../src/domain/dashboard';
@@ -512,12 +513,15 @@ describe('Signals rows and pills', () => {
     const html = await render(Signals, { d, now: NOW });
     expect(html.match(/class="pill live"[^>]*>LIVE · \d SOURCES</g)).toEqual([
       expect.stringContaining('>LIVE · 5 SOURCES<'),
-      expect.stringContaining('>LIVE · 6 SOURCES<'),
     ]);
     expect(html).toContain('No anonymous slots on OpenRouter right now.');
     expect(html).toContain('No unlisted leaks in the last two weeks.');
-    expect(html).toContain('No launch posts on the labs’ own feeds in the last 7 days.');
-    expect(html).toContain('No release story over the points bar this week.');
+    const quiet = { ...d, landed: { ...d.landed, releases: [], announcements: [], stories: [] } };
+    const arrivals = await render(RadarArrivals, { d: quiet, now: NOW });
+    expect(arrivals.match(/class="pill live"[^>]*>LIVE · \d SOURCES</g)).toEqual([
+      expect.stringContaining('>LIVE · 6 SOURCES<'),
+    ]);
+    expect(arrivals).toContain('No frontier launch this week in the listings, the lab feeds or Hacker News.');
   });
 
   it('lays every row out the same way, with its age in a cell that never wraps', async () => {
@@ -532,7 +536,7 @@ describe('Signals rows and pills', () => {
     expect(html).toContain('31d pending');
   });
 
-  it('counts only the labs\' own feeds as "FEED DOWN", and the launch search as HN', async () => {
+  it('says once under Recent arrivals which of its sources could not be checked', async () => {
     const base = dashboard();
     const withSources = (down: string[]) => ({
       ...base,
@@ -540,25 +544,22 @@ describe('Signals rows and pills', () => {
         (name) => (down.includes(name) ? { name, ok: false, error: 'down' } : { name, ok: true }),
       ),
     });
-    const announcements = (html: string) =>
-      /Lab announcements <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
-    const stories = (html: string) =>
-      /Hacker News launch stories <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
+    const gaps = (html: string) => /<p class="lede"[^>]*>.*?<b[^>]*>([^<]*)<\/b>/s.exec(html)?.[1];
     // HN's launch search down, every lab feed up: no feed is down.
-    const hn = await render(Signals, { d: withSources([SOURCE.hnLaunches]), now: NOW });
-    expect(announcements(hn)).toBe('0');
-    expect(stories(hn)).toBe('HN DOWN');
+    const hn = await render(RadarArrivals, { d: withSources([SOURCE.hnLaunches]), now: NOW });
+    expect(gaps(hn)).toBe('The Hacker News launch search is down.');
     // One lab feed down: counted once.
-    const one = await render(Signals, { d: withSources([SOURCE.deepmind]), now: NOW });
-    expect(announcements(one)).toBe('0 · 1 FEED DOWN');
-    expect(stories(one)).toBe('0');
+    const one = await render(RadarArrivals, { d: withSources([SOURCE.deepmind]), now: NOW });
+    expect(gaps(one)).toBe('1 lab feed is down.');
+    expect(await render(RadarArrivals, { d: withSources([]), now: NOW })).not.toContain('<b');
   });
 
   it('says why a subsection is empty when its source is down', async () => {
     const d = dashboard(darkInputs);
     const html = await render(Signals, { d, now: NOW });
     expect(html).toContain('OpenRouter is unreachable, so stealth slots are unknown right now.');
-    expect(html).toContain('OpenRouter is unreachable, so this week’s listings are unknown.');
     expect(html).toContain('The transformers registry is unreachable right now.');
+    const arrivals = await render(RadarArrivals, { d, now: NOW });
+    expect(arrivals).toContain('OpenRouter is unreachable, so this week’s listings are unknown');
   });
 });

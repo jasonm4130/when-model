@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import PageHead from '../components/PageHead.astro';
 import Signals from '../components/Signals.astro';
+import RadarArrivals from '../components/RadarArrivals.astro';
 import Drops from '../components/Drops.astro';
 import Feed from '../components/Feed.astro';
 import Footer from '../components/Footer.astro';
@@ -26,9 +27,36 @@ const fact = unmarked
     <PageHead title="Service notices" kicker="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." fact={fact} />
     <div class="wrap page-body">
       <Signals d={d} />
-      <Drops d={d} />
-      <Feed d={d} />
+      <RadarArrivals d={d} />
+      <div class="radar-pair">
+        <Drops d={d} show="listings" />
+        <Feed d={d} show="feed" />
+      </div>
+      <details class="fold elsewhere" id="elsewhere">
+        <summary class="fold-summary"><span>Elsewhere on the network <span class="what">open weights, papers, the X watchlist</span></span></summary>
+        <div class="radar-pair inner">
+          <Drops d={d} show="open" />
+          <Feed d={d} show="watch" />
+        </div>
+      </details>
     </div>
   </main>
   <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>
+<style>
+  /* Two across only where both columns hold a readable row; one column below that. */
+  .radar-pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s8); }
+  .radar-pair > :global(*) { min-width: 0; }
+  @media (min-width: 1100px) {
+    .radar-pair { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  }
+  @media (max-width: 900px) {
+    .radar-pair { gap: var(--s7); }
+  }
+  .elsewhere > .fold-summary { border-top: 2px solid var(--rule); border-bottom-width: 1px; min-height: 56px; font-size: var(--t-sm); }
+  .elsewhere .what { margin-left: var(--s3); font-weight: 500; letter-spacing: 0.04em; color: var(--ink-2); }
+  .elsewhere .inner { padding-top: var(--s6); }
+  @media (max-width: 640px) {
+    .elsewhere .what { display: block; margin-left: 0; margin-top: var(--s1); }
+  }
+</style>

@@ -1,0 +1,74 @@
+---
+/**
+ * /radar's Recent arrivals: the week's frontier launches, each once (`arrivalBoard`,
+ * src/ui/signals.ts), tagged with every source that saw it: its OpenRouter listing, the lab's own
+ * post, a Hacker News launch story. Launches that already happened are listed, never scored.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { SOURCE } from '../domain/sources';
+import { dayLabel } from '../ui/departures';
+import { sourcePill } from '../ui/panels';
+import { LANDED_LAB_FEEDS, LANDED_SOURCES, arrivalBoard } from '../ui/signals';
+import Bullet from './Bullet.astro';
+import Pill from './Pill.astro';
+interface Props { d: Dashboard; now?: number }
+const { d, now = Date.now() } = Astro.props;
+const built = Date.parse(d.generatedAt);
+const board = arrivalBoard(d.landed);
+const pill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');
+const feeds: readonly string[] = LANDED_LAB_FEEDS;
+const feedsDown = d.sources.filter((s) => feeds.includes(s.name) && !s.ok).length;
+const openrouterDown = !d.earlyWarnings.stealth.ok;
+const hnDown = d.sources.some((s) => s.name === SOURCE.hnLaunches && !s.ok);
+// What could not be checked, said once under the heading rather than per list.
+const gaps = [
+  openrouterDown ? 'OpenRouter is unreachable, so this week’s listings are unknown' : '',
+  feedsDown ? `${feedsDown} lab feed${feedsDown === 1 ? ' is' : 's are'} down` : '',
+  hnDown ? 'the Hacker News launch search is down' : '',
+].filter(Boolean);
+const gapLine = gaps.join('; ').replace(/^./, (c) => c.toUpperCase());
+const when = (a: (typeof board)[number]) =>
+  a.dayOnly ? dayLabel(Date.parse(a.at), built) : `${dayLabel(Date.parse(a.at), built)} ${a.at.slice(11, 16)}Z`;
+---
+<section class="radar-arrivals" id="landed" aria-labelledby="landed-title">
+  <div class="sec">
+    <h2 id="landed-title">Recent arrivals</h2>
+    <Pill pill={pill} />
+  </div>
+  <p class="lede">Frontier launches in the last 7 days, each once, with every source that saw it. Listed, never scored.{gapLine && <> <b>{gapLine}.</b></>}</p>
+  {board.length === 0 ? (
+    <p class="empty">{openrouterDown ? 'No arrivals could be checked this week.' : 'No frontier launch this week in the listings, the lab feeds or Hacker News.'}</p>
+  ) : (
+    <ol class="arrivals-list">
+      {board.map((a) => (
+        <li class="arrival">
+          {a.labId ? <Bullet id={a.labId} name={a.lab ?? ''} decorative /> : <span class="no-line" aria-hidden="true"></span>}
+          <a class="a-name" href={a.url} target="_blank" rel="noopener">{a.name}</a>
+          <span class="a-when mono">{when(a)}</span>
+          <span class="a-tags">
+            {a.lab && <span class="a-lab">{a.lab}</span>}
+            {a.sightings.map((s) => <a class="tag" href={s.url} target="_blank" rel="noopener" title={s.title}>{s.label}</a>)}
+          </span>
+        </li>
+      ))}
+    </ol>
+  )}
+</section>
+<style>
+  .radar-arrivals { scroll-margin-top: 16px; }
+  .lede b { font-weight: 600; color: var(--ink); }
+  .arrivals-list { margin-top: var(--s4); border-top: 1px solid var(--rule-soft); }
+  .arrival { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: 'b n w' 'b t t'; column-gap: var(--s4); row-gap: var(--s1); align-items: baseline; padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
+  .arrival :global(.b), .no-line { grid-area: b; align-self: start; }
+  .no-line { width: 32px; height: 32px; border: 2px dashed var(--ink-2); border-radius: 50%; }
+  .a-name { grid-area: n; font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .a-when { grid-area: w; font-size: var(--t-xs); line-height: 28px; white-space: nowrap; color: var(--ink-2); }
+  .a-tags { grid-area: t; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .a-tags .tag { color: var(--ink); text-decoration: none; }
+  .a-tags .tag:hover { background: var(--paper-2); }
+  @media (max-width: 640px) {
+    .arrival { grid-template-areas: 'b n' 'b w' 'b t'; grid-template-columns: 32px minmax(0, 1fr); column-gap: var(--s3); }
+    .a-name { font-size: var(--t-base); line-height: 24px; }
+    .a-when { line-height: 16px; }
+  }
+</style>

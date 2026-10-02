@@ -8,6 +8,7 @@ import Header from '../../src/components/Header.astro';
 import Labs from '../../src/components/Labs.astro';
 import Markets from '../../src/components/Markets.astro';
 import ScoreDetail from '../../src/components/ScoreDetail.astro';
+import RadarArrivals from '../../src/components/RadarArrivals.astro';
 import Signals from '../../src/components/Signals.astro';
 import ServiceStatus from '../../src/components/ServiceStatus.astro';
 import SourceHealth from '../../src/components/SourceHealth.astro';
@@ -222,18 +223,35 @@ describe('components', async () => {
     expect(html).toContain('aria-label="DROPCON: no signal"');
   });
 
-  it('Signals lists early warnings with their track record and landed launches, neither scored', async () => {
+  it('Signals lists early warnings with their track record, and Recent arrivals the landed launches, never scored', async () => {
     const html = await container.renderToString(Signals, { props: { d } });
     expect(html).toContain('Early warnings');
-    // "Not scored" is said once, in the landed panel's intro; /radar's page intro says none of it moves the level.
-    expect(html).toContain('never scored');
+    expect(html).toContain('id="warnings"');
     expect(html).toContain(d.earlyWarnings.stealth.track.summary);
     expect(html).toContain('10 of 13 resolved leaks');
     expect(html).toContain(d.earlyWarnings.broadcasts.track.summary);
     expect(html).toContain(d.earlyWarnings.architectures.track.summary);
-    expect(html).toContain('Recent arrivals');
-    expect(html).toContain('Claude Fable 5.1');
-    expect(html).toContain('Hacker News launch stories');
+    expect(html).not.toContain('Recent arrivals');
+    const arrivals = await container.renderToString(RadarArrivals, { props: { d } });
+    // "Not scored" is said once, in the arrivals' lede; /radar's page intro says none of it moves the level.
+    expect(arrivals).toContain('never scored');
+    expect(arrivals).toContain('Recent arrivals');
+    expect(arrivals).toContain('Claude Fable 5.1');
+    expect(arrivals).toContain('>OPENROUTER<');
+  });
+
+  it('Drops and Feed render one half each when /radar splits them', async () => {
+    const listings = await container.renderToString(Drops, { props: { d, show: 'listings' } });
+    expect(listings).toContain('Fresh drops');
+    expect(listings).not.toContain('Open weights trending');
+    const open = await container.renderToString(Drops, { props: { d, show: 'open' } });
+    expect(open).not.toContain('Fresh drops');
+    expect(open).toContain('Scaling Laws Revisited');
+    const feed = await container.renderToString(Feed, { props: { d, show: 'feed' } });
+    expect(feed).not.toContain('X watchlist');
+    const watch = await container.renderToString(Feed, { props: { d, show: 'watch' } });
+    expect(watch).toContain('x.com/sama');
+    expect(watch).not.toContain('The feed');
   });
 
   it('Drops renders integer prices without stripping zeros and marks vision models', async () => {

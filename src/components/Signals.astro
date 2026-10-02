@@ -3,43 +3,35 @@ import type { Dashboard } from '../domain/dashboard';
 import { LABS } from '../domain/lab';
 import { ago } from '../ui/format';
 import { sourcePill } from '../ui/panels';
-import { SOURCE } from '../domain/sources';
-import { EARLY_WARNING_SOURCES, LANDED_LAB_FEEDS, LANDED_SOURCES, TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
+import { EARLY_WARNING_SOURCES, TRACK_LINES, daysShort } from '../ui/signals';
 interface Props { d: Dashboard; now?: number }
 const { d, now = Date.now() } = Astro.props;
 const w = d.earlyWarnings;
-const l = d.landed;
 const labName = (id?: string) => LABS.find((x) => x.id === id)?.short ?? id ?? '';
 const LIMIT = 5;
 /** Rows each list shows before its "more" fold. */
 const SHOW = 3;
 // The same pill every panel wears: LIVE, PARTIAL or DOWN from these sources, STALE once the data ages.
 const ewPill = sourcePill(d.sources, EARLY_WARNING_SOURCES, d.generatedAt, now, 'SOURCES');
-const landedPill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');
 const leaksDown = w.leaks.sources.filter((s) => !s.ok).length > 0;
 const openrouterDown = !w.stealth.ok;
-const labFeeds: readonly string[] = LANDED_LAB_FEEDS;
-const labFeedsDown = d.sources.filter((s) => labFeeds.includes(s.name) && !s.ok).length;
 const allLeaksDown = w.leaks.sources.length > 0 && w.leaks.sources.every((s) => !s.ok);
-const hnDown = d.sources.some((s) => s.name === SOURCE.hnLaunches && !s.ok);
 const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time' : h >= 0 ? `in ${Math.round(h)}h` : 'started');
 const stealthItems = w.stealth.items.slice(0, LIMIT);
 const leakItems = w.leaks.items.slice(0, LIMIT);
 const streamItems = w.broadcasts.items.slice(0, LIMIT);
 const archItems = w.architectures.items.slice(0, LIMIT);
-const announceItems = l.announcements.slice(0, LIMIT);
-const storyItems = l.stories.slice(0, LIMIT);
 const more = (n: number) => `${n} more`;
 ---
-<section class="signals" aria-label="Early warnings and landed launches">
-  <div class="cols">
-    <div class="panel sig-panel">
+<section class="signals" id="warnings" aria-labelledby="warnings-title">
+  <div class="panel sig-panel">
       <div class="panel-head">
-        <h2>Early warnings</h2>
+        <h2 id="warnings-title">Early warnings</h2>
         <div class="pills">
           <span class={`pill ${ewPill.tone}`} title={ewPill.title} data-source-pill data-stale-at={ewPill.staleAt} data-stale-text={ewPill.staleText}>{ewPill.text}</span>
         </div>
       </div>
+      <div class="sig-groups">
 
       <div class="sig" id="ew-stealth">
         <h3 class="sig-head">Unmarked trains <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : w.stealth.items.length}</span></h3>
@@ -157,94 +149,16 @@ const more = (n: number) => `${n} more`;
         </div>
       )}
     </div>
-
-    <div class="panel sig-panel" id="landed">
-      <div class="panel-head">
-        <h2>Recent arrivals</h2>
-        <div class="pills">
-          <span class={`pill ${landedPill.tone}`} title={landedPill.title} data-source-pill data-stale-at={landedPill.staleAt} data-stale-text={landedPill.staleText}>{landedPill.text}</span>
-        </div>
-      </div>
-      <p class="sig-intro">{l.summary}. Launches that already happened are listed, never scored.</p>
-
-      <div class="sig">
-        <h3 class="sig-head">Listed on OpenRouter · 7 days <span class="count">{openrouterDown ? 'OPENROUTER DOWN' : l.releases.length}</span></h3>
-        {l.releases.slice(0, SHOW).map((r) => (
-          <a class="sig-row" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener">
-            <span class="sig-main landed-name">{r.name}</span>
-            <span class="sig-when">listed {hoursAgo(r.hoursAgo)}</span>
-            <span class="sig-meta">{r.lab}</span>
-          </a>
-        ))}
-        {l.releases.length > SHOW && (
-          <details class="fold sig-fold">
-            <summary class="fold-summary">{more(l.releases.length - SHOW)}</summary>
-            {l.releases.slice(SHOW).map((r) => (
-              <a class="sig-row" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener">
-                <span class="sig-main landed-name">{r.name}</span>
-                <span class="sig-when">listed {hoursAgo(r.hoursAgo)}</span>
-                <span class="sig-meta">{r.lab}</span>
-              </a>
-            ))}
-          </details>
-        )}
-        {l.releases.length === 0 && <p class="sig-empty">{openrouterDown ? 'OpenRouter is unreachable, so this week’s listings are unknown.' : 'No frontier launch listed on OpenRouter in the last 7 days.'}</p>}
-      </div>
-
-      <div class="sig">
-        <h3 class="sig-head">Lab announcements <span class="count">{l.announcements.length}{labFeedsDown ? ` · ${labFeedsDown} FEED${labFeedsDown === 1 ? '' : 'S'} DOWN` : ''}</span></h3>
-        {announceItems.slice(0, SHOW).map((a) => (
-          <a class="sig-row" href={a.url} target="_blank" rel="noopener">
-            <span class="sig-main">{a.title}</span>
-            <span class="sig-when" data-time={a.seenAt}>{ago(a.seenAt, now)}</span>
-            <span class="sig-meta">{a.source.toUpperCase()}{a.precision === 'day' ? ' · dated by day' : ''}</span>
-          </a>
-        ))}
-        {announceItems.length > SHOW && (
-          <details class="fold sig-fold">
-            <summary class="fold-summary">{more(announceItems.length - SHOW)}</summary>
-            {announceItems.slice(SHOW).map((a) => (
-              <a class="sig-row" href={a.url} target="_blank" rel="noopener">
-                <span class="sig-main">{a.title}</span>
-                <span class="sig-when" data-time={a.seenAt}>{ago(a.seenAt, now)}</span>
-                <span class="sig-meta">{a.source.toUpperCase()}{a.precision === 'day' ? ' · dated by day' : ''}</span>
-              </a>
-            ))}
-          </details>
-        )}
-        {l.announcements.length === 0 && <p class="sig-empty">No launch posts on the labs’ own feeds in the last 7 days.</p>}
-      </div>
-
-      <div class="sig">
-        <h3 class="sig-head">Hacker News launch stories <span class="count">{hnDown ? 'HN DOWN' : l.stories.length}</span></h3>
-        {storyItems.slice(0, SHOW).map((s) => (
-          <a class="sig-row" href={s.url} target="_blank" rel="noopener">
-            <span class="sig-main">{s.title}</span>
-            <span class="sig-when">{s.score} pts</span>
-            <span class="sig-meta">Hacker News</span>
-          </a>
-        ))}
-        {storyItems.length > SHOW && (
-          <details class="fold sig-fold">
-            <summary class="fold-summary">{more(storyItems.length - SHOW)}</summary>
-            {storyItems.slice(SHOW).map((s) => (
-              <a class="sig-row" href={s.url} target="_blank" rel="noopener">
-                <span class="sig-main">{s.title}</span>
-                <span class="sig-when">{s.score} pts</span>
-                <span class="sig-meta">Hacker News</span>
-              </a>
-            ))}
-          </details>
-        )}
-        {l.stories.length === 0 && <p class="sig-empty">{hnDown ? 'Hacker News is unreachable right now.' : 'No release story over the points bar this week.'}</p>}
-      </div>
-    </div>
   </div>
 </section>
 <style>
+  /* The page's one primary thing: every early warning, its groups two across on a wide screen. */
+  .sig-groups { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--s8); }
+  @media (min-width: 1100px) {
+    .sig-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   .sig-intro { max-width: 56ch; margin-top: var(--s3); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .sig { scroll-margin-top: 16px; margin-top: var(--s6); }
-  #landed { scroll-margin-top: 16px; }
   /* Each notice names itself, then its count, then its track record in one quiet line. */
   .sig-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s1) var(--s3); font-size: var(--t-md); line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
   .sig-head .count { font-family: var(--mono); font-size: var(--t-sm); line-height: 20px; font-weight: 500; letter-spacing: 0; color: var(--ink-2); }
@@ -259,7 +173,6 @@ const more = (n: number) => `${n} more`;
   a.sig-row:hover .sig-main { text-decoration: underline; text-underline-offset: 3px; }
   a.sig-row:focus-visible { outline-offset: -2px; }
   .sig-main { grid-area: main; overflow-wrap: anywhere; }
-  .landed-name { font-weight: 600; }
   .sig-meta { grid-area: meta; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .sig-when { grid-area: when; align-self: start; font-family: var(--mono); font-size: var(--t-xs); line-height: 24px; white-space: nowrap; text-align: right; color: var(--ink-2); }
 </style>

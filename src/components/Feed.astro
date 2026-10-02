@@ -4,8 +4,9 @@ import { X_WATCHLIST } from '../domain/lab';
 import { FEED_SOURCE_NAME } from '../domain/sources';
 import { MOBILE_FEED, sourcePill } from '../ui/panels';
 import FeedRow from './FeedRow.astro';
-interface Props { d: Dashboard }
-const { d } = Astro.props;
+/** `feed` is the reports alone, `watch` the X watchlist; both by default. */
+interface Props { d: Dashboard; show?: 'all' | 'feed' | 'watch' }
+const { d, show = 'all' } = Astro.props;
 const now = Date.now();
 const alerts = d.feed.filter((f) => f.alert).length;
 const feedSources = Object.values(FEED_SOURCE_NAME);
@@ -15,9 +16,9 @@ const rest = d.feed.slice(MOBILE_FEED);
 /** Watchlist accounts shown before the fold. */
 const WATCH_SHOWN = 5;
 ---
-<section class="feed-section" id="feed" aria-label="Lab blogs, SDK changelogs and Hacker News">
+<section class={`feed-section show-${show}`} id={show === 'watch' ? 'watchlist' : 'feed'} aria-label={show === 'watch' ? 'X watchlist' : 'Lab blogs, SDK changelogs and Hacker News'}>
   <div class="grid feed-grid">
-    <div class="panel feed-panel">
+    {show !== 'watch' && <div class="panel feed-panel">
       <div class="panel-head">
         <h2>The feed</h2>
         <div class="pills">
@@ -36,9 +37,9 @@ const WATCH_SHOWN = 5;
           )}
         </div>
       ) : <p class="empty">{pill.state === 'down' ? 'Every feed is down. That is itself a signal.' : 'No reports yet.'}</p>}
-    </div>
+    </div>}
 
-    <div class="panel side">
+    {show !== 'feed' && <div class="panel side">
       <div class="panel-head"><h2>X watchlist</h2><span class="pill">NO FREE API · CLICK THROUGH</span></div>
       <p class="intro">X killed free read access, so we can't ingest the vague-posts. These are the accounts that leak first.</p>
       <ul class="list watch">
@@ -56,12 +57,13 @@ const WATCH_SHOWN = 5;
           </ul>
         </details>
       )}
-    </div>
+    </div>}
   </div>
 </section>
 <style>
   .feed-section { scroll-margin-top: 16px; }
   .feed-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .show-feed .feed-grid, .show-watch .feed-grid { grid-template-columns: minmax(0, 1fr); }
   .feed { border-top: 1px solid var(--ink); }
   .intro { margin-bottom: 14px; font-size: var(--fs-sm); color: var(--ink-2); }
   .list { font-size: var(--fs-sm); line-height: 1.4; }

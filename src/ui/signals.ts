@@ -11,7 +11,9 @@ import {
   type EarlyWarnings,
 } from '../domain/early-warnings';
 import { hitRate } from '../domain/lab-events';
-import type { LabId } from '../domain/lab';
+import type { Landed } from '../domain/landed';
+import { labForModelId, type FeedSource } from '../domain/feed';
+import { LABS, type LabId } from '../domain/lab';
 import { SOURCE } from '../domain/sources';
 import { REVEAL_STATS } from '../domain/stealth';
 
@@ -114,4 +116,120 @@ export function hoursAgo(h: number): string {
 /** "2.6d" under ten days, whole days above. */
 export function daysShort(n: number): string {
   return `${n < 10 ? n.toFixed(1) : Math.round(n)}d`;
+}
+
+// ─── recent arrivals ─────────────────────────────────────────────────────────
+
+/** One place a launch was seen: its OpenRouter listing, the lab's own post, or a Hacker News story. */
+export interface ArrivalSighting {
+  kind: 'listing' | 'post' | 'story';
+  /** The tag as printed: "OPENROUTER", "ANTHROPIC POST", "HN". */
+  label: string;
+  /** Its hover title, e.g. "883 points on Hacker News": points move every poll, so they stay off the tag. */
+  title?: string;
+  url: string;
+}
+
+/** One launch on /radar's Recent arrivals, with every source that saw it. */
+export interface Arrival {
+  /** The launch as named by its listing, else by the post or story that is all there is of it. */
+  name: string;
+  lab?: string;
+  labId?: LabId;
+  url: string;
+  /** When it arrived: the first listing, else the post or story. */
+  at: string;
+  /** "dated by day" posts. */
+  dayOnly: boolean;
+  sightings: ArrivalSighting[];
+}
+
+const POST_LABEL: Readonly<Partial<Record<FeedSource, string>>> = {
+  openai: 'OPENAI POST',
+  deepmind: 'DEEPMIND POST',
+  anthropic: 'ANTHROPIC POST',
+  xai: 'XAI POST',
+};
+
+const storyTag = (s: { score: number; url: string }): ArrivalSighting => ({
+  kind: 'story',
+  label: 'HN',
+  title: `${s.score} points on Hacker News`,
+  url: s.url,
+});
+
+/** A listing's model id without its vendor: "anthropic/claude-sonnet-5.5" → "claude-sonnet-5.5". */
+const bare = (id: string) => id.replace(/^[^/]+\//, '').toLowerCase();
+
+/** A post or story names a listed model when one of its ids is the model, or the model's tail ("sonnet-5.5"). */
+const names = (ids: readonly string[], models: readonly string[]) =>
+  ids.some((id) => models.some((m) => m === id || m.endsWith(`-${id}`)));
+
+/**
+ * The week's launches, each once: a listing gathers the lab posts and Hacker News stories that name
+ * one of its models, and a post or story no listing claims stands as its own arrival. Newest first.
+ * A launch seen three ways is one row with three tags, never three rows.
+ */
+export function arrivalBoard(l: Pick<Landed, 'releases' | 'announcements' | 'stories'>): Arrival[] {
+  // Posts and stories are claimed separately: a story often links the very post it discusses.
+  const usedPosts = new Set<string>();
+  const usedStories = new Set<string>();
+  /** The line a post or story no listing claims belongs to, from the first model it names. */
+  const lineOf = (ids: readonly string[]) => {
+    const labId = ids.map(labForModelId).find(Boolean);
+    const lab = LABS.find((x) => x.id === labId);
+    return lab ? { lab: lab.name, labId: lab.id } : {};
+  };
+  const out: Arrival[] = l.releases.map((r) => {
+    const models = r.models.map((m) => bare(m.id));
+    const sightings: ArrivalSighting[] = [
+      { kind: 'listing', label: 'OPENROUTER', url: r.models[0]?.url ?? 'https://openrouter.ai/models' },
+    ];
+    for (const a of l.announcements)
+      if (!usedPosts.has(a.url) && names(a.modelIds, models)) {
+        usedPosts.add(a.url);
+        sightings.push({
+          kind: 'post',
+          label: POST_LABEL[a.source] ?? `${a.source.toUpperCase()} POST`,
+          url: a.url,
+        });
+      }
+    for (const s of l.stories)
+      if (!usedStories.has(s.url) && names(s.modelIds, models)) {
+        usedStories.add(s.url);
+        sightings.push(storyTag(s));
+      }
+    return {
+      name: r.name,
+      lab: r.lab,
+      ...(r.labId ? { labId: r.labId } : {}),
+      url: sightings[0].url,
+      at: r.firstListedAt,
+      dayOnly: false,
+      sightings,
+    };
+  });
+  for (const a of l.announcements)
+    if (!usedPosts.has(a.url))
+      out.push({
+        name: a.title,
+        ...lineOf(a.modelIds),
+        url: a.url,
+        at: a.seenAt,
+        dayOnly: a.precision === 'day',
+        sightings: [
+          { kind: 'post', label: POST_LABEL[a.source] ?? `${a.source.toUpperCase()} POST`, url: a.url },
+        ],
+      });
+  for (const s of l.stories)
+    if (!usedStories.has(s.url))
+      out.push({
+        name: s.title,
+        ...lineOf(s.modelIds),
+        url: s.url,
+        at: s.publishedAt,
+        dayOnly: false,
+        sightings: [storyTag(s)],
+      });
+  return out.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }

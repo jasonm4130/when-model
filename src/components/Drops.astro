@@ -4,8 +4,9 @@ import { SOURCE } from '../domain/sources';
 import { ago, ctx, num, shortDate } from '../ui/format';
 import { MOBILE_DROPS, PANEL_ROWS, dropPrice, sourceOk, sourcePill, stealthIds } from '../ui/panels';
 import DropItem from './DropItem.astro';
-interface Props { d: Dashboard }
-const { d } = Astro.props;
+/** `listings` is OpenRouter's new models alone, `open` the open weights and papers; both by default. */
+interface Props { d: Dashboard; show?: 'all' | 'listings' | 'open' }
+const { d, show = 'all' } = Astro.props;
 const now = Date.now();
 const FRESH_MS = 3 * 86_400_000;
 const stealth = stealthIds(d);
@@ -45,9 +46,9 @@ const item = (r: (typeof rows)[number]) => ({
 /** Trending repos shown before the fold. */
 const TRENDING_SHOWN = 6;
 ---
-<section class="drops" id="drops" aria-label="New listings and open weights">
+<section class={`drops show-${show}`} id={show === 'open' ? 'open-weights' : 'drops'} aria-label={show === 'listings' ? 'New listings' : show === 'open' ? 'Open weights and papers' : 'New listings and open weights'}>
   <div class="grid dr-grid">
-    <div class="panel">
+    {show !== 'open' && <div class="panel">
       <div class="panel-head">
         <h2>Fresh drops</h2>
         <span class={`pill ${pills.drops.tone}`} title={pills.drops.title} data-source-pill data-stale-at={pills.drops.staleAt} data-stale-text={pills.drops.staleText}>{pills.drops.text}</span>
@@ -68,9 +69,9 @@ const TRENDING_SHOWN = 6;
           )}
         </div>
       ) : <p class="empty">{sourceOk(d.sources, SOURCE.openrouter) ? 'No new listings on OpenRouter.' : 'OpenRouter unreachable. Listings return when it does.'}</p>}
-    </div>
+    </div>}
 
-    <div class="panel">
+    {show !== 'listings' && <div class="panel">
       <div class="panel-head">
         <h2>Open weights trending</h2>
         <span class={`pill ${pills.trending.tone}`} title={pills.trending.title} data-source-pill data-stale-at={pills.trending.staleAt} data-stale-text={pills.trending.staleText}>{pills.trending.text}</span>
@@ -115,12 +116,13 @@ const TRENDING_SHOWN = 6;
           ) : <p class="empty">Hugging Face papers unreachable.</p>}
         </>
       )}
-    </div>
+    </div>}
   </div>
 </section>
 <style>
   .drops { scroll-margin-top: 16px; }
   .dr-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+  .show-listings .dr-grid, .show-open .dr-grid { grid-template-columns: minmax(0, 1fr); }
   @media (max-width: 960px) {
     .dr-grid { grid-template-columns: minmax(0, 1fr); }
   }
