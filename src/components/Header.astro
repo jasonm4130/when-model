@@ -9,8 +9,10 @@ interface Props {
   /** The dashboard this page rendered. /backtest reads none: it gets no status and never polls. */
   d?: Dashboard;
   view: SiteView;
+  /** A page with no live data (/backtest) says what it is and when its data was pulled instead. */
+  pulledAt?: string;
 }
-const { d, view } = Astro.props;
+const { d, view, pulledAt } = Astro.props;
 // The status covers only the sources the dashboard depends on; the footer counts every one.
 const core = d ? d.sources.filter((s) => !BEST_EFFORT_SOURCES.has(s.name)) : [];
 const coreOk = core.filter((s) => s.ok).length;
@@ -36,6 +38,12 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
         <span class="refresh-status" aria-live="polite" data-reload-status data-fingerprint={fingerprint} data-view={JSON.stringify(pageView)}></span>
       </div>
     )}
+    {!d && pulledAt && (
+      <div class="top-right">
+        <span class="status-live static">STATIC REPORT</span>
+        <span class="when mono">data pulled <b>{dayLabel(Date.parse(pulledAt), Date.parse(pulledAt), false)} {pulledAt.slice(0, 4)}</b></span>
+      </div>
+    )}
   </div>
 </header>
 <style>
@@ -46,6 +54,7 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
   .top-right { display: flex; align-items: center; gap: var(--s4); margin-left: auto; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .status-live { display: inline-flex; align-items: center; gap: var(--s2); font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; color: var(--ink); white-space: nowrap; }
   .status-live::before { content: ''; width: 8px; height: 8px; background: var(--ink); }
+  .status-live.static::before { background: none; outline: 1.5px solid var(--ink); outline-offset: -1.5px; }
   .status-live.warn::before { background: var(--notice); outline: 1.5px solid var(--ink); }
   .when { white-space: nowrap; }
   .when b { font-weight: 500; color: var(--ink); }
@@ -62,6 +71,9 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
     .top-row > :global(.site-nav) { order: 3; flex-basis: 100%; }
     .top-right { gap: var(--s3); }
     .rt-noun { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  }
+  @media (max-width: 480px) {
+    .status-live.static { display: none; }
   }
   @media (max-width: 359.98px) {
     .top-right { gap: var(--s2); }

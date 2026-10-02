@@ -166,7 +166,8 @@ describe('backtest components', async () => {
       `${top.n} hours with a mean forecast of ${pct(top.meanForecast)} came true ${pct(top.observed)}`,
     );
     for (const b of d72.reliability) expect(html).toContain(`>${b.n}</text>`);
-    expect(html).toContain('held-out rate 63%');
+    // The label sits in the right margin, wrapped a word group a line.
+    expect(html).toMatch(/<tspan[^>]*>held-out<\/tspan><tspan[^>]*>rate 63%<\/tspan>/);
     expect((html.match(/<caption[\s>]/g) ?? []).length).toBe(2);
   });
 
@@ -336,10 +337,11 @@ describe('backtest page', async () => {
     expect(hero).toContain('1 Apr 2026 to 26 Sep 2026');
     expect(hero).toContain(`Plus ${events.releases.length} launches timed by hand`);
     const d = replay.decision;
+    // The verdict is the sign's one anchored fact, said once.
     expect(hero).toContain(
-      `Best 72h skill ${signed3(d.skill)} needed ${signed2(replay.meta.protocol.decisionMinSkill)}`,
+      `${signed3(d.skill)} best 72-hour skill against the base rate; it needed ${signed2(replay.meta.protocol.decisionMinSkill)} (95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])})`,
     );
-    expect(hero).toContain(`95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])}`);
+    expect(hero.split(signed3(d.skill))).toHaveLength(2);
     expect(hero).toContain(`${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test}`);
     expect(hero).toContain(`Level's input, 7d ${signed2(LEAD_INPUT_SKILL_7D.skill)}`);
     // The fourth tile is the sample size, chosen in advance, not the two best labs after the fact.
@@ -609,7 +611,7 @@ describe('site copy and links', async () => {
       `${archived} of these ${broadcasts.broadcasts.length} have an archived copy proving it was up before the stream; GPT-5.6 is timed from YouTube's own publishedAt, with no archive.`,
     );
     expect(html).not.toContain('These are the cases where an archived copy proves');
-    expect(html).toContain('PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR');
+    expect(html).toContain('Pre-announced, leaked or no HN precursor');
     expect(html).toContain('No HN precursor');
     expect(html).not.toMatch(/surprise/i);
   });

@@ -22,7 +22,8 @@ const { panels } = Astro.props;
 
 const S = 280;
 const HIST = 56;
-const M = { top: 14, right: 14, left: 50, bottom: 40 };
+// The reference labels sit in the right margin, level with their lines, never over a bin.
+const M = { top: 14, right: 104, left: 50, bottom: 40 };
 const W = M.left + S + M.right;
 const H = M.top + S + 16 + HIST + M.bottom;
 const px = (p: number) => M.left + p * S;
@@ -44,11 +45,21 @@ const views = panels.map((panel) => {
   const path = bins.map((b, i) => `${i ? 'L' : 'M'}${b.cx.toFixed(1)},${b.cy.toFixed(1)}`).join(' ');
   const worst = [...panel.bins].sort((a, b) => Math.abs(b.observed - b.meanForecast) * b.n - Math.abs(a.observed - a.meanForecast) * a.n)[0];
   const label = `${panel.description} Over ${total} ${panel.unit} in ${panel.bins.length} bins.${worst ? ` The largest miss is the ${pct(worst.from)}–${pct(worst.to)} bin: ${worst.n} ${panel.unit} with a mean forecast of ${pct(worst.meanForecast)} came true ${pct(worst.observed)} of the time.` : ''} The table below has every bin.`;
-  return { panel, bins, path, label, total };
+  // The reference label beside its line, kept clear of "perfect" at the top.
+  const ref = panel.reference;
+  // Wrapped to the margin's width: 11 mono characters a line.
+  const refLines = (ref?.label.split(' ') ?? []).reduce<string[]>((lines, w) => {
+    const last = lines[lines.length - 1];
+    if (last !== undefined && `${last} ${w}`.length <= 11) lines[lines.length - 1] = `${last} ${w}`;
+    else lines.push(w);
+    return lines;
+  }, []);
+  const refY = ref ? Math.max(py(ref.value), py(1) + 40) : 0;
+  return { panel, bins, path, label, total, refLines, refY };
 });
 ---
 <div class="reliability">
-  {views.map(({ panel, bins, path, label }) => (
+  {views.map(({ panel, bins, path, label, refLines, refY }) => (
     <figure>
       <figcaption class="tiny">{panel.title}</figcaption>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} class="chart">
@@ -61,11 +72,11 @@ const views = panels.map((panel) => {
           </g>
         ))}
         <line class="diag" x1={px(0)} y1={py(0)} x2={px(1)} y2={py(1)} />
-        <text class="note" x={px(0.97)} y={py(0.97) + 22} text-anchor="end">perfect</text>
+        <text class="note" x={px(1) + 8} y={py(1) + 5}>perfect</text>
         {panel.reference && (
           <>
             <line class="ref" x1={px(0)} x2={px(1)} y1={py(panel.reference.value)} y2={py(panel.reference.value)} />
-            <text class="note" x={px(0) + 6} y={py(panel.reference.value) - 7}>{panel.reference.label}</text>
+            <text class="note" x={px(1) + 8} y={refY - 3}>{refLines.map((l, i) => <tspan x={px(1) + 8} dy={i ? 16 : 0}>{l}</tspan>)}</text>
           </>
         )}
         <path class="curve" d={path} />
@@ -122,7 +133,7 @@ const views = panels.map((panel) => {
   .reliability { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px 28px; }
   figure { margin: 0; min-width: 0; }
   figcaption { color: var(--text); margin-bottom: 8px; line-height: 1.6; }
-  .chart { display: block; width: 100%; max-width: 400px; height: auto; font-family: var(--font-mono); }
+  .chart { display: block; width: 100%; max-width: 520px; height: auto; font-family: var(--font-mono); }
   .grid { stroke: var(--line); stroke-width: 1; }
   .axis { stroke: var(--line2); stroke-width: 1; }
   .diag { stroke: var(--muted); stroke-width: 1; }
@@ -131,10 +142,10 @@ const views = panels.map((panel) => {
   circle { fill: var(--ink); stroke: var(--paper); stroke-width: 2; }
   .hbar { fill: var(--line2); }
   .bin:hover circle, .bin:hover .hbar { stroke: var(--ink); stroke-width: 2; }
-  .tick, .count { fill: var(--muted); font-size: 16px; }
-  .count { font-size: 14px; }
-  .note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
-  .axis-label { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tick, .count { fill: var(--muted); font-size: 13px; }
+  .count { font-size: 12px; }
+  .note { fill: var(--text); font-size: 13px; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+  .axis-label { fill: var(--muted); font-family: var(--font-head); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
   .bins { margin-top: 10px; }
   .bins summary { color: var(--muted); margin-bottom: 8px; }
   .bins table { margin-bottom: 12px; }
