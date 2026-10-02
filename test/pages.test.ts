@@ -41,14 +41,14 @@ describe('Layout head', () => {
       props: { title: 'whenmodel', description: 'A test description.' },
       slots: { default: '<p>body</p>' },
     });
-    expect(html).toContain('og:image" content="https://whenmodel.com/og-card-v2.png"');
+    expect(html).toContain('og:image" content="https://whenmodel.com/og-card-v3.png"');
     expect(html).toContain('og:image:width" content="1200"');
     expect(html).toContain('og:image:height" content="630"');
     expect(html).toContain('og:image:type" content="image/png"');
     expect(html).toContain('og:image:alt"');
     expect(html).toContain('og:site_name" content="whenmodel"');
     expect(html).toContain('twitter:card" content="summary_large_image"');
-    expect(html).toContain('twitter:image" content="https://whenmodel.com/og-card-v2.png"');
+    expect(html).toContain('twitter:image" content="https://whenmodel.com/og-card-v3.png"');
     expect(html).toContain('twitter:image:alt"');
     // self-hosted, preloaded fonts, no Google Fonts left to strip from the CSP
     expect(html).toContain('href="/fonts/inter-tight.woff2"');

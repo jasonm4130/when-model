@@ -50,7 +50,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   mirrors the tokens on `:root` in `global.css` and is checked for contrast (status text 7:1, bullet
   letters 4.5:1). Say each fact once per page; untrusted odds are never printed large. Fonts are
   self-hosted Inter Tight and Geist Mono (`src/styles/fonts.css`, licences in `public/fonts/`); a
-  change to them re-measures the fallback faces and keeps `test/browser/cls.spec.ts` passing.
+  change to them re-measures the fallback faces and keeps `test/browser/cls.spec.ts` passing. The icons and
+  social card are rendered by `pnpm brand` (`scripts/brand/`); rerun it after changing a line's bullet.
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
