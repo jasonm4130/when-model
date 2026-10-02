@@ -148,7 +148,7 @@ describe('components', async () => {
     const html = await container.renderToString(DepartureSign, {
       props: { d, now: Date.parse(d.generatedAt) },
     });
-    expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by Sep 24');
+    expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by 24 Sep');
     expect(html).toMatch(/<h1 id="next-title"[^>]*data-flap[^>]*>GPT-6<\/h1>/);
     expect(html).toContain('href="/labs/openai"');
     expect(html).toContain('OpenAI line');

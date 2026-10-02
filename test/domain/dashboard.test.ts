@@ -167,7 +167,7 @@ describe('assembleDashboard', () => {
     expect(rec.p7).toBe(d.labs.find((l) => l.id === 'anthropic')!.odds!.p7.p);
     expect(rec.p30).toBeGreaterThanOrEqual(rec.p7);
     expect(rec.p7DayAgo).toBeNull();
-    expect(d.dropcon.headline).toBe('Polymarket prices 80% that the next Claude Sonnet ships by Sep 22');
+    expect(d.dropcon.headline).toBe('Polymarket prices 80% that the next Claude Sonnet ships by 22 Sep');
     expect(d.dropcon.score).toBe(d.dropcon.provenance.reduce((sum, r) => sum + r.points, 0));
     expect(d.dropcon.state).toBe('ok');
     // The forecast reads every trusted frontier 72h read and is context only.
@@ -191,7 +191,7 @@ describe('assembleDashboard', () => {
     // The level scores the interpolated read, so the headline states it next to the rung it quotes.
     expect(top7.p).toBeGreaterThan(0.7);
     expect(d.dropcon.headline).toBe(
-      `Polymarket prices 50% that the next Claude Sonnet ships by Sep 22 (${Math.round(top7.p * 100)}% within 7 days on its curve)`,
+      `Polymarket prices 50% that the next Claude Sonnet ships by 22 Sep (${Math.round(top7.p * 100)}% within 7 days on its curve)`,
     );
     expect(top7.url).toBe('https://polymarket.com/event/anthropic');
     expect(d.dropcon.provenance[0].url).toBe(top7.url);

@@ -1,4 +1,4 @@
-import { dayMonth } from './dates';
+import { dayMonth, rungLabel } from './dates';
 import { leadInputSkillText, type ForecastSummary } from './forecast';
 import type { LabId } from './lab';
 import { LEVEL_NAMES } from './levels';
@@ -162,14 +162,9 @@ export function familyPhrase(family: string): string {
   return family.replace(/^next\s+/i, 'the next ');
 }
 
-const MONTH = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+/i;
-
-/** "September 29" → "Sep 29"; anything else as the market wrote it. */
+/** "September 29" → "29 Sep", the site's order (`rungLabel`); anything else as the market wrote it. */
 export function shortRung(label: string): string {
-  return label.replace(
-    MONTH,
-    (_, m: string) => `${m.charAt(0).toUpperCase()}${m.slice(1, 3).toLowerCase()} `,
-  );
+  return rungLabel(label);
 }
 
 /**
@@ -189,12 +184,14 @@ function marketSentence(d: MarketDriver, horizon: string): string {
 }
 
 function bracketText(d: MarketDriver): string {
-  if (d.read === 'rung') return `quoted at ${d.to}`;
+  if (d.read === 'rung') return `quoted at ${rungLabel(d.to ?? '')}`;
   if (d.read === 'floor') return 'day-bucket best bids';
   if (d.read === 'ceiling') return 'at most, capped by day-bucket asks';
-  if (d.read === 'held') return `at least, held at ${d.from}`;
-  if (d.from && d.to) return `interpolated ${d.from} → ${d.to}`;
-  return d.to ? `constant hazard from now to ${d.to}` : `held at ${d.from ?? 'the last rung'}`;
+  if (d.read === 'held') return `at least, held at ${rungLabel(d.from ?? '')}`;
+  if (d.from && d.to) return `interpolated ${rungLabel(d.from)} → ${rungLabel(d.to)}`;
+  return d.to
+    ? `constant hazard from now to ${rungLabel(d.to)}`
+    : `held at ${d.from ? rungLabel(d.from) : 'the last rung'}`;
 }
 
 /** "70.7": a term's points before rounding, so "80 × 0.884 = 70.7" shows why the row reads 71. */
