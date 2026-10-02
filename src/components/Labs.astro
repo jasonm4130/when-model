@@ -7,7 +7,7 @@
  */
 import type { Dashboard } from '../domain/dashboard';
 import { daysLabel, pct } from '../ui/format';
-import { boardingWindow, datedRungs, familyMarkets, timetableState, windowText } from '../ui/departures';
+import { boardingWindow, dayLabel, datedRungs, familyMarkets, timetableState, windowText } from '../ui/departures';
 import { lineName, serviceName } from '../ui/lines';
 import { asOfMs } from '../ui/panels';
 import { leadFlags } from '../ui/signals';
@@ -19,6 +19,9 @@ const oddsAvailable = d.measurement.inputs.oddsAvailable;
 const built = Date.parse(d.generatedAt);
 const asOf = asOfMs(d);
 const stealth = d.earlyWarnings.stealth.items.length;
+const by = dayLabel(built + 7 * 86_400_000, built, false);
+/** Odds under this are a long shot: printed quiet. */
+const QUIET_BELOW = 0.1;
 const STATE_TEXT = { 'times-unavailable': 'times unavailable', 'no-timetable': 'no timetable', offline: 'odds offline' } as const;
 ---
 <section class="network" aria-labelledby="network-title">
@@ -27,7 +30,7 @@ const STATE_TEXT = { 'times-unavailable': 'times unavailable', 'no-timetable': '
     <span class="label">{d.labs.length} lines · busiest first</span>
   </div>
   <ol class="lines">
-    <li class="lines-head" aria-hidden="true"><span>Line · service</span><span>7 days</span><span>Timetable</span><span>Last arrival</span></li>
+    <li class="lines-head" aria-hidden="true"><span>Line · service</span><span>By {by}</span><span>Boarding window</span><span>Last arrival</span></li>
     {d.labs.map((l) => {
       const state = timetableState(l, oddsAvailable);
       const flags = leadFlags(d.earlyWarnings, l.id);
@@ -40,7 +43,7 @@ const STATE_TEXT = { 'times-unavailable': 'times unavailable', 'no-timetable': '
               <h3 class="lab-name">{lineName(l.name)}</h3>
               <span class="svc">{l.odds ? serviceName(l.odds.family) : 'No release market'} · <span class="mono heat">{l.status} · heat {l.heat}</span></span>
             </span>
-            <span class:list={['odds', 'mono', { quiet: state !== 'scheduled' }]}>{state === 'scheduled' ? pct(l.odds!.p7.p) : STATE_TEXT[state]}</span>
+            <span class:list={['odds', 'mono', { quiet: state !== 'scheduled', long: state === 'scheduled' && l.odds!.p7.p < QUIET_BELOW }]}>{state === 'scheduled' ? pct(l.odds!.p7.p) : STATE_TEXT[state]}</span>
             <span class="win mono">{w ? windowText(w, built, true) : '—'}</span>
             <span class="last">{l.daysSince === undefined ? 'none listed' : l.daysSince === 0 ? 'today' : `${daysLabel(l.daysSince)} ago`}<span class="mono"> · {l.releases30d}/30d</span></span>
           </a>
@@ -73,6 +76,7 @@ const STATE_TEXT = { 'times-unavailable': 'times unavailable', 'no-timetable': '
   .svc { display: block; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); overflow-wrap: anywhere; }
   .heat { font-size: var(--t-xs); }
   .odds { text-align: right; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
+  .odds.long { font-size: var(--t-md); line-height: 28px; font-weight: 400; color: var(--ink-2); }
   .odds.quiet { font-family: var(--sans); font-size: var(--t-sm); line-height: 20px; font-weight: 400; color: var(--ink-2); }
   .win { text-align: right; font-size: var(--t-sm); white-space: nowrap; }
   .last { text-align: right; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }

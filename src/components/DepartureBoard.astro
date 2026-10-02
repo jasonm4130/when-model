@@ -1,13 +1,15 @@
 ---
 /**
  * "Then": every other line with a time, in the board's order (src/ui/departures.ts), each with its
- * service, its 7-day odds and its timetable (the boarding window, short). Lines the board cannot time
+ * service, its odds of departing by the 7-day date ("By Fri 9 Oct") and its boarding window (when
+ * its market reaches even odds, which can be weeks out). Long shots, under `QUIET_BELOW`, are set
+ * small and grey so a 2% never reads as loud as the 46% above it. Lines the board cannot time
  * follow as bullets with one plain sentence: a thin market is "times unavailable" and never shows its
  * odds; no market is "no timetable"; Polymarket down is "offline".
  */
 import type { Dashboard } from '../domain/dashboard';
 import type { LabStatus } from '../domain/lab-status';
-import { departureBoard, isDeparture, windowText } from '../ui/departures';
+import { dayLabel, departureBoard, isDeparture, windowText } from '../ui/departures';
 import { pct } from '../ui/format';
 import { lineName, serviceName } from '../ui/lines';
 import { labPath } from '../ui/site';
@@ -18,22 +20,25 @@ const board = departureBoard(d);
 const built = Date.parse(d.generatedAt);
 const names = (ls: LabStatus[]) => ls.map((l) => l.name).join(', ');
 const hasNext = isDeparture(board.next);
+/** Odds under this are a long shot: printed quiet. */
+const QUIET_BELOW = 0.1;
+const by = dayLabel(built + 7 * 86_400_000, built);
 ---
 <section aria-labelledby="then-title">
   <div class="sec">
     <h2 id="then-title">{hasNext ? 'Then' : 'Lines'}</h2>
-    <span class="label">Within 7 days</span>
+    <span class="label">Odds of departing by {by}</span>
   </div>
   {board.later.length > 0 && (
     <ol class="then" aria-label="Other lines with a time">
-      <li class="then-head" aria-hidden="true"><span>Line · service</span><span>Odds</span><span>Timetable</span></li>
+      <li class="then-head" aria-hidden="true"><span>Line · service</span><span>Odds</span><span>Boarding window</span></li>
       {board.later.map((dep) => (
         <li>
           <a class="dep" href={labPath(dep.lab.id)}>
             <Bullet id={dep.lab.id} name={dep.lab.name} size="lg" decorative />
             <span class="n">{serviceName(dep.family)}</span>
             <span class="f">{lineName(dep.lab.name)}</span>
-            <span class="p mono">{pct(dep.p7)}</span>
+            <span class:list={['p', 'mono', { quiet: dep.p7 < QUIET_BELOW }]}>{pct(dep.p7)}</span>
             <span class="w mono">{windowText(dep.window, built, true)}</span>
           </a>
         </li>
@@ -69,6 +74,7 @@ const hasNext = isDeparture(board.next);
   .n { grid-area: n; font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
   .f { grid-area: f; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .p { grid-area: p; text-align: right; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
+  .p.quiet { font-size: var(--t-md); line-height: 28px; font-weight: 400; color: var(--ink-2); }
   .w { grid-area: w; text-align: right; font-size: var(--t-sm); line-height: 20px; white-space: nowrap; }
   .untimed { padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
   .bul { display: flex; flex-wrap: wrap; gap: var(--s1); }
@@ -80,6 +86,7 @@ const hasNext = isDeparture(board.next);
     .dep :global(.b.lg) { --d: 32px; }
     .n { font-size: var(--t-base); line-height: 24px; }
     .p { font-size: var(--t-md); line-height: 24px; }
+    .p.quiet { font-size: var(--t-base); }
     .w { font-size: var(--t-xs); line-height: 20px; }
   }
 </style>
