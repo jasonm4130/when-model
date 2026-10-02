@@ -18,6 +18,6 @@ const more = d.earlyWarnings.stealth.items.length - 1;
     <span class="notice-label">Service notice</span>
     <h3 id="notice-title">Unmarked train on the network</h3>
     <p><a href={slot.url ?? '/radar#ew-stealth'} target="_blank" rel="noopener"><b>{slot.name}</b></a> has been running since {dayLabel(Date.parse(slot.createdAt), built, false)} with no operator shown{slot.contextLength ? `, ${ctx(slot.contextLength)} context` : ''}.</p>
-    <p class="quiet">{TRACK_LINES.stealth} <a href="/radar#ew-stealth">{more > 0 ? `${more} more on Radar` : 'All notices on Radar'}</a></p>
+    <p class="quiet">{TRACK_LINES.stealth} <a class="keep" href="/radar#ew-stealth">{more > 0 ? `${more} more on Radar` : 'All notices on Radar'}</a></p>
   </aside>
 )}

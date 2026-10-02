@@ -21,11 +21,19 @@ const up = sourceOk(d.sources, SOURCE.polymarket);
 const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, Date.now());
 const down = 'Polymarket unreachable. Odds return when it does.';
 const leader = bestRows[0]?.yes ?? 0;
-/** Release markets in line order (busiest line first), grouped under each line's heading. */
+/** Release markets grouped under each line's heading, lines in network order. */
 const byLine = (ms: Market[]) => {
   const by = new Map<string, Market[]>();
   for (const m of ms) by.set(m.labId ?? '', [...(by.get(m.labId ?? '') ?? []), m]);
-  return [...by.entries()].map(([id, markets]) => ({ lab: id ? labById(id) : undefined, markets }));
+  // Lines in the network's order (the /labs order), so the headline service is never folded away;
+  // markets with no line go last.
+  const rank = (id: string) => {
+    const i = d.labs.findIndex((l) => l.id === id);
+    return i < 0 ? d.labs.length : i;
+  };
+  return [...by.entries()]
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([id, markets]) => ({ lab: id ? labById(id) : undefined, markets }));
 };
 const ordered = byLine(releases).flatMap((g) => g.markets);
 // The first MOBILE_MARKETS show; the rest wait behind one fold, still under their line's heading.

@@ -135,6 +135,10 @@ h4 {
   letter-spacing: -0.01em;
   text-wrap: balance;
 }
+/* No one-word last lines in running text. */
+p {
+  text-wrap: pretty;
+}
 ol,
 ul {
   padding: 0;
@@ -294,6 +298,10 @@ a.b:hover {
   font-weight: 700;
   letter-spacing: -0.03em;
   overflow-wrap: anywhere;
+}
+/* A short trailing link ("Source on GitHub", "More on Radar") moves to the next line whole. */
+a.keep {
+  white-space: nowrap;
 }
 .page-sign .intro {
   margin-top: var(--s3);

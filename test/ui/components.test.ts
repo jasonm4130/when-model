@@ -271,6 +271,31 @@ describe('components', async () => {
     expect(html).not.toContain('class="thin"');
   });
 
+  it('Markets groups release markets in network order, not by volume', async () => {
+    const quiet: Market = {
+      ...release,
+      slug: 'claude-x',
+      title: 'Claude X released by...?',
+      labId: 'anthropic',
+      volume: 1,
+      vol24: 1,
+    };
+    const base = dashboard({ markets: { name: 'Polymarket', data: [release, quiet, board], ok: true } });
+    const heads = (html: string) =>
+      [...html.matchAll(/class="line-head"[^>]*>([\s\S]*?)<\/h3>/g)].map((m) =>
+        m[1].replace(/<[^>]+>/g, '').trim(),
+      );
+    const ids = (labs: typeof base.labs) => labs.map((l) => l.id);
+    for (const labs of [base.labs, [...base.labs].reverse()]) {
+      const html = await container.renderToString(Markets, { props: { d: { ...base, labs } } });
+      const order = heads(html).map((h) =>
+        h.includes('Anthropic') ? 'anthropic' : h.includes('OpenAI') ? 'openai' : h,
+      );
+      const expected = ids(labs).filter((id) => id === 'anthropic' || id === 'openai');
+      expect(order.filter((h) => h === 'anthropic' || h === 'openai')).toEqual(expected);
+    }
+  });
+
   it('Markets shows a thin book as a muted bid-ask range, not odds', async () => {
     const thin: Market = {
       ...release,
