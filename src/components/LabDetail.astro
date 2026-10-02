@@ -13,7 +13,7 @@ import type { LabPage } from '../ui/lab-page';
 import { labWarningCount } from '../ui/lab-page';
 import { histogramLabel, readValue } from '../ui/odds';
 import { PANEL_ROWS, asOfMs, sourcePill } from '../ui/panels';
-import { TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
+import { TRACK_LINES, daysShort } from '../ui/signals';
 import {
   dayLabel,
   datedRungs,
@@ -52,7 +52,8 @@ const hist = l?.histogram ?? [];
 const max = Math.max(1, ...hist);
 const warnings = labWarningCount(p);
 const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time' : h >= 0 ? `in ${Math.round(h)}h` : 'started');
-const heard = p.landed.length + p.announcements.length + p.feed.length;
+// The week's OpenRouter listing is the Last arrival above, so the announcements leave it out.
+const heard = p.announcements.length + p.feed.length;
 const last = l?.latest;
 const stopLabel = (s: (typeof stops)[number]) =>
   s.kind === 'now' ? 'Now' : s.kind === 'tick' ? s.horizon! : dayLabel(s.day, built);
@@ -186,7 +187,6 @@ const stopSub = (s: (typeof stops)[number]) =>
     <p class="empty">Nothing from or about {name} this week in the listings, the lab feeds or Hacker News.</p>
   ) : (
     <div class="ann">
-      {p.landed.map((r) => <a class="row item" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener"><span class="ttl landed-name">{r.name}</span><span class="when mono">listed {hoursAgo(r.hoursAgo)}</span><span class="meta mono">OPENROUTER · FIRST LISTING · SHOWN, NOT SCORED</span></a>)}
       {p.announcements.map((a) => <a class="row item" href={a.url} target="_blank" rel="noopener"><span class="ttl">{a.title}</span><span class="when mono" data-time={a.seenAt}>{ago(a.seenAt, nowMs)}</span><span class="meta mono">{a.source.toUpperCase()} · LAUNCH POST · {shortDate(a.seenAt)}</span></a>)}
       {p.feed.map((f, i) => <FeedRow f={f} i={i} now={nowMs} />)}
     </div>
@@ -240,7 +240,8 @@ const stopSub = (s: (typeof stops)[number]) =>
   .notice .rows { margin-top: var(--s2); }
 
   .ann { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s8); }
-  .ann > :global(.item) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'ttl when' 'meta meta'; gap: 2px var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
+  /* Every announcement is the same stack: title and time on top, one meta line under, no gap between. */
+  .ann > :global(.item) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'ttl when' 'meta meta'; grid-template-rows: auto 18px; align-content: start; align-items: start; gap: 2px var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
   .ann .ttl { grid-area: ttl; overflow-wrap: anywhere; }
   .ann .when { grid-area: when; font-size: var(--t-xs); line-height: 24px; color: var(--ink-2); white-space: nowrap; }
   .ann .meta { grid-area: meta; font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }

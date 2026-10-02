@@ -11,6 +11,7 @@ import type { LabStatus } from '../domain/lab-status';
 import type { LandedAnnouncement, LandedRelease } from '../domain/landed';
 import type { EventWindow } from '../domain/lead';
 import { displayOutcomes, type Market } from '../domain/market';
+import { soften } from './format';
 import { PANEL_ROWS, asOfMs } from './panels';
 
 /** How many of each list a lab page shows. */
@@ -85,10 +86,12 @@ export function labPage(d: LabPageInput, id: string): LabPage | undefined {
     events: (w?.events.items ?? []).filter((x) => x.labId === lab.id),
     landed: (l?.releases ?? []).filter((r) => r.labId === lab.id),
     announcements,
-    // A launch post the lab section already lists is not repeated as a headline.
+    // A launch post the lab section already lists is not repeated as a headline, and a headline
+    // printed under the lab's name has its profanity softened.
     feed: labFeed(d.feed ?? [], lab.id)
       .filter((f) => !announcements.some((a) => a.url === f.url))
-      .slice(0, LAB_PAGE_ROWS.feed),
+      .slice(0, LAB_PAGE_ROWS.feed)
+      .map((f) => ({ ...f, title: soften(f.title) })),
   };
 }
 

@@ -3,6 +3,7 @@ import { stripDay } from '../../src/domain/history';
 import {
   ago,
   ctx,
+  soften,
   daysLabel,
   monthInitials,
   num,
@@ -70,5 +71,17 @@ describe('format', () => {
   it('monthInitials ends with the current month', () => {
     expect(monthInitials(new Date('2026-09-19T00:00:00Z'), 3)).toEqual(['J', 'A', 'S']);
     expect(monthInitials(new Date('2026-01-05T00:00:00Z'), 2)).toEqual(['D', 'J']);
+  });
+});
+
+describe('soften', () => {
+  it('keeps a first letter and stars out the rest of a profanity, and leaves clean titles alone', () => {
+    expect(soften("Anthropic's IPO Prospectus Is a Fucking Doozy")).toBe(
+      "Anthropic's IPO Prospectus Is a F***ing Doozy",
+    );
+    expect(soften('shitposting about Shit')).toBe('s***posting about S***');
+    expect(soften('Introducing Claude Sonnet 5.5')).toBe('Introducing Claude Sonnet 5.5');
+    // Not inside a word: "Shiitake" and "Fuchsia" are fine.
+    expect(soften('Fuchsia shiitake')).toBe('Fuchsia shiitake');
   });
 });

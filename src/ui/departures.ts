@@ -325,9 +325,10 @@ export interface OtherService {
 }
 
 /**
- * A line's other services: every release family of the lab but its headline one, in the dashboard's
- * (busiest-first) order, each quoted at the stop that answers "by when?": the first at 50% or more,
- * else the furthest it has.
+ * A line's other services: every release family of the lab but its headline one, each quoted at the
+ * stop that answers "by when?" (the first at 50% or more, else the furthest it has), soonest stop
+ * first like a timetable; a family with no dated stop goes last, ties in the dashboard's
+ * (busiest-first) order.
  */
 export function otherServices(
   d: Partial<Pick<Dashboard, 'markets' | 'generatedAt'>>,
@@ -344,9 +345,13 @@ export function otherServices(
     else groups.set(f.key, { family: f.name, markets: [m] });
   }
   const asOf = asOfMs(d);
-  return [...groups.values()].map(({ family, markets }) => {
-    const w = boardingWindow(datedRungs(markets, asOf));
-    const stop = w.kind === 'none' ? w.last : w.to;
-    return { family, url: markets[0].url, ...(stop ? { stop } : {}) };
-  });
+  return [...groups.values()]
+    .map(({ family, markets }): OtherService => {
+      const w = boardingWindow(datedRungs(markets, asOf));
+      const stop = w.kind === 'none' ? w.last : w.to;
+      return { family, url: markets[0].url, ...(stop ? { stop } : {}) };
+    })
+    .map((o, i) => ({ o, i }))
+    .sort((a, b) => (a.o.stop?.day ?? Infinity) - (b.o.stop?.day ?? Infinity) || a.i - b.i)
+    .map(({ o }) => o);
 }

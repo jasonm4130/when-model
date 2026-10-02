@@ -349,10 +349,11 @@ describe('otherServices', () => {
     const other = market('GPT-7 released by...?', [by(9, 0.6)], 'openai', 'gpt');
     const l = lab('anthropic', read(0.46), { family: 'Next Claude Haiku (4.6+)', marketUrl: head.url });
     const out = otherServices({ markets: [head, fable, opus, other], generatedAt: AT }, l);
+    // Soonest stop first, like a timetable: Opus's furthest stop (day 30) before Fable's (day 31).
     expect(out.map((o) => [o.family, o.stop?.p ?? null])).toEqual([
-      ['Next Fable (5.2+)', 0.87],
       ['Next Claude Opus (5.6+)', 0.3],
+      ['Next Fable (5.2+)', 0.87],
     ]);
-    expect(out[0].url).toBe(fable.url);
+    expect(out[1].url).toBe(fable.url);
   });
 });
