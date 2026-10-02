@@ -129,9 +129,14 @@ const toc = [
   description={`Can public signals see a frontier AI launch coming? An hourly replay of Polymarket release odds from ${longDate(meta.window.from)} to ${longDate(meta.window.until)}, scored out of sample on ${FORECAST_CONSTANTS.testedOn.events} launches, plus ${events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in its tables.`}
 >
   <Header view={{ page: 'backtest' }} />
+  <div class="sign page-sign">
+    <div class="wrap">
+      <p class="label">Track record</p>
+      <h1>Backtest</h1>
+      <p class="intro bt-question">Can public signals see a frontier model launch coming?</p>
+    </div>
+  </div>
   <div class="bt-hero wrap">
-    <h1 class="plate" data-plate="BACKTEST">BACKTEST</h1>
-    <p class="bt-question">Can public signals see a frontier model launch coming?</p>
     <p class="bt-method">
       <span class="tiny">METHOD</span>
       Polymarket's release odds, replayed hour by hour from {longDate(meta.window.from)} to {longDate(meta.window.until)} through the dashboard's own code: {meta.protocol.formulasTried} forecasts fitted on the first {FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next {FORECAST_CONSTANTS.testedOn.events}. Plus {events.releases.length} launches timed by hand against Hacker News, lab feeds, TestingCatalog and the other sources in the tables below.
@@ -328,16 +333,14 @@ const toc = [
   <Footer generatedAt={pulledAt} variant="backtest" />
 </Layout>
 <style>
-  .bt-hero { padding-top: 20px; }
-  /* The page title is the one poster-size word. */
-  .bt-hero h1 { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d1); line-height: 0.82; letter-spacing: -0.02em; color: var(--ink); margin-bottom: clamp(20px, 3vw, 36px); overflow-wrap: anywhere; --plate-x: 0.03em; --plate-y: 0.026em; }
-  .bt-question { font-family: var(--font-text); font-size: var(--fs-lede); color: var(--ink); max-width: 30ch; margin-bottom: var(--s4); line-height: 1.2; text-wrap: balance; }
+  .bt-hero { padding-top: var(--s7); }
+  .page-sign .label + h1 { margin-top: var(--s2); }
   .bt-method, .bt-verdict { max-width: 68ch; font-size: var(--fs-body); line-height: 1.55; }
   .bt-method { color: var(--ink-2); margin-bottom: var(--s3); }
   .bt-method .tiny, .bt-verdict .tiny { display: block; margin-bottom: 6px; color: var(--ink); }
   .bt-hero .metrics { margin: var(--s4) 0; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
   .bt-hero .metric-note { white-space: normal; }
-  .bt-verdict { margin-bottom: var(--s4); padding-top: 14px; border-top: 3px solid var(--ink); color: var(--ink); }
+  .bt-verdict { margin-bottom: var(--s4); padding-top: var(--s3); border-top: 2px solid var(--ink); color: var(--ink); }
   .toc { display: flex; flex-wrap: wrap; gap: 4px 20px; }
   .wave { color: var(--muted); line-height: 1.6; }
   .intro { max-width: 90ch; margin-bottom: 12px; }
@@ -351,11 +354,11 @@ const toc = [
   .raw { margin-top: 12px; }
   .raw summary { color: var(--muted); margin-bottom: 8px; }
   .raw .bullets { font-size: var(--fs-xs); color: var(--muted); }
-  code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em; color: var(--ink); background: var(--paper-2); padding: 0 3px; }
+  code { font-family: var(--mono); font-size: 0.88em; color: var(--ink); background: var(--paper-2); padding: 0 3px; }
   /* Row headers read as data, not column labels. */
   main :global(th[scope='row']) {
     font-family: var(--font-mono);
-    font-size: 19px;
+    font-size: var(--t-sm);
     text-transform: none;
     letter-spacing: 0;
     color: var(--text);

@@ -1,15 +1,28 @@
 ---
-/** A page's name, set large over one swipe of ink, and the one line that says what the page is for. */
+/**
+ * A page's station sign: the black band under an inset white rule, the page's name, and the one line
+ * that says what the page is for. Optional slotted content (a source pill, a count) sits under it.
+ */
 interface Props {
   title: string;
   intro: string;
   /** The heading's id, for aria-labelledby. */
   id?: string;
+  /** A small label over the name ("Line", "Notices"…). */
+  kicker?: string;
 }
-const { title, intro, id = 'page-title' } = Astro.props;
+const { title, intro, id = 'page-title', kicker } = Astro.props;
 ---
-<div class="wrap page-head reveal">
-  <h1 id={id}>{title}</h1>
-  <p class="page-intro">{intro}</p>
-  {Astro.slots.has('default') && <div class="page-meta"><slot /></div>}
+<div class="sign page-sign">
+  <div class="wrap">
+    {kicker && <p class="label kicker">{kicker}</p>}
+    <h1 id={id}>{title}</h1>
+    <p class="intro">{intro}</p>
+    {Astro.slots.has('default') && <div class="page-meta"><slot /></div>}
+  </div>
 </div>
+<style>
+  .kicker { margin-top: var(--s4); }
+  .kicker + h1 { margin-top: var(--s2); }
+  .page-meta { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); margin-top: var(--s4); }
+</style>

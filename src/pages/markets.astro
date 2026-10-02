@@ -15,10 +15,10 @@ const meta = pageMeta(view);
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="The odds" intro="What traders will pay to be right about a launch date. Crowd opinion, not a roadmap." />
+    <PageHead title="Timetable" kicker="Markets" intro="Every release market on Polymarket, by line: what traders will pay to be right about a launch date. Crowd opinion, not a roadmap." />
     <div class="wrap page-body">
       <Markets d={d} />
     </div>
   </main>
-  <Footer generatedAt={d.generatedAt} />
+  <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>

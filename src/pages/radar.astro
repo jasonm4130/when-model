@@ -17,12 +17,12 @@ const meta = pageMeta(view);
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." />
+    <PageHead title="Service notices" kicker="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." />
     <div class="wrap page-body">
       <Signals d={d} />
       <Drops d={d} />
       <Feed d={d} />
     </div>
   </main>
-  <Footer generatedAt={d.generatedAt} />
+  <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>

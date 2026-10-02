@@ -17,9 +17,21 @@ import type { Dashboard } from '../domain/dashboard';
 import type { LabStatus } from '../domain/lab-status';
 import { displayOutcomes, type Market } from '../domain/market';
 import { pct } from './format';
-import { labPage, topLabs } from './lab-page';
+import {
+  boardingWindow,
+  datedRungs,
+  departureBoard,
+  familyMarkets,
+  isDeparture,
+  otherServices,
+  timetableState,
+  windowNote,
+  windowText,
+  type Departure,
+} from './departures';
+import { labPage } from './lab-page';
 import { outcomeOdds, readValue } from './odds';
-import { PANEL_ROWS, asOfMs, dropPrice, leadMarket, otherRows, raceRows, releaseRows } from './panels';
+import { PANEL_ROWS, asOfMs, dropPrice, otherRows, raceRows, releaseRows } from './panels';
 import type { PageView } from './site';
 
 type Visible = Partial<Dashboard>;
@@ -38,28 +50,63 @@ const labReads = (l: LabStatus) => [
 
 /** Each slice of the dashboard a page can show, at displayed precision. */
 const PARTS = {
-  /** The level as the hero prints it: number, name, headline and the score line. */
+  /** The level as the service status and /about print it: number, name, line and the score. */
   level: (d: Visible) => {
     const c = d.dropcon;
-    return c && [c.level, c.name, c.state, c.score, c.headline];
+    return c && [c.level, c.name, c.state, c.score, c.headline, c.blurb];
   },
   /** How the score adds up, row by row, as /about prints it. */
   provenance: (d: Visible) => list(d.dropcon?.provenance).map((r) => [r.points, r.label, r.detail]),
-  /** The home strip: the hottest lab, the busiest market's first rungs, the landed banner. */
-  strip: (d: Visible) => {
-    const lead = leadMarket(d);
-    const hot = list(d.labs)[0];
-    return [
-      // With no market, the hottest lab's line names its last listing instead.
-      hot ? [...labReads(hot), hot.latest?.id ?? null] : null,
-      lead ? [lead.market.slug, lead.outcomes.map((o) => [o.label, outcomeOdds(o).text])] : null,
-      d.landed?.bannerText ?? null,
+  /**
+   * The home page's departure board as printed: the next departure and the "Then" rows (line,
+   * service, 7-day odds, boarding window), and which lines are untimed and why.
+   */
+  departures: (d: Visible) => {
+    const board = departureBoard(d);
+    const t = Date.parse(d.generatedAt ?? '');
+    const row = (x: Departure, short: boolean) => [
+      x.lab.id,
+      x.family,
+      pct(x.p7),
+      windowText(x.window, t, short),
+      short ? null : windowNote(x.window, t),
     ];
+    return {
+      next: isDeparture(board.next) ? row(board.next, false) : board.next.reason,
+      later: board.later.map((x) => row(x, true)),
+      unavailable: board.unavailable.map((l) => l.id),
+      untimed: board.untimed.map((l) => l.id),
+      offline: board.offline,
+    };
   },
-  /** The home page's top three labs by 7-day odds. */
-  topLabs: (d: Visible) =>
-    topLabs(list(d.labs)).map((l) => [l.id, readValue(l.odds?.p7), l.odds?.family ?? null]),
-  labs: (d: Visible) => list(d.labs).map(labReads),
+  /** Recent arrivals and the one service notice on the home page. */
+  arrivals: (d: Visible) => list(d.landed?.releases).map((r) => r.id),
+  notice: (d: Visible) => {
+    const items = list(d.earlyWarnings?.stealth?.items);
+    return [items[0]?.id ?? null, items.length];
+  },
+  /** The network: each line's state, its 7-day odds when timed, its service and window. */
+  network: (d: Visible) => {
+    const up = d.measurement?.inputs?.oddsAvailable ?? true;
+    const t = Date.parse(d.generatedAt ?? '');
+    const asOf = asOfMs(d);
+    return list(d.labs).map((l) => {
+      const state = timetableState(l, up);
+      const w =
+        state === 'scheduled'
+          ? windowText(boardingWindow(datedRungs(familyMarkets(d, l), asOf)), t, true)
+          : null;
+      return [
+        l.id,
+        state,
+        state === 'scheduled' ? pct(l.odds?.p7.p) : null,
+        l.odds?.family ?? null,
+        w,
+        l.status,
+        l.releases30d,
+      ];
+    });
+  },
   markets: (d: Visible) => {
     // Which rungs show depends on the build time (a past deadline drops out), as it does on the page.
     const asOf = asOfMs(d);
@@ -114,9 +161,9 @@ type Part = keyof typeof PARTS;
 
 /** What each page shows. A lab's page is its own selection (`labContent`). */
 export const PAGE_PARTS: Readonly<Record<Exclude<PageView['page'], 'lab'>, readonly Part[]>> = {
-  home: ['level', 'strip', 'topLabs'],
-  // The lab list carries each lab's lead flags and the stealth count, so it hashes the warnings.
-  labs: ['labs', 'warnings'],
+  home: ['level', 'departures', 'arrivals', 'notice'],
+  // The network carries each line's lead flags and the stealth count, so it hashes the warnings.
+  labs: ['network', 'warnings'],
   markets: ['markets'],
   radar: ['warnings', 'landed', 'drops', 'trending', 'papers', 'feed'],
   about: ['level', 'provenance', 'health'],
@@ -134,6 +181,11 @@ function labContent(d: Visible, id: string): unknown {
       displayOutcomes(m, PANEL_ROWS.releaseOutcomes, asOf).map((o) => [o.label, outcomeOdds(o).text]),
     ]),
     latest: p.status?.latest?.id ?? null,
+    // The strip map's stops and the other services, as the line page prints them.
+    rungs: p.status ? datedRungs(familyMarkets(d, p.status), asOf).map((r) => [r.day, pct(r.p)]) : [],
+    others: p.status
+      ? otherServices(d, p.status).map((o) => [o.family, o.stop ? [o.stop.day, pct(o.stop.p)] : null])
+      : [],
     warnings: [
       p.leaks.map((x) => x.url),
       p.streams.map((x) => x.url),

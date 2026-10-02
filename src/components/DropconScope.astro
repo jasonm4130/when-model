@@ -1,9 +1,9 @@
 ---
 /**
- * The DROPCON instrument: the level now and how it got here, as one piece. The 5-level scale is the
- * plot's vertical axis, the lead score's week runs across it, and the line ends at the NOW edge in
- * the big number. Server-rendered SVG and HTML; the script below turns the plot into a slider whose
- * readout names each hour, and never touches the number: that is always NOW.
+ * Service history: the DROPCON level's last 7 days. The 5-level scale is the plot's vertical axis,
+ * the lead score's week runs across it, and the line ends at the NOW edge. The level itself is posted
+ * above, in the service status (`ServiceStatus.astro`). Server-rendered SVG and HTML; the script below
+ * turns the plot into a slider whose readout names each hour, and never touches the posted level.
  */
 import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
@@ -13,7 +13,8 @@ import { stripDay, stripHour } from '../domain/history';
 import { LEVEL_NAMES } from '../domain/levels';
 import { SOURCE } from '../domain/sources';
 import { estimateFlagWidth, flagCandidates, placeLabels, type Box } from '../ui/labels';
-import { dropconName, dropconNumber } from '../ui/odds';
+import { dropconNumber } from '../ui/odds';
+import { lineBullet } from '../ui/lines';
 import { launchLine, nowReadout, type ScrubData, type ScrubKind } from '../ui/readout';
 interface Props {
   d: Dashboard;
@@ -71,7 +72,11 @@ const data: ScrubData = {
   ...(inst.lastReading ? { last: Date.parse(inst.lastReading) } : {}),
   near: LAUNCH_NEAR_MS,
   pts: inst.scrub.map((p) => [K[p.kind], p.h, p.e, p.score, p.level ?? 0, p.held ? 1 : 0, p.version]),
-  launches: inst.launches.map((l) => [Date.parse(l.at), l.name, l.lab, l.glyph, l.color]),
+  // A launch carries its line's bullet: the letter in the readout, the fill on the flag.
+  launches: inst.launches.map((l) => {
+    const b = lineBullet(l.labId ?? '');
+    return [Date.parse(l.at), l.name, l.lab, b.letter, b.fill];
+  }),
   live: { state: c.state, at: Date.parse(d.generatedAt), score: c.score, level: c.level },
 };
 const rest = nowReadout(data);
@@ -88,7 +93,7 @@ const hhmm = inst.currentSince ? stripHour(inst.currentSince).slice(-6) : '';
 // First paint places launch names on a reference 1000 x 236 px plot with estimated widths; the
 // script measures the real plot and places them again (src/ui/labels.ts either way).
 const REF: Box = { left: 0, top: 0, right: INSTRUMENT_WIDTH, bottom: 236 };
-const flagText = (l: (typeof inst.launches)[number]) => `${l.glyph} ${l.name}`;
+const flagText = (l: (typeof inst.launches)[number]) => `${lineBullet(l.labId ?? '').letter} ${l.name}`;
 const dirTop: Box = { left: 0, top: 0, right: 180, bottom: 24 };
 const changeBoxes: Box[] = inst.changes.map((ch) => {
   const w = ch.text.length * 8 + 12;
@@ -111,32 +116,6 @@ const tableRows = inst.scrub.slice().reverse();
   data-scope={JSON.stringify(data)}
   style={`--y:${inst.now.y}`}
 >
-  <div class="sc-poster">
-    <div class="dc-lede">
-      <p class:list={['dc-name head', { plate: ok }]} data-plate={dropconName(c)}>{dropconName(c)}</p>
-      <p class="dc-headline">{c.headline}</p>
-      <p class="sc-eq">
-        {ok ? (
-          <>
-            <span class="sc-eq-score"><b>{c.score}</b><span class="of">/100</span> LEAD SCORE</span>
-            <span class="sc-eq-level"><span aria-hidden="true">→ </span><span class="sr-only">sets </span>LEVEL {c.level} OF 5</span>
-            <span class="sc-eq-nf stamp hot thunk"><span class="sr-only">, </span>NOT A FORECAST</span>
-          </>
-        ) : c.state === 'floor' ? (
-          <>
-            <span class="sc-eq-score"><b class="word">FLOOR</b> ODDS OFFLINE</span>
-            <span class="sc-eq-level stamp">NOT A MEASUREMENT</span>
-          </>
-        ) : (
-          <span class="sc-eq-score"><b class="word">NO SIGNAL</b></span>
-        )}
-      </p>
-    </div>
-    <div class:list={['dc-num head', { plate: ok }]} data-num data-plate={dropconNumber(c)}>{dropconNumber(c)}</div>
-  </div>
-
-  {Astro.slots.has('default') && <div class="sc-strip"><slot /></div>}
-
   <div class="sc-readout" data-readout data-tone={rest.tone} style={rest.tone === 'ok' && rest.level ? `--rl:var(--l${rest.level})` : undefined}>
     <p class="sc-r1">
       <span class="sc-rw">
@@ -194,7 +173,7 @@ const tableRows = inst.scrub.slice().reverse();
           data-launch={i}
           data-label="flag"
           aria-hidden="true"
-        ><i>{l.glyph}</i> {l.name}</span>
+        ><i style={`--c:${lineBullet(l.labId ?? '').fill};--fg:${lineBullet(l.labId ?? '').ink}`}>{lineBullet(l.labId ?? '').letter}</i> {l.name}</span>
       ))}
       {v3 && <span class="sc-vline" style={`left:${pct(v3.x)}`} aria-hidden="true"></span>}
       {v3 && (v3.young ? (
@@ -263,7 +242,7 @@ const tableRows = inst.scrub.slice().reverse();
 
   <div class="sc-rail" aria-hidden="true">
     {inst.launches.map((l, i) => (
-      <span class="sc-mark" data-launch={i} style={`left:${pct(l.x)}`} title={`${l.name} · ${l.lab} · ${stripHour(l.at)}`}>{l.glyph}</span>
+      <span class="sc-mark" data-launch={i} style={`left:${pct(l.x)}`} title={`${l.name} · ${l.lab} · ${stripHour(l.at)}`}>{lineBullet(l.labId ?? '').letter}</span>
     ))}
     {!inst.launchesOk && <span class="sc-rail-note tiny">LAUNCH LISTINGS OFFLINE</span>}
   </div>
@@ -276,19 +255,16 @@ const tableRows = inst.scrub.slice().reverse();
   </div>
 
 <p class="dc-what">
-  <b class="tiny">WHAT IS THIS?</b> <span class="w-long">DROPCON reads Polymarket's odds on frontier model
-  releases into a 0–100 lead score. The score's band sets the level, 5 (quiet) to 1 (release surge); the
-  line is that score over time.</span><span class="w-short">The line is the 0–100 lead score over time;
-  its band sets the level, 5 quiet to 1 surge.</span> It is a lead score, <b class="nf">NOT A FORECAST</b>. <a href="/about#score">How it adds up</a> · <a href="/backtest">/backtest</a>
+  <span class="w-long">The line is DROPCON's lead score, 0 to 100, read hourly from Polymarket's release odds; its band sets the level, 5 (quiet) to 1 (release surge).</span><span class="w-short">The line is the 0–100 lead score; its band sets the level, 5 quiet to 1 surge.</span> A lead score, not a forecast. <a href="/about#score">How it adds up</a> · <a href="/backtest">The backtest</a>
 </p>
 <p class="dc-key">
-  <span class="k-item"><i class="k-line" aria-hidden="true"></i>lead score, coloured by its level</span>
-  <span class="k-item"><i class="k-launch" aria-hidden="true">◆</i>frontier launch (first OpenRouter listing): context only, the score has not been shown to predict launches</span>
+  <span class="k-item"><i class="k-line" aria-hidden="true"></i>lead score</span>
+  <span class="k-item"><i class="k-launch" aria-hidden="true">A</i>a line's launch, first listed on OpenRouter: context, not scored</span>
   <span class="k-item"><i class="k-hatch" aria-hidden="true"></i>older scoring, not comparable</span>
 </p>
 
 <details class="sc-table">
-  <summary class="tiny">THE WEEK AS A TABLE</summary>
+  <summary class="fold-summary">The week as a table</summary>
   <div class="table-scroll" role="region" tabindex="0" aria-label="DROPCON readings and launches, last 7 days">
     <table>
       <caption class="sr-only">DROPCON hourly readings, newest first, and frontier launches in the same 7 days</caption>
@@ -321,26 +297,22 @@ const tableRows = inst.scrub.slice().reverse();
 </div>
 
 <style>
-  /* The level ramp: quiet is faint, a surge is the one colour. */
+  /* The level ramp on paper. A surge is the alert red, a strong lead ink, a lead the notice yellow's
+     dark twin (the yellow itself is too light for a line on paper), and the quiet levels grey. Each
+     clears 3:1 as a line on paper. */
   .scope {
-    /* The level ramp in the three inks: a surge is the hot pink, a strong lead the blue, and the
-       quiet levels fade from black to grey. Each clears 3:1 as a line on paper. */
-    --l1: var(--pink-deep);
-    --l2: var(--blue);
-    --l3: var(--ink);
+    --l1: var(--alert);
+    --l2: var(--ink);
+    --l3: #7a6200;
     --l4: var(--ink-2);
-    --l5: #8f897d;
+    --l5: #8a867c;
     --plot-h: 220px;
-    /* Wide and short screens cap the numeral by height, so the answer strip still makes the first screen. */
-    --num: clamp(180px, min(6rem + 32vw, 50vh), 590px);
-    --sweep: 1400ms;
+    --sweep: 1200ms;
     position: relative;
     display: grid;
-    grid-template-columns: 30px 30px minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto var(--plot-h) 26px auto auto auto auto;
+    grid-template-columns: 32px 28px minmax(0, 1fr);
+    grid-template-rows: auto auto var(--plot-h) 28px auto auto auto auto;
     grid-template-areas:
-      'poster poster poster'
-      'strip strip strip'
       'read read read'
       'lcap lcap pcap'
       'rail ticks stage'
@@ -349,7 +321,8 @@ const tableRows = inst.scrub.slice().reverse();
       'what what what'
       'key key key'
       'table table table';
-    column-gap: 8px;
+    column-gap: var(--s2);
+    margin-top: var(--s5);
   }
   .l1 { --lc: var(--l1); }
   .l2 { --lc: var(--l2); }
@@ -357,92 +330,76 @@ const tableRows = inst.scrub.slice().reverse();
   .l4 { --lc: var(--l4); }
   .l5 { --lc: var(--l5); }
 
-  /* ── The poster: the numeral enormous, the level's name huge beside it, then everything calm. ── */
-  .sc-poster { grid-area: poster; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'num lede'; column-gap: clamp(20px, 3.5vw, 64px); align-items: start; }
-  .dc-num { grid-area: num; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--num); line-height: 0.74; letter-spacing: -0.02em; color: var(--lvl); font-variant-numeric: lining-nums; margin-top: calc(var(--num) * -0.012); --plate-x: 0.05em; --plate-y: 0.032em; }
-  /* A reading prints in two plates: the blue on top, flat and crisp, and the grainy pink under it, far
-     enough out of register that it shows as its own colour down one side rather than darkening the
-     blue to navy (the overprint read as one dark ink). */
-  .dc-num.plate::before { mix-blend-mode: multiply; }
-  .dc-name.plate { --plate-x: 0.03em; --plate-y: 0.026em; }
-  .dc-lede { grid-area: lede; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
-  .dc-name { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--fs-d1); line-height: 0.84; letter-spacing: -0.005em; text-transform: uppercase; color: var(--ink); overflow-wrap: anywhere; }
-  .scope:not(.ok) .dc-name { color: var(--ink-2); }
-  .dc-headline { margin-top: clamp(16px, 2vw, 28px); max-width: 34ch; font-size: var(--fs-lede); line-height: 1.28; color: var(--ink); text-wrap: pretty; }
-  .sc-eq { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-top: clamp(16px, 2vw, 28px); font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; color: var(--ink-2); }
-  .sc-eq b { font-family: var(--font-display); font-size: 30px; font-weight: 800; font-stretch: 62.5%; letter-spacing: 0; line-height: 1; color: var(--ink); }
-  .sc-eq .of { margin-right: 6px; font-family: var(--font-display); font-size: 20px; font-weight: 600; font-stretch: 62.5%; letter-spacing: 0; color: var(--ink-2); }
-  .sc-eq b.word { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink); margin-right: 6px; }
-  .sc-eq-level { color: var(--ink); }
-  .scope:not(.ok) .sc-eq-level { color: var(--ink-2); }
-  .sc-eq-nf { --tilt: -4deg; margin-left: 4px; }
-  .sc-eq-level.stamp { --tilt: 2deg; }
-
-  /* The answer strip (the hottest lab, the busiest market) arrives from Dropcon.astro through the slot. */
-  .sc-strip { grid-area: strip; min-width: 0; margin-top: clamp(32px, 3.5vw, 48px); }
-
-  /* ── The week: a calm instrument under the poster. ── */
-  .sc-readout { --rl: var(--ink); grid-area: read; display: grid; grid-template-rows: 22px 20px; align-content: center; gap: 2px; min-width: 0; height: 58px; margin-top: clamp(56px, 7vw, 96px); margin-bottom: 14px; padding: 0 0 0 14px; border-left: 3px solid var(--rl); }
-  .sc-readout[data-tone='ok'] { --rl: var(--ink); }
+  /* The readout: what the cursor is on, in two lines behind a rule the level's colour. */
+  .sc-readout { --rl: var(--ink); grid-area: read; display: grid; grid-template-rows: 24px 20px; align-content: center; gap: 2px; min-width: 0; height: 60px; margin-bottom: var(--s4); padding-left: var(--s3); border-left: 4px solid var(--rl); }
   .sc-readout[data-tone='old'], .sc-readout[data-tone='none'] { --rl: var(--line2); }
-  .sc-readout[data-tone='outage'] { --rl: var(--accent-ink); }
-  .sc-readout.is-scrub { --rl: var(--accent); }
+  .sc-readout[data-tone='outage'] { --rl: var(--notice); }
+  .sc-readout.is-scrub { --rl: var(--ink); }
   /* The reading comes first: when it and the hint do not both fit, the hint wraps onto a second
      line the row clips, so it shows whole or not at all and never squeezes the reading. */
-  .sc-r1 { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: baseline; column-gap: 14px; min-width: 0; height: 22px; white-space: nowrap; overflow: hidden; }
-  .sc-rw { display: flex; flex: 0 1 auto; align-items: baseline; gap: 14px; min-width: 0; }
-  .sc-when { flex: none; font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink); }
-  .sc-readout.is-scrub .sc-when { color: var(--accent-ink); }
-  .sc-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-md); line-height: 22px; color: var(--ink); }
+  .sc-r1 { display: flex; flex-wrap: wrap; align-content: flex-start; align-items: baseline; column-gap: var(--s4); min-width: 0; height: 24px; white-space: nowrap; overflow: hidden; }
+  .sc-rw { display: flex; flex: 0 1 auto; align-items: baseline; gap: var(--s3); min-width: 0; }
+  .sc-when { flex: none; font-family: var(--mono); font-size: var(--t-xs); font-weight: 500; color: var(--ink); }
+  .sc-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--t-base); line-height: 24px; font-weight: 600; color: var(--ink); }
   .sc-readout[data-tone='old'] .sc-what, .sc-readout[data-tone='none'] .sc-what { color: var(--ink-2); }
-  .sc-rname { color: var(--ink-2); }
+  .sc-rname { font-weight: 400; color: var(--ink-2); }
   .sc-hint { margin-left: auto; flex: none; color: var(--ink-2); }
   .sc-hint[hidden] { display: none; }
   .sc-hint .h-short { display: none; }
-  .sc-r2 { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-xs); line-height: 20px; color: var(--ink-2); }
+  .sc-r2 { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
 
-  .sc-cap { padding-bottom: 10px; color: var(--ink); white-space: nowrap; overflow: hidden; }
-  .sc-cap-level { grid-area: lcap; color: var(--ink-2); }
-  .sc-cap-plot { grid-area: pcap; }
+  .sc-cap { padding-bottom: var(--s2); color: var(--ink-2); white-space: nowrap; overflow: hidden; }
+  .sc-cap-level { grid-area: lcap; }
+  .sc-cap-plot { grid-area: pcap; color: var(--ink); }
+  .sc-cap-plot .muted { font-weight: 500; }
   .sc-cap-now { display: none; }
 
   /* The DROPCON scale, standing up: each level's segment as tall as its score band. */
   .dc-scale { grid-area: rail; display: grid; grid-template-rows: 25fr 20fr 20fr 20fr 15fr; gap: 2px; }
-  .seg { display: grid; place-items: center; font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 700; color: var(--ink-2); background: var(--paper-2); outline: 1px solid transparent; outline-offset: 1px; transition: outline-color var(--fast) var(--ease); }
-  .seg.on { background: var(--accent); color: var(--paper); }
+  .seg { display: grid; place-items: center; font-size: var(--t-xs); font-weight: 700; color: var(--ink-2); background: var(--paper-2); outline: 2px solid transparent; outline-offset: 1px; transition: outline-color var(--fast) var(--ease); }
+  .seg.on { background: var(--ink); color: var(--paper); }
+  .seg.on.l3 { background: var(--notice); color: var(--ink); }
+  .seg.on.l1 { background: var(--alert); color: #fff; }
   .seg.dim { background: transparent; border: 1px dashed var(--line2); }
   .seg.floor { border: 2px solid var(--ink-2); }
   .seg.is-probe { outline-color: var(--ink); }
 
-  .sc-ticks { grid-area: ticks; position: relative; font-family: var(--font-label); font-size: 11px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .sc-ticks { grid-area: ticks; position: relative; font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
   .sc-ticks span { position: absolute; right: 0; transform: translateY(-50%); line-height: 1; }
 
   .sc-stage { grid-area: stage; position: relative; min-width: 0; }
-  .sc-plot { position: absolute; inset: 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); overflow: hidden; touch-action: pan-y; }
+  .sc-plot { position: absolute; inset: 0; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); overflow: hidden; touch-action: pan-y; }
   .sc-plot[role='slider'] { cursor: crosshair; }
-  .sc-plot:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+  .sc-plot:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   .sc-plot svg, .sc-ink { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .sc-band { fill: var(--ink); opacity: 0; }
-  .sc-band.on { fill: var(--accent); opacity: 0.09; }
+  /* Level bands: the busy levels tinted faintly, the current band a little more. */
+  .sc-band { fill: transparent; }
+  .sc-band.l1 { fill: var(--alert); opacity: 0.06; }
+  .sc-band.l2 { fill: var(--ink); opacity: 0.04; }
+  .sc-band.l3 { fill: var(--notice); opacity: 0.16; }
+  .sc-band.on { opacity: 0.3; }
+  .sc-band.on.l4, .sc-band.on.l5 { fill: var(--ink); opacity: 0.05; }
+  .sc-band.on.l2 { opacity: 0.08; }
+  .sc-band.on.l1 { opacity: 0.12; }
   .sc-guide { stroke: var(--line2); stroke-width: 1; stroke-dasharray: 1 4; vector-effect: non-scaling-stroke; }
   .sc-day { stroke: var(--rule-soft); stroke-width: 1; vector-effect: non-scaling-stroke; }
   #sc-level-ink stop { stop-color: var(--lc); }
-  .sc-area { fill: url(#sc-level-ink); opacity: 0.07; shape-rendering: crispEdges; }
+  .sc-area { fill: url(#sc-level-ink); opacity: 0.06; shape-rendering: crispEdges; }
   .sc-glow { display: none; }
-  .sc-line { fill: none; stroke: url(#sc-level-ink); stroke-width: 2.5; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+  .sc-line { fill: none; stroke: url(#sc-level-ink); stroke-width: 3; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
   .sc-launch { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.6; vector-effect: non-scaling-stroke; transition: opacity var(--fast) var(--ease); }
   .sc-launch.is-near { opacity: 1; stroke: var(--ink); stroke-dasharray: none; }
 
   /* Stretches with no line on this axis: hatched or blank. The label shows whole, or not at all. */
   .sc-zone { position: absolute; top: 0; bottom: 0; overflow: hidden; border-right: 1px dashed var(--line2); container: zone / inline-size; }
   .sc-zone.unrecorded { background: var(--paper-2); }
-  .sc-zone.old { background: repeating-linear-gradient(135deg, rgba(20, 19, 18, 0.1) 0 1px, transparent 1px 7px), var(--paper); }
-  .sc-zone.outage { background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--accent) 22%, transparent) 0 1px, transparent 1px 7px), var(--paper); }
+  .sc-zone.old { background: repeating-linear-gradient(135deg, rgba(17, 17, 17, 0.1) 0 1px, transparent 1px 7px), var(--paper); }
+  .sc-zone.outage { background: repeating-linear-gradient(45deg, rgba(252, 204, 10, 0.45) 0 2px, transparent 2px 8px), var(--paper); }
   .sc-zlabel { position: absolute; left: 8px; bottom: 28px; max-width: calc(100% - 16px); }
   .sc-zlabel > * { display: none; white-space: nowrap; }
-  .sc-zlabel b { font-family: var(--font-label); font-size: 11px; font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink-2); }
-  .zl-full { gap: 3px; }
-  .zl-full span { font-size: var(--fs-xs); color: var(--ink-2); }
+  .sc-zlabel b { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-2); }
+  .zl-full { gap: 2px; }
+  .zl-full span { font-size: var(--t-xs); color: var(--ink-2); }
   @container zone (min-width: 250px) {
     .sc-zlabel > .zl-full { display: grid; }
   }
@@ -457,58 +414,56 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-zlabel[data-pick='full'] > .zl-full { display: grid; }
   .sc-zlabel[data-pick='head'] > .zl-head, .sc-zlabel[data-pick='min'] > .zl-min { display: block; }
 
-  /* Which way is hot, at the plot's top and bottom edges. */
+  /* Which way is busy, at the plot's top and bottom edges. */
   .sc-dir { position: absolute; left: 8px; padding: 2px 4px; font-size: 11px; color: var(--ink-2); background: var(--paper); white-space: nowrap; }
-  .sc-dir.l1 { color: var(--accent-ink); }
+  .sc-dir.l1 { color: var(--alert); }
   .sc-dir.top { top: 6px; }
   .sc-dir.bottom { bottom: 6px; }
 
-  /* Launch names, stacked in rows at the top of the plot, each hung on its own dashed line. */
-  .sc-flag { position: absolute; top: calc(6px + var(--row) * 22px); height: 18px; margin-left: 4px; padding: 0 5px; font-size: 13px; line-height: 18px; color: var(--ink); white-space: nowrap; background: var(--paper); border-left: 2px solid var(--ink); transition: color var(--fast) var(--ease), background var(--fast) var(--ease); }
-  .sc-flag i { font-style: normal; color: var(--ink-2); }
-  .sc-flag.flip { margin-left: 0; transform: translateX(calc(-100% - 4px)); border-left: 0; border-right: 2px solid var(--ink); }
+  /* Launch names, stacked in rows at the top of the plot, each with its line's bullet. */
+  .sc-flag { position: absolute; top: calc(6px + var(--row) * 22px); height: 18px; margin-left: 4px; padding: 0 6px 0 2px; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--ink); white-space: nowrap; background: var(--paper); border-left: 2px solid var(--ink); transition: color var(--fast) var(--ease), background var(--fast) var(--ease); }
+  .sc-flag i { display: inline-grid; place-items: center; width: 14px; height: 14px; margin-right: 2px; border-radius: 50%; vertical-align: -2px; font-size: 9px; line-height: 1; font-weight: 700; font-style: normal; color: var(--fg); background: var(--c); }
+  .sc-flag.flip { margin-left: 0; padding: 0 2px 0 6px; transform: translateX(calc(-100% - 4px)); border-left: 0; border-right: 2px solid var(--ink); }
   .sc-flag.is-near { color: var(--paper); background: var(--ink); }
-  .sc-flag.is-near i { color: var(--paper); }
   .scope:not(.fitted) .sc-flag.unplaced { display: none; }
   .is-cut { visibility: hidden; }
 
   /* Where the current scale starts, and while its line is young, how much of it there is. */
   .sc-vline { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--ink-2); }
-  .sc-v3 { position: absolute; bottom: 6px; display: grid; gap: 3px; padding: 2px 6px; border-left: 2px solid var(--ink); white-space: nowrap; background: var(--paper); }
-  .sc-v3 b { font-family: var(--font-label); font-size: 11px; font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink); }
-  .sc-v3 > span { font-size: 13px; line-height: 1.1; color: var(--ink-2); }
+  .sc-v3 { position: absolute; bottom: 6px; display: grid; gap: 2px; padding: 2px 6px; border-left: 2px solid var(--ink); white-space: nowrap; background: var(--paper); }
+  .sc-v3 b { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink); }
+  .sc-v3 > span { font-size: 12px; line-height: 16px; color: var(--ink-2); }
   .sc-v3.young { --off: 36px; bottom: auto; top: calc(var(--vy) * 1%); transform: translate(calc(-100% - 10px), calc(-100% - var(--off))); border-left: 0; border-right: 2px solid var(--ink); text-align: right; }
   .sc-v3.young.below { transform: translate(calc(-100% - 10px), var(--off)); }
   .sc-v3 .yl-short { display: none; }
 
-  /* Level changes on the line: where it crossed a band and stayed. A tick joins the flag to the step. */
-  .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)) rotate(-2deg); padding: 3px 6px 2px; font-family: var(--font-label); font-size: 11px; font-weight: 800; font-stretch: 125%; letter-spacing: 0.08em; color: var(--ink); white-space: nowrap; background: var(--paper); border: 2px solid var(--lc); border-radius: 2px 4px 2px 3px; box-shadow: inset 0 0 0 1px var(--paper), inset 0 0 0 2px var(--lc); }
-  /* A level change is stamped on the week where it happened, a couple of degrees off square. */
-  .sc-change.l1, .sc-change.l2 { color: var(--accent-ink); }
+  /* Level changes on the line: where it crossed a band and stayed. A tick joins the label to the step. */
+  .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)); padding: 2px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; background: var(--paper); border: 2px solid var(--lc); }
+  .sc-change.l3 { background: var(--notice); border-color: var(--ink); }
+  .sc-change.l1 { color: #fff; background: var(--alert); border-color: var(--alert); }
   .sc-change.right { --tx: 0px; }
   .sc-change[data-side='below'] { --ty: 8px; }
-  .sc-change::after { content: ''; position: absolute; right: -1px; top: 100%; height: 9px; border-right: 1px solid var(--lc); }
-  .sc-change.right::after { right: auto; left: -1px; border-right: 0; border-left: 1px solid var(--lc); }
+  .sc-change::after { content: ''; position: absolute; right: -2px; top: 100%; height: 8px; border-right: 2px solid var(--lc); }
+  .sc-change.right::after { right: auto; left: -2px; border-right: 0; border-left: 2px solid var(--lc); }
   .sc-change[data-side='below']::after { top: auto; bottom: 100%; }
   .sc-change[data-side='above']:not([data-side0='above'])::after, .sc-change[data-side='below']:not([data-side0='below'])::after { display: none; }
 
   /* NOW: the right edge, a square at the live score, and a tag naming it. None of it takes the
      pointer, so hovering the edge reads the plot underneath. */
-  .sc-nowline { position: absolute; top: 0; bottom: 0; right: 0; width: 0; border-right: 1px solid var(--ink); }
-  .sc-dot { position: absolute; z-index: 4; right: -5px; top: calc(var(--y) * 1%); width: 10px; height: 10px; margin-top: -5px; background: var(--accent); pointer-events: none; }
+  .sc-nowline { position: absolute; top: 0; bottom: 0; right: 0; width: 0; border-right: 2px solid var(--ink); }
+  .sc-dot { position: absolute; z-index: 4; right: -6px; top: calc(var(--y) * 1%); width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--paper); pointer-events: none; }
   .scope:not(.ok) .sc-dot { background: var(--paper); border: 2px dashed var(--ink-2); }
-  .sc-nowtag { display: block; position: absolute; z-index: 4; right: 10px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 2px 6px; color: var(--paper); background: var(--ink); pointer-events: none; }
+  .sc-nowtag { display: block; position: absolute; z-index: 4; right: 12px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 2px 6px; color: var(--paper); background: var(--ink); pointer-events: none; }
   .sc-nowtag b { font-weight: 700; }
   .scope:not(.ok) .sc-nowtag { color: var(--ink-2); background: var(--paper); border: 1px dashed var(--ink-2); }
-  /* The NOW tag sits above the dot unless the dot is near the top; the young callout keeps clear of it. */
-  .scope.high .sc-nowtag { transform: translateY(6px); }
+  .scope.high .sc-nowtag { transform: translateY(8px); }
 
   .sc-rail { grid-area: marks; position: relative; }
-  .sc-mark { position: absolute; top: 4px; transform: translateX(-50%); font-size: 13px; line-height: 1; color: var(--ink); transition: transform var(--fast) var(--ease), color var(--fast) var(--ease); }
-  .sc-mark::before { content: ''; position: absolute; left: 50%; top: -5px; height: 5px; border-left: 1px solid currentColor; }
-  .sc-mark.is-near { transform: translateX(-50%) scale(1.3); color: var(--accent-ink); }
+  .sc-mark { position: absolute; top: 6px; transform: translateX(-50%); font-size: 11px; line-height: 1; font-weight: 700; color: var(--ink); transition: transform var(--fast) var(--ease); }
+  .sc-mark::before { content: ''; position: absolute; left: 50%; top: -6px; height: 5px; border-left: 1px solid currentColor; }
+  .sc-mark.is-near { transform: translateX(-50%) scale(1.3); }
   .sc-rail-note { position: absolute; left: 6px; top: 6px; color: var(--ink-2); }
-  .sc-days { grid-area: days; container: days / inline-size; position: relative; height: 16px; margin-top: 4px; font-family: var(--font-label); font-size: 11px; font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.06em; color: var(--ink-2); }
+  .sc-days { grid-area: days; container: days / inline-size; position: relative; height: 16px; margin-top: 4px; font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
   /* A day is about a seventh of the axis: under about 80px a day, "25 SEP" meets "26 SEP" (the script
      drops any label that still meets its neighbour). */
   @container days (max-width: 559.98px) {
@@ -517,42 +472,35 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-days > span { position: absolute; top: 0; white-space: nowrap; }
   .sc-daylabel { transform: translateX(-50%); }
   .sc-daylabel.late { transform: translateX(-100%); }
-  .sc-days > .sc-ctag { z-index: 2; top: -3px; padding: 3px 6px; color: var(--paper); background: var(--ink); }
+  .sc-days > .sc-ctag { z-index: 2; top: -3px; padding: 2px 6px; color: var(--paper); background: var(--ink); }
   .sc-ctag[hidden] { display: none; }
 
   /* Scrubber: a hairline and a probe on the reading; the words go in the readout. */
   .sc-cursor { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
   .sc-cursor[hidden] { display: none; }
   .sc-cursor::before { content: ''; position: absolute; top: 0; bottom: 0; left: var(--cx); border-left: 1px solid var(--ink); }
-  .sc-probe { position: absolute; left: var(--cx); top: calc(var(--cy) * 1%); width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; background: var(--probe, var(--ink)); outline: 2px solid var(--paper); }
+  .sc-probe { position: absolute; left: var(--cx); top: calc(var(--cy) * 1%); width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--probe, var(--ink)); outline: 2px solid var(--paper); }
   .sc-probe[hidden] { display: none; }
 
   /* No series: the plot pales under a card. Launch names and the direction labels do not depend on
      the series, so they stay above it at full contrast (the script keeps them off the card). */
   .sc-empty { position: absolute; inset: 0; display: grid; place-content: center; padding: 12px; background: color-mix(in srgb, var(--paper) 70%, transparent); z-index: 1; }
-  .sc-veil { display: grid; justify-items: center; gap: 4px; max-width: 40ch; padding: 10px 16px; text-align: center; background: var(--paper); border: 1px solid var(--ink); }
-  .sc-veil b { font-family: var(--font-label); font-size: 11px; font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.1em; color: var(--ink); }
-  .sc-veil span { font-size: var(--fs-xs); line-height: 1.3; color: var(--ink-2); }
+  .sc-veil { display: grid; justify-items: center; gap: 4px; max-width: 40ch; padding: 8px 16px; text-align: center; background: var(--paper); border: 2px solid var(--ink); }
+  .sc-veil b { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--ink); }
+  .sc-veil span { font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .scope:not(.hist-ok) .sc-flag, .scope:not(.hist-ok) .sc-dir { z-index: 2; }
 
   .sc-sweep { display: none; }
 
-  /* What the reader is looking at, in one plain paragraph under the instrument. */
-  .dc-what { grid-area: what; max-width: 72ch; margin: 28px 0 0; font-size: var(--fs-md); line-height: 1.5; color: var(--ink-2); }
-  .dc-what .tiny { margin-right: 8px; color: var(--ink); }
+  .dc-what { grid-area: what; max-width: 72ch; margin-top: var(--s5); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .dc-what .w-short { display: none; }
-  .dc-what .nf { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--accent-ink); }
-  .dc-key { grid-area: key; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 24px; margin: 12px 0 0; font-size: var(--fs-xs); line-height: 1.4; color: var(--ink-2); }
-  .k-item i { display: inline-block; margin-right: 8px; font-style: normal; }
-  .k-line { width: 22px; height: 3px; vertical-align: 3px; background: linear-gradient(90deg, var(--l5), var(--l4), var(--l3), var(--l2), var(--l1)); }
-  .k-launch { color: var(--ink); }
-  .k-hatch { width: 16px; height: 12px; vertical-align: -1px; border: 1px dashed var(--line2); background: repeating-linear-gradient(135deg, rgba(20, 19, 18, 0.25) 0 1px, transparent 1px 5px); }
-  .sc-table { grid-area: table; margin: 20px 0 0; min-width: 0; }
-  .sc-table summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; border-top: 1px solid var(--rule-soft); border-bottom: 1px solid var(--rule-soft); color: var(--ink); }
-  .sc-table summary::after { content: '+'; font-family: var(--font-display); font-size: 22px; font-weight: 500; font-stretch: 100%; }
-  .sc-table[open] summary::after { content: '−'; }
-  .sc-table summary:hover { color: var(--accent-ink); }
-  .sc-table .table-scroll { max-height: 300px; overflow: auto; margin-top: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; align-items: start; }
+  .dc-key { grid-area: key; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s1) var(--s5); margin-top: var(--s3); font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
+  .k-item i { display: inline-block; margin-right: var(--s2); font-style: normal; }
+  .k-line { width: 24px; height: 3px; vertical-align: 3px; background: var(--ink); }
+  .k-launch { display: inline-grid !important; place-items: center; width: 14px; height: 14px; border-radius: 50%; vertical-align: -3px; font-size: 9px; font-weight: 700; color: #fff; background: var(--ink); }
+  .k-hatch { width: 16px; height: 12px; vertical-align: -1px; border: 1px dashed var(--line2); background: repeating-linear-gradient(135deg, rgba(17, 17, 17, 0.25) 0 1px, transparent 1px 5px); }
+  .sc-table { grid-area: table; margin-top: var(--s5); min-width: 0; }
+  .sc-table .table-scroll { max-height: 300px; overflow: auto; margin-top: var(--s2); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--s5); align-items: start; }
   .sc-table tr.old td { color: var(--ink-2); }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -560,16 +508,6 @@ const tableRows = inst.scrub.slice().reverse();
     .sc-sweep { display: block; position: absolute; top: 0; bottom: 0; left: 0; width: 1px; z-index: 2; background: var(--ink); opacity: 0; animation: sc-sweep var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 250ms both; }
     .sc-ink { animation: sc-ink var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 250ms both; }
     .sc-change, .sc-v3, .sc-dot { animation: sc-fade 360ms var(--ease) calc(var(--sweep) + 200ms) both; }
-    .dc-num { animation: sc-num 900ms var(--ease) 60ms both; }
-    /* Then the second plate slides in from the left (never past the page's right side) into (near) register, as if the drum had just been lined up;
-       hovering the numeral knocks it out again. */
-    .scope .plate::before { animation: sc-register 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) 500ms backwards; transition: transform 260ms var(--ease); }
-    .dc-num.plate:hover::before { transform: translate(calc(var(--plate-x) * 2.2), calc(var(--plate-y) * -0.5)); }
-    @keyframes sc-register {
-      from { opacity: 0; transform: translate(calc(var(--plate-x) - 0.14em), calc(var(--plate-y) - 0.07em)); }
-      25% { opacity: 1; }
-      to { opacity: 1; transform: translate(var(--plate-x), var(--plate-y)); }
-    }
     @keyframes sc-sweep {
       0% { left: 0; opacity: 0; }
       8% { opacity: 1; }
@@ -584,47 +522,8 @@ const tableRows = inst.scrub.slice().reverse();
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    /* The numeral rises into place from its baseline, like type set on a press. */
-    @keyframes sc-num {
-      from { clip-path: inset(100% -10% -10% -10%); transform: translateY(8%); }
-      to { clip-path: inset(-10% -10% -10% -10%); transform: none; }
-    }
   }
 
-  /* Wide screens: the answer strip hangs down the poster's right-hand third, so the poster spans the
-     width and the week's instrument starts on the first screen. The lede is a container, so the
-     level's name sets itself to the room it has (and to the screen's height) and breaks onto a
-     second line like a headline rather than running under the strip. */
-  @media (min-width: 1024px) {
-    .scope {
-      --num: clamp(260px, min(6rem + 30vw, 60vh), 560px);
-      grid-template-columns: 30px 30px minmax(0, 1fr) minmax(280px, 0.44fr);
-      grid-template-rows: auto auto auto var(--plot-h) 26px auto auto auto auto;
-      grid-template-areas:
-        'poster poster poster strip'
-        'read read read read'
-        'lcap lcap pcap pcap'
-        'rail ticks stage stage'
-        '. . marks marks'
-        '. . days days'
-        'what what what what'
-        'key key key key'
-        'table table table table';
-    }
-    .sc-poster { align-self: start; padding-right: clamp(24px, 3vw, 48px); }
-    .dc-lede { container: lede / inline-size; }
-    .dc-name { font-size: clamp(64px, min(25cqi, 18.5vh), 172px); }
-    .dc-headline { font-size: clamp(21px, 0.9rem + 0.6vw, 27px); }
-    .sc-strip { margin: 0; padding-left: clamp(24px, 3vw, 44px); border-left: 1px solid var(--ink); align-self: start; }
-    .sc-readout { margin-top: clamp(20px, 3vh, 40px); }
-  }
-  @media (min-width: 1024px) and (max-height: 820px) {
-    .scope { --num: clamp(240px, min(6rem + 30vw, 50vh), 560px); }
-    .dc-name { font-size: clamp(56px, min(25cqi, 11.5vh), 172px); }
-    .sc-readout { margin-top: 16px; }
-  }
-
-  /* Tablets: a slightly shorter plot. */
   @media (max-width: 1023.98px) {
     .scope { --plot-h: 200px; }
   }
@@ -639,16 +538,12 @@ const tableRows = inst.scrub.slice().reverse();
     .sc-hint .h-drag { display: none; }
   }
 
-  /* Phones: the numeral beside the name, the headline under both, and a shorter plot. */
   @media (max-width: 640px) {
     .scope {
-      --plot-h: 150px;
-      --num: clamp(150px, 48vw, 220px);
+      --plot-h: 160px;
       grid-template-columns: 20px 22px minmax(0, 1fr);
-      grid-template-rows: auto auto auto var(--plot-h) 22px auto auto auto auto;
+      grid-template-rows: auto var(--plot-h) 24px auto auto auto auto;
       grid-template-areas:
-        'poster poster poster'
-        'strip strip strip'
         'read read read'
         'rail ticks stage'
         '. . marks'
@@ -656,33 +551,24 @@ const tableRows = inst.scrub.slice().reverse();
         'what what what'
         'key key key'
         'table table table';
-      column-gap: 5px;
+      column-gap: 4px;
     }
-    .sc-poster { grid-template-areas: 'num name' 'num eq' 'head head'; grid-template-rows: auto 1fr auto; column-gap: 14px; }
-    .dc-lede { display: contents; }
-    .dc-name { grid-area: name; font-size: clamp(40px, 13vw, 64px); }
-    .sc-eq { grid-area: eq; align-self: end; gap: 6px 10px; margin-top: 12px; }
-    .sc-eq b { font-size: 26px; }
-    .sc-eq .of { font-size: 17px; margin-right: 4px; }
-    .dc-headline { grid-area: head; margin-top: 18px; font-size: 20px; }
-    .sc-strip { margin-top: 32px; }
-    .sc-readout { height: 76px; margin-top: 44px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 16px 22px 32px; gap: 2px 8px; padding-left: 10px; }
+    .sc-readout { height: 80px; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 16px 24px 32px; gap: 2px 8px; padding-left: 10px; }
     .sc-r1, .sc-rw { display: contents; }
     .sc-when { grid-area: 1 / 1; min-width: 0; overflow: hidden; }
     .sc-hint { grid-area: 1 / 2; margin-left: 0; align-self: center; }
     .sc-what { grid-area: 2 / 1 / 3 / -1; white-space: nowrap; }
     .sc-rname { display: none; }
-    .sc-r2 { grid-column: 1 / -1; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; }
+    .sc-r2 { grid-column: 1 / -1; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 16px; font-size: var(--t-xs); }
     .sc-cap { display: none; }
     .sc-ticks span.end { display: none; }
     .sc-dir.top, .sc-dir.bottom { left: 4px; }
     .scope:not(.fitted) .sc-flag { display: none; }
-    .dc-what { margin-top: 20px; font-size: var(--fs-sm); }
     .dc-what .w-long { display: none; }
     .dc-what .w-short { display: inline; }
-    .sc-veil { gap: 3px; padding: 6px 10px; }
+    .sc-veil { gap: 2px; padding: 6px 10px; }
     .sc-veil .v-live { display: none; }
-    .dc-key { gap: 2px 14px; }
+    .dc-key { gap: 2px 16px; }
     .sc-v3 .yl-long, .sc-change .cf-when { display: none; }
     .sc-v3 .yl-short { display: inline; }
   }
@@ -758,7 +644,7 @@ const tableRows = inst.scrub.slice().reverse();
       probe.hidden = r.score === undefined;
       if (r.score !== undefined) {
         cursor.style.setProperty('--cy', String(100 - r.score));
-        probe.style.setProperty('--probe', r.level ? `var(--l${r.level})` : '#fff');
+        probe.style.setProperty('--probe', r.level ? `var(--l${r.level})` : 'var(--paper)');
       }
       // The time tag rides the day axis under the cursor, kept inside it.
       ctag.hidden = false;

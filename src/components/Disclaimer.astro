@@ -25,7 +25,7 @@ const HOME: Readonly<Record<Upstream, string>> = {
 const upstreams = (Object.keys(HOME) as Upstream[]).map((key) => ({ name: SOURCE[key], href: HOME[key] }));
 ---
 <section class="panel disclaimer" id="disclaimer" aria-labelledby="disclaimer-title">
-  <div class="panel-head"><h2 id="disclaimer-title">OPERATIONAL DISCLAIMER</h2></div>
+  <div class="panel-head"><h2 id="disclaimer-title">Disclaimer</h2></div>
   <div class="dis-cols">
     <p>This dashboard is for informational and entertainment purposes only. Prediction market odds are crowd opinion, not lab roadmaps. Listing dates on model registries can lag or lead official announcements. Model names, labs and trademarks belong to their owners; whenmodel is not affiliated with any of them, nor with the very good site that inspired it, <a href="https://www.pizzint.watch" target="_blank" rel="noopener">pizzint.watch</a>. Always monitor the changelogs responsibly.</p>
     <p class="sources"><span class="tiny muted">SOURCES</span> {upstreams.map((u, i) => <><span class="src-item"><a href={u.href} target="_blank" rel="noopener">{u.name}</a>{i < upstreams.length - 1 && <span aria-hidden="true"> ·</span>}</span> </>)}</p>

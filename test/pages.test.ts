@@ -2,6 +2,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import Layout from '../src/layouts/Layout.astro';
 import NotFound from '../src/pages/404.astro';
+import { departureBoard, isDeparture } from '../src/ui/departures';
 
 afterEach(() => vi.resetModules());
 
@@ -50,8 +51,8 @@ describe('Layout head', () => {
     expect(html).toContain('twitter:image" content="https://whenmodel.com/og-card-v2.png"');
     expect(html).toContain('twitter:image:alt"');
     // self-hosted, preloaded fonts, no Google Fonts left to strip from the CSP
-    expect(html).toContain('href="/fonts/archivo.woff2"');
-    expect(html).toContain('href="/fonts/source-serif-4.woff2"');
+    expect(html).toContain('href="/fonts/inter-tight.woff2"');
+    expect(html).toContain('href="/fonts/geist-mono.woff2"');
     expect(html).toMatch(/rel="preload"[^>]*as="font"/);
     expect(html).toContain('crossorigin');
     expect(html).not.toContain('fonts.googleapis.com');
@@ -142,14 +143,21 @@ describe('the pages', () => {
     }
   });
 
-  it('has the home page answer, show the top three labs linked to their pages and lead onward', async () => {
+  it('has the home page answer: the service status, the next departure, the other lines and the way on', async () => {
     const { html, d } = await render('/');
-    const top = [...html.matchAll(/<a class="top-lab[^"]*" href="\/labs\/([a-z]+)"/g)].map((m) => m[1]);
-    expect(top).toHaveLength(3);
-    for (const id of top) expect(d.labs.map((l) => l.id)).toContain(id);
-    for (const href of ['/labs', '/markets', '/radar', '/about']) expect(html).toContain(`href="${href}"`);
+    // This fixture has no market, so nothing departs and every line is untimed: no timetable.
+    const board = departureBoard(d);
+    expect(isDeparture(board.next)).toBe(false);
+    expect(html).toMatch(/<h2 id="status-title"[^>]*>/);
+    expect(html).toMatch(/<h1 id="next-title"[^>]*data-flap[^>]*>No departures scheduled<\/h1>/);
+    expect(board.untimed.length).toBe(d.labs.length);
+    for (const l of board.untimed) expect(html).toContain(`href="/labs/${l.id}"`);
+    expect(html).toContain('no timetable. Nobody is betting on these lines.');
+    expect(html).toContain('Service history · last 7 days');
+    for (const href of ['/labs', '/markets', '/radar', '/about#score'])
+      expect(html).toContain(`href="${href}"`);
     // The rest of the old single page is gone from it.
-    for (const gone of ['id="feed"', 'id="faq"', 'id="health"', 'class="labs-list"'])
+    for (const gone of ['id="feed"', 'id="faq"', 'id="health"', 'class="network"'])
       expect(html).not.toContain(gone);
   });
 
@@ -171,5 +179,6 @@ describe('GET /404', () => {
     const html = await container.renderToString(NotFound, {});
     expect(html).toContain('name="robots" content="noindex"');
     expect(html).toContain('404');
+    expect(html).toMatch(/<h1[^>]*>Line not found<\/h1>/);
   });
 });

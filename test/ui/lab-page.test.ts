@@ -3,7 +3,7 @@ import type { FeedItem } from '../../src/domain/feed';
 import type { LabOddsRead, LabStatus } from '../../src/domain/lab-status';
 import type { Landed } from '../../src/domain/landed';
 import type { Market } from '../../src/domain/market';
-import { LAB_PAGE_ROWS, labFeed, labPage, labWarningCount, topLabs } from '../../src/ui/lab-page';
+import { LAB_PAGE_ROWS, labFeed, labPage, labWarningCount } from '../../src/ui/lab-page';
 import { warnings } from '../fixtures/warnings';
 
 const AT = '2026-09-19T12:00:00.000Z';
@@ -87,26 +87,6 @@ describe('labFeed', () => {
     ]);
     expect(labFeed(feed, 'openai').map((f) => f.url)).toEqual(['https://e.com/2', 'https://openai.com/1']);
     expect(labFeed(feed, 'nope' as never)).toEqual([]);
-  });
-});
-
-describe('topLabs', () => {
-  it('ranks trusted 7-day reads first, an extrapolated read after, and labs with no market last in heat order', () => {
-    const labs = [
-      status('meta'),
-      status('xai', read(0.9, false)),
-      status('google', read(0.3)),
-      status('anthropic', read(0.6)),
-      status('openai'),
-    ];
-    expect(topLabs(labs).map((l) => l.id)).toEqual(['anthropic', 'google', 'xai']);
-    expect(topLabs(labs, 5).map((l) => l.id)).toEqual(['anthropic', 'google', 'xai', 'meta', 'openai']);
-    // With the odds offline it is the heat ranking the list already has.
-    expect(topLabs([status('meta'), status('openai'), status('qwen')]).map((l) => l.id)).toEqual([
-      'meta',
-      'openai',
-      'qwen',
-    ]);
   });
 });
 

@@ -1,6 +1,7 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
-import Dropcon from '../../src/components/Dropcon.astro';
+import DepartureBoard from '../../src/components/DepartureBoard.astro';
+import DepartureSign from '../../src/components/DepartureSign.astro';
 import Drops from '../../src/components/Drops.astro';
 import Feed from '../../src/components/Feed.astro';
 import Header from '../../src/components/Header.astro';
@@ -8,7 +9,10 @@ import Labs from '../../src/components/Labs.astro';
 import Markets from '../../src/components/Markets.astro';
 import ScoreDetail from '../../src/components/ScoreDetail.astro';
 import Signals from '../../src/components/Signals.astro';
+import ServiceStatus from '../../src/components/ServiceStatus.astro';
 import SourceHealth from '../../src/components/SourceHealth.astro';
+import { LEVEL_NAMES } from '../../src/domain/levels';
+import { SERVICE_PHRASES } from '../../src/ui/service-status';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
@@ -126,32 +130,59 @@ describe('components', async () => {
   const container = await AstroContainer.create();
   const d = dashboard();
 
-  it('Dropcon shows the level, the headline, the hottest lab linked to its page and the landed model', async () => {
-    const html = await container.renderToString(Dropcon, { props: { d, now: Date.parse(d.generatedAt) } });
-    expect(html).toContain(`DROPCON LEVEL`);
-    expect(html).toContain(`>${d.dropcon.level}<`);
-    // A reading wears the markets panel's Polymarket pill, which ages to STALE on an open page.
+  it('ServiceStatus posts the level, its name and line, and links to how it adds up', async () => {
+    const html = await container.renderToString(ServiceStatus, { props: { c: d.dropcon } });
+    const level = d.dropcon.level;
+    expect(html).toMatch(new RegExp(`data-num[^>]*>${level}<`));
+    expect(html).toContain(LEVEL_NAMES[level]);
+    expect(html).toContain(SERVICE_PHRASES[level]);
+    expect(html).toContain(d.dropcon.blurb);
+    expect(html).toMatch(new RegExp(`class="rung on"[^>]*>${level}<`));
+    expect((html.match(/class="rung/g) ?? []).length).toBe(5);
+    expect(html).toContain(`lead score <b class="mono"`);
+    expect(html).toContain('href="/about#score"');
+  });
+
+  it('DepartureSign names the next model departing, its line, the 7-day odds and the boarding window', async () => {
+    const html = await container.renderToString(DepartureSign, {
+      props: { d, now: Date.parse(d.generatedAt) },
+    });
+    expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by Sep 24');
+    expect(html).toMatch(/<h1 id="next-title"[^>]*data-flap[^>]*>GPT-6<\/h1>/);
+    expect(html).toContain('href="/labs/openai"');
+    expect(html).toContain('OpenAI line');
+    expect(html).toMatch(/66<small[^>]*>%<\/small>/);
+    expect(html).toContain('chance it departs within 7 days');
+    // Its only rung is already past even odds: the window is "by" that day.
+    expect(html).toContain('by Thu 24 Sep');
+    expect(html).toContain('NOT A FORECAST');
+    // The odds wear the markets panel's Polymarket pill, which ages to STALE on an open page.
     expect(html).toMatch(
       /data-source-pill data-stale-at="[^"]+" data-stale-text="STALE · POLYMARKET"[^>]*>LIVE · POLYMARKET</,
     );
-    const later = await container.renderToString(Dropcon, {
+    const later = await container.renderToString(DepartureSign, {
       props: { d, now: Date.parse(d.generatedAt) + STALE_AFTER_MS },
     });
     expect(later).toContain('>STALE · POLYMARKET<');
-    expect(html).not.toContain('ODDS OFFLINE');
-    expect(d.dropcon.headline).toBe('Polymarket prices 66% that GPT-6 ships by Sep 24');
-    expect(html).toContain(d.dropcon.headline);
-    // The busiest release market links out to Polymarket, and its full ladder is on /markets.
-    expect(html).toContain('href="https://polymarket.com/event/gpt-6"');
-    expect(html).toContain('href="/markets"');
-    expect(html).toContain(d.labs[0].name);
-    expect(html).toMatch(new RegExp(`class="dc-hot[^"]*" href="/labs/${d.labs[0].id}"`));
-    // A frontier listing under 48 hours old gets the JUST LANDED ticket, which is never scored.
-    expect(html).toContain('JUST LANDED');
-    expect(html).toContain('shown, not scored');
-    // The arithmetic and the forecast question live on /about now, linked from the score line.
-    expect(html).not.toContain('class="pts"');
-    expect(html).toContain('href="/about#score"');
+  });
+
+  it("DepartureBoard never prints a thin market's odds: that line is 'times unavailable'", async () => {
+    const far: Market = {
+      ...release,
+      slug: 'flash',
+      title: 'Next Gemini Flash released by...?',
+      labId: 'google',
+      outcomes: [
+        { ...release.outcomes[0], yes: 0.4, label: 'November 30', deadline: '2026-12-01T04:59:59.000Z' },
+      ],
+    };
+    const both = dashboard({ markets: { name: 'Polymarket', data: [release, far], ok: true } });
+    const google = both.labs.find((l) => l.id === 'google')!;
+    expect(google.odds?.p7.trusted).toBe(false);
+    const html = await container.renderToString(DepartureBoard, { props: { d: both } });
+    expect(html).toMatch(/Google DeepMind<\/b>:? ?times unavailable|Google DeepMind:<\/b> times unavailable/);
+    expect(html).not.toContain(`>${Math.round(google.odds!.p7.p * 100)}%<`);
+    expect(html).toContain('no timetable. Nobody is betting on these lines.');
   });
 
   it('ScoreDetail shows a provenance that adds up and answers whether it is a forecast', async () => {
@@ -165,36 +196,44 @@ describe('components', async () => {
     expect(html).toContain('href="/backtest"');
   });
 
-  it('Dropcon flags a floor when the odds are offline', async () => {
+  it('ServiceStatus calls a floor a signal failure, never a calm level 5, and the sign has no departure', async () => {
     const degraded = dashboard({ markets: { name: 'Polymarket', data: [], ok: false, error: 'down' } });
-    const html = await container.renderToString(Dropcon, { props: { d: degraded } });
-    expect(html).toContain('FLOOR · ODDS OFFLINE');
+    const html = await container.renderToString(ServiceStatus, { props: { c: degraded.dropcon } });
+    expect(html).toContain('SIGNAL FAILURE');
+    expect(html).toContain('Odds offline.');
+    // The heading never wears level 5's name (the ladder's hover titles still name every level).
+    expect(html.match(/<h2[^>]*>[\s\S]*?<\/h2>/)?.[0]).not.toContain(LEVEL_NAMES[5]);
+    expect(html).not.toMatch(/class="rung on"/);
+    expect(html).toMatch(/class="rung on held"|class="rung held"/);
+    const sign = await container.renderToString(DepartureSign, { props: { d: degraded } });
+    expect(sign).toMatch(/data-flap[^>]*>No departures scheduled</);
+    expect(sign).toContain('Polymarket is unreachable');
   });
 
-  it('Dropcon shows a question mark and no lit segment with no signal at all', async () => {
+  it('ServiceStatus shows a question mark and no lit rung with no signal at all', async () => {
     const dark = dashboard({
       markets: { name: 'Polymarket', data: [], ok: false, error: 'down' },
       drops: { name: 'OpenRouter', data: [], ok: false, error: 'down' },
     });
-    const html = await container.renderToString(Dropcon, { props: { d: dark } });
-    expect(html).toContain('>?<');
+    const html = await container.renderToString(ServiceStatus, { props: { c: dark.dropcon } });
+    expect(html).toMatch(/data-num[^>]*>\?</);
     expect(html).toContain('NO SIGNAL');
-    expect(html).not.toMatch(/class="seg on/);
+    expect(html).not.toMatch(/class="rung on/);
     expect(html).toContain('aria-label="DROPCON: no signal"');
   });
 
   it('Signals lists early warnings with their track record and landed launches, neither scored', async () => {
     const html = await container.renderToString(Signals, { props: { d } });
-    expect(html).toContain('EARLY WARNINGS');
+    expect(html).toContain('Early warnings');
     // "Not scored" is said once, in the landed panel's intro; /radar's page intro says none of it moves the level.
     expect(html).toContain('never scored');
     expect(html).toContain(d.earlyWarnings.stealth.track.summary);
     expect(html).toContain('10 of 13 resolved leaks');
     expect(html).toContain(d.earlyWarnings.broadcasts.track.summary);
     expect(html).toContain(d.earlyWarnings.architectures.track.summary);
-    expect(html).toContain('LANDED');
+    expect(html).toContain('Recent arrivals');
     expect(html).toContain('Claude Fable 5.1');
-    expect(html).toContain('HACKER NEWS LAUNCH STORIES');
+    expect(html).toContain('Hacker News launch stories');
   });
 
   it('Drops renders integer prices without stripping zeros and marks vision models', async () => {
@@ -246,17 +285,20 @@ describe('components', async () => {
     expect(html).toContain('Down: ');
   });
 
-  it('Labs renders every lab with its status tag, histogram and 72h/7d/30d reads', async () => {
+  it('Labs lists every line, ranked, with its bullet, status and heat, each linking to its page', async () => {
     const html = await container.renderToString(Labs, { props: { d } });
-    for (const lab of d.labs) expect(html).toContain(lab.name);
+    for (const lab of d.labs) {
+      expect(html).toContain(`${lab.name} line`);
+      expect(html).toContain(`href="/labs/${lab.id}"`);
+    }
+    const order = [...html.matchAll(/class="lrow"[^>]*href="\/labs\/([a-z]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(d.labs.map((l) => l.id));
     expect(html).toContain('SHIPPING');
-    expect((html.match(/class="col"/g) ?? []).length).toBe(d.labs.length * 12);
-    expect(html).toContain('DROP ≤72H');
-    expect(html).toContain('GPT-6 on Polymarket');
-    expect(html).toContain('burstiness prior');
+    expect(html).toMatch(/>66%</);
+    expect(html).toContain('by 24 Sep');
   });
 
-  it('Labs marks an extrapolated read with a tilde and keeps it dim', async () => {
+  it('Labs says "times unavailable" for an extrapolated read and never prints its odds', async () => {
     const far: Market = {
       ...release,
       slug: 'flash',
@@ -264,19 +306,20 @@ describe('components', async () => {
       labId: 'google',
       outcomes: [{ ...release.outcomes[0], label: 'November 30', deadline: '2026-12-01T04:59:59.000Z' }],
     };
-    const html = await container.renderToString(Labs, {
-      props: { d: dashboard({ markets: { name: 'Polymarket', data: [far], ok: true } }) },
-    });
-    expect(html).toMatch(/metric-value extrap"[^>]*>~\d+%/);
-    expect(html).toContain('extrapolated to Nov 30 · not scored');
+    const fd = dashboard({ markets: { name: 'Polymarket', data: [far], ok: true } });
+    const html = await container.renderToString(Labs, { props: { d: fd } });
+    const google = html.slice(html.indexOf('href="/labs/google"'));
+    expect(google.slice(0, google.indexOf('</a>'))).toContain('times unavailable');
+    expect(html).not.toMatch(/~\d+%/);
+    expect(html).not.toContain(`>${Math.round(fd.labs.find((l) => l.id === 'google')!.odds!.p7.p * 100)}%<`);
   });
 
   it('Header reports status, names the site for screen readers and keeps an explicit pause control, with no ticker', async () => {
     const html = await container.renderToString(Header, { props: { d, view: { page: 'home' } } });
-    expect(html).toContain('STATUS: DEGRADED');
+    expect(html).toMatch(/status-live warn[^>]*>(?:<span[^>]*>Sources <\/span>)?DEGRADED</);
     expect(html).toContain('data-refresh-toggle');
     expect(html).toContain('aria-pressed="false"');
-    expect(html).toMatch(/class="sr-only"[^>]*>: frontier model release intelligence</);
+    expect(html).toMatch(/class="sr-only"[^>]*>: frontier model release intelligence, home</);
     // The landed model and the odds are said once each, in the hero and the lab list, not repeated in a crawl.
     expect(html).not.toContain('ticker');
     expect(html).not.toContain('NEW ON OPENROUTER');

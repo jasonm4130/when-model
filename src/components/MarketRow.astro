@@ -2,13 +2,15 @@
 import { displayOutcomes, type Market } from '../domain/market';
 import { usd } from '../ui/format';
 import { outcomeOdds } from '../ui/odds';
+import { labById } from '../domain/lab';
+import Bullet from './Bullet.astro';
 interface Props {
   m: Market;
   /** Outcomes to show. */
   limit: number;
   /** Benchmark and other markets: no marker, bare volume. */
   compact?: boolean;
-  /** Kept for callers; the poster palette does not colour markets by lab. */
+  /** Kept for callers; a release market wears its line's bullet instead. */
   color?: string;
   i?: number;
   /** The build time: a release rung whose deadline is behind it is not shown (`asOfMs`). */
@@ -17,9 +19,10 @@ interface Props {
 const { m, limit, compact = false, asOf } = Astro.props;
 const THIN = 'Thin book: bid–ask range, not odds';
 const tone = (p: number) => (p >= 0.5 ? 'hi' : p >= 0.2 ? 'mid' : 'lo');
+const lab = !compact && m.labId ? labById(m.labId) : undefined;
 ---
 <a class={`row mrow ${compact ? 'compact' : ''}`} href={m.url} target="_blank" rel="noopener">
-  <div class="mtitle">{!compact && <span class="mdot" aria-hidden="true"></span>}<span class="mname">{m.title}</span><span class="muted vol">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
+  <div class="mtitle">{!compact && (lab ? <Bullet id={lab.id} name={lab.name} size="sm" /> : <span class="mdot" aria-hidden="true"></span>)}<span class="mname">{m.title}</span><span class="vol mono">{usd(m.vol24)}{compact ? '' : ' 24h'}</span></div>
   <div class="outs">
     {displayOutcomes(m, limit, asOf).map((o) => {
       const odds = outcomeOdds(o);
@@ -29,23 +32,23 @@ const tone = (p: number) => (p >= 0.5 ? 'hi' : p >= 0.2 ? 'mid' : 'lo');
   </div>
 </a>
 <style>
-  .mrow { padding: 16px 0; }
-  /* UI-12: a grid keeps the marker on the title's first line and the volume in its own column however the title wraps. */
-  .mtitle { font-size: var(--fs-lg); line-height: 1.25; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; }
-  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-size: var(--fs-md); }
-  .mdot { width: 7px; height: 7px; background: var(--ink); display: inline-block; align-self: start; margin-top: 0.55em; }
-  .mname { transition: color var(--fast) var(--ease); }
-  .vol { font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.06em; white-space: nowrap; }
-  .outs { display: flex; gap: 4px 20px; flex-wrap: wrap; margin-top: 8px; padding-left: 19px; font-size: var(--fs-sm); color: var(--ink-2); }
-  .compact .outs { padding-left: 0; margin-top: 6px; }
+  .mrow { padding: var(--s4) 0; }
+  /* A grid keeps the bullet on the title's first line and the volume in its own column however the title wraps. */
+  .mtitle { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s3); align-items: start; font-size: var(--t-base); line-height: 24px; font-weight: 600; }
+  .compact .mtitle { grid-template-columns: minmax(0, 1fr) auto; font-weight: 500; }
+  .mdot { width: 24px; height: 24px; border: 2px solid var(--ink); border-radius: 50%; }
+  .mrow:hover .mname { text-decoration: underline; text-underline-offset: 3px; }
+  .mname { overflow-wrap: anywhere; }
+  .vol { font-size: var(--t-xs); line-height: 24px; font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+  .outs { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin-top: var(--s2); padding-left: 36px; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .compact .outs { padding-left: 0; }
   .out { overflow-wrap: anywhere; }
-  /* A rung's price and deadline stay on one line wherever there is room for it. */
   @media (min-width: 481px) {
     .out { white-space: nowrap; }
   }
-  .out b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 24px; line-height: 1; margin-right: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .compact .out b { font-size: 19px; }
-  .out b.hi { color: var(--ink); }
-  .out b.mid { color: var(--ink); font-weight: 600; }
-  .out b.lo, .out b.thin { color: var(--ink-2); font-weight: 500; }
+  .out b { margin-right: 2px; font-family: var(--mono); font-size: var(--t-md); line-height: 24px; font-weight: 500; white-space: nowrap; color: var(--ink); }
+  .compact .out b { font-size: var(--t-base); }
+  .out b.lo { color: var(--ink-2); }
+  /* A thin book is a range, not odds: never set at full weight. */
+  .out b.thin { font-size: var(--t-sm); font-weight: 400; color: var(--ink-2); }
 </style>

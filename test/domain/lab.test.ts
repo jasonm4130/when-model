@@ -119,30 +119,42 @@ describe('lab colours', () => {
   };
   const css = readFileSync('src/styles/global.css', 'utf8') as string;
   const token = (name: string) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})\\b`, 'i').exec(css)?.[1];
-  const background = token('bg');
+  const background = token('paper');
 
-  it('text tokens reach 7:1 against the paper, display inks 3:1, and the fluorescent pink is a fill', () => {
-    expect(background).toBe('#f1eee6');
-    expect(token('paper')).toBe(background);
-    // Running text, and the small-text versions of the two spot inks, clear 7:1 on paper and on paper-2.
-    for (const name of ['ink', 'ink-2', 'accent-ink', 'pink-ink', 'blue-ink']) {
+  it('text tokens reach 7:1 against the paper and the sign, and the notice yellow is a field under ink', () => {
+    expect(background).toBe('#f4f2ec');
+    // Running text clears 7:1 on paper and on paper-2; the sign's two inks clear it on the sign.
+    for (const name of ['ink', 'ink-2']) {
       expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(7);
       expect(contrast(token(name)!, token('paper-2')!), `${name} on paper-2`).toBeGreaterThanOrEqual(7);
     }
-    // The full-strength inks are for display sizes and fills only: they pass the 3:1 large-text bar, not 4.5:1.
-    for (const name of ['accent', 'blue', 'pink-deep', 'ink-3']) {
-      expect(contrast(token(name)!, background!), name).toBeGreaterThanOrEqual(3);
-      expect(contrast(token(name)!, background!), name).toBeLessThan(4.5);
+    for (const name of ['sign-ink', 'sign-ink-2']) {
+      expect(contrast(token(name)!, token('sign')!), name).toBeGreaterThanOrEqual(7);
     }
-    // Riso fluorescent pink cannot carry type on paper at all: it is only ever a field, a bar or a plate.
-    expect(contrast(token('pink')!, background!)).toBeLessThan(3);
+    // The notice yellow cannot carry type on paper: it is only ever a field with ink on it.
+    expect(contrast(token('notice')!, background!)).toBeLessThan(3);
+    expect(contrast(token('ink')!, token('notice')!)).toBeGreaterThanOrEqual(7);
+    // The alert red carries white type at 7:1.
+    expect(contrast('#ffffff', token('alert')!)).toBeGreaterThanOrEqual(7);
   });
 
   it('never ink markup in a lab colour, which was tuned for the old dark page', () => {
-    // The lab palette was chosen for #07060f; on paper several fall under 4.5:1, so the page stays in its own tokens.
+    // The lab palette was chosen for #07060f; on paper several fall under 4.5:1. A line's colour on the
+    // page comes from its bullet (src/ui/lines.ts), never from the registry's colour.
     const light = LABS.filter((lab) => contrast(lab.color, background!) < 4.5);
     expect(light.length).toBeGreaterThan(0);
-    for (const file of ['Labs', 'MarketRow', 'DropItem', 'FeedRow', 'Dropcon', 'Signals']) {
+    for (const file of [
+      'Labs',
+      'MarketRow',
+      'DropItem',
+      'FeedRow',
+      'Signals',
+      'Bullet',
+      'DepartureSign',
+      'DepartureBoard',
+      'Arrivals',
+      'LabDetail',
+    ]) {
       const src = readFileSync(`src/components/${file}.astro`, 'utf8') as string;
       expect(src, file).not.toMatch(/\.color\b|labColor|feedColour/);
     }

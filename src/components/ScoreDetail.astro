@@ -68,10 +68,10 @@ const range = (b: { top: number; bottom: number }) =>
   /* The five bands as a ruled ladder, the live one printed in the blue. */
   .bands { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
   .bands li { display: grid; grid-template-columns: 2.2ch minmax(0, 1fr) auto; gap: 14px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule-soft); }
-  .bands b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 28px; line-height: 1; color: var(--ink-3); }
+  .bands b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 28px; line-height: 1; color: var(--ink-2); }
   .band-name { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink-2); }
   .band-range { font-size: var(--fs-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-  .bands li.on b { color: var(--blue); }
+  .bands li.on b { color: var(--ink); }
   .bands li.on .band-name { color: var(--ink); font-weight: 800; }
   .dc-honest { display: grid; gap: 14px; max-width: 72ch; font-size: var(--fs-body); line-height: 1.55; }
   .dc-q { font-size: var(--fs-lede); line-height: 1.3; }

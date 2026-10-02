@@ -1,545 +1,203 @@
 /* ───────────────────────────── tokens ─────────────────────────────
-   A risograph gig poster: warm paper, and three spot inks that overprint. Black carries the words;
-   fluorescent pink and blue are the colour, printed as fields, plates and stamps. Where two inks
-   overlap they multiply, as they do on the drum. Texture belongs to the inks at display sizes and in
-   colour fields; running text is always flat black on paper. */
+   Transit wayfinding: paper and ink, a black station sign, one yellow for service status and
+   notices, and a coloured bullet per line that only ever names the line. src/ui/palette.ts holds the
+   same values for the contrast tests (test/ui/lines.test.ts keeps the two in step). */
 :root {
-  --paper: #f1eee6;
-  --paper-2: #e8e4da;
-  --ink: #141312;
-  /* 8.1:1 on paper (7.4:1 on paper-2): every small secondary line clears 7:1. */
-  --ink-2: #4a463f;
-  --rule-soft: #d3cdc1;
-  /* Rank numerals and other quiet display type: 4.0:1, so never small text. */
-  --ink-3: #7a746a;
-  /* Riso Fluorescent Pink. 2.7:1 on paper, so it is never text on its own: fields, plates, bars. */
-  --pink: #ff48b0;
-  /* The pink for display type (4.4:1) and for small text (7.9:1). */
-  --pink-deep: #d6007a;
-  --pink-ink: #8f0050;
-  /* Riso Blue. 4.1:1: display type (24px and up) and fields; small text uses --blue-ink, 8.0:1. */
-  --blue: #0078bf;
-  --blue-ink: #004a7a;
-  /* The accent is the blue plate; the hot accent (warnings, SHIPPING, the level-1 surge) is the pink. */
-  --accent: #0078bf;
-  --accent-ink: #8f0050;
+  /* surfaces */
+  --paper: #f4f2ec;
+  --paper-2: #ebe8df;
+  --sign: #141414;
+  /* words: ink 16.9:1 on paper, ink-2 7.9:1 (7.4:1 on paper-2) */
+  --ink: #111111;
+  --ink-2: #4a4a4a;
+  --sign-ink: #ffffff;
+  /* 9.3:1 on the sign */
+  --sign-ink-2: #b8b8b8;
+  --rule: #141414;
+  --rule-soft: #d9d5cb;
+  /* One job each. Notice: service status and service notices. Alert: a level-1 notice. */
+  --notice: #fccc0a;
+  --alert: #a50021;
 
-  /* The names the older components use, mapped onto the riso inks. */
-  --bg: #f1eee6;
-  --bg2: #e8e4da;
-  --panel: transparent;
-  --panel-hover: transparent;
-  --line: #d3cdc1;
-  --line2: #a9a293;
-  --line-soft: #ddd8cd;
-  --text: var(--ink);
-  --muted: var(--ink-2);
-  --fg: var(--ink);
-  --magenta: var(--pink-ink);
-  --red: var(--pink-ink);
-  --orange: var(--pink-ink);
-  --cyan: var(--blue-ink);
-  --yellow: var(--ink);
-  --green: var(--ink);
+  /* Space: a 4px grid. */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --s9: 96px;
 
-  /* Print texture. Grain knocks small specks out of an ink, the way a riso drum starves; the
-     halftone is a tint of an ink as dots. Both are masks and backgrounds on colour, never on text. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -5 0 0 0 3.55'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)'/%3E%3C/svg%3E");
-  --halftone-size: 5px;
-  --plate-x: 0.028em;
-  --plate-y: 0.018em;
+  /* Type: a 1.333 scale from 16px, every line height on the 4px grid. */
+  --t-xs: 12px;
+  --t-sm: 14px;
+  --t-base: 16px;
+  --t-md: 21px;
+  --t-lg: 28px;
+  --t-xl: 37px;
+  --t-2xl: 50px;
+  --t-3xl: 67px;
+  --t-4xl: 89px;
+  --t-5xl: 118px;
 
-  /* Fonts: fonts.css re-points these at the webfonts and their metric-matched fallbacks. */
-  --font-display: 'Arial Narrow', sans-serif;
-  --font-label: Arial, sans-serif;
-  --font-text: Georgia, serif;
-  --font-head: var(--font-label);
-  --font-mono: var(--font-text);
+  /* fonts.css re-points these at the webfonts and their metric-matched fallbacks. */
+  --sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, Menlo, monospace;
 
-  /* Type scale. Two faces, seven steps, far apart on purpose:
-     label 12 · small 15 · body 18 · lede 22–30 · display-3 28–40 · display-2 44–96 · display-1 60–168,
-     and the DROPCON numeral on its own at 180–460. */
-  --fs-tiny: 12px;
-  --fs-pill: 11px;
-  --fs-xs: 14px;
-  --fs-sm: 15px;
-  --fs-md: 16px;
-  --fs-body: 18px;
-  --fs-lg: 21px;
-  --fs-lede: clamp(21px, 1.2rem + 0.8vw, 30px);
-  --fs-d3: clamp(26px, 1.1rem + 1.4vw, 40px);
-  --fs-d2: clamp(44px, 1.6rem + 5.2vw, 96px);
-  --fs-d1: clamp(54px, 1rem + 9vw, 168px);
-  --fs-metric: 32px;
-  --fs-metric-sm: 26px;
-  --fs-head: 12px;
-  --fs-head-lg: 12px;
-
-  /* Space: an 8px base, and section gaps big enough to read as silence. */
-  --s1: 8px;
-  --s2: 16px;
-  --s3: 24px;
-  --s4: 40px;
-  --s5: 64px;
-  --s6: clamp(88px, 10vw, 144px);
-  --gap: 24px;
-  --pad: 0px;
-
+  --gutter: 48px;
+  --max: 1248px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --fast: 160ms;
-  --slow: 700ms;
+  --fast: 140ms;
+
+  /* The names the backtest and the history chart still use, mapped onto the tokens above. */
+  --muted: var(--ink-2);
+  --text: var(--ink);
+  --accent: var(--ink);
+  --accent-ink: var(--ink);
+  --line: var(--rule-soft);
+  --line2: #8a867c;
+  --line-soft: var(--rule-soft);
+  --font-display: var(--sans);
+  --font-label: var(--sans);
+  --font-text: var(--sans);
+  --font-head: var(--sans);
+  --font-mono: var(--mono);
+  --fs-tiny: var(--t-xs);
+  --fs-pill: var(--t-xs);
+  --fs-xs: var(--t-sm);
+  --fs-sm: var(--t-sm);
+  --fs-md: var(--t-base);
+  --fs-body: var(--t-base);
+  --fs-lg: var(--t-md);
+  --fs-lede: var(--t-md);
+  --fs-d3: var(--t-lg);
+  --fs-d2: var(--t-xl);
+  --fs-d1: var(--t-2xl);
+  --fs-metric: var(--t-lg);
+  --gap: var(--s5);
+  /* The backtest's good, bad and highlight marks. */
+  --green: #00843d;
+  --red: var(--alert);
+  --yellow: var(--notice);
+  --cyan: #0039a6;
+  --bg2: var(--paper-2);
+}
+@media (max-width: 900px) {
+  :root {
+    --gutter: 16px;
+  }
 }
 
-* {
+/* ───────────────────────────── base ───────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 html {
   background: var(--paper);
   color-scheme: light;
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
 body {
   margin: 0;
-  color: var(--ink);
-  background: var(--paper);
-  font-family: var(--font-text);
-  font-size: var(--fs-body);
-  line-height: 1.5;
-  font-optical-sizing: auto;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   overflow-x: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: var(--t-base);
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
 }
 ::selection {
-  background: var(--pink);
+  background: var(--notice);
   color: var(--ink);
 }
-a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-  transition:
-    color var(--fast) var(--ease),
-    text-decoration-color var(--fast) var(--ease);
-}
-a:hover {
-  color: var(--accent-ink);
-  text-decoration-color: currentColor;
-}
-:focus-visible {
-  outline: 2px solid var(--accent-ink);
-  outline-offset: 2px;
+h1,
+h2,
+h3,
+h4,
+p,
+ol,
+ul,
+dl,
+dd,
+figure {
+  margin: 0;
 }
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-stretch: 62.5%;
-  line-height: 1;
-  letter-spacing: 0;
-  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
-p {
-  margin: 0;
-}
+ol,
 ul {
-  list-style: none;
-  margin: 0;
   padding: 0;
+  list-style: none;
 }
 b,
 strong {
-  font-weight: 650;
+  font-weight: 600;
 }
 button {
   font: inherit;
   color: inherit;
 }
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+/* A link inside running text says so before it is hovered. */
+p a,
+li > a:only-child:not([class]),
+.prose a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+}
 .wrap {
-  max-width: 1320px;
+  max-width: var(--max);
   margin: 0 auto;
-  padding: 0 clamp(16px, 4vw, 48px);
+  padding: 0 var(--gutter);
 }
 .mono {
-  font-family: var(--font-text);
-}
-.head {
-  font-family: var(--font-display);
+  font-family: var(--mono);
 }
 .muted {
   color: var(--ink-2);
 }
-/* The label voice: small, wide, capitals. Everything calm on the page speaks in it. */
-.tiny,
-.label {
-  font-family: var(--font-label);
-  font-size: var(--fs-tiny);
-  font-weight: 600;
-  font-stretch: 112.5%;
-  letter-spacing: 0.08em;
-  line-height: 1.35;
-  text-transform: uppercase;
-}
-.glow-m,
-.glow-c,
-.glow-y,
-.glow-g {
-  color: inherit;
-}
-.glow-m {
-  color: var(--accent-ink);
-}
-.err {
-  color: var(--accent-ink);
-}
 .num,
 .tnum {
-  font-variant-numeric: tabular-nums lining-nums;
+  font-variant-numeric: tabular-nums;
 }
-
-/* ───────────────────────────── sections ───────────────────────────── */
-.section {
-  margin-block: var(--s6);
-}
-/* Every section opens on a heavy rule, its name set large, and one quiet line. */
-.section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s1) var(--s3);
-  flex-wrap: wrap;
-  border-top: 3px solid var(--ink);
-  padding-top: var(--s2);
-  margin-bottom: var(--s4);
-}
-.section-head h2 {
-  font-size: var(--fs-d2);
-  line-height: 0.88;
-  text-wrap: balance;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
-}
-.section-head h2 > span[aria-hidden] {
-  display: none;
-}
-.section-head .sub {
-  display: block;
-  margin-top: var(--s2);
-  font-family: var(--font-text);
-  font-size: var(--fs-lede);
-  font-weight: 400;
-  font-stretch: 100%;
-  line-height: 1.3;
-  text-transform: none;
-  color: var(--ink-2);
-  max-width: 40ch;
-}
-.kicker {
-  font-size: var(--fs-lede);
-  line-height: 1.3;
-  color: var(--ink-2);
-  max-width: 40ch;
-}
-.grid {
-  display: grid;
-  gap: var(--s5) var(--s4);
-}
-.grid > * {
-  min-width: 0;
-}
-.grid-2 {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
-}
-.grid-3 {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-}
-.stack {
-  display: grid;
-  gap: var(--s5);
-  align-content: start;
-}
-
-/* ───────────────────────────── panels ─────────────────────────────
-   A panel is a block of the page under a thin rule, not a box. */
-.panel {
-  position: relative;
-  min-width: 0;
-}
-.panel-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s1) var(--s2);
-  flex-wrap: wrap;
-  border-top: 1px solid var(--ink);
-  padding-top: 12px;
-  margin-bottom: var(--s3);
-}
-.panel-head.sub-head {
-  margin-top: var(--s5);
-}
-.panel-head h2,
-.panel-head h3 {
-  font-size: var(--fs-d3);
-  line-height: 0.95;
-  text-transform: uppercase;
-}
-.panel-head h2 > span[aria-hidden],
-.panel-head h3 > span[aria-hidden] {
-  display: none;
-}
-.panel-head .pills {
-  display: flex;
-  gap: var(--s1);
-  flex-wrap: wrap;
-  align-items: baseline;
-}
-.empty {
-  color: var(--ink-2);
-  padding: var(--s1) 0;
-  font-size: var(--fs-md);
-}
-
-/* ───────────────────────────── pills & tags ───────────────────────────── */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-label);
-  font-size: var(--fs-pill);
+/* The label voice: small capitals, a little tracked. Everything quiet on the page speaks in it. */
+.label,
+.tiny {
+  font-size: var(--t-xs);
+  line-height: 16px;
   font-weight: 600;
-  font-stretch: 112.5%;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  padding: 4px 0;
-  color: var(--ink-2);
-  text-transform: uppercase;
-  text-decoration: none;
-  white-space: nowrap;
-  background: none;
-  border: 0;
-}
-.pill::before {
-  content: '';
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border: 1px solid currentColor;
-}
-.pill.live {
-  color: var(--ink);
-}
-.pill.live::before {
-  background: var(--ink);
-  border-color: var(--ink);
-}
-.pill.warn,
-.pill.err {
-  color: var(--accent-ink);
-}
-.pill.warn::before,
-.pill.err::before {
-  background: var(--pink);
-  border-color: var(--pink);
-}
-a.pill:hover {
-  color: var(--accent-ink);
-}
-button.pill {
-  cursor: pointer;
-  padding: 10px 14px;
-  min-height: 44px;
-  color: var(--paper);
-  background: var(--ink);
-}
-button.pill::before {
-  background: var(--pink);
-  border-color: var(--pink);
-}
-button.pill:hover {
-  background: var(--accent-ink);
-}
-.tag {
-  display: inline-block;
-  font-family: var(--font-label);
-  font-size: var(--fs-pill);
-  font-weight: 600;
-  font-stretch: 112.5%;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  padding: 2px 5px;
-  border: 1px solid currentColor;
-  text-transform: uppercase;
-  vertical-align: 0.15em;
-}
-
-/* ───────────────────────────── metrics ───────────────────────────── */
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--s3);
-}
-.metrics.tight {
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--s2);
-}
-.metric-label {
-  font-family: var(--font-label);
-  font-size: var(--fs-tiny);
-  font-weight: 600;
-  font-stretch: 112.5%;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-2);
-}
-.metric-value {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-stretch: 62.5%;
-  font-size: var(--fs-metric);
-  line-height: 1;
-  margin: 6px 0 4px;
-  font-variant-numeric: tabular-nums lining-nums;
-}
-.metrics.tight .metric-value {
-  font-size: var(--fs-metric-sm);
-}
-.metric-note {
-  font-size: var(--fs-xs);
-  line-height: 1.35;
-  color: var(--ink-2);
-}
-
-/* ───────────────────────────── bars & histograms ───────────────────────────── */
-.bar {
-  height: 6px;
-  background: var(--paper-2);
-  position: relative;
-  overflow: hidden;
-}
-.bar > i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--ink);
-  transform-origin: left center;
-}
-.hist {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 3px;
-  height: 56px;
-  align-items: end;
-}
-.hist .col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-}
-.hist .col i {
-  display: block;
-  width: 100%;
-  background: var(--ink);
-  transform-origin: bottom center;
-}
-.hist .col span {
-  font-family: var(--font-label);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--ink-2);
-  line-height: 1;
-  margin-top: 4px;
-}
-
-/* ───────────────────────────── lists & rows ───────────────────────────── */
-.row {
-  display: block;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--rule-soft);
-  color: var(--ink);
-  text-decoration: none;
-  transition: color var(--fast) var(--ease);
-}
-.row:hover {
-  color: var(--ink);
-}
-.row:hover .mname,
-.row:hover .ttl {
-  color: var(--accent-ink);
-}
-.list li {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--rule-soft);
-}
-
-/* ───────────────────────────── tables ───────────────────────────── */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-md);
-  line-height: 1.35;
-}
-th {
-  font-family: var(--font-label);
-  font-size: var(--fs-pill);
-  font-weight: 600;
-  font-stretch: 112.5%;
-  letter-spacing: 0.08em;
-  text-align: left;
-  color: var(--ink-2);
-  padding: 8px 10px 8px 0;
-  border-bottom: 1px solid var(--ink);
-  text-transform: uppercase;
-  vertical-align: bottom;
-}
-td {
-  padding: 9px 10px 9px 0;
-  border-bottom: 1px solid var(--rule-soft);
-  vertical-align: top;
-}
-th:last-child,
-td:last-child {
-  padding-right: 0;
-}
-tr.fresh td:first-child {
-  color: var(--accent-ink);
-}
-.num {
-  text-align: right;
-  white-space: nowrap;
-}
-.table-scroll {
-  overflow-x: auto;
-}
-
-/* ───────────────────────────── entrance ───────────────────────────── */
-.reveal {
-  animation: none;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .reveal {
-    animation: rise 700ms var(--ease) both;
-  }
-  main > .section:nth-child(2) {
-    animation-delay: 80ms;
-  }
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
 }
 .sr-only {
   position: absolute;
@@ -552,8 +210,396 @@ tr.fresh td:first-child {
   white-space: nowrap;
   border: 0;
 }
+.empty {
+  padding: var(--s3) 0;
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
 
-/* ───────────────────────────── misc ───────────────────────────── */
+/* ───────────────────────────── line bullets ─────────────────────────────
+   A disc of the line's colour with its letter. Bullet.astro sets --c and --fg from src/ui/lines.ts.
+   Identity only: nothing about a bullet changes with the data. */
+.b {
+  --c: var(--ink);
+  --fg: #fff;
+  --d: 32px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--d);
+  height: var(--d);
+  border-radius: 50%;
+  background: var(--c);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: calc(var(--d) * 0.6);
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: 0;
+  text-decoration: none;
+}
+.b.sm {
+  --d: 24px;
+}
+.b.lg {
+  --d: 40px;
+}
+.b.xl {
+  --d: 88px;
+}
+a.b:hover {
+  text-decoration: none;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+/* The black xAI disc keeps a white ring on the black sign. */
+.sign .b.dark {
+  box-shadow: inset 0 0 0 2px #fff;
+}
+
+/* ───────────────────────────── the station sign ─────────────────────────────
+   Every page opens on a black sign under an inset white rule: the page's name, and the one line
+   that says what it is for. */
+.sign {
+  background: var(--sign);
+  color: var(--sign-ink);
+}
+.sign > .wrap {
+  position: relative;
+  padding-top: var(--s7);
+  padding-bottom: var(--s7);
+}
+.sign > .wrap::before {
+  content: '';
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: var(--s4);
+  border-top: 2px solid var(--sign-ink);
+}
+.sign .label {
+  color: var(--sign-ink-2);
+}
+.sign a {
+  color: var(--sign-ink);
+}
+.sign :focus-visible {
+  outline-color: var(--sign-ink);
+}
+.page-sign h1 {
+  margin-top: var(--s4);
+  font-size: var(--t-2xl);
+  line-height: 56px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+.page-sign .intro {
+  margin-top: var(--s3);
+  max-width: 60ch;
+  font-size: var(--t-md);
+  line-height: 28px;
+  color: var(--sign-ink-2);
+}
+@media (max-width: 900px) {
+  .sign > .wrap {
+    padding-top: var(--s7);
+    padding-bottom: var(--s6);
+  }
+  .page-sign h1 {
+    font-size: var(--t-xl);
+    line-height: 44px;
+  }
+  .page-sign .intro {
+    font-size: var(--t-base);
+    line-height: 24px;
+  }
+}
+
+/* ───────────────────────────── sections ───────────────────────────── */
+.grid {
+  display: grid;
+  gap: var(--s7) var(--s8);
+}
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 960px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.page-body {
+  display: grid;
+  gap: var(--s8);
+  padding-top: var(--s8);
+  padding-bottom: var(--s8);
+}
+.page-body > * {
+  min-width: 0;
+}
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s8);
+}
+.cols > * {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .page-body {
+    gap: var(--s7);
+    padding-top: var(--s6);
+    padding-bottom: var(--s6);
+  }
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s7);
+  }
+}
+/* A section's name over a heavy rule, with one quiet label pushed right. */
+.sec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s4);
+  padding-bottom: var(--s3);
+  border-bottom: 2px solid var(--rule);
+}
+.sec h2,
+.sec h3 {
+  font-size: var(--t-lg);
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.sec .label {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.sec.minor {
+  border-bottom-width: 1px;
+}
+.sec.minor h3 {
+  font-size: var(--t-md);
+  line-height: 28px;
+}
+.panel {
+  position: relative;
+  min-width: 0;
+}
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s1) var(--s4);
+  flex-wrap: wrap;
+  padding-bottom: var(--s3);
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--rule);
+}
+.panel-head h2,
+.panel-head h3 {
+  font-size: var(--t-lg);
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.panel-head .pills {
+  display: flex;
+  gap: var(--s2) var(--s4);
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.lede {
+  max-width: 64ch;
+  margin-top: var(--s3);
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+
+/* ───────────────────────────── status chips ─────────────────────────────
+   A source pill: a small square and the word. Its text comes from sourcePill; the square fills when
+   the source is live and turns to the notice yellow when it is stale, partial or down. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 2px 0;
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  text-decoration: none;
+}
+.pill::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+}
+.pill.live {
+  color: var(--ink);
+}
+.pill.live::before {
+  background: currentColor;
+}
+.pill.warn,
+.pill.err {
+  color: var(--ink);
+}
+.pill.warn::before,
+.pill.err::before {
+  background: var(--notice);
+  border-color: var(--ink);
+}
+.sign .pill,
+.sign .pill.live,
+.sign .pill.warn {
+  color: var(--sign-ink-2);
+}
+.sign .pill.live::before {
+  background: var(--sign-ink-2);
+}
+a.pill:hover {
+  text-decoration: underline;
+}
+button.pill {
+  min-height: 44px;
+  padding: 0 var(--s4);
+  cursor: pointer;
+  color: var(--ink);
+  background: var(--notice);
+}
+button.pill::before {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+@media (max-width: 640px) {
+  .pill {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+.tag {
+  display: inline-block;
+  padding: 0 6px;
+  font-size: var(--t-xs);
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border: 1px solid currentColor;
+  vertical-align: 1px;
+}
+
+/* ───────────────────────────── notices ─────────────────────────────
+   A service notice: a ruled box with the yellow label. Used where the page has news a rider must
+   not miss (an unmarked train, a line's early warnings), and nowhere else. */
+.notice {
+  border: 2px solid var(--rule);
+  padding: var(--s5);
+}
+.notice-label {
+  display: inline-block;
+  margin-bottom: var(--s3);
+  padding: 2px 6px;
+  background: var(--notice);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.notice h3,
+.notice h4 {
+  font-size: var(--t-md);
+  line-height: 28px;
+  font-weight: 700;
+}
+.notice p {
+  margin-top: var(--s2);
+}
+.notice .quiet {
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+
+/* ───────────────────────────── rows ─────────────────────────────
+   One layout for a listed item: what, then when (never wrapped), then where from. */
+.rows > li,
+.rows > .r {
+  border-bottom: 1px solid var(--rule-soft);
+}
+.r {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'main when' 'meta meta';
+  column-gap: var(--s4);
+  row-gap: 2px;
+  padding: var(--s3) 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+a.r:hover {
+  text-decoration: none;
+}
+a.r:hover .r-main {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+a.r:focus-visible {
+  outline-offset: -2px;
+}
+.r-main {
+  grid-area: main;
+  overflow-wrap: anywhere;
+}
+.r-when {
+  grid-area: when;
+  align-self: start;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  line-height: 24px;
+  color: var(--ink-2);
+}
+.r-meta {
+  grid-area: meta;
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.row {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.row:hover {
+  text-decoration: none;
+}
+.list li {
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+/* ───────────────────────────── disclosure ─────────────────────────────
+   Everything past a list's first few rows waits behind one of these: a line of type under a rule,
+   with a plus that turns to a minus. */
 details summary {
   cursor: pointer;
   list-style: none;
@@ -561,30 +607,127 @@ details summary {
 details summary::-webkit-details-marker {
   display: none;
 }
-hr.neon {
-  border: 0;
-  height: 0;
-  margin: var(--s5) 0;
+.fold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  min-height: 44px;
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
-.scroll-y {
-  overflow-y: auto;
+.fold-summary::after {
+  content: '+';
+  font-size: var(--t-md);
+  font-weight: 400;
+  line-height: 1;
 }
-code {
-  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-  font-size: 0.86em;
+.fold[open] > .fold-summary::after {
+  content: '−';
+}
+.fold-summary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-@media (max-width: 640px) {
-  :root {
-    --fs-body: 17px;
-    --fs-metric: 28px;
-    --gap: 16px;
-  }
-  .pill {
-    max-width: 100%;
-    white-space: normal;
-  }
+/* ───────────────────────────── tables ───────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+  line-height: 20px;
 }
+th {
+  padding: var(--s3) var(--s3) var(--s3) 0;
+  text-align: left;
+  vertical-align: bottom;
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+}
+td {
+  padding: var(--s3) var(--s3) var(--s3) 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule-soft);
+}
+th:last-child,
+td:last-child {
+  padding-right: 0;
+}
+.num {
+  text-align: right;
+  white-space: nowrap;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+/* A table wider than its column shows a soft shadow on the side that still scrolls. The two covers
+   (paper-coloured, attached to the content) sit over the edge shades (attached to the box) when that
+   side is fully in view, so a table that fits shows nothing. */
+.table-scroll {
+  --scroll-cover: var(--paper);
+  background:
+    linear-gradient(90deg, var(--scroll-cover) 40%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(270deg, var(--scroll-cover) 40%, transparent) right center / 32px 100% no-repeat local,
+    linear-gradient(90deg, rgba(17, 17, 17, 0.2), transparent) left center / 12px 100% no-repeat scroll,
+    linear-gradient(270deg, rgba(17, 17, 17, 0.2), transparent) right center / 12px 100% no-repeat scroll;
+}
+.scroll-y a:focus-visible,
+.table-scroll a:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ───────────────────────────── figures ─────────────────────────────
+   The backtest's metric tiles and bars, on the same scale. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--s5);
+}
+.metric-label {
+  font-size: var(--t-xs);
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.metric-value {
+  margin: var(--s2) 0 var(--s1);
+  font-size: var(--t-lg);
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.metric-note {
+  font-size: var(--t-sm);
+  line-height: 20px;
+  color: var(--ink-2);
+}
+.bar {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  background: var(--paper-2);
+}
+.bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--ink);
+}
+
+/* ───────────────────────────── motion ─────────────────────────────
+   One moment per page, each gated in its component by prefers-reduced-motion; this is the backstop. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -595,314 +738,4 @@ code {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* ───────────────────────────── disclosure ─────────────────────────────
-   Everything past a list's first few rows sits behind one of these. It reads as a line of type
-   under a rule, with a plus that turns to a minus. */
-.fold-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s2);
-  min-height: 44px;
-  margin-top: 0;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--ink);
-  font-family: var(--font-label);
-  font-size: var(--fs-tiny);
-  font-weight: 600;
-  font-stretch: 112.5%;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink);
-  transition: color var(--fast) var(--ease);
-}
-.fold-summary::after {
-  content: '+';
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 500;
-  font-stretch: 100%;
-  line-height: 1;
-}
-.fold[open] > .fold-summary {
-  border-bottom-color: var(--rule-soft);
-}
-.fold[open] > .fold-summary::after {
-  content: '−';
-}
-.fold-summary:hover {
-  color: var(--accent-ink);
-}
-.fold-summary:focus-visible {
-  outline-offset: 2px;
-}
-/* Listing badges, shared by the Fresh Drops rows. */
-.tag.vis,
-.tag.stealth {
-  margin-left: 6px;
-}
-.tag.stealth {
-  color: var(--accent-ink);
-}
-/* Focus rings inside a scroller draw inside their link: the scroller clips anything outside it. */
-.scroll-y a:focus-visible,
-.table-scroll a:focus-visible {
-  outline-offset: -2px;
-}
-/* A table wider than its column shows a soft shadow on the side that still scrolls. The two covers
-   (paper-coloured, attached to the content) sit over the edge shades (attached to the box) when that
-   side is fully in view, so a table that fits shows nothing. */
-.table-scroll {
-  --scroll-cover: var(--paper);
-  background:
-    linear-gradient(90deg, var(--scroll-cover) 40%, transparent) left center / 32px 100% no-repeat local,
-    linear-gradient(270deg, var(--scroll-cover) 40%, transparent) right center / 32px 100% no-repeat local,
-    linear-gradient(90deg, rgba(20, 19, 18, 0.22), transparent) left center / 12px 100% no-repeat scroll,
-    linear-gradient(270deg, rgba(20, 19, 18, 0.22), transparent) right center / 12px 100% no-repeat scroll;
-}
-
-/* ───────────────────────────── riso ─────────────────────────────
-   The print: grain, halftone, stamps, lab inks and the section swipes. */
-
-/* An ink with the drum's grain in it. Only on colour: a plate, a field, a bar, never a line of text. */
-.riso-grain {
-  -webkit-mask: var(--grain) 0 0 / 180px 180px;
-  mask: var(--grain) 0 0 / 180px 180px;
-}
-/* A tint of an ink as dots, for a field that should read lighter than solid. */
-.halftone {
-  background: radial-gradient(circle, var(--tone, var(--pink)) 0 38%, transparent 42%) 0 0 /
-    var(--halftone-size) var(--halftone-size);
-}
-
-/* The lab inks. The ink groups labs; the glyph printed on it names the lab. */
-.ink-pink {
-  --lab: var(--pink);
-  --lab-type: var(--pink-deep);
-  --lab-on: var(--ink);
-}
-.ink-blue {
-  --lab: var(--blue);
-  --lab-type: var(--blue);
-  --lab-on: var(--paper);
-}
-.ink-ink {
-  --lab: var(--ink);
-  --lab-type: var(--ink);
-  --lab-on: var(--paper);
-}
-/* A lab's chip: a square of its ink with its glyph knocked out of it (printed on it, on pink). */
-.lab-chip {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 26px;
-  height: 26px;
-  font-family: var(--font-text);
-  font-size: 15px;
-  font-weight: 700;
-  font-style: normal;
-  line-height: 1;
-  color: var(--lab-on);
-  background: var(--lab);
-  mix-blend-mode: multiply;
-}
-
-/* A rubber stamp: wide capitals in a double rule, set a few degrees off square, overprinting what is
-   under it. Its ink is dark enough for small text (8:1). */
-.stamp {
-  --tilt: -3deg;
-  display: inline-block;
-  padding: 5px 9px 4px;
-  font-family: var(--font-label);
-  font-size: var(--fs-tiny);
-  font-weight: 800;
-  font-stretch: 125%;
-  letter-spacing: 0.12em;
-  line-height: 1.1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--stamp, var(--blue-ink));
-  border: 2px solid currentColor;
-  border-radius: 3px 6px 2px 5px;
-  box-shadow:
-    inset 0 0 0 2px var(--paper),
-    inset 0 0 0 3px currentColor;
-  transform: rotate(var(--tilt));
-  mix-blend-mode: multiply;
-}
-.stamp.hot {
-  --stamp: var(--pink-ink);
-}
-@media (prefers-reduced-motion: no-preference) {
-  /* The page's one flourish: a stamp comes down once, hard, and settles at its angle. */
-  .stamp.thunk {
-    /* It grows from its right edge, so the big first frame reaches left, never past the page's right side. */
-    transform-origin: right center;
-    animation: thunk 380ms cubic-bezier(0.5, 0, 0.75, 0) var(--thunk-delay, 900ms) both;
-  }
-  @keyframes thunk {
-    0% {
-      opacity: 0;
-      transform: rotate(calc(var(--tilt) - 8deg)) scale(1.9);
-    }
-    70% {
-      opacity: 1;
-      transform: rotate(var(--tilt)) scale(0.94);
-      animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-    100% {
-      opacity: 1;
-      transform: rotate(var(--tilt)) scale(1);
-    }
-  }
-}
-
-/* Every section's name gets a swipe of ink under its baseline, blue and pink in turn, printed on
-   its own pass and a hair out of register. The words stay flat black above it. */
-.section-head h2 {
-  position: relative;
-  isolation: isolate;
-}
-.section-head h2::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: -0.05em;
-  right: -0.12em;
-  bottom: -0.03em;
-  height: 0.38em;
-  background: var(--swipe, var(--pink));
-  transform: rotate(-0.8deg) translateX(0.06em);
-  -webkit-mask: var(--grain) 0 0 / 180px 180px;
-  mask: var(--grain) 0 0 / 180px 180px;
-  mix-blend-mode: multiply;
-}
-main > .section:nth-of-type(even) .section-head h2 {
-  --swipe: var(--blue);
-}
-
-/* ───────────────────────────── pages ─────────────────────────────
-   Every page but the home one opens on its name, set large over the page's one swipe of ink, and
-   one line saying what the page is for. Below it, panels carry the page: thin rules, no more swipes. */
-.page-head {
-  padding-top: clamp(28px, 4vw, 56px);
-  margin-bottom: clamp(40px, 5vw, 72px);
-}
-.page-head h1 {
-  position: relative;
-  isolation: isolate;
-  display: inline-block;
-  max-width: 100%;
-  font-size: var(--fs-d2);
-  line-height: 0.88;
-  text-transform: uppercase;
-  text-wrap: balance;
-  overflow-wrap: anywhere;
-}
-.page-head h1::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: -0.05em;
-  right: -0.12em;
-  bottom: -0.03em;
-  height: 0.38em;
-  background: var(--swipe, var(--pink));
-  transform: rotate(-0.8deg) translateX(0.06em);
-  -webkit-mask: var(--grain) 0 0 / 180px 180px;
-  mask: var(--grain) 0 0 / 180px 180px;
-  mix-blend-mode: multiply;
-}
-.page-intro {
-  margin-top: var(--s3);
-  max-width: 46ch;
-  font-size: var(--fs-lede);
-  line-height: 1.3;
-  color: var(--ink-2);
-  text-wrap: pretty;
-}
-.page-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 20px;
-  margin-top: var(--s2);
-}
-/* A page's panels, one block after another with room between them. */
-.page-body {
-  display: grid;
-  gap: clamp(64px, 7vw, 104px);
-  margin-bottom: var(--s6);
-}
-.page-body > * {
-  min-width: 0;
-}
-/* Where to go next: a ruled list of the other pages, each a name and a line. */
-.onward {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
-  gap: 0 var(--s4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid var(--ink);
-}
-.onward a {
-  display: grid;
-  gap: 6px;
-  padding: 16px 0 18px;
-  border-bottom: 1px solid var(--rule-soft);
-  color: var(--ink);
-  text-decoration: none;
-}
-.onward b {
-  font-family: var(--font-display);
-  font-size: var(--fs-d3);
-  font-weight: 800;
-  font-stretch: 62.5%;
-  line-height: 1;
-  text-transform: uppercase;
-}
-.onward b::after {
-  content: ' →';
-  font-weight: 500;
-}
-.onward span {
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-  color: var(--ink-2);
-}
-.onward a:hover b {
-  color: var(--accent-ink);
-}
-.section-head {
-  border-top-width: 4px;
-}
-
-/* A second plate of the same words, a hair out of register: the misprint that makes it riso. Only
-   display type gets one. The copy lives in data-plate and is hidden from assistive tech (the "/ ''"
-   alt text), so the words are read once. Under the words by default; `.over` prints it on top,
-   multiplied, so where the inks overlap they darken as they would on paper. */
-.plate {
-  position: relative;
-  isolation: isolate;
-}
-.plate::before {
-  content: attr(data-plate);
-  content: attr(data-plate) / '';
-  position: absolute;
-  z-index: -1;
-  inset: 0 auto auto 0;
-  width: 100%;
-  color: var(--plate-ink, var(--pink));
-  transform: translate(var(--plate-x), var(--plate-y));
-  -webkit-mask: var(--grain) 0 0 / 180px 180px;
-  mask: var(--grain) 0 0 / 180px 180px;
-  pointer-events: none;
-}
-.plate.over::before {
-  z-index: 1;
-  mix-blend-mode: multiply;
 }

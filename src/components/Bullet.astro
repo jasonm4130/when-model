@@ -1,0 +1,30 @@
+---
+/**
+ * A line's bullet: its letter in a disc of its colour (src/ui/lines.ts). Identity only. With `href`
+ * it is a link to the line's page; its accessible name is the line's name either way, unless the
+ * line is already named beside it (`decorative`).
+ */
+import { lineBullet } from '../ui/lines';
+interface Props {
+  id: string;
+  /** The lab's name, for the accessible name. */
+  name: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  href?: string;
+  /** The line's name is printed next to it: hide the bullet from assistive tech. */
+  decorative?: boolean;
+  class?: string;
+}
+const { id, name, size = 'md', href, decorative = false, class: extra } = Astro.props;
+const b = lineBullet(id);
+const cls = ['b', size !== 'md' && size, b.fill.toLowerCase() === '#141414' && 'dark', extra].filter(Boolean).join(' ');
+const style = `--c:${b.fill};--fg:${b.ink}`;
+const label = `${name} line`;
+---
+{href ? (
+  <a class={cls} style={style} href={href} aria-label={label} title={label}>{b.letter}</a>
+) : decorative ? (
+  <span class={cls} style={style} aria-hidden="true">{b.letter}</span>
+) : (
+  <span class={cls} style={style} role="img" aria-label={label}>{b.letter}</span>
+)}

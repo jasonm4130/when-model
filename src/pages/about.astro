@@ -18,7 +18,7 @@ const meta = pageMeta(view);
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="How it works" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." />
+    <PageHead title="How the service works" kicker="About" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." />
     <div class="wrap page-body">
       <ScoreDetail d={d} />
       <History />
@@ -26,5 +26,5 @@ const meta = pageMeta(view);
       <Disclaimer />
     </div>
   </main>
-  <Footer generatedAt={d.generatedAt} />
+  <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>

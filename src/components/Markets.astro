@@ -4,6 +4,7 @@ import { SOURCE } from '../domain/sources';
 import { pct, usd } from '../ui/format';
 import { MOBILE_MARKETS, PANEL_ROWS, asOfMs, otherRows, raceRows, releaseRows, sourceOk, sourcePill } from '../ui/panels';
 import MarketRow from './MarketRow.astro';
+import Pill from './Pill.astro';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const asOf = asOfMs(d);
@@ -17,18 +18,18 @@ const down = 'Polymarket unreachable. Odds return when it does.';
 const leader = bestRows[0]?.yes ?? 0;
 ---
 <section class="markets" aria-label="Markets">
-  <div class="grid mk-grid">
+  <div class="cols">
     <div class="panel">
       <div class="panel-head">
-        <h2><span aria-hidden="true">◔</span>RELEASE MARKETS</h2>
-        <a class={`pill ${pill.tone}`} href="https://polymarket.com?utm_source=whenmodel.com" target="_blank" rel="noopener" title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</a>
+        <h2>Release timetables</h2>
+        <Pill pill={pill} href="https://polymarket.com?utm_source=whenmodel.com" />
       </div>
       {releases.length ? (
         <div class="mlist">
           {releases.slice(0, MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i} />)}
           {releases.length > MOBILE_MARKETS && (
             <details class="fold">
-              <summary class="fold-summary">{releases.length - MOBILE_MARKETS} MORE RELEASE MARKETS</summary>
+              <summary class="fold-summary">{releases.length - MOBILE_MARKETS} more release markets</summary>
               {releases.slice(MOBILE_MARKETS).map((m, i) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} i={i + MOBILE_MARKETS} />)}
             </details>
           )}
@@ -38,7 +39,7 @@ const leader = bestRows[0]?.yes ?? 0;
 
     <div class="stack">
       <div class="panel">
-        <div class="panel-head"><h2><span aria-hidden="true">◆</span>BEST MODEL RACE</h2>{best && <span class="pill">{usd(best.vol24)} 24H VOL</span>}</div>
+        <div class="panel-head"><h2>Best model race</h2>{best && <span class="label vol">{usd(best.vol24)} 24h</span>}</div>
         {best ? (
           <>
             <a href={best.url} target="_blank" rel="noopener" class="best-title">{best.title}</a>
@@ -56,13 +57,13 @@ const leader = bestRows[0]?.yes ?? 0;
       </div>
 
       <div class="panel">
-        <div class="panel-head"><h2><span aria-hidden="true">◈</span>BENCHMARK & OTHER MARKETS</h2></div>
+        <div class="panel-head"><h2>Benchmark and other markets</h2></div>
         {others.length ? (
           <div class="mlist">
             {others.slice(0, MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
             {others.length > MOBILE_MARKETS && (
               <details class="fold">
-                <summary class="fold-summary">{others.length - MOBILE_MARKETS} MORE MARKETS</summary>
+                <summary class="fold-summary">{others.length - MOBILE_MARKETS} more markets</summary>
                 {others.slice(MOBILE_MARKETS).map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.otherOutcomes} compact />)}
               </details>
             )}
@@ -73,18 +74,17 @@ const leader = bestRows[0]?.yes ?? 0;
   </div>
 </section>
 <style>
-  .mk-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
-  @media (max-width: 960px) {
-    .mk-grid { grid-template-columns: minmax(0, 1fr); }
-  }
+  .stack { display: grid; gap: var(--s7); align-content: start; }
   .mlist { display: flex; flex-direction: column; }
-  .mlist > .row:last-of-type { border-bottom-color: var(--ink); }
-  .best-title { display: block; font-size: var(--fs-lg); line-height: 1.3; margin-bottom: 18px; }
-  .race { display: grid; gap: 10px; }
-  .race-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 52px; gap: 14px; align-items: center; }
-  .race-name { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vol { color: var(--ink-2); }
+  .best-title { display: block; margin: var(--s4) 0; font-weight: 600; }
+  .race { display: grid; gap: var(--s3); }
+  .race-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 56px; gap: var(--s3); align-items: center; }
+  .race-name { font-size: var(--t-sm); line-height: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .race-row .bar { height: 8px; }
   .race-row .bar > i { background: var(--ink-2); }
-  .race-row.lead .bar > i { background: var(--pink); }
-  .race-pct { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 22px; line-height: 1; }
-  @media (max-width: 480px) { .race-row { grid-template-columns: 92px minmax(0, 1fr) 46px; gap: 10px; } }
+  .race-row.lead .bar > i { background: var(--ink); }
+  .race-row.lead .race-name { font-weight: 700; }
+  .race-pct { font-family: var(--mono); font-size: var(--t-base); }
+  @media (max-width: 480px) { .race-row { grid-template-columns: 92px minmax(0, 1fr) 48px; } }
 </style>

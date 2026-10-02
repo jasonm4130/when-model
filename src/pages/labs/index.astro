@@ -15,10 +15,10 @@ const meta = pageMeta(view);
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="Lab Watch" intro="Ranked by heat. The big number is the market's odds of a drop inside seven days; open a row for a quick look, or a lab's name for its whole page." />
+    <PageHead title="The network" kicker="Lines" intro="Every lab is a line. Ranked by heat; the odds are the market's chance of a release within seven days, shown only where the market is deep enough to trust." />
     <div class="wrap page-body">
       <Labs d={d} />
     </div>
   </main>
-  <Footer generatedAt={d.generatedAt} />
+  <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>

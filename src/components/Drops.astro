@@ -49,7 +49,7 @@ const TRENDING_SHOWN = 6;
   <div class="grid dr-grid">
     <div class="panel">
       <div class="panel-head">
-        <h2><span aria-hidden="true">▼</span>FRESH DROPS</h2>
+        <h2>Fresh drops</h2>
         <span class={`pill ${pills.drops.tone}`} title={pills.drops.title} data-source-pill data-stale-at={pills.drops.staleAt} data-stale-text={pills.drops.staleText}>{pills.drops.text}</span>
       </div>
       {rows.length ? (
@@ -72,7 +72,7 @@ const TRENDING_SHOWN = 6;
 
     <div class="panel">
       <div class="panel-head">
-        <h2><span aria-hidden="true">▲</span>OPEN WEIGHTS TRENDING</h2>
+        <h2>Open weights trending</h2>
         <span class={`pill ${pills.trending.tone}`} title={pills.trending.title} data-source-pill data-stale-at={pills.trending.staleAt} data-stale-text={pills.trending.staleText}>{pills.trending.text}</span>
       </div>
       {d.trending.length ? (
@@ -105,7 +105,7 @@ const TRENDING_SHOWN = 6;
       {(papers.length > 0 || !papersUp) && (
         <>
           <div class="panel-head sub-head">
-            <h2><span aria-hidden="true">§</span>PAPERS OF THE DAY</h2>
+            <h2>Papers of the day</h2>
             <span class={`pill ${pills.papers.tone}`} title={pills.papers.title} data-source-pill data-stale-at={pills.papers.staleAt} data-stale-text={pills.papers.staleText}>{pills.papers.text}</span>
           </div>
           {papers.length ? (
@@ -132,7 +132,7 @@ const TRENDING_SHOWN = 6;
   }
   .trend-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
   .trend { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
-  .t-rank { grid-row: span 2; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 22px; line-height: 1; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .t-rank { grid-row: span 2; font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 22px; line-height: 1; color: var(--ink-2); font-variant-numeric: tabular-nums; }
   .repo { overflow-wrap: anywhere; font-size: var(--fs-md); text-decoration: none; }
   .repo:hover { text-decoration: underline; }
   .t-meta { font-size: var(--fs-xs); color: var(--ink-2); }

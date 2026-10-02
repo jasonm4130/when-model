@@ -1,8 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
-import Dropcon from '../components/Dropcon.astro';
-import TopLabs from '../components/TopLabs.astro';
+import ServiceStatus from '../components/ServiceStatus.astro';
+import DepartureSign from '../components/DepartureSign.astro';
+import DepartureBoard from '../components/DepartureBoard.astro';
+import Arrivals from '../components/Arrivals.astro';
+import NetworkNotice from '../components/NetworkNotice.astro';
+import DropconScope from '../components/DropconScope.astro';
 import Footer from '../components/Footer.astro';
 import { loadDashboard, loadHistoryForPage } from '../app/load-dashboard';
 import { dropconTitle } from '../ui/odds';
@@ -12,14 +16,33 @@ const [d, history] = await Promise.all([loadDashboard(), loadHistoryForPage()]);
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const title = dropconTitle(d.dropcon);
 ---
-<Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket release odds read into one DROPCON level, with early warnings and fresh launches from OpenRouter, Hacker News, lab blogs, YouTube and the transformers registry.">
+<Layout title={title} description="Real-time frontier AI model release intelligence. Polymarket release odds read into the next model departing and one DROPCON level, with early warnings and fresh launches from OpenRouter, Hacker News, lab blogs, YouTube and the transformers registry.">
   <Header d={d} view={{ page: 'home' }} />
+  <ServiceStatus c={d.dropcon} />
   <main id="main">
-    <Dropcon d={d} history={history} />
-    <TopLabs d={d} />
+    <DepartureSign d={d} />
+    <div class="wrap page-body">
+      <div class="cols">
+        <DepartureBoard d={d} />
+        <div class="side">
+          <Arrivals d={d} />
+          <NetworkNotice d={d} />
+        </div>
+      </div>
+      <section aria-labelledby="history-title">
+        <div class="sec">
+          <h2 id="history-title">Service history · last 7 days</h2>
+          <span class="label">DROPCON lead score, hourly</span>
+        </div>
+        <DropconScope d={d} history={history} />
+      </section>
+    </div>
   </main>
-  <Footer generatedAt={d.generatedAt} />
+  <Footer generatedAt={d.generatedAt} d={d} />
 </Layout>
+<style>
+  .side { display: grid; gap: var(--s7); align-content: start; }
+</style>
 <script>
   // The site was one long page whose sections had hash anchors. A hash never reaches the server,
   // so an old link (#lab-anthropic, #markets) moves on to the page that now holds it.

@@ -18,8 +18,8 @@ export type PageView =
 export type NavKey = 'home' | 'labs' | 'markets' | 'radar' | 'about' | 'backtest';
 
 export const NAV: readonly { key: NavKey; href: string; label: string }[] = [
-  { key: 'home', href: '/', label: 'Home' },
-  { key: 'labs', href: '/labs', label: 'Labs' },
+  { key: 'home', href: '/', label: 'Departures' },
+  { key: 'labs', href: '/labs', label: 'Lines' },
   { key: 'markets', href: '/markets', label: 'Markets' },
   { key: 'radar', href: '/radar', label: 'Radar' },
   { key: 'about', href: '/about', label: 'About' },

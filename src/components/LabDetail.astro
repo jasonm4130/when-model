@@ -1,189 +1,275 @@
 ---
 /**
- * One lab's page: "When will <Lab> ship?" Its 72-hour, 7-day and 30-day reads with how far each can
- * be trusted come first, then its next named market, its tempo and latest listing, and the early
- * warnings, landed launches and headlines that name it. Every list is a filter of the dashboard
- * (`labPage` in src/ui/lab-page.ts), so the page makes no fetch of its own.
+ * A line's page below its sign: the next departure (the headline family's 7-day odds) on a strip map
+ * of its dated stops, then the line's service frequency (12 months of listings), its other services,
+ * the service notices that name it, and its station announcements. A line with only a thin market
+ * says "times unavailable" and keeps its extrapolated read small; a line with no market says "no
+ * timetable". Every list is a filter of the dashboard (`labPage`, src/ui/lab-page.ts).
  */
 import type { Dashboard } from '../domain/dashboard';
 import { SOURCE } from '../domain/sources';
-import { ago, daysLabel, monthInitials, shortDate } from '../ui/format';
+import { ago, daysLabel, monthInitials, pct, shortDate, usd } from '../ui/format';
 import type { LabPage } from '../ui/lab-page';
 import { labWarningCount } from '../ui/lab-page';
-import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue } from '../ui/odds';
+import { histogramLabel, readValue } from '../ui/odds';
 import { PANEL_ROWS, asOfMs, sourcePill } from '../ui/panels';
 import { TRACK_LINES, daysShort, hoursAgo } from '../ui/signals';
+import {
+  dayLabel,
+  datedRungs,
+  familyMarkets,
+  otherServices,
+  readSentence,
+  stripStops,
+  timetableState,
+  windowText,
+  boardingWindow,
+} from '../ui/departures';
+import { lineBullet } from '../ui/lines';
 import FeedRow from './FeedRow.astro';
 import MarketRow from './MarketRow.astro';
+import Pill from './Pill.astro';
 interface Props { d: Dashboard; p: LabPage; now?: Date }
 const { d, p, now = new Date() } = Astro.props;
 const l = p.status;
 const name = p.lab.name;
 const nowMs = now.getTime();
+const built = Date.parse(d.generatedAt);
 const oddsAvailable = d.measurement.inputs.oddsAvailable;
-const horizons: { key: 'p72' | 'p7' | 'p30'; label: string }[] = [
-  { key: 'p72', label: '72H' },
-  { key: 'p7', label: '7D' },
-  { key: 'p30', label: '30D' },
-];
-const months = monthInitials(now);
-const max = Math.max(1, ...(l?.histogram ?? []));
-const others = p.markets.filter((m) => m !== p.next);
+const state = l ? timetableState(l, oddsAvailable) : oddsAvailable ? 'no-timetable' : 'offline';
 const asOf = asOfMs(d);
 const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, nowMs);
+const colour = lineBullet(p.lab.id).fill;
+const fam = l ? familyMarkets(d, l) : [];
+const rungs = datedRungs(fam, asOf);
+const stops = l && state === 'scheduled' ? stripStops(l, rungs, built) : [];
+const headMarket = fam[0];
+const others = l ? otherServices(d, l) : [];
+// A family priced only in day buckets has no dated rung to draw: its market rows stand in.
+const bucketOnly = state === 'scheduled' && rungs.length === 0 && p.next;
+const months = monthInitials(now);
+const hist = l?.histogram ?? [];
+const max = Math.max(1, ...hist);
 const warnings = labWarningCount(p);
 const streamWhen = (h: number | undefined) => (h === undefined ? 'no start time' : h >= 0 ? `in ${Math.round(h)}h` : 'started');
 const heard = p.landed.length + p.announcements.length + p.feed.length;
+const last = l?.latest;
+const stopLabel = (s: (typeof stops)[number]) =>
+  s.kind === 'now' ? 'Now' : s.kind === 'tick' ? s.horizon! : dayLabel(s.day, built);
+const stopSub = (s: (typeof stops)[number]) =>
+  s.kind === 'now'
+    ? dayLabel(s.day, built)
+    : s.kind === 'tick'
+      ? s.horizon === '7 days'
+        ? `${dayLabel(s.day, built)} · the ${pct(l!.odds!.p7.p)}`
+        : dayLabel(s.day, built)
+      : s.horizon
+        ? `market stop · ${s.horizon}`
+        : 'market stop';
 ---
-<section class="lab-answer" aria-labelledby="reads-title">
-  <div class="panel-head">
-    <h2 id="reads-title">The odds</h2>
-    <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
-  </div>
-  {l?.odds ? (
-    <div class="answer-grid">
-      <div class="big-read">
-        <b class:list={['big-value', { extrap: !l.odds.p7.trusted }]} title={readNote(l.odds.p7)}>{readValue(l.odds.p7)}</b>
-        <span class="big-label tiny">DROP ≤7D · {l.odds.family}</span>
-      </div>
-      <div class="reads">
-        <dl>
-          {horizons.map((h) => {
-            const read = l.odds![h.key];
-            const trust = readTrust(read);
-            return (
-              <div class={`read ${trust}`} title={readNote(read)}>
-                <dt>{h.label}</dt>
-                <dd class="rv"><span class:list={['rv-n', { extrap: !read.trusted }]}>{readValue(read)}</span></dd>
-                <dd class="rb"><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrapolated, not scored'}</span> · <span class="bracket">{readBracket(read)}</span>{read.family && <span class="rfam"> · {read.family}</span>}</dd>
-              </div>
-            );
-          })}
-        </dl>
-        {l.launchedFamilies.length > 0 && <p class="odds-note">Left out, just launched: {l.launchedFamilies.join(', ')}</p>}
-        <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener">{l.odds.family} on Polymarket</a>
-      </div>
-    </div>
-  ) : <p class="empty">{noOddsText(oddsAvailable)}{l?.latest ? `. Last listed ${l.latest.name.replace(/^[^:]+:\s*/, '')}, ${shortDate(l.latest.createdAt)}.` : '.'}</p>}
-</section>
-
-{p.next && (
-  <section class="lab-markets" aria-labelledby="lab-markets-title">
-    <div class="panel-head"><h2 id="lab-markets-title">Next named market</h2></div>
-    <div class="mlist">
-      <MarketRow m={p.next} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} />
-      {others.length > 0 && (
-        <details class="fold">
-          <summary class="fold-summary">{others.length} MORE {name.toUpperCase()} MARKET{others.length === 1 ? '' : 'S'}</summary>
-          {others.map((m) => <MarketRow m={m} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} />)}
-        </details>
-      )}
-    </div>
-  </section>
-)}
-
-{l && (
-  <section class="lab-tempo" aria-labelledby="tempo-title">
-    <div class="panel-head"><h2 id="tempo-title">Tempo and heat</h2></div>
-    <div class="tempo-grid">
-      <div>
-        <div class="metric-label">RELEASE TEMPO · 12 MONTHS</div>
-        <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
-          {l.histogram.map((v, i) => <div class="col"><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
+<section class="next" aria-labelledby="reads-title" style={`--line:${colour}`}>
+  {state === 'scheduled' && l?.odds ? (
+    <>
+      <div class="next-head">
+        <p class="big" aria-label={`${pct(l.odds.p7.p)} chance of a release within 7 days`}><span aria-hidden="true">{pct(l.odds.p7.p).replace('%', '')}<small>%</small></span></p>
+        <div class="what">
+          <p class="label">Next departure · within 7 days</p>
+          <h2 id="reads-title" class="n">{l.odds.family}</h2>
+          <p>{readSentence(l.odds.p7, built)}</p>
         </div>
       </div>
-      <div class="facts">
-        <div class="fact"><span class="metric-label">HEAT</span><b>{l.heat}</b><span class="fact-note">markets {l.heatParts.market} + recency {l.heatParts.recency}, a burstiness prior, not a forecast</span><span class="bar heat" aria-hidden="true"><i style={`width:${l.heat}%`}></i></span></div>
-        <div class="fact"><span class="metric-label">LAUNCHES · 30D</span><b>{l.releases30d}</b><span class="fact-note">last drop {daysLabel(l.daysSince)}{l.daysSince ? ' ago' : ''}</span></div>
-        <div class="fact latest"><span class="metric-label">LATEST</span>{l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted when">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}</div>
+      {stops.length > 1 && (
+        <ol class="strip" style={`--n:${stops.length}`} aria-label={`Timetable for ${l.odds.family}: chance it has shipped by each stop`}>
+          {stops.map((s) => (
+            <li class:list={[s.kind, { seven: s.horizon === '7 days' }]}>
+              <span class="p mono">{s.p === undefined ? (s.horizon === '7 days' ? '' : ' ') : pct(s.p)}</span>
+              <span class="dot" aria-hidden="true"></span>
+              <span class="d">{stopLabel(s)}</span>
+              <span class="s">{stopSub(s)}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+      {bucketOnly && (
+        <div class="mlist"><MarketRow m={p.next!} asOf={asOf} limit={PANEL_ROWS.releaseOutcomes} /></div>
+      )}
+      <p class="src">
+        Chance the service has departed by each stop.{' '}
+        {headMarket ? <>Polymarket, <a href={headMarket.url} target="_blank" rel="noopener">{headMarket.title}</a>, {usd(headMarket.vol24)} traded in 24h.</> : 'Polymarket.'}
+        {rungs.length > 0 && <> Window {windowText(boardingWindow(rungs), built)}.</>}
+        {l.launchedFamilies.length > 0 && <> Left out, just launched: {l.launchedFamilies.join(', ')}.</>}
+        {' '}<Pill pill={pill} />
+      </p>
+    </>
+  ) : (
+    <div class="next-head none">
+      <p class="big none-word">{state === 'times-unavailable' ? 'Times unavailable' : state === 'offline' ? 'Odds offline' : 'No timetable'}</p>
+      <div class="what">
+        <p class="label">Next departure</p>
+        <h2 id="reads-title" class="n">{l?.odds ? l.odds.family : `No release market for ${name}`}</h2>
+        <p>
+          {state === 'times-unavailable' && l?.odds
+            ? `Its market is too thin for a 7-day estimate. Extrapolated, not scored: ${readValue(l.odds.p7)} within 7 days.`
+            : state === 'offline'
+              ? 'Polymarket is unreachable, so this line has no time. Times return when it does.'
+              : 'Nobody is betting on this line.'}
+          {' '}<Pill pill={pill} />
+        </p>
       </div>
     </div>
-  </section>
-)}
-
-<section class="lab-signals" aria-labelledby="lab-signals-title">
-  <div class="panel-head"><h2 id="lab-signals-title">Early warnings</h2><a class="tiny all" href="/radar">ALL EARLY WARNINGS</a></div>
-  {warnings === 0 ? (
-    <p class="empty">None of the early warnings names {name} right now. Stealth slots are anonymous, so no lab page carries one.</p>
-  ) : (
-    <ul class="rows">
-      {p.leaks.map((x) => <li><a class="r" href={x.url} target="_blank" rel="noopener"><span class="r-main">{x.title}</span><span class="r-when" data-time={x.publishedAt}>{ago(x.publishedAt, nowMs)}</span><span class="r-meta">Leak · {x.sourceName} · {TRACK_LINES.leaks}</span></a></li>)}
-      {p.streams.map((b) => <li><a class="r" href={b.url} target="_blank" rel="noopener"><span class="r-main">{b.title}</span><span class="r-when">{streamWhen(b.startsInHours)}</span><span class="r-meta">Scheduled stream · {b.channel} on YouTube · {TRACK_LINES.broadcasts}</span></a></li>)}
-      {p.architectures.map((a) => <li><div class="r"><span class="r-main">{a.module}</span><span class="r-when">{daysShort(a.daysPending)} pending</span><span class="r-meta">Pending architecture in transformers · {TRACK_LINES.architectures}</span></div></li>)}
-      {p.events.map((e) => <li><a class="r" href={e.source} target="_blank" rel="noopener"><span class="r-main">{e.label}</span><span class="r-when">{e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span><span class="r-meta">Keynote window · {TRACK_LINES.events}</span></a></li>)}
-    </ul>
   )}
 </section>
 
-<section class="lab-heard" aria-labelledby="heard-title">
-  <div class="panel-head"><h2 id="heard-title">Landed and in the news</h2></div>
+<div class="cols">
+  {l && (
+    <section aria-labelledby="tempo-title" style={`--line:${colour}`}>
+      <div class="sec"><h2 id="tempo-title">Service frequency</h2><span class="label">Arrivals · 12 months</span></div>
+      <div class="hist" role="img" aria-label={histogramLabel(hist, now)}>
+        {hist.map((v, i) => (
+          <div class:list={['col', { cur: i === hist.length - 1 }]} title={`${v} listed`}>
+            {Array.from({ length: Math.min(v, 8) }, () => <i style={`height:${Math.max(6, Math.min(20, Math.floor(112 / Math.min(max, 8)) - 4))}px`}></i>)}
+          </div>
+        ))}
+      </div>
+      <div class="months" aria-hidden="true">{months.map((m) => <span>{m}</span>)}</div>
+      <dl class="facts">
+        <div><dt>Last arrival</dt><dd>{last ? <a href={last.url} target="_blank" rel="noopener">{last.name.replace(/^[^:]+:\s*/, '')}</a> : 'Nothing listed'}{last && <span class="mono">{dayLabel(Date.parse(last.createdAt), built)} {last.createdAt.slice(11, 16)}Z</span>}</dd></div>
+        <div><dt>Arrivals · 30 days</dt><dd>{l.releases30d}<span>last one {daysLabel(l.daysSince)}{l.daysSince ? ' ago' : ''}</span></dd></div>
+        <div><dt>Heat</dt><dd>{l.heat}<span>markets {l.heatParts.market} + recency {l.heatParts.recency}; a burstiness prior, not a forecast</span></dd></div>
+      </dl>
+    </section>
+  )}
+  <aside class="side">
+    <section aria-labelledby="svc-title">
+      <div class="sec"><h2 id="svc-title">Other services</h2><span class="label">Same line</span></div>
+      {others.length === 0 ? (
+        <p class="empty">No other {name} release market is open.</p>
+      ) : (
+        <ul class="svcs">
+          {others.map((o) => (
+            <li>
+              <a class="svc" href={o.url} target="_blank" rel="noopener">
+                <span class="sn">{o.family}</span>
+                <span class="sp mono">{o.stop ? pct(o.stop.p) : '—'}</span>
+                <span class="sw mono">{o.stop ? `by ${dayLabel(o.stop.day, built, false)}` : 'no dated stop'}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+    <section class="notice" aria-labelledby="lab-signals-title">
+      <span class="notice-label">Service notices</span>
+      {warnings === 0 ? (
+        <>
+          <h3 id="lab-signals-title">None on this line</h3>
+          <p class="quiet">None of the early warnings names {name} right now. Unmarked trains run anonymous, so no line ever carries one. <a href="/radar">All notices</a></p>
+        </>
+      ) : (
+        <>
+          <h3 id="lab-signals-title">{warnings} on this line</h3>
+          <ul class="rows">
+            {p.leaks.map((x) => <li><a class="r" href={x.url} target="_blank" rel="noopener"><span class="r-main">{x.title}</span><span class="r-when" data-time={x.publishedAt}>{ago(x.publishedAt, nowMs)}</span><span class="r-meta">Leak · {x.sourceName} · {TRACK_LINES.leaks}</span></a></li>)}
+            {p.streams.map((b) => <li><a class="r" href={b.url} target="_blank" rel="noopener"><span class="r-main">{b.title}</span><span class="r-when">{streamWhen(b.startsInHours)}</span><span class="r-meta">Scheduled stream · {b.channel} on YouTube · {TRACK_LINES.broadcasts}</span></a></li>)}
+            {p.architectures.map((a) => <li><div class="r"><span class="r-main">{a.module}</span><span class="r-when">{daysShort(a.daysPending)} pending</span><span class="r-meta">Pending architecture in transformers · {TRACK_LINES.architectures}</span></div></li>)}
+            {p.events.map((e) => <li><a class="r" href={e.source} target="_blank" rel="noopener"><span class="r-main">{e.label}</span><span class="r-when">{e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span><span class="r-meta">Keynote window · {TRACK_LINES.events}</span></a></li>)}
+          </ul>
+        </>
+      )}
+    </section>
+  </aside>
+</div>
+
+<section aria-labelledby="heard-title">
+  <div class="sec"><h2 id="heard-title">Station announcements</h2><span class="label">This week</span></div>
   {heard === 0 ? (
     <p class="empty">Nothing from or about {name} this week in the listings, the lab feeds or Hacker News.</p>
   ) : (
-    <div class="heard">
-      {(p.landed.length > 0 || p.announcements.length > 0) && (
-        <ul class="rows">
-          {p.landed.map((r) => <li><a class="r" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener"><span class="r-main landed-name">{r.name}</span><span class="r-when">listed {hoursAgo(r.hoursAgo)}</span><span class="r-meta">First OpenRouter listing · shown, not scored</span></a></li>)}
-          {p.announcements.map((a) => <li><a class="r" href={a.url} target="_blank" rel="noopener"><span class="r-main">{a.title}</span><span class="r-when" data-time={a.seenAt}>{ago(a.seenAt, nowMs)}</span><span class="r-meta">Launch post · {a.source.toUpperCase()}</span></a></li>)}
-        </ul>
-      )}
-      {p.feed.length > 0 && (
-        <div class="feed">
-          {p.feed.map((f, i) => <FeedRow f={f} i={i} now={nowMs} />)}
-        </div>
-      )}
+    <div class="ann">
+      {p.landed.map((r) => <a class="row item" href={r.models[0]?.url ?? 'https://openrouter.ai/models'} target="_blank" rel="noopener"><span class="ttl landed-name">{r.name}</span><span class="when mono">listed {hoursAgo(r.hoursAgo)}</span><span class="meta mono">OPENROUTER · FIRST LISTING · SHOWN, NOT SCORED</span></a>)}
+      {p.announcements.map((a) => <a class="row item" href={a.url} target="_blank" rel="noopener"><span class="ttl">{a.title}</span><span class="when mono" data-time={a.seenAt}>{ago(a.seenAt, nowMs)}</span><span class="meta mono">{a.source.toUpperCase()} · LAUNCH POST · {shortDate(a.seenAt)}</span></a>)}
+      {p.feed.map((f, i) => <FeedRow f={f} i={i} now={nowMs} />)}
     </div>
   )}
+  {l && l.xHandles.length > 0 && (
+    <p class="lab-x"><span class="label">On X</span> {l.xHandles.map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)} <span class="muted">No free API, so click through.</span></p>
+  )}
 </section>
-
-{l && l.xHandles.length > 0 && (
-  <p class="lab-x"><span class="tiny">ON X</span> {l.xHandles.map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)} <span class="muted">No free API, so click through.</span></p>
-)}
 <style>
-  section { scroll-margin-top: 16px; }
-  .answer-grid { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 24px clamp(32px, 5vw, 80px); align-items: start; }
-  .big-read { display: grid; gap: 10px; }
-  .big-value { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: clamp(96px, 4rem + 9vw, 200px); line-height: 0.8; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums lining-nums; }
-  /* An extrapolated read is marked by its "~" and the secondary ink, never by opacity. */
-  .big-value.extrap, .rv-n.extrap { color: var(--muted); }
-  .big-label { color: var(--ink-2); }
-  .reads dl { display: grid; margin: 0; border-top: 1px solid var(--ink); }
-  .read { display: grid; grid-template-columns: 4ch 7ch minmax(0, 1fr); gap: 14px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
-  .read dt { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink-2); }
-  .read dd { margin: 0; }
-  .rv-n { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
-  .rb { font-size: var(--fs-sm); color: var(--ink); overflow-wrap: anywhere; }
-  .read .trust { font-style: italic; }
-  .read.extrapolated .rb, .read .rfam { color: var(--ink-2); }
-  .odds-note { margin-top: 10px; font-size: var(--fs-sm); color: var(--ink-2); }
-  .mkt { display: inline-block; margin-top: 14px; font-size: var(--fs-sm); }
-  .mlist { display: flex; flex-direction: column; }
-  .tempo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 28px clamp(32px, 5vw, 80px); }
-  .tempo-grid .hist { height: 96px; margin-top: 12px; }
-  .facts { display: grid; gap: 18px; }
-  .fact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid var(--rule-soft); }
-  .fact b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 36px; line-height: 1; font-variant-numeric: tabular-nums; }
-  .fact-note { grid-column: 1 / -1; font-size: var(--fs-sm); color: var(--ink-2); }
-  .fact .bar { grid-column: 1 / -1; }
-  .bar.heat > i { background: var(--ink); }
-  .fact.latest { grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere; font-size: var(--fs-md); }
-  .latest .when { white-space: nowrap; }
-  .all { color: var(--ink); }
-  .rows { border-top: 1px solid var(--ink); }
-  .r { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'main when' 'meta meta'; column-gap: 16px; row-gap: 2px; padding: 12px 0; border-bottom: 1px solid var(--rule-soft); color: var(--ink); text-decoration: none; font-size: var(--fs-md); line-height: 1.3; }
-  a.r:hover .r-main { color: var(--accent-ink); }
-  a.r:focus-visible { outline-offset: -2px; }
-  .r-main { grid-area: main; overflow-wrap: anywhere; }
-  .landed-name { font-weight: 650; }
-  .r-when { grid-area: when; white-space: nowrap; font-size: var(--fs-xs); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-  .r-meta { grid-area: meta; font-size: var(--fs-xs); color: var(--ink-2); }
-  .heard { display: grid; gap: var(--s4); }
-  .feed { border-top: 1px solid var(--ink); }
-  .lab-x { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; font-size: var(--fs-md); }
-  .lab-x a { font-weight: 600; text-decoration: none; }
-  .lab-x a:hover { text-decoration: underline; }
-  @media (max-width: 640px) {
-    .answer-grid { grid-template-columns: minmax(0, 1fr); }
-    .read { grid-template-columns: 4ch 7ch minmax(0, 1fr); gap: 10px; }
+  .next-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s7); align-items: end; padding-bottom: var(--s6); border-bottom: 2px solid var(--rule); }
+  .big { font-size: var(--t-5xl); line-height: 104px; font-weight: 700; letter-spacing: -0.04em; }
+  .big small { font-size: var(--t-2xl); letter-spacing: -0.01em; }
+  .none-word { font-size: var(--t-2xl); line-height: 56px; letter-spacing: -0.03em; color: var(--ink-2); }
+  .what { padding-bottom: 10px; min-width: 0; }
+  .what .label { margin-bottom: var(--s2); color: var(--ink-2); }
+  .what .n { font-size: var(--t-lg); line-height: 32px; font-weight: 700; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  .what p:not(.label) { margin-top: var(--s1); color: var(--ink-2); }
+
+  /* The strip map: the line in its colour, a stop for each dated rung, ticks for the horizons. */
+  .strip { position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); margin-top: var(--s7); }
+  .strip::before { content: ''; position: absolute; left: calc(100% / var(--n) / 2); right: calc(100% / var(--n) / 2); top: 63px; height: 12px; border-radius: 6px; background: var(--line); }
+  .strip li { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+  .strip .p { height: 40px; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
+  .strip .dot { position: relative; z-index: 1; width: 28px; height: 28px; margin: 5px 0; border-radius: 50%; background: #fff; border: 5px solid var(--ink); }
+  .strip .d { margin-top: var(--s3); font-size: var(--t-base); line-height: 24px; font-weight: 600; }
+  .strip .s { font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .strip li.now .dot { background: var(--ink); }
+  .strip li.tick .dot { width: 4px; height: 28px; border: 0; border-radius: 0; background: var(--ink); }
+  .strip li.tick .p { font-size: var(--t-md); color: var(--ink-2); }
+  .strip li.seven .dot { width: 8px; }
+  .src { margin-top: var(--s6); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .src a:not(.pill) { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+  .mlist { margin-top: var(--s5); }
+
+  .hist { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s2); align-items: end; height: 140px; margin-top: var(--s5); border-bottom: 2px solid var(--rule); }
+  .hist .col { display: flex; flex-direction: column-reverse; gap: 4px; align-items: center; padding-bottom: 6px; }
+  .hist i { display: block; width: 100%; max-width: 28px; background: var(--line); }
+  .months { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s2); margin-top: var(--s2); font-family: var(--mono); font-size: var(--t-xs); line-height: 16px; text-align: center; color: var(--ink-2); }
+  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s5); margin-top: var(--s6); }
+  .facts dt { font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .facts dd { margin-top: var(--s2); font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .facts dd span { display: block; font-size: var(--t-sm); line-height: 20px; font-weight: 400; letter-spacing: 0; color: var(--ink-2); }
+
+  .side { display: grid; gap: var(--s7); align-content: start; }
+  .svcs li { border-bottom: 1px solid var(--rule-soft); }
+  .svc { display: grid; grid-template-columns: minmax(0, 1fr) 72px 128px; gap: var(--s3); align-items: baseline; padding: var(--s3) 0; text-decoration: none; }
+  .svc:hover .sn { text-decoration: underline; text-underline-offset: 3px; }
+  .sn { font-weight: 600; overflow-wrap: anywhere; }
+  .sp { text-align: right; font-size: var(--t-md); line-height: 28px; }
+  .sw { text-align: right; font-size: var(--t-sm); white-space: nowrap; }
+  .notice .rows { margin-top: var(--s2); }
+
+  .ann { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s8); }
+  .ann > :global(.item) { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'ttl when' 'meta meta'; gap: 2px var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft); }
+  .ann .ttl { grid-area: ttl; overflow-wrap: anywhere; }
+  .ann .when { grid-area: when; font-size: var(--t-xs); line-height: 24px; color: var(--ink-2); white-space: nowrap; }
+  .ann .meta { grid-area: meta; font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
+  .lab-x { margin-top: var(--s4); font-size: var(--t-sm); }
+  .lab-x a { margin-right: var(--s2); }
+
+  @media (max-width: 900px) {
+    .next-head { grid-template-columns: minmax(0, 1fr); gap: var(--s2); }
+    .big { font-size: var(--t-4xl); line-height: 84px; }
+    .what { padding-bottom: 0; }
+    .what .n { font-size: var(--t-md); line-height: 28px; }
+    /* Phones: the strip map stands up, the line down the left and each stop's words beside it. */
+    .strip { grid-template-columns: minmax(0, 1fr); margin-top: var(--s6); }
+    .strip::before { left: 28px; right: auto; top: 28px; bottom: 36px; width: 12px; height: auto; }
+    .strip li { display: grid; grid-template-columns: 68px minmax(0, 1fr); column-gap: var(--s3); align-items: center; padding: var(--s2) 0; text-align: left; }
+    .strip .dot { grid-column: 1; grid-row: 1 / 4; justify-self: center; margin: 0; }
+    .strip li.now .p, .strip li.seven .p { display: none; }
+    .strip .p { grid-column: 2; grid-row: 1; height: auto; font-size: var(--t-md); line-height: 28px; }
+    .strip .d { grid-column: 2; grid-row: 2; margin: 0; font-size: var(--t-sm); line-height: 20px; }
+    .strip .s { grid-column: 2; grid-row: 3; }
+    .strip li.tick .dot { width: 28px; height: 4px; }
+    .strip li.seven .dot { height: 8px; }
+    .facts { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
+    .hist { height: 120px; gap: var(--s1); }
+    .months { gap: var(--s1); }
+    .svc { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'n p' 'w w'; row-gap: 0; }
+    .sn { grid-area: n; }
+    .sp { grid-area: p; }
+    .sw { grid-area: w; text-align: left; }
+    .ann { grid-template-columns: minmax(0, 1fr); }
   }
 </style>

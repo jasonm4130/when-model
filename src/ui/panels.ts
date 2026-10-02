@@ -6,7 +6,6 @@
 import type { Dashboard } from '../domain/dashboard';
 import type { Drop } from '../domain/drop';
 import type { FeedSource } from '../domain/feed';
-import type { LabId } from '../domain/lab';
 import { displayOutcomes, isPlaceholderOutcome, type Market, type Outcome } from '../domain/market';
 import { perMillion } from './format';
 
@@ -99,31 +98,6 @@ export const FEED_LABELS: Readonly<Record<FeedSource, string>> = {
   github: 'GITHUB',
   xai: 'XAI',
 };
-
-// ─── lab inks ────────────────────────────────────────────────────────────────
-
-/** The riso print has three inks. Each lab prints in one, by the hue its old dark-page colour had. */
-export type LabInk = 'pink' | 'blue' | 'ink';
-const LAB_INKS: Readonly<Record<LabId, LabInk>> = {
-  openai: 'ink',
-  anthropic: 'pink',
-  google: 'blue',
-  xai: 'ink',
-  deepseek: 'blue',
-  qwen: 'pink',
-  meta: 'blue',
-  mistral: 'pink',
-  moonshot: 'pink',
-  zai: 'blue',
-};
-
-/**
- * A lab's ink. Three inks cannot tell ten labs apart, so every mark printed in one carries the lab's
- * glyph or name as well: the ink groups, the glyph identifies.
- */
-export function labInk(id: LabId): LabInk {
-  return LAB_INKS[id];
-}
 
 // ─── source pills ────────────────────────────────────────────────────────────
 

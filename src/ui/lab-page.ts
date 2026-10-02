@@ -11,7 +11,6 @@ import type { LabStatus } from '../domain/lab-status';
 import type { LandedAnnouncement, LandedRelease } from '../domain/landed';
 import type { EventWindow } from '../domain/lead';
 import { displayOutcomes, type Market } from '../domain/market';
-import { trustedP } from '../domain/lab-status';
 import { PANEL_ROWS, asOfMs } from './panels';
 
 /** How many of each list a lab page shows. */
@@ -35,24 +34,6 @@ function concerns(lab: Lab, source: FeedSource | undefined, title: string): bool
 export function labFeed(feed: readonly FeedItem[], id: LabId): FeedItem[] {
   const lab = labById(id);
   return lab ? feed.filter((f) => concerns(lab, f.source, f.title)) : [];
-}
-
-/**
- * The top labs by their 7-day odds: trusted reads first (an extrapolated read is shown but never
- * scored), then the read itself, then the heat order the list already has. Labs with no read come
- * last, so with the odds offline this is the heat ranking.
- */
-export function topLabs(labs: readonly LabStatus[], n = 3): LabStatus[] {
-  return labs
-    .map((l, i) => ({ l, i }))
-    .sort(
-      (a, b) =>
-        trustedP(b.l.odds?.p7) - trustedP(a.l.odds?.p7) ||
-        (b.l.odds?.p7.p ?? -1) - (a.l.odds?.p7.p ?? -1) ||
-        a.i - b.i,
-    )
-    .slice(0, n)
-    .map(({ l }) => l);
 }
 
 export interface LabPage {

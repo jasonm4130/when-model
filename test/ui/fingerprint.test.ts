@@ -276,6 +276,46 @@ describe('pageFingerprint covers only what the reader sees (UI-11)', () => {
     expect(pageFingerprint(flagged as never, ANTHROPIC)).toBe(pageFingerprint(base, ANTHROPIC));
   });
 
+  it('hashes the departure board, the arrivals and the notice on the home page, and each line on the network', () => {
+    const base = assembleDashboard(live, LIVE_AT);
+    const home = pageFingerprint(base, HOME);
+    const network = pageFingerprint(base, LABS);
+    const lab = base.labs.find((l) => l.odds)!;
+    // A line's 7-day odds as printed: a move below a whole percent is not new data, a whole point is.
+    const nudge = (dp: number) => ({
+      ...base,
+      labs: base.labs.map((l) =>
+        l === lab ? { ...l, odds: { ...l.odds!, p7: { ...l.odds!.p7, p: l.odds!.p7.p + dp } } } : l,
+      ),
+    });
+    const shown = Math.round(lab.odds!.p7.p * 100);
+    const tiny = Math.round((lab.odds!.p7.p + 0.001) * 100) === shown ? 0.001 : -0.001;
+    expect(pageFingerprint(nudge(tiny), HOME)).toBe(home);
+    if (lab.odds!.p7.trusted) {
+      expect(pageFingerprint(nudge(0.05), HOME)).not.toBe(home);
+      expect(pageFingerprint(nudge(0.05), LABS)).not.toBe(network);
+    }
+    // A line whose market thins out moves from a time to "times unavailable" on both pages.
+    const thinned = {
+      ...base,
+      labs: base.labs.map((l) =>
+        l === lab ? { ...l, odds: { ...l.odds!, p7: { ...l.odds!.p7, trusted: !l.odds!.p7.trusted } } } : l,
+      ),
+    };
+    expect(pageFingerprint(thinned, HOME)).not.toBe(home);
+    expect(pageFingerprint(thinned, LABS)).not.toBe(network);
+    // A new arrival and a new unmarked train each show on the home page.
+    const release = { ...base.landed.releases[0], id: 'anthropic@2026-09-30', labId: 'anthropic' };
+    expect(pageFingerprint({ ...base, landed: { ...base.landed, releases: [release] } }, HOME)).not.toBe(
+      home,
+    );
+    const w = base.earlyWarnings;
+    const slot = { ...w.stealth.items[0], id: 'stealth/new-train' };
+    expect(
+      pageFingerprint({ ...base, earlyWarnings: { ...w, stealth: { ...w.stealth, items: [slot] } } }, HOME),
+    ).not.toBe(home);
+  });
+
   it('ignores fields the page never prints, such as source timings and raw inputs', () => {
     const base = assembleDashboard(live, LIVE_AT);
     const noisy = {

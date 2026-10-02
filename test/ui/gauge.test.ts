@@ -1,9 +1,10 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
-import Dropcon from '../../src/components/Dropcon.astro';
 import DropconScope from '../../src/components/DropconScope.astro';
+import LabDetail from '../../src/components/LabDetail.astro';
 import Labs from '../../src/components/Labs.astro';
 import ScoreDetail from '../../src/components/ScoreDetail.astro';
+import ServiceStatus from '../../src/components/ServiceStatus.astro';
 import Signals from '../../src/components/Signals.astro';
 import Layout from '../../src/layouts/Layout.astro';
 import { assembleDashboard, type Dashboard, type DashboardInputs } from '../../src/domain/dashboard';
@@ -12,7 +13,8 @@ import { buildInstrument } from '../../src/domain/instrument';
 import type { Market } from '../../src/domain/market';
 import { SOURCE } from '../../src/domain/sources';
 import { dropconTitle } from '../../src/ui/odds';
-import { labInk } from '../../src/ui/panels';
+import { labPage } from '../../src/ui/lab-page';
+import { lineBullet } from '../../src/ui/lines';
 import type { ScrubData } from '../../src/ui/readout';
 import { TRACK_LINES } from '../../src/ui/signals';
 import { readings, series } from '../fixtures/history';
@@ -104,7 +106,7 @@ const scopeData = (html: string) =>
       .replace(/&amp;/g, '&'),
   ) as ScrubData;
 
-describe('DropconScope: the level and its week as one instrument', () => {
+describe('DropconScope: service history, the week of the level', () => {
   const d = dashboard();
 
   it('renders an intentional empty state, with the live level still at the NOW edge', async () => {
@@ -115,11 +117,9 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(html).toContain('NO READINGS YET');
     expect(html).toContain('v3 history starts 26 Sep: the 15-minute capture writes the first point.');
     expect(html).not.toContain('class="sc-line"');
-    expect(html).toMatch(
-      new RegExp(
-        `class="dc-num head plate" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
-      ),
-    );
+    // The live level still sits at the NOW edge; the posted number is the service status's, not the chart's.
+    expect(html).not.toContain('data-num');
+    expect(html).toMatch(new RegExp(`class="sc-nowtag tiny"[^>]*>NOW <b[^>]*>${d.dropcon.level}</b>`));
     expect(html).toContain(`--y:${100 - d.dropcon.score}`);
     // The readout starts at NOW, from the same function the browser runs.
     expect(html).toMatch(/data-r-when[^>]*>NOW · 26 SEP 12:00Z</);
@@ -137,12 +137,8 @@ describe('DropconScope: the level and its week as one instrument', () => {
     const data = scopeData(html);
     expect(data).toMatchObject({ history: 'unavailable', pts: [] });
     expect(data.live).toMatchObject({ state: 'ok', score: d.dropcon.score, level: d.dropcon.level });
-    // The big number is the live reading all the same.
-    expect(html).toMatch(
-      new RegExp(
-        `class="dc-num head plate" data-num data-plate="${d.dropcon.level}"[^>]*>${d.dropcon.level}<`,
-      ),
-    );
+    // The NOW tag is the live reading all the same.
+    expect(html).toMatch(new RegExp(`class="sc-nowtag tiny"[^>]*>NOW <b[^>]*>${d.dropcon.level}</b>`));
   });
 
   it('draws an old version as a labelled hatch, never a line, and calls a young v3 line what it is', async () => {
@@ -210,9 +206,15 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(html).toMatch(new RegExp(`class="sc-flag[^"]*"[^>]*>.*${release.name}`, 's'));
     expect(html).toContain('<caption class="sr-only"');
     expect(html).toMatch(
-      /data-r-near[^>]*>1 frontier launch in 7 days · latest ✱ Claude Opus 5\.5 \(Anthropic\), 22 Sep</,
+      /data-r-near[^>]*>1 frontier launch in 7 days · latest A Claude Opus 5\.5 \(Anthropic\), 22 Sep</,
     );
     expect(scopeData(html).launches).toHaveLength(d.landed.releases.length);
+    // Each launch carries its line's bullet: the letter in the readout and on the flag, in the line's colour.
+    const b = lineBullet('anthropic');
+    expect(scopeData(html).launches[0].slice(3)).toEqual([b.letter, b.fill]);
+    expect(html).toMatch(
+      new RegExp(`class="sc-flag[^"]*"[^>]*><i style="--c:${b.fill};--fg:${b.ink}"[^>]*>A</i>`),
+    );
   });
 
   it('says the launch listings are offline instead of drawing a week with no launches', async () => {
@@ -223,21 +225,18 @@ describe('DropconScope: the level and its week as one instrument', () => {
     expect(scopeData(html).launchesOk).toBe(false);
   });
 
-  it('states the score-to-level rule beside the number', async () => {
+  it('leaves the score-to-level rule to the service status, which prints it for a reading only', async () => {
     const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
-    expect(html).toMatch(
+    expect(html).not.toContain('sc-eq');
+    const status = await render(ServiceStatus, { c: d.dropcon });
+    expect(status).toMatch(
       new RegExp(
-        `class="sc-eq-score"[^>]*><b[^>]*>${d.dropcon.score}</b><span class="of"[^>]*>/100</span> LEAD SCORE</span>`,
+        `Level <b class="ss-num"[^>]*data-num[^>]*>${d.dropcon.level}</b> of 5 · lead score <b class="mono"[^>]*>${d.dropcon.score}</b>/100`,
       ),
     );
-    expect(html).toContain(`LEVEL ${d.dropcon.level} OF 5</span>`);
-    // Stamped on the number itself, so the first screen says it wherever the number is.
-    expect(html).toMatch(
-      /class="sc-eq-nf stamp hot thunk"[^>]*><span class="sr-only"[^>]*>, <\/span>NOT A FORECAST<\/span>/,
-    );
     for (const inputs of [floorInputs, darkInputs]) {
-      const off = await render(DropconScope, { d: dashboard(inputs), now: NOW });
-      expect(off).not.toContain('sc-eq-nf');
+      const off = await render(ServiceStatus, { c: dashboard(inputs).dropcon });
+      expect(off).not.toContain('lead score');
     }
   });
 
@@ -272,7 +271,7 @@ describe('DropconScope: the level and its week as one instrument', () => {
   });
 });
 
-describe('Dropcon for a first-time reader', () => {
+describe('DROPCON for a first-time reader', () => {
   it('on /about, adds the score up row by row, says plainly it is no forecast and lists the bands', async () => {
     const d = dashboard();
     const html = await render(ScoreDetail, { d });
@@ -298,75 +297,59 @@ describe('Dropcon for a first-time reader', () => {
     expect(html).toContain('Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.');
   });
 
-  it('shows the level, the scale right under the headline, and links to the score and the hottest lab', async () => {
+  it('posts the level above the week, explains the chart plainly and links to how it adds up', async () => {
     const d = dashboard();
-    const html = await render(Dropcon, { d, history: { ok: true, points: [] }, now: NOW });
-    const at = (s: string) => html.indexOf(s);
-    expect(at('dc-headline')).toBeLessThan(at('dc-scale'));
+    const status = await render(ServiceStatus, { c: d.dropcon });
+    expect(status).toContain('href="/about#score"');
+    expect(status).toMatch(/<h2 id="status-title"[^>]*>/);
+    const html = await render(DropconScope, { d, history: { ok: true, points: [] }, now: NOW });
     // The arithmetic is one link away on /about, not on the home page.
     expect(html).not.toContain('dc-drivers');
     expect(html).toContain('href="/about#score"');
-    // The hottest-lab line links to that lab's own page; the lab list keeps the same id for old links.
-    const hot = d.labs[0];
-    expect(html).toContain(`href="/labs/${hot.id}"`);
-    expect(html).toContain(`heat ${hot.heat}`);
-    expect(await render(Labs, { d })).toContain(`id="lab-${hot.id}"`);
-    // Icon glyphs are hidden from the heading's accessible name.
-    expect(html).toContain('<span aria-hidden="true" data-astro-cid');
-    expect(html).toMatch(/<h2[^>]*><span aria-hidden="true"[^>]*>▣<\/span>DROPCON LEVEL<\/h2>/);
-    // One instrument: the number, the rule that sets it, the week that led to it, and what it is.
-    expect(html).toContain('LEAD SCORE');
-    expect(html).toContain('WHAT IS THIS?');
-    expect(html).toContain('the line is that');
-    // A phone shows the short form above its readout.
-    expect(html).toContain('The line is the 0–100 lead score over time');
-    expect(html).toMatch(/It is a lead score, <b class="nf"[^>]*>NOT A FORECAST<\/b>/);
-    expect(html).toContain('context only, the score has not been shown to predict launches');
-    expect(at('dc-name')).toBeLessThan(at('dc-num'));
-    expect(at('dc-num')).toBeLessThan(at('sc-plot'));
-    expect(html).not.toContain('DROPCON HISTORY');
-    expect(html).not.toContain('COMPOSITE HEAT');
+    // What the reader is looking at, long and short, and what it is not.
+    expect(html).toContain(
+      "The line is DROPCON's lead score, 0 to 100, read hourly from Polymarket's release odds",
+    );
+    expect(html).toContain('The line is the 0–100 lead score; its band sets the level, 5 quiet to 1 surge.');
+    expect(html).toContain('A lead score, not a forecast.');
+    expect(html).toContain("a line's launch, first listed on OpenRouter: context, not scored");
+    expect(html.indexOf('dc-scale')).toBeLessThan(html.indexOf('dc-what'));
+    // The network keeps each line's old anchor id for old links.
+    expect(await render(Labs, { d })).toContain(`id="lab-${d.labs[0].id}"`);
   });
 
-  it('shows a floor muted, named FLOOR (ODDS OFFLINE), with dimmed segments and no lit level', async () => {
+  it('shows a floor as a signal failure, with dimmed segments and no lit level', async () => {
     const d = dashboard(floorInputs);
-    const html = await render(Dropcon, { d, now: NOW });
     expect(d.dropcon.state).toBe('floor');
-    expect(html).toMatch(/class="section wrap reveal dc-hero"[^>]*style="--lvl:var\(--muted\)"/);
-    // A floor is not a reading: no second plate, no misprint.
-    expect(html).toMatch(/class="dc-num head" data-num[^>]*>5</);
-    expect(html).toContain('FLOOR (ODDS OFFLINE)');
+    const status = await render(ServiceStatus, { c: d.dropcon });
+    expect(status).toContain('SIGNAL FAILURE');
+    expect(status).toMatch(/data-num[^>]*>5</);
+    expect(status).toContain('class="ss is-offline"');
+    expect(status).toContain('aria-label="DROPCON floor: 5 of 5 with the odds offline"');
+    const html = await render(DropconScope, { d, now: NOW });
     expect(html).toContain('class="sc-dot"');
-    expect(html).toMatch(/<b class="word"[^>]*>FLOOR<\/b> ODDS OFFLINE/);
-    expect(html).toContain('NOT A MEASUREMENT');
     expect(html).toMatch(/data-r-what[^>]*>floor · odds offline, not measured</);
-    expect(html).not.toContain('QUIET ORBIT</div>');
-    expect(html).toContain('FLOOR · ODDS OFFLINE');
     expect(html).not.toMatch(/class="seg on/);
     expect(html.match(/class="seg dim/g)).toHaveLength(5);
     expect(html).toContain('class="seg dim floor l5"');
     expect(html).toContain('aria-label="DROPCON floor: 5 of 5 with the odds offline"');
     expect(dropconTitle(d.dropcon)).toBe('DROPCON 5 · FLOOR (odds offline) — whenmodel');
-    // The hottest-lab line and every lab card say the odds are offline, never "no market".
-    expect(html).toContain('odds offline; last listed Claude Opus 5.5');
-    expect(html).not.toContain('no market;');
+    // Every line says its odds are offline, never "no timetable".
     const labs = await render(Labs, { d });
-    expect(labs).toContain('ODDS OFFLINE · POLYMARKET UNREACHABLE');
-    expect(labs).not.toContain('NO POLYMARKET RELEASE MARKET');
-    expect(labs).toContain('title="odds offline"');
+    expect(labs).toContain('odds offline');
+    expect(labs).not.toContain('no timetable');
   });
 
   it('shows "?" and NO SIGNAL with every segment dimmed, and titles the page DROPCON — NO SIGNAL', async () => {
     const d = dashboard(darkInputs);
-    const html = await render(Dropcon, { d, now: NOW });
-    expect(html).toMatch(/class="section wrap reveal dc-hero"[^>]*style="--lvl:var\(--muted\)"/);
-    expect(html).toMatch(/class="dc-num head" data-num[^>]*>\?</);
+    const status = await render(ServiceStatus, { c: d.dropcon });
+    expect(status).toMatch(/data-num[^>]*>\?</);
+    expect(status).toContain('NO SIGNAL');
+    const html = await render(DropconScope, { d, now: NOW });
     expect(html).not.toContain('class="sc-dot');
     expect(html).not.toContain('class="sc-nowtag');
-    expect(html).toContain('NO SIGNAL');
     expect(html).toMatch(/data-r-what[^>]*>no signal · odds and listings down</);
     expect(html.match(/class="seg dim l\d"/g)).toHaveLength(5);
-    expect(html).toContain('No lab data: Polymarket and OpenRouter are both unreachable.');
     const page = await container.renderToString(Layout, {
       props: { title: dropconTitle(d.dropcon), description: 'd' },
       slots: { default: '<p>x</p>' },
@@ -375,53 +358,53 @@ describe('Dropcon for a first-time reader', () => {
   });
 });
 
-describe('Labs cards', () => {
-  it('flags each lab with the lead signals that name it, linked to the early warnings', async () => {
+describe('The network and a line page', () => {
+  it('flags each line with the lead signals that name it, linked to the early warnings', async () => {
     const d = { ...dashboard(), earlyWarnings: warnings() };
     const html = await render(Labs, { d });
-    const card = (id: string) =>
-      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</details>', html.indexOf(`id="lab-${id}"`)));
-    expect(card('openai')).toMatch(/class="flag leak" href="\/radar#ew-leaks"[^>]*>LEAK ×2</);
-    expect(card('openai')).toMatch(/class="flag stream" href="\/radar#ew-streams"[^>]*>STREAM 5H</);
-    expect(card('openai')).toMatch(/class="flag keynote" href="\/radar#ew-events"[^>]*>KEYNOTE 70H</);
-    expect(card('qwen')).toMatch(/class="flag arch" href="\/radar#ew-arch"[^>]*>ARCH</);
-    expect(card('anthropic')).not.toContain('class="flag');
-    // A stealth slot has no lab: it is counted once, in the section head, never on a card.
-    expect(html).toContain('1 STEALTH SLOT · UNATTRIBUTED');
+    const row = (id: string) =>
+      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</li>', html.indexOf(`id="lab-${id}"`)));
+    expect(row('openai')).toMatch(/class="flag" href="\/radar#ew-leaks"[^>]*>LEAK ×2</);
+    expect(row('openai')).toMatch(/class="flag" href="\/radar#ew-streams"[^>]*>STREAM 5H</);
+    expect(row('openai')).toMatch(/class="flag" href="\/radar#ew-events"[^>]*>KEYNOTE 70H</);
+    expect(row('qwen')).toMatch(/class="flag" href="\/radar#ew-arch"[^>]*>ARCH</);
+    expect(row('anthropic')).not.toContain('class="flag');
+    // A stealth slot has no line: it is counted once, under the list, never on a row.
+    expect(html).toContain('1 unmarked train on the network');
   });
 
-  it('labels every read trusted or extrapolated with its bracket, and gives the histogram a text alternative', async () => {
+  it("names how a line's 7-day read was taken, and gives its tempo a text alternative", async () => {
     const d = dashboard();
-    const html = await render(Labs, { d, now: new Date(NOW) });
-    const anthropic = html.slice(html.indexOf('id="lab-anthropic"'));
-    const read = (h: string) =>
-      new RegExp(
-        `class="read trusted"[^>]*><dt[^>]*>${h}</dt><dd[^>]*><span class="trust"[^>]*>trusted</span> <span class="bracket"[^>]*>([^<]*)<`,
-      ).exec(anthropic)?.[1];
-    // Sonnet's only rung is Sep 30: 72 hours reads toward it, 7 days is past it and held there.
-    expect(read('72H')).toBe('now → Sep 30');
-    expect(read('7D')).toBe('at least, held Sep 30');
+    const html = await render(LabDetail, { d, p: labPage(d, 'anthropic')!, now: new Date(NOW) });
+    // Sonnet's only rung is Sep 30: 7 days is past it and held there, a floor.
+    expect(html).toContain('At least: held at its 30 Sep stop.');
     expect(html).toMatch(
       /class="hist" role="img" aria-label="Models listed on OpenRouter per month: Oct 2025 \d+, [^"]*Sep 2026 \d+\."/,
     );
+    // The strip map: now, the Sep 30 stop, and the 72-hour tick between them.
     expect(html).toMatch(
-      /<h2 class="lab-name"[^>]*><a class="lab-link" href="\/labs\/anthropic"[^>]*>Anthropic<\/a><\/h2>/,
+      /<ol class="strip"[^>]*aria-label="Timetable for Next Claude Sonnet: chance it has shipped by each stop"/,
+    );
+    expect(html).toMatch(/class="d"[^>]*>Wed 30 Sep</);
+    expect(html).toMatch(/class="d"[^>]*>72 hours</);
+    const net = await render(Labs, { d });
+    expect(net).toMatch(
+      /class="lrow"[^>]*href="\/labs\/anthropic"[\s\S]*?<h3 class="lab-name"[^>]*>Anthropic line<\/h3>/,
     );
   });
 
-  it('says "NO POLYMARKET RELEASE MARKET" only when the odds are up, and "1 LAUNCH" in the singular', async () => {
+  it('says "no timetable" only when the odds are up, and counts arrivals per 30 days', async () => {
     const html = await render(Labs, { d: dashboard() });
-    expect(html).toContain('NO POLYMARKET RELEASE MARKET');
-    expect(html).not.toContain('ODDS OFFLINE');
+    expect(html).toContain('no timetable');
+    expect(html).not.toContain('odds offline');
     const anthropic = html.slice(
       html.indexOf('id="lab-anthropic"'),
-      html.indexOf('</details>', html.indexOf('id="lab-anthropic"')),
+      html.indexOf('</li>', html.indexOf('id="lab-anthropic"')),
     );
-    expect(anthropic).toMatch(/>1 LAUNCH\/30D</);
-    expect(anthropic).not.toContain('1 LAUNCHES');
+    expect(anthropic).toMatch(/ · 1\/30d</);
   });
 
-  it('marks an extrapolated read by its tilde and class, and names a 30-day read from another family', async () => {
+  it("never prints an extrapolated read on the network, and keeps another family off the line's strip", async () => {
     const rung = (label: string, deadline: string, yes: number) => ({
       ...sonnet.outcomes[0],
       label,
@@ -459,56 +442,36 @@ describe('Labs cards', () => {
     expect(g.odds?.family).toBe('Next Google Gemini Flash-Lite');
     expect(g.odds?.p30.family).toBe('Gemini 4.0');
     expect(g.odds?.p7.family).toBeUndefined();
-    const html = await render(Labs, { d, now: new Date(NOW) });
-    const card = (id: string) =>
-      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</details>', html.indexOf(`id="lab-${id}"`)));
-    expect(card('google')).toMatch(
-      /<dt[^>]*>30D<\/dt><dd[^>]*>.*<span class="rfam"[^>]*> · Gemini 4\.0<\/span>/,
+    const html = await render(Labs, { d });
+    const row = (id: string) =>
+      html.slice(html.indexOf(`id="lab-${id}"`), html.indexOf('</li>', html.indexOf(`id="lab-${id}"`)));
+    expect(row('xai')).toContain('times unavailable');
+    expect(row('xai')).not.toMatch(/\d+%/);
+    // Google's 30-day read is Gemini 4.0's: its strip shows no 30-day tick; Gemini 4.0 is another service.
+    const page = await render(LabDetail, { d, p: labPage(d, 'google')!, now: new Date(NOW) });
+    expect(page).not.toMatch(/class="d"[^>]*>30 days</);
+    expect(page).toMatch(
+      /class="sn"[^>]*>Gemini 4\.0<\/span><span class="sp mono"[^>]*>79%<\/span><span class="sw mono"[^>]*>by 31 Oct</,
     );
-    expect(card('google')).toMatch(/title="Gemini 4\.0: /);
-    expect(card('google')).not.toMatch(/<dt[^>]*>7D<\/dt><dd[^>]*>[^\n]*?rfam[^\n]*?<dt[^>]*>30D/);
-    // Extrapolated: "~" and the extrap class (muted in CSS, never dimmed by opacity).
-    expect(card('xai')).toMatch(/class="metric-value extrap"[^>]*>~\d+%</);
+    // A line on a thin market says so on its own page, and keeps the extrapolated read small.
+    const xai = await render(LabDetail, { d, p: labPage(d, 'xai')!, now: new Date(NOW) });
+    expect(xai).toMatch(/class="big none-word"[^>]*>Times unavailable</);
+    expect(xai).toContain('Extrapolated, not scored: ~');
   });
 
-  it('ranks labs as closed rows: the summary answers, the fold holds the reads, tempo, handles and market link', async () => {
+  it('lists every line as one row, in heat order, each with its own bullet', async () => {
     const d = dashboard();
     const html = await render(Labs, { d });
-    expect(
-      html.match(
-        /<li class="lab ink-(?:pink|blue|ink)"[^>]*><details class="lab-fold"[^>]*><summary class="lab-row"/g,
-      ),
-    ).toHaveLength(d.labs.length);
-    // Each row prints in its lab's riso ink, and carries the lab's glyph so two labs in one ink still differ.
-    for (const lab of d.labs)
+    const ids = [...html.matchAll(/<li class="line"[^>]*id="lab-([a-z]+)"/g)].map((m) => m[1]);
+    expect(ids).toEqual(d.labs.map((l) => l.id));
+    for (const lab of d.labs) {
+      const b = lineBullet(lab.id);
       expect(html).toMatch(
-        new RegExp(
-          `<li class="lab ink-${labInk(lab.id)}"[^>]*id="lab-${lab.id}"[\\s\\S]*?class="lab-chip"[^>]*>${lab.glyph}<`,
-        ),
+        new RegExp(`id="lab-${lab.id}"[\\s\\S]*?style="--c:${b.fill};--fg:${b.ink}"[^>]*>${b.letter}<`),
       );
-    // Closed by default, so ten labs read as ten lines, ranked from 01 in heat order.
-    expect(html).not.toMatch(/<details class="lab-fold"[^>]*open/);
-    expect(html).toMatch(/class="rank"[^>]*aria-hidden="true"[^>]*>01</);
-    const anthropic = html.slice(
-      html.indexOf('id="lab-anthropic"'),
-      html.indexOf('</details>', html.indexOf('id="lab-anthropic"')),
-    );
-    const [summary, more] = anthropic.split('</summary>');
-    for (const part of ['class="lab-name"', 'class="lab-odds"', 'DROP ≤7D', 'heat-line'])
-      expect(summary).toContain(part);
-    for (const part of ['class="hist"', 'class="reads"', 'class="latest"']) {
-      expect(summary).not.toContain(part);
-      expect(more).toContain(part);
     }
-    for (const part of [
-      'metric-label tempo',
-      'class="hist"',
-      'class="x"',
-      'class="mkt"',
-      'class="reads"',
-      'class="latest"',
-    ])
-      expect(anthropic).toContain(part);
+    // No folds: a row is one line of facts and a link to the line's page.
+    expect(html).not.toContain('<details');
   });
 });
 
@@ -582,9 +545,9 @@ describe('Signals rows and pills', () => {
       ),
     });
     const announcements = (html: string) =>
-      /LAB ANNOUNCEMENTS <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
+      /Lab announcements <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
     const stories = (html: string) =>
-      /HACKER NEWS LAUNCH STORIES <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
+      /Hacker News launch stories <span class="count"[^>]*>([^<]*)</.exec(html)?.[1];
     // HN's launch search down, every lab feed up: no feed is down.
     const hn = await render(Signals, { d: withSources([SOURCE.hnLaunches]), now: NOW });
     expect(announcements(hn)).toBe('0');

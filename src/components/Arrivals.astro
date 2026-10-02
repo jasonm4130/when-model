@@ -1,0 +1,68 @@
+---
+/**
+ * Recent arrivals: frontier launches first listed on OpenRouter in the last 7 days, newest first, each
+ * with its line's bullet. Context, never scored. The rest wait behind one fold.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { SOURCE } from '../domain/sources';
+import { dayLabel } from '../ui/departures';
+import { sourcePill } from '../ui/panels';
+import Bullet from './Bullet.astro';
+import Pill from './Pill.astro';
+interface Props {
+  d: Dashboard;
+  now?: number;
+  /** Rows before the fold. */
+  show?: number;
+  /** The heading level: an h2 on the home page, an h3 inside a /radar section. */
+  level?: 2 | 3;
+}
+const { d, now = Date.now(), show = 3, level = 2 } = Astro.props;
+const releases = d.landed.releases;
+const built = Date.parse(d.generatedAt);
+const pill = sourcePill(d.sources, [SOURCE.openrouter], d.generatedAt, now);
+const arr = (iso: string) => `Arr. ${dayLabel(Date.parse(iso), built)} ${iso.slice(11, 16)}Z`;
+const H = level === 2 ? 'h2' : 'h3';
+---
+<section class="arrivals" aria-labelledby="arrivals-title">
+  <div class="sec">
+    <H id="arrivals-title">Recent arrivals</H>
+    <Pill pill={pill} />
+  </div>
+  {releases.length === 0 && (
+    <p class="empty">{pill.state === 'down' ? 'OpenRouter is unreachable, so arrivals are unknown right now.' : 'No frontier arrivals in the last 7 days.'}</p>
+  )}
+  <ol class="arr">
+    {releases.slice(0, show).map((r) => (
+      <li>
+        <Bullet id={r.labId ?? ''} name={r.lab} />
+        <div><a class="n" href={r.models[0]?.url ?? '#'} target="_blank" rel="noopener">{r.name}</a><p class="t mono">{arr(r.firstListedAt)} · {r.lab}</p></div>
+      </li>
+    ))}
+  </ol>
+  {releases.length > show && (
+    <details class="fold">
+      <summary class="fold-summary">{releases.length - show} more</summary>
+      <ol class="arr">
+        {releases.slice(show).map((r) => (
+          <li>
+            <Bullet id={r.labId ?? ''} name={r.lab} />
+            <div><a class="n" href={r.models[0]?.url ?? '#'} target="_blank" rel="noopener">{r.name}</a><p class="t mono">{arr(r.firstListedAt)} · {r.lab}</p></div>
+          </li>
+        ))}
+      </ol>
+    </details>
+  )}
+  <p class="foot-note">First listed on OpenRouter. Shown, not scored.</p>
+</section>
+<style>
+  .arr li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--s4); padding: var(--s4) 0; border-bottom: 1px solid var(--rule-soft); }
+  .n { font-size: var(--t-md); line-height: 28px; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+  .t { font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .foot-note { margin-top: var(--s3); font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
+  @media (max-width: 640px) {
+    .arr li { gap: var(--s3); padding: var(--s3) 0; }
+    .n { font-size: var(--t-base); line-height: 24px; }
+    .t { font-size: var(--t-xs); line-height: 16px; }
+  }
+</style>

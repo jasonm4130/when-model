@@ -317,18 +317,18 @@ describe('backtest page', async () => {
     for (const anchor of ['id="trap-her"', 'id="seven-day"', 'id="negative-results"'])
       expect(html).toContain(anchor);
     // The site's tab strip leads back to the dashboard and marks this page as the current one.
-    expect(html).toMatch(/<a class="tab" href="\/"[^>]*>Home</);
+    expect(html).toMatch(/<a class="tab" href="\/"[^>]*>Departures</);
     expect(html).toMatch(/<a class="tab on" href="\/backtest" aria-current="page"/);
     // The page wears the backtest footer: the pull time and the rebuild.
     const footer = html.slice(html.indexOf('<footer'));
-    expect(footer).toContain(`DATA PULLED ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
+    expect(footer).toContain(`Data pulled ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
     expect(footer).toContain('href="#reproduce"');
     expect(footer).not.toContain('EDGE-CACHED');
   });
 
   it('opens on the question, the method and the headline results, all from the replay and the shipped constants', async () => {
     const html = text(await container.renderToString(BacktestPage));
-    const hero = html.slice(html.indexOf('BACKTEST'), html.indexOf("WHAT THIS CAN'T DO"));
+    const hero = html.slice(html.indexOf('Track record'), html.indexOf("WHAT THIS CAN'T DO"));
     expect(hero).toContain('Can public signals see a frontier model launch coming?');
     expect(hero).toContain(
       `fitted on the first ${FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next ${FORECAST_CONSTANTS.testedOn.events}`,
@@ -587,7 +587,7 @@ describe('site copy and links', async () => {
 
   it('never says anything but the markets feeds the level (FAQ and timeline)', async () => {
     const html = text(await container.renderToString(History));
-    const faq = html.slice(html.indexOf('FREQUENTLY ASKED QUESTIONS'));
+    const faq = html.slice(html.indexOf('Questions riders ask'));
     expect(faq).toContain('Its headline level, DROPCON, reads Polymarket release odds only.');
     expect(faq).toContain('are shown beside it with their track records and never move it');
     expect(html).not.toMatch(

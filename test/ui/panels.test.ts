@@ -9,7 +9,6 @@ import SourceHealth from '../../src/components/SourceHealth.astro';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { FeedItem, FeedSource } from '../../src/domain/feed';
-import { LABS } from '../../src/domain/lab';
 import type { Market } from '../../src/domain/market';
 import { FEED_SOURCE_NAME, SOURCE } from '../../src/domain/sources';
 import {
@@ -22,7 +21,6 @@ import {
   STALE_AFTER_MS,
   asOfMs,
   dropPrice,
-  labInk,
   otherRows,
   releaseRows,
   sourceErrorText,
@@ -231,14 +229,7 @@ describe('panel selections', () => {
     expect(dropPrice(listing(1))).toBe('$1 / $4');
   });
 
-  it('prints every lab in one of the three riso inks, and each ink carries more than one lab (UI-15)', () => {
-    const inks = LABS.map((l) => labInk(l.id));
-    expect(new Set(inks)).toEqual(new Set(['pink', 'blue', 'ink']));
-    // The ink only groups labs; the glyph beside it has to tell them apart.
-    expect(new Set(LABS.map((l) => l.glyph)).size).toBe(LABS.length);
-    expect(labInk('anthropic')).toBe('pink');
-    expect(labInk('google')).toBe('blue');
-    expect(labInk('openai')).toBe('ink');
+  it('names every feed source (UI-15); a line is told apart by its bullet, tested in lines.test.ts', () => {
     for (const source of SOURCES) expect(FEED_LABELS[source]).toBeTruthy();
   });
 });
@@ -259,15 +250,15 @@ describe('panels render', async () => {
     // One fold at every width now: the first MOBILE_MARKETS rows show, the rest wait behind a summary.
     const [before, folded] = html.split('<details class="fold"');
     expect(before.match(/Model \d+ released by/g)).toHaveLength(MOBILE_MARKETS);
-    expect(folded).toContain(`${9 - MOBILE_MARKETS} MORE RELEASE MARKETS`);
-    expect(html).toContain(`${8 - MOBILE_MARKETS} MORE MARKETS`);
+    expect(folded).toContain(`${9 - MOBILE_MARKETS} more release markets`);
+    expect(html).toContain(`${8 - MOBILE_MARKETS} more markets`);
     // A single yes/no market answers "Yes" instead of repeating its question (UI-12).
     // Odds are toned by class (hi / mid / lo), never by a lab colour inline.
     expect(html).toMatch(/<b class="(hi|mid|lo)"[^>]*>37%<\/b> Yes/);
     expect(html).not.toMatch(/<b[^>]*style="color/);
-    // The title row is a grid: dot, title, volume, whatever wraps.
+    // The title row is a grid: the line's bullet (or a plain ring for no line), title, volume.
     expect(html).toMatch(
-      /class="mtitle"[^>]*><span class="mdot"[^>]*aria-hidden="true"[^>]*><\/span><span class="mname"/,
+      /class="mtitle"[^>]*>(?:<span class="b sm"[^>]*role="img"[^>]*aria-label="[^"]+ line"[^>]*>[A-Z]<\/span>|<span class="mdot"[^>]*aria-hidden="true"[^>]*><\/span>)<span class="mname"/,
     );
   });
 
@@ -333,8 +324,8 @@ describe('panels render', async () => {
     const html = await container.renderToString(Feed, { props: { d } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · 6 FEEDS</);
     // Sources are named, not colour-coded: the lab palette was tuned for the old dark page.
-    expect(html).toMatch(/class="src tiny"[^>]*>HN</);
-    expect(html).toMatch(/class="src tiny"[^>]*>ANTHROPIC</);
+    expect(html).toMatch(/class="src"[^>]*>HN</);
+    expect(html).toMatch(/class="src"[^>]*>ANTHROPIC</);
     expect(html).not.toContain('style="color:');
     const [shown, folded] = html.split('<details class="fold"');
     expect(shown.match(/class="row item/g)).toHaveLength(MOBILE_FEED);
@@ -378,18 +369,18 @@ describe('panels render', async () => {
       if (key === 'ledger') expect(disclaimer).not.toContain(`>${name}<`);
       else expect(disclaimer).toContain(`>${name}</a>`);
     }
-    expect(disclaimer).toContain('OPERATIONAL DISCLAIMER');
+    expect(disclaimer).toMatch(/<h2 id="disclaimer-title"[^>]*>Disclaimer</);
     expect(disclaimer).toContain('id="disclaimer"');
 
     const html = await container.renderToString(Footer, { props: { generatedAt: GENERATED } });
-    expect(html).toContain('GENERATED 2026-09-19 12:00:00Z');
+    expect(html).toMatch(/data-synced="2026-09-19T12:00:00[^"]*"[^>]*>19 Sep 12:00:00Z</);
     expect(html).toContain('href="/backtest"');
     expect(html).toContain('href="/about#disclaimer"');
 
     const bt = await container.renderToString(Footer, {
       props: { generatedAt: GENERATED, variant: 'backtest' },
     });
-    expect(bt).toContain('DATA PULLED 2026-09-19 12:00Z');
+    expect(bt).toContain('Data pulled 2026-09-19 12:00Z');
     expect(bt).toMatch(/href="#reproduce"[^>]*><code[^>]*>pnpm backtest</);
     expect(bt).not.toContain('EDGE-CACHED');
     expect(bt).toContain('href="/about#disclaimer"');

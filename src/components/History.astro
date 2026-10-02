@@ -27,7 +27,7 @@ const faq: { q: string; a: string; link?: { href: string; label: string } }[] = 
 ---
 <section class="about-faq" id="faq" aria-labelledby="faq-title">
   <div class="panel-head">
-    <h2 id="faq-title">FREQUENTLY ASKED QUESTIONS</h2>
+    <h2 id="faq-title">Questions riders ask</h2>
   </div>
   <div class="faq">
     {faq.map((f) => (
@@ -40,7 +40,7 @@ const faq: { q: string; a: string; link?: { href: string; label: string } }[] = 
 </section>
 <section class="about-history" id="history" aria-labelledby="vague-title">
   <div class="panel-head">
-    <h2 id="vague-title">A BRIEF HISTORY OF VAGUE-POSTING</h2>
+    <h2 id="vague-title">A brief history of vague-posting</h2>
   </div>
   <ol class="timeline">
     {eras.map((e) => (
@@ -63,9 +63,8 @@ const faq: { q: string; a: string; link?: { href: string; label: string } }[] = 
   @media (min-width: 960px) {
     .timeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
-  .era { border-top: 1px solid var(--ink); padding-top: 14px; }
-  .era-when { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: clamp(40px, 1.4rem + 2.6vw, 64px); line-height: 0.9; text-transform: uppercase; color: var(--ink); }
-  .era:last-child .era-when { color: var(--accent); }
+  .era { border-top: 2px solid var(--ink); padding-top: var(--s3); }
+  .era-when { font-size: var(--t-xl); line-height: 44px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
   .era-title { margin: 14px 0 10px; font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 700; font-stretch: 112.5%; letter-spacing: 0.1em; line-height: 1.35; text-transform: uppercase; }
   .era p { font-size: var(--fs-md); line-height: 1.5; color: var(--ink); }
   .era-link { display: inline-block; margin-top: 12px; }

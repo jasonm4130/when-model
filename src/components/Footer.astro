@@ -1,29 +1,74 @@
 ---
+/**
+ * Every page's foot: the one-line disclaimer and a link to the full one, when the data was made and
+ * when the page checks again, the network's bullets as a map of every line, and the way on.
+ */
+import type { Dashboard } from '../domain/dashboard';
+import { LABS } from '../domain/lab';
+import { dayLabel } from '../ui/departures';
+import { labPath } from '../ui/site';
+import Bullet from './Bullet.astro';
 interface Props {
   /** When the data on this page was produced: the dashboard build, or the backtest's raw pulls. */
   generatedAt: string;
   /** `backtest` says how to rebuild the page's data. */
   variant?: 'dashboard' | 'backtest';
+  /** The dashboard, for the counts and the refresh countdown. */
+  d?: Dashboard;
 }
-const { generatedAt, variant = 'dashboard' } = Astro.props;
+const { generatedAt, variant = 'dashboard', d } = Astro.props;
 const REPO = 'https://github.com/jasonm4130/when-model';
-const stamp = generatedAt.replace('T', ' ').slice(0, variant === 'backtest' ? 16 : 19);
+/** The client polls /api/dashboard.json on this cadence; the Header's script runs the countdown. */
+const REFRESH_SECONDS = 300;
+const t = Date.parse(generatedAt);
+// The backtest cites its pull to the minute, as the raw files name it; a dashboard build to the second.
+const stamp = !Number.isFinite(t)
+  ? generatedAt
+  : variant === 'backtest'
+    ? `${generatedAt.replace('T', ' ').slice(0, 16)}Z`
+    : `${dayLabel(t, t, false)} ${generatedAt.slice(11, 19)}Z`;
+const ok = d ? d.sources.filter((s) => s.ok).length : 0;
 ---
-<footer class="wrap foot">
-  <p class="foot-note">For information and entertainment only: prediction market odds are crowd opinion, not lab roadmaps, and whenmodel is not affiliated with any lab. <a href="/about#disclaimer">The full disclaimer and every source</a>.</p>
-  <div class="foot-row">
-    {variant === 'backtest' ? (
-      <span class="muted">DATA PULLED {stamp}Z · REPRODUCE: <a href="#reproduce"><code>pnpm backtest</code></a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
-    ) : (
-      <span class="muted">GENERATED {stamp}Z · EDGE-CACHED · <a href="/api/dashboard.json">dashboard.json</a> · <a href="/backtest">backtest</a> · <a href={REPO} target="_blank" rel="noopener">source</a></span>
-    )}
-    <span class="muted">whenmodel.com · built on Astro + Cloudflare Workers</span>
+<footer class="foot">
+  <div class="wrap foot-grid">
+    <div>
+      <p class="foot-title">Crowd opinion, not a timetable.</p>
+      <p class="foot-note">For information and entertainment only. The level is a hand-weighted lead score read from Polymarket odds; odds are crowd opinion, not lab roadmaps, and whenmodel is not affiliated with any line. <a href="/about#disclaimer">The full disclaimer and every source</a>.</p>
+      {variant === 'backtest' ? (
+        <p class="foot-meta mono">Data pulled {stamp} · reproduce: <a href="#reproduce"><code>pnpm backtest</code></a></p>
+      ) : (
+        <p class="foot-meta mono">
+          <span class="sync">Updated <span data-synced={generatedAt}>{stamp}</span> · next check <span class="next" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
+          {d && <span class="counts"> · {d.labs.length} lines · {ok}/{d.sources.length} sources · {d.markets.length} markets</span>}
+        </p>
+      )}
+    </div>
+    <div>
+      <p class="label">All lines</p>
+      <div class="map">
+        {LABS.map((l) => <Bullet id={l.id} name={l.name} size="lg" href={labPath(l.id)} />)}
+      </div>
+      <nav class="links" aria-label="More">
+        <a href="/markets">Markets</a><a href="/radar">Radar</a><a href="/about#score">How the score works</a><a href="/backtest">Backtest</a><a href="/api/dashboard.json">dashboard.json</a><a href={REPO} target="_blank" rel="noopener">Source</a>
+      </nav>
+      <p class="tag-line">Intel by the weights. Watching the labs so you don't have to.</p>
+    </div>
   </div>
 </footer>
 <style>
-  .foot { margin: var(--s5) auto var(--s5); }
-  .foot-note { padding-top: 16px; border-top: 3px solid var(--ink); }
-  .foot-note { font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); }
-  .foot-row { display: flex; justify-content: space-between; gap: 8px 24px; flex-wrap: wrap; margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--rule-soft); font-family: var(--font-label); font-size: var(--fs-pill); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.06em; }
-  .foot-row code { font-size: 1.05em; letter-spacing: 0; }
+  .foot { border-top: 2px solid var(--rule); }
+  .foot-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--s8); padding-top: var(--s6); padding-bottom: var(--s7); }
+  .foot-title { font-size: var(--t-md); line-height: 28px; font-weight: 800; letter-spacing: -0.01em; }
+  .foot-note { max-width: 60ch; margin-top: var(--s2); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .foot-meta { margin-top: var(--s4); font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
+  .foot-meta .next, .foot-meta span[data-synced] { color: var(--ink); }
+  .label { color: var(--ink); }
+  .map { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+  .map :global(.b) { --d: 36px; }
+  .links { display: flex; flex-wrap: wrap; gap: 0 var(--s4); margin-top: var(--s4); font-size: var(--t-sm); line-height: 20px; font-weight: 500; }
+  .links a { display: inline-flex; align-items: center; min-height: 32px; }
+  .tag-line { margin-top: var(--s3); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  @media (max-width: 900px) {
+    .foot-grid { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
+  }
 </style>

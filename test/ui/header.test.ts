@@ -1,7 +1,9 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, expect, it } from 'vitest';
 import Header from '../../src/components/Header.astro';
-import Labs from '../../src/components/Labs.astro';
+import Footer from '../../src/components/Footer.astro';
+import LabDetail from '../../src/components/LabDetail.astro';
+import { labPage } from '../../src/ui/lab-page';
 import { assembleDashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { Drop } from '../../src/domain/drop';
 import type { Market } from '../../src/domain/market';
@@ -44,10 +46,9 @@ describe('Header', async () => {
       const html = await container.renderToString(Header, { props: { d, view: HOME } });
       expect(html).not.toContain('ticker');
       expect(html).not.toContain('NEW ON OPENROUTER');
-      // "model" prints twice, once as a pink plate out of register; the plate's copy is an attribute, read once.
-      expect(html).toMatch(
-        /<h1 class="wordmark"[^>]*>when<span class="m plate" data-plate="model"[^>]*>model<\/span>/,
-      );
+      // The wordmark is one word, a link home; every page's h1 is on its own sign, never here.
+      expect(html).toMatch(/<a class="wordmark"[^>]*href="\/"[^>]*>whenmodel</);
+      expect(html).not.toContain('<h1');
     }
   });
 
@@ -78,16 +79,17 @@ describe('Header', async () => {
     }
   });
 
-  it('names the site in an h1 only on the home page, and links home from every other page', async () => {
+  it("never takes the h1 (each page's sign holds it), and links home from every page", async () => {
     const home = await container.renderToString(Header, { props: { d: dashboard(), view: HOME } });
-    expect(home).toMatch(/<h1 class="wordmark"/);
+    expect(home).not.toContain('<h1');
+    expect(home).toMatch(/<a class="tab on" href="\/" aria-current="page"[^>]*>Departures</);
     const labs = await container.renderToString(Header, {
       props: { d: dashboard(), view: { page: 'labs' } },
     });
     expect(labs).not.toContain('<h1');
     expect(labs).toMatch(/<a class="wordmark"[^>]*href="\/"/);
     expect(labs).toMatch(/<a class="tab on" href="\/labs" aria-current="page"/);
-    // A lab's page sits in the Labs section: marked current, but not as the page itself.
+    // A line's page sits in the Lines section: marked current, but not as the page itself.
     const lab = await container.renderToString(Header, {
       props: { d: dashboard(), view: { page: 'lab', lab: 'anthropic' } },
     });
@@ -107,13 +109,19 @@ describe('Header', async () => {
     expect(missing).not.toContain('aria-current');
   });
 
-  it('gives the statusbar the mobile-only hooks that hide everything but STATUS and the clock (UI-06)', async () => {
-    const html = await container.renderToString(Header, { props: { d: dashboard(), view: HOME } });
-    expect(html).toContain('class="tiny muted counts"');
-    expect(html).toContain('class="tiny muted sync"');
-    // The clock already ends in Z, so a separate UTC label only costs width.
-    expect(html).toMatch(/data-clock[^>]*>\d{2}:\d{2}:\d{2}Z</);
+  it('keeps the header to status and clock, and moves the counts and the refresh countdown to the footer (UI-06)', async () => {
+    const d = dashboard();
+    const html = await container.renderToString(Header, { props: { d, view: HOME } });
+    expect(html).not.toContain('class="counts"');
+    expect(html).not.toContain('data-refresh=');
+    // The clock already ends in Z, so a separate UTC label only costs width; the day hides on narrow screens.
+    expect(html).toMatch(/data-clock[^>]*>\d{2}:\d{2}Z</);
+    expect(html).toMatch(/class="day"[^>]*>Sat 19 Sep · </);
     expect(html).not.toMatch(/>UTC</);
+    const foot = await container.renderToString(Footer, { props: { d, generatedAt: d.generatedAt } });
+    expect(foot).toMatch(/class="counts"[^>]*> · \d+ lines · \d+\/\d+ sources · \d+ markets</);
+    expect(foot).toMatch(/data-synced="2026-09-19T12:00:00/);
+    expect(foot).toMatch(/data-refresh="300"[^>]*>5:00</);
   });
 
   it('reports a degraded source in the status', async () => {
@@ -147,13 +155,13 @@ describe('Header', async () => {
         view: HOME,
       },
     });
-    expect(html).toContain('STATUS: DEGRADED');
-    expect(html).toMatch(/status-live warn/);
-    // Past its last rung the read is held there, a floor, and the lab list says so where the ticker used to.
-    const labs = await container.renderToString(Labs, {
-      props: { d: dashboard({ markets: { name: 'Polymarket', data: [release], ok: false, error: 'down' } }) },
+    expect(html).toMatch(/status-live warn[^>]*>(?:<span[^>]*>Sources <\/span>)?DEGRADED</);
+    // Past its last rung the read is held there, a floor, and the line's page says so under its odds.
+    const held = dashboard({ markets: { name: 'Polymarket', data: [release], ok: false, error: 'down' } });
+    const page = await container.renderToString(LabDetail, {
+      props: { d: held, p: labPage(held, 'openai')! },
     });
-    expect(labs).toMatch(/class="bracket"[^>]*>at least, held Sep 24</);
+    expect(page).toContain('At least: held at its 24 Sep stop.');
   });
 
   it('counts a YouTube outage but keeps the status OPERATIONAL, since the feeds are best-effort', async () => {
@@ -161,18 +169,20 @@ describe('Header', async () => {
     const html = await container.renderToString(Header, {
       props: { d: dashboard({ broadcasts: youtubeDown }), view: HOME },
     });
-    expect(html).toContain('STATUS: OPERATIONAL');
-    expect(html).toMatch(/5\/6(?:<!--[^>]*-->)?\s*SOURCES/);
+    expect(html).toMatch(/status-live ok[^>]*>(?:<span[^>]*>Sources <\/span>)?OPERATIONAL</);
+    const d = dashboard({ broadcasts: youtubeDown });
+    const foot = await container.renderToString(Footer, { props: { d, generatedAt: d.generatedAt } });
+    expect(foot).toMatch(/5\/6(?:<!--[^>]*-->)?\s*sources/);
     const bothDown = dashboard({
       broadcasts: youtubeDown,
       drops: { name: 'OpenRouter', data: [], ok: false, error: 'down' },
     });
-    expect(await container.renderToString(Header, { props: { d: bothDown, view: HOME } })).toContain(
-      'STATUS: DEGRADED',
+    expect(await container.renderToString(Header, { props: { d: bothDown, view: HOME } })).toMatch(
+      /status-live warn[^>]*>(?:<span[^>]*>Sources <\/span>)?DEGRADED</,
     );
   });
 
-  it('has the lab list name a read between near rungs plainly and a bucket-capped read as a ceiling', async () => {
+  it("has a line's page name a read between near rungs plainly and a bucket-capped read as a ceiling", async () => {
     const rung = (label: string, deadline: string, mid: number) => ({
       label,
       yes: mid,
@@ -198,10 +208,13 @@ describe('Header', async () => {
         rung('October 1', '2026-10-02T03:59:59.000Z', 0.9),
       ],
     };
-    const plain = await container.renderToString(Labs, {
-      props: { d: dashboard({ markets: { name: 'Polymarket', data: [ladder], ok: true } }) },
+    const one = dashboard({ markets: { name: 'Polymarket', data: [ladder], ok: true } });
+    const plain = await container.renderToString(LabDetail, {
+      props: { d: one, p: labPage(one, 'openai')! },
     });
-    expect(plain).toMatch(/class="bracket"[^>]*>Sep 24 → Oct 1</);
+    expect(plain.replace(/&#39;/g, "'")).toContain(
+      "Read off the market's curve between its 24 Sep and 1 Oct stops.",
+    );
     const day = (d: number, ask: number) => ({
       label: `September ${d}`,
       yes: ask / 2,
@@ -219,10 +232,11 @@ describe('Header', async () => {
       title: 'GPT-6 released on...?',
       outcomes: [19, 20, 21, 22, 23, 24, 25, 26].map((d) => day(d, 0.02)),
     };
-    const capped = await container.renderToString(Labs, {
-      props: { d: dashboard({ markets: { name: 'Polymarket', data: [ladder, buckets], ok: true } }) },
+    const two = dashboard({ markets: { name: 'Polymarket', data: [ladder, buckets], ok: true } });
+    const capped = await container.renderToString(LabDetail, {
+      props: { d: two, p: labPage(two, 'openai')! },
     });
-    expect(capped).toContain('at most: bucket asks');
-    expect(capped).toMatch(/lab-odds[\s\S]*?16%/);
+    expect(capped.replace(/&#39;/g, "'")).toContain("At most: capped by the day buckets' asks.");
+    expect(capped).toMatch(/class="big"[^>]*>(?:<span[^>]*>)?16<small/);
   });
 });
