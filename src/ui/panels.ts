@@ -180,6 +180,21 @@ export function sourceErrorText(error: string | undefined): string {
   return short.length > SOURCE_ERROR_MAX ? `${short.slice(0, SOURCE_ERROR_MAX - 1)}…` : short;
 }
 
+/**
+ * Why a source is down, in plain words for /about's health list: never a raw database or HTTP
+ * error. The ledger is retried on the next 15-minute capture; every other source on the next build.
+ * The raw text (`sourceErrorText`) goes in the row's title for whoever wants it.
+ */
+export function sourceStatusText(name: string, error: string | undefined): string {
+  const retry = /ledger/i.test(name) ? 'retrying each capture' : 'retrying each build';
+  const e = error ?? '';
+  const status = /^(\d{3})\b/.exec(e)?.[1];
+  if (/time(d)?\s?out|abort/i.test(e)) return `timed out; ${retry}`;
+  if (status) return `${status.startsWith('5') ? 'answered with an error' : 'refused the request'}; ${retry}`;
+  if (/pars|valid|json|xml|unexpected/i.test(e)) return `sent something unreadable; ${retry}`;
+  return `unavailable; ${retry}`;
+}
+
 /** True when the named source answered this build; a missing result counts as down. */
 export function sourceOk(health: readonly SourceHealth[], name: string): boolean {
   return health.some((s) => s.name === name && s.ok);

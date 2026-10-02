@@ -24,6 +24,7 @@ import {
   otherRows,
   releaseRows,
   sourceErrorText,
+  sourceStatusText,
   sourcePill,
   stealthIds,
 } from '../../src/ui/panels';
@@ -121,6 +122,25 @@ function inputs(overrides: Partial<DashboardInputs> = {}): DashboardInputs {
   };
 }
 const dashboard = (overrides: Partial<DashboardInputs> = {}) => assembleDashboard(inputs(overrides), NOW);
+
+describe('sourceStatusText', () => {
+  it('says why a source is down in plain words, never the raw error', () => {
+    expect(sourceStatusText('First-seen ledger', 'D1_ERROR: no such table: first_seen: SQLITE_ERROR')).toBe(
+      'unavailable; retrying each capture',
+    );
+    expect(sourceStatusText('Hacker News', 'timeout')).toBe('timed out; retrying each build');
+    expect(sourceStatusText('Polymarket', '503 https://gamma-api.polymarket.com/events')).toBe(
+      'answered with an error; retrying each build',
+    );
+    expect(sourceStatusText('xAI news', '403 https://x.ai/news')).toBe(
+      'refused the request; retrying each build',
+    );
+    expect(sourceStatusText('OpenAI news', 'https://openai.com/news/rss.xml failed validation')).toBe(
+      'sent something unreadable; retrying each build',
+    );
+    expect(sourceStatusText('HF papers', undefined)).toBe('unavailable; retrying each build');
+  });
+});
 
 describe('sourceErrorText', () => {
   it('cuts each URL to its host, keeps a status, and clips at SOURCE_ERROR_MAX', () => {
@@ -359,7 +379,10 @@ describe('panels render', async () => {
     // /about's source health list prints it the same way.
     const health = await container.renderToString(SourceHealth, { props: { d } });
     expect(health).toContain(`${FEED_SOURCE_NAME.anthropic}<span class="muted"`);
-    expect(health).toMatch(/> — 503 · hn\.algolia\.com<\/span>/);
+    // In plain words; the short error is the row's title, for whoever wants it.
+    expect(health).toMatch(
+      /title="503 · hn\.algolia\.com"[^>]*>: answered with an error; retrying each build<\/span>/,
+    );
     expect(health).not.toContain('search_by_date');
   });
 

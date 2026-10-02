@@ -277,21 +277,17 @@ describe('DROPCON for a first-time reader', () => {
     const html = await render(ScoreDetail, { d });
     const at = (s: string) => html.indexOf(s);
     expect(at('dc-now')).toBeLessThan(at('dc-drivers'));
-    expect(html.match(/class="tag lead"[^>]*>LEAD</g)).toHaveLength(d.dropcon.provenance.length);
+    // Every row is a lead input, so no row wears a LEAD chip.
+    expect(html).not.toContain('class="tag lead"');
     const pts = [...html.matchAll(/<span class="pts"[^>]*>(\d+)<\/span>/g)].map((m) => Number(m[1]));
     expect(pts.slice(0, -1).reduce((a, b) => a + b, 0)).toBe(pts.at(-1));
     expect(html).toMatch(/<h2 id="forecast-title"[^>]*>Is this a forecast\?<\/h2>/);
+    // One line and the way to the evidence: the base rates and skill live on /backtest, not here too.
     expect(html).toMatch(
-      /<b[^>]*>No\.<\/b> It's a hand-weighted lead score, not a probability\. <a href="\/backtest"/,
+      /<b[^>]*>No\.<\/b> It's a hand-weighted lead score, not a probability: a fitted forecast was tested and did not beat the base rate\. <a href="\/backtest"/,
     );
-    // Beside the level: the base rate at its own 7-day horizon. The 72-hour rate sits in the note.
-    const base = html.slice(html.indexOf('class="dc-base"'), html.indexOf('class="dc-more"'));
-    expect(base).toContain('within 7 days in 73% of hours');
-    expect(base).toContain('94% of held-out hours');
-    expect(base).not.toContain('72-hour');
-    const more = html.slice(html.indexOf('class="dc-more"'));
-    expect(more).toContain('39% of 72-hour windows');
-    expect(more).toContain('63% more recently');
+    expect(html).not.toContain('73% of hours');
+    expect(html).not.toContain('72-hour windows');
     expect(html).not.toContain('Context, not the level');
     // The score-to-level cut points, from LEVEL_BANDS.
     expect(html).toContain('Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.');

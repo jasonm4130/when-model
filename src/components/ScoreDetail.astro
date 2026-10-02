@@ -6,7 +6,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import { LEVEL_BANDS, levelBandsText, WEIGHTS } from '../domain/dropcon';
 import { LEVEL_NAMES } from '../domain/levels';
-import { dropconName, forecastAnswer, levelBaseRateText } from '../ui/odds';
+import { dropconName } from '../ui/odds';
 interface Props { d: Dashboard }
 const { d } = Astro.props;
 const c = d.dropcon;
@@ -25,7 +25,7 @@ const range = (b: { top: number; bottom: number }) =>
         {c.provenance.map((row) => (
           <li>
             <span class="pts">{row.points}</span>
-            <span class="why"><span class="tag lead">{row.tag}</span> {row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
+            <span class="why">{row.url ? <a href={row.url} target={row.url.startsWith('/') ? undefined : '_blank'} rel="noopener">{row.label}</a> : row.label} <span class="muted">({row.detail})</span></span>
           </li>
         ))}
         <li class="total"><span class="pts">{c.score}</span><span class="why">= LEAD SCORE <span class="muted">out of 100; the rows above add up to it</span></span></li>
@@ -44,14 +44,7 @@ const range = (b: { top: number; bottom: number }) =>
 </section>
 <section class="about-forecast" id="forecast" aria-labelledby="forecast-title">
   <div class="panel-head"><h2 id="forecast-title">Is this a forecast?</h2></div>
-  <div class="dc-honest">
-    <p class="dc-q"><b>No.</b> It's a hand-weighted lead score, not a probability. <a href="/backtest">See /backtest</a></p>
-    <p class="dc-base">{levelBaseRateText()}</p>
-    <div class="dc-more">
-      <p>{forecastAnswer(d.forecast)}</p>
-      <ul>{c.notes.map((n) => <li>{n}</li>)}</ul>
-    </div>
-  </div>
+  <p class="dc-q"><b>No.</b> It's a hand-weighted lead score, not a probability: a fitted forecast was tested and did not beat the base rate. <a href="/backtest">The evidence is on the backtest</a>.</p>
 </section>
 <style>
   .about-score, .about-forecast { scroll-margin-top: 16px; }
@@ -63,7 +56,6 @@ const range = (b: { top: number; bottom: number }) =>
   .dc-drivers .why { overflow-wrap: anywhere; }
   .dc-drivers .pts { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 24px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
   .dc-drivers .total { border-top: 1px solid var(--ink); padding-top: 8px; color: var(--ink); }
-  .tag.lead { margin-right: 2px; color: var(--ink); }
   .dc-blurb, .dc-bands { margin-top: 16px; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); max-width: 60ch; }
   /* The five bands as a ruled ladder, the live one printed in the blue. */
   .bands { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
@@ -73,12 +65,6 @@ const range = (b: { top: number; bottom: number }) =>
   .band-range { font-size: var(--fs-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
   .bands li.on b { color: var(--ink); }
   .bands li.on .band-name { color: var(--ink); font-weight: 800; }
-  .dc-honest { display: grid; gap: 14px; max-width: 72ch; font-size: var(--fs-body); line-height: 1.55; }
-  .dc-q { font-size: var(--fs-lede); line-height: 1.3; }
+  .dc-q { max-width: 60ch; font-size: var(--fs-lede); line-height: 1.4; }
   .dc-q b { font-weight: 650; }
-  .dc-base { color: var(--ink-2); }
-  .dc-more { display: grid; gap: 8px; color: var(--ink-2); font-size: var(--fs-md); }
-  .dc-more ul { display: grid; gap: 6px; padding-left: 0; }
-  .dc-more li { padding-left: 18px; position: relative; }
-  .dc-more li::before { content: ''; position: absolute; left: 0; top: 0.7em; width: 8px; height: 2px; background: var(--ink-2); }
 </style>
