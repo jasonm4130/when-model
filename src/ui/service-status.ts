@@ -1,7 +1,7 @@
 /**
  * The DROPCON level as a transit service-status notice: the level's name, one deadpan line a
  * station would post, and a treatment that escalates with the level. Calm at 5 and 4 (ink on the
- * paper-2 board), the notice yellow at 3, inverted (yellow on black) at 2 and, at 1, white on the sign between platform-edge stripes. A floor
+ * paper-2 board), the notice yellow at 3, inverted (yellow on black) at 2 and, at 1, the notice yellow at double height. A floor
  * (odds offline) and no signal are not readings, so they get the calm treatment with their own
  * words. Every treatment's text clears 7:1 on its ground (test/ui/service-status.test.ts). Pure.
  */
@@ -26,7 +26,7 @@ export const STATUS_COLOURS: Readonly<Record<StatusTreatment, { ground: string; 
   offline: { ground: PALETTE.paper, text: PALETTE['ink-2'] },
   notice: { ground: PALETTE.notice, text: PALETTE.ink },
   inverted: { ground: PALETTE.sign, text: PALETTE.notice },
-  alert: { ground: PALETTE.sign, text: PALETTE['sign-ink'] },
+  alert: { ground: PALETTE.notice, text: PALETTE.ink },
 };
 
 export const LEVEL_TREATMENT: Readonly<Record<DropconLevel, StatusTreatment>> = {

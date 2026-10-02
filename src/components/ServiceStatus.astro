@@ -3,7 +3,7 @@
  * The DROPCON level, posted the way a station posts service status: the level's name, one deadpan
  * line, what the markets say, and the 5-to-1 ladder with the current level lit. The strip's
  * treatment escalates with the level (src/ui/service-status.ts): calm at 5 and 4, the notice yellow
- * at 3, inverted at 2 and, at 1, white on the sign between platform-edge stripes. The page's number for the level is here
+ * at 3, inverted at 2 and, at 1, the notice yellow again at double height with the name set large. The page's number for the level is here
  * (`data-num`); the history's scrubber never changes it.
  */
 import type { Dropcon } from '../domain/dropcon';
@@ -42,12 +42,11 @@ const label =
   .ss.is-offline { --ground: var(--paper); border-bottom-width: 2px; --text: var(--ink-2); --soft: var(--ink-2); --lit: var(--ink-2); }
   .ss.is-notice { --ground: var(--notice); --lit-text: var(--notice); border-bottom-color: var(--notice); }
   .ss.is-inverted { --ground: var(--sign); --text: var(--notice); --soft: var(--sign-ink); --lit: var(--notice); --lit-text: var(--ink); border-bottom-color: var(--notice); }
-  /* A surge: white on the sign between two stripes the yellow-and-black of a platform's edge. */
-  .ss.is-alert { --ground: var(--sign); --text: var(--sign-ink); --soft: var(--sign-ink); --lit: var(--notice); --lit-text: var(--ink); position: relative; border-bottom: 0; padding: 8px 0; }
-  .ss.is-alert::before, .ss.is-alert::after { content: ''; position: absolute; left: 0; right: 0; height: 8px; background: repeating-linear-gradient(-45deg, var(--notice) 0 12px, var(--sign) 12px 24px); }
-  .ss.is-alert::before { top: 0; }
-  .ss.is-alert::after { bottom: 0; }
-  .ss.is-alert .ss-phrase { color: var(--notice); }
+  /* A surge: the notice yellow at double height, the name set large in black. The words carry it. */
+  .ss.is-alert { --ground: var(--notice); --lit-text: var(--notice); border-bottom: 2px solid var(--rule); }
+  .ss.is-alert .ss-row { min-height: 128px; padding-top: var(--s5); padding-bottom: var(--s5); }
+  .ss.is-alert .ss-name { font-size: var(--t-xl); line-height: 44px; letter-spacing: -0.02em; }
+  .ss.is-alert .ss-phrase { font-size: var(--t-md); line-height: 28px; }
   .ss-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--s2) var(--s5); align-items: center; min-height: 64px; padding-top: var(--s3); padding-bottom: var(--s3); }
   .ss-name { font-size: var(--t-md); line-height: 28px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
   /* The posted line, then what the markets say under it: two set lines, never a one-word orphan. */

@@ -29,7 +29,7 @@ describe('serviceStatus', () => {
     });
   }
 
-  it('escalates: calm at 5 and 4, the notice yellow at 3, inverted at 2, the platform-edge alert at 1', () => {
+  it('escalates: calm at 5 and 4, the notice yellow at 3, inverted at 2, the double-height yellow alert at 1', () => {
     expect([5, 4, 3, 2, 1].map((l) => reading(l as DropconLevel).treatment)).toEqual([
       'calm',
       'calm',
