@@ -44,9 +44,9 @@ const Fact = fact?.href ? 'a' : 'div';
   a.ph-fact:hover { text-decoration: none; }
   a.ph-fact:hover .ph-cap { text-decoration: underline; text-underline-offset: 3px; }
   .ph-fig { display: flex; align-items: center; gap: var(--s3); }
-  .ph-fig b { font-family: var(--sans); font-size: var(--t-3xl); line-height: 64px; font-weight: 700; letter-spacing: -0.04em; }
+  .ph-fig b { font-family: var(--sans); font-variant-numeric: proportional-nums; font-size: var(--t-3xl); line-height: 64px; font-weight: 700; letter-spacing: -0.04em; }
   .ph-fig small { align-self: flex-end; margin-bottom: 8px; margin-left: -6px; font-size: var(--t-lg); line-height: 32px; font-weight: 700; }
-  .ph-cap { max-width: 22ch; font-size: var(--t-base); line-height: 24px; color: var(--sign-ink-2); }
+  .ph-cap { max-width: 22ch; text-wrap: balance; font-size: var(--t-base); line-height: 24px; color: var(--sign-ink-2); }
   @media (max-width: 900px) {
     .has-fact { grid-template-columns: minmax(0, 1fr); }
     .ph-fact { min-width: 0; padding-left: 0; padding-top: var(--s4); border-left: 0; border-top: 2px solid var(--sign-ink); grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: var(--s4); }

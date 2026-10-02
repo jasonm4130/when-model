@@ -15,8 +15,8 @@
   --sign-ink-2: #b8b8b8;
   --rule: #141414;
   --rule-soft: #d9d5cb;
-  /* One job: service status and service notices. A level-1 surge is the sign black with the
-     platform-edge stripe, so no status colour is ever mistaken for a line's colour. */
+  /* One job: service status and service notices. A level-1 surge is the same yellow at double
+     height, so no status colour is ever mistaken for a line's colour. */
   --notice: #fccc0a;
 
   /* Space: a 4px grid. */
@@ -105,7 +105,10 @@ body {
   font-family: var(--sans);
   font-size: var(--t-base);
   line-height: 24px;
-  font-variant-numeric: tabular-nums;
+  /* Proportional figures by default: a display "11" set tabular opens a digit-wide hole. Columns
+     that must line up (tables, mono times, .num) opt into tabular figures below. */
+  font-variant-numeric: proportional-nums;
+  font-kerning: normal;
   -webkit-font-smoothing: antialiased;
 }
 ::selection {
@@ -156,8 +159,7 @@ a:hover {
 }
 /* A link inside running text says so before it is hovered. */
 p a,
-li > a:only-child:not([class]),
-.prose a {
+li > a:only-child:not([class]) {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
@@ -178,6 +180,7 @@ code {
 }
 .mono {
   font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
 .muted {
   color: var(--ink-2);
@@ -376,13 +379,6 @@ a.b:hover {
 .sec .label {
   color: var(--ink-2);
   font-weight: 500;
-}
-.sec.minor {
-  border-bottom-width: 1px;
-}
-.sec.minor h3 {
-  font-size: var(--t-md);
-  line-height: 28px;
 }
 .panel {
   position: relative;
@@ -636,6 +632,7 @@ details summary::-webkit-details-marker {
 /* ───────────────────────────── tables ───────────────────────────── */
 table {
   width: 100%;
+  font-variant-numeric: tabular-nums;
   border-collapse: collapse;
   font-size: var(--t-sm);
   line-height: 20px;
