@@ -59,20 +59,22 @@ test('the tabs are reachable in order from the keyboard, with a visible ring, an
 });
 
 for (const width of [390, 360, 320]) {
-  test(`the tab strip fits inside ${width}px, every tab a 44px target`, async ({ page }) => {
+  test(`the tab strip is one row inside ${width}px, every tab a 44px target`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await open(page, '/markets');
+    const strip = (await nav(page).boundingBox())!;
+    expect(strip.x).toBeGreaterThanOrEqual(0);
+    expect(strip.x + strip.width).toBeLessThanOrEqual(width);
     const boxes = await nav(page)
       .getByRole('link')
       .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().toJSON() as DOMRect));
-    for (const b of boxes) {
-      expect(b.left).toBeGreaterThanOrEqual(0);
-      expect(b.right).toBeLessThanOrEqual(width);
-      expect(b.height).toBeGreaterThanOrEqual(44);
-    }
-    // One row where the six tabs fit; below 390px a tidy block of two rows, never a ragged third.
-    const rows = new Set(boxes.map((b) => Math.round(b.top))).size;
-    expect(rows).toBe(width >= 390 ? 1 : 2);
+    for (const b of boxes) expect(b.height).toBeGreaterThanOrEqual(44);
+    // One row at every width: where the six tabs do not fit, the strip scrolls inside itself.
+    expect(new Set(boxes.map((b) => Math.round(b.top))).size).toBe(1);
+    const last = nav(page).getByRole('link').last();
+    await last.scrollIntoViewIfNeeded();
+    const lastBox = (await last.boundingBox())!;
+    expect(lastBox.x + lastBox.width).toBeLessThanOrEqual(width + 0.5);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }

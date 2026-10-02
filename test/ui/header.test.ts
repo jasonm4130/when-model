@@ -52,18 +52,24 @@ describe('Header', async () => {
     }
   });
 
-  it('exposes a PAUSE AUTO-REFRESH toggle and an empty, live reload status region (UI-11)', async () => {
-    const html = await container.renderToString(Header, { props: { d: dashboard(), view: HOME } });
-    expect(html).toContain('data-refresh-toggle');
-    // Phones show only the verb; the noun stays in the accessible name, so it reads the same everywhere.
-    const toggle = html.match(/<button[^>]*data-refresh-toggle[^>]*>(.*?)<\/button>/)?.[1] ?? '';
-    expect(toggle.replace(/<[^>]+>/g, '')).toBe('PAUSE AUTO-REFRESH');
-    expect(toggle).toMatch(/data-refresh-verb[^>]*>PAUSE</);
-    expect(toggle).toMatch(/class="rt-noun"[^>]*> AUTO-REFRESH</);
-    expect(html).toMatch(/data-refresh-toggle[^>]*aria-pressed="false"/);
+  it('keeps the clock in the header and puts the PAUSE AUTO-REFRESH toggle in the footer (UI-11)', async () => {
+    const d = dashboard();
+    const html = await container.renderToString(Header, { props: { d, view: HOME } });
+    // The header carries the clock, an empty live region for NEW DATA, and no control.
+    expect(html).toContain('data-clock');
+    expect(html).not.toContain('data-refresh-toggle');
     expect(html).toContain('<span class="refresh-status" aria-live="polite" data-reload-status');
     expect(html).toMatch(/<span class="refresh-status"[^>]*><\/span>/);
     expect(html).not.toContain('NEW DATA');
+    // The toggle sits on the footer's "Updated · next check" line, the refresh it pauses.
+    const foot = await container.renderToString(Footer, { props: { d, generatedAt: d.generatedAt } });
+    const toggle = foot.match(/<button[^>]*data-refresh-toggle[^>]*>(.*?)<\/button>/)?.[1] ?? '';
+    expect(toggle.replace(/<[^>]+>/g, '')).toBe('PAUSE AUTO-REFRESH');
+    expect(toggle).toMatch(/data-refresh-verb[^>]*>PAUSE</);
+    expect(foot).toMatch(/data-refresh-toggle[^>]*aria-pressed="false"/);
+    // A page with no dashboard (/backtest, the 404) has nothing to refresh, so no toggle.
+    const bare = await container.renderToString(Footer, { props: { generatedAt: d.generatedAt } });
+    expect(bare).not.toContain('data-refresh-toggle');
   });
 
   it('stamps the fingerprint of the data it rendered, as the browser will compute it from the API (UI-11)', async () => {
@@ -109,17 +115,17 @@ describe('Header', async () => {
     expect(missing).not.toContain('aria-current');
   });
 
-  it('keeps the header to status and clock, and moves the counts and the refresh countdown to the footer (UI-06)', async () => {
+  it('keeps the header to the clock, and moves the counts and the refresh countdown to the footer (UI-06)', async () => {
     const d = dashboard();
     const html = await container.renderToString(Header, { props: { d, view: HOME } });
-    expect(html).not.toContain('class="counts"');
+    expect(html).not.toContain('counts');
     expect(html).not.toContain('data-refresh=');
     // The clock already ends in Z, so a separate UTC label only costs width; the day hides on narrow screens.
     expect(html).toMatch(/data-clock[^>]*>\d{2}:\d{2}Z</);
     expect(html).toMatch(/class="day"[^>]*>Sat 19 Sep · </);
     expect(html).not.toMatch(/>UTC</);
     const foot = await container.renderToString(Footer, { props: { d, generatedAt: d.generatedAt } });
-    expect(foot).toMatch(/class="counts"[^>]*> · \d+ lines · \d+\/\d+ sources · \d+ markets</);
+    expect(foot).toMatch(/class="foot-meta mono counts"[^>]*>\d+ lines · \d+\/\d+ sources · \d+ markets</);
     expect(foot).toMatch(/data-synced="2026-09-19T12:00:00/);
     expect(foot).toMatch(/data-refresh="300"[^>]*>5:00</);
   });
@@ -169,7 +175,8 @@ describe('Header', async () => {
     const html = await container.renderToString(Header, {
       props: { d: dashboard({ broadcasts: youtubeDown }), view: HOME },
     });
-    expect(html).toMatch(/status-live ok[^>]*>(?:<span[^>]*>Sources <\/span>)?OPERATIONAL</);
+    // All is well with the core sources, so the header says nothing about them.
+    expect(html).not.toContain('status-live');
     const d = dashboard({ broadcasts: youtubeDown });
     const foot = await container.renderToString(Footer, { props: { d, generatedAt: d.generatedAt } });
     expect(foot).toMatch(/5\/6(?:<!--[^>]*-->)?\s*sources/);

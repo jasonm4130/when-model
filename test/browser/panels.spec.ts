@@ -85,7 +85,7 @@ test.describe('panels on a phone (UI-10)', () => {
     const box = (await toggle.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(44);
     expect(box.width).toBeGreaterThanOrEqual(44);
-    await expect(toggle).toHaveText('PAUSE AUTO-REFRESH'); // the noun is visually hidden, not removed
+    await expect(toggle).toHaveText('PAUSE AUTO-REFRESH'); // in the footer it has room for its full name
     await toggle.click();
     await expect(page.getByRole('button', { name: 'RESUME AUTO-REFRESH' })).toHaveAttribute(
       'aria-pressed',

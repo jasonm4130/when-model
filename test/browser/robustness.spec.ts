@@ -236,13 +236,13 @@ for (const width of [390, 360, 320]) {
       return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
     });
     expect(lines).toBe(1);
-    for (const sel of ['.status-live', '.clock', '.refresh-toggle', '.wordmark']) {
+    for (const sel of ['.clock', '.wordmark']) {
       const box = (await page.locator(`header ${sel}`).boundingBox())!;
       expect(box.x, sel).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width, sel).toBeLessThanOrEqual(width);
     }
-    // The pause stays a 44px target however narrow the phone.
-    expect((await page.locator('header .refresh-toggle').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    // The pause, in the footer, stays a 44px target however narrow the phone.
+    expect((await page.locator('footer .refresh-toggle').boundingBox())!.height).toBeGreaterThanOrEqual(44);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   });
 }

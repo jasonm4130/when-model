@@ -37,19 +37,19 @@ test.describe('mobile header (UI-05, UI-06)', () => {
     }
   });
 
-  test('reduces the header to the source status, the clock and the auto-refresh pause on a phone', async ({
+  test('reduces the header to the clock on a phone, with the auto-refresh pause in the footer', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openDashboard(page);
 
     const head = page.locator('header');
-    await expect(head.locator('.status-live')).toBeVisible();
     await expect(head.locator('.clock')).toBeVisible();
     await expect(head.locator('.clock')).toHaveText(/^\d{2}:\d{2}Z$/);
     await expect(head.locator('.when .day')).toBeHidden();
-    // The pause stays reachable on a phone, as a 44px target (see panels.spec.ts).
-    await expect(head.locator('.refresh-toggle')).toBeVisible();
+    // The header carries no control; the pause sits with the refresh it pauses, in the footer.
+    await expect(head.locator('.refresh-toggle')).toHaveCount(0);
+    await expect(page.locator('footer .refresh-toggle')).toHaveCount(1);
     // The counts and the last sync are said once, in the footer.
     await expect(head.locator('.counts, .sync')).toHaveCount(0);
     await expect(page.locator('footer .sync')).toHaveCount(1);

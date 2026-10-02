@@ -13,7 +13,8 @@ interface Props {
   pulledAt?: string;
 }
 const { d, view, pulledAt } = Astro.props;
-// The status covers only the sources the dashboard depends on; the footer counts every one.
+// The status covers only the sources the dashboard depends on; the footer counts every one. The
+// header says it only when something is wrong: the clock is the one thing it always carries.
 const core = d ? d.sources.filter((s) => !BEST_EFFORT_SOURCES.has(s.name)) : [];
 const coreOk = core.filter((s) => s.ok).length;
 const status = coreOk === core.length ? 'OPERATIONAL' : coreOk > core.length / 2 ? 'DEGRADED' : 'IMPAIRED';
@@ -32,9 +33,10 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
     <SiteNav view={view} />
     {d && built !== undefined && (
       <div class="top-right">
-        <span class={`status-live ${statusClass}`} title={`${coreOk} of ${core.length} core sources answered this build`}><span class="sr-only">Sources </span>{status}</span>
+        {status !== 'OPERATIONAL' && (
+          <span class={`status-live ${statusClass}`} title={`${coreOk} of ${core.length} core sources answered this build`}><span class="sr-only">Sources </span>{status}</span>
+        )}
         <span class="when mono"><span class="day">{dayLabel(built, built)} · </span><b class="clock" data-clock>{d.generatedAt.slice(11, 16)}Z</b></span>
-        <button type="button" class="refresh-toggle" data-refresh-toggle aria-pressed="false"><span data-refresh-verb>PAUSE</span><span class="rt-noun"> AUTO-REFRESH</span></button>
         <span class="refresh-status" aria-live="polite" data-reload-status data-fingerprint={fingerprint} data-view={JSON.stringify(pageView)}></span>
       </div>
     )}
@@ -58,9 +60,6 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
   .status-live.warn::before { background: var(--notice); outline: 1.5px solid var(--ink); }
   .when { white-space: nowrap; }
   .when b { font-weight: 500; color: var(--ink); }
-  .refresh-toggle { min-height: 44px; min-width: 44px; padding: 0 var(--s1); background: none; border: 0; cursor: pointer; font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--rule-soft); }
-  .refresh-toggle:hover { text-decoration-color: currentColor; }
-  .refresh-toggle[aria-pressed='true'] { background: var(--notice); text-decoration: none; padding: 0 var(--s2); }
   .refresh-status { display: inline-flex; }
   .refresh-status:empty { display: none; }
   @media (max-width: 1100px) {
@@ -70,7 +69,6 @@ const built = d ? Date.parse(d.generatedAt) : undefined;
     .top-row { padding-top: var(--s2); padding-bottom: 0; column-gap: var(--s3); }
     .top-row > :global(.site-nav) { order: 3; flex-basis: 100%; }
     .top-right { gap: var(--s3); }
-    .rt-noun { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
   }
   @media (max-width: 480px) {
     .status-live.static { display: none; }

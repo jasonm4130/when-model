@@ -334,11 +334,9 @@ describe('components', async () => {
     expect(html).not.toContain(`>${Math.round(fd.labs.find((l) => l.id === 'google')!.odds!.p7.p * 100)}%<`);
   });
 
-  it('Header reports status, names the site for screen readers and keeps an explicit pause control, with no ticker', async () => {
+  it('Header reports a degraded status, names the site for screen readers, with no ticker', async () => {
     const html = await container.renderToString(Header, { props: { d, view: { page: 'home' } } });
     expect(html).toMatch(/status-live warn[^>]*>(?:<span[^>]*>Sources <\/span>)?DEGRADED</);
-    expect(html).toContain('data-refresh-toggle');
-    expect(html).toContain('aria-pressed="false"');
     expect(html).toMatch(/class="sr-only"[^>]*>: frontier model release intelligence, home</);
     // The landed model and the odds are said once each, in the hero and the lab list, not repeated in a crawl.
     expect(html).not.toContain('ticker');

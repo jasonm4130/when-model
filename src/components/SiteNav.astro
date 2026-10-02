@@ -1,8 +1,8 @@
 ---
 /**
  * The site's tabs. The current page's tab is underlined, set heavier, and carries aria-current; a
- * line's own page marks Lines as its section (aria-current="true"). One row from 390px; narrower,
- * the six tabs sit in a 3 × 2 block, never wider than the page.
+ * line's own page marks Lines as its section (aria-current="true"). Always one row: where the six
+ * tabs do not fit, the row scrolls sideways inside itself, never the page.
  */
 import { NAV, navKey, type SiteView } from '../ui/site';
 interface Props { view: SiteView }
@@ -35,9 +35,10 @@ const exact = view.page !== 'lab';
   @media (max-width: 480px) {
     .tab { font-size: 13px; }
   }
-  /* The narrowest phones: two rows of three, each tab a full 44px target. */
+  /* The narrowest phones: one row that scrolls, each tab a full 44px target. */
   @media (max-width: 389.98px) {
-    .tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 var(--s3); }
-    .tab { justify-self: start; }
+    .site-nav { overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+    .site-nav::-webkit-scrollbar { display: none; }
+    .tabs { flex-wrap: nowrap; justify-content: flex-start; gap: 0 var(--s4); }
   }
 </style>

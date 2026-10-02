@@ -39,10 +39,13 @@ const ok = d ? d.sources.filter((s) => s.ok).length : 0;
       {variant === 'backtest' ? (
         <p class="foot-meta mono">Data pulled {stamp} · reproduce: <a href="#reproduce"><code>pnpm backtest</code></a></p>
       ) : (
-        <p class="foot-meta mono">
-          <span class="sync">Updated <span data-synced={generatedAt}>{stamp}</span> · next check <span class="next" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
-          {d && <span class="counts"> · {d.labs.length} lines · {ok}/{d.sources.length} sources · {d.markets.length} markets</span>}
-        </p>
+        <>
+          {d && <p class="foot-meta mono counts">{d.labs.length} lines · {ok}/{d.sources.length} sources · {d.markets.length} markets</p>}
+          <p class="foot-meta mono foot-sync">
+            <span class="sync">Updated <span data-synced={generatedAt}>{stamp}</span> · next check <span class="next" data-refresh={REFRESH_SECONDS}>{`${Math.floor(REFRESH_SECONDS / 60)}:00`}</span></span>
+            {d && <button type="button" class="refresh-toggle" data-refresh-toggle aria-pressed="false"><span data-refresh-verb>PAUSE</span> AUTO-REFRESH</button>}
+          </p>
+        </>
       )}
     </div>
     <div>
@@ -64,6 +67,14 @@ const ok = d ? d.sources.filter((s) => s.ok).length : 0;
   .foot-note { max-width: 60ch; margin-top: var(--s2); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .foot-meta { margin-top: var(--s4); font-size: var(--t-xs); line-height: 16px; color: var(--ink-2); }
   .foot-meta .next, .foot-meta span[data-synced] { color: var(--ink); }
+  .counts + .foot-sync { margin-top: var(--s1); }
+  /* The sync line and the pause it governs share a row; the button keeps its 44px target without spacing the text. */
+  .foot-sync { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--s4); }
+  .foot-sync .refresh-toggle { margin: -14px 0 -14px calc(-1 * var(--s1)); }
+  /* The page's one control sits with the refresh it pauses (the Header's script drives it). */
+  .refresh-toggle { min-height: 44px; min-width: 44px; padding: 0 var(--s1); background: none; border: 0; cursor: pointer; font-family: var(--sans); font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--rule-soft); }
+  .refresh-toggle:hover { text-decoration-color: currentColor; }
+  .refresh-toggle[aria-pressed='true'] { background: var(--notice); text-decoration: none; padding: 0 var(--s2); }
   .label { color: var(--ink); }
   .map { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
   .map :global(.b) { --d: 36px; }
