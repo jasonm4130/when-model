@@ -171,8 +171,10 @@ describe('DropconScope: service history, the week of the level', () => {
     expect(html).toContain('captures start 23 Sep');
     expect(html).toContain(`aria-label="${inst.summary}"`);
     // Which way is hot, at the plot's top and bottom.
-    expect(html).toContain('▲ 1 · RELEASE SURGE');
-    expect(html).toContain('▼ 5 · QUIET ORBIT');
+    expect(html).toContain('▲ 1<span class="sc-dname" data-astro-cid-');
+    expect(html).toContain('> · RELEASE SURGE</span>');
+    expect(html).toContain('▼ 5<span class="sc-dname" data-astro-cid-');
+    expect(html).toContain('> · QUIET ORBIT</span>');
     // The table keeps every number: the live reading first, then v3, then v2 marked old.
     expect(html).toMatch(/<td[^>]*>NOW · 26 Sep 12:00Z<\/td><td[^>]*>\d+<\/td>/);
     expect(html).toContain('90 (v2, old scale)');
