@@ -158,7 +158,8 @@ test('the instrument strokes its trace and never fills it', async ({ page }) => 
     return { fill: s.fill, stroke: s.stroke };
   });
   expect(lines.fill).toBe('none');
-  expect(lines.stroke).toMatch(/url\("?#sc-level-ink"?\)/);
+  // One ink at every level: the band tints carry the level, the NOW tag is the one yellow mark.
+  expect(lines.stroke).toBe('rgb(17, 17, 17)');
 });
 
 for (const width of [390, 1024, 1440]) {

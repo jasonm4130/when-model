@@ -294,7 +294,7 @@ test('with reduced motion the sweep and the split-flap are gone and nothing anim
   await still(['.ss', '.ss-num', '#next-title']);
   await openHistory(page);
   await expect(page.locator('.sc-sweep')).toBeHidden();
-  await still(['.sc-ink', '.sc-dot', '.seg.on', '.sc-change', '.sc-v3']);
+  await still(['.sc-ink', '.sc-dot', '.seg.on', '.sc-v3']);
   expect(
     await page
       .locator('.sc-dot')

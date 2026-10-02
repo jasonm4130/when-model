@@ -163,11 +163,10 @@ describe('DropconScope: service history, the week of the level', () => {
     expect(html).toContain('v3 FROM 00:00Z HOUR');
     expect(html).toContain('12 hourly readings so far');
     expect(html).toContain('updates every 15 min');
-    // It stepped from level 2 to level 4 at 06:00, and held: a flag on the line, hung below the
-    // corner of a step down. The time is its own span, so a phone can show just "▼ L4".
-    expect(html).toMatch(
-      /class="sc-change l4 left"[^>]*data-side="below" data-side0="below"[^>]*><span class="cf-dir"[^>]*>▼ L4<\/span><span class="cf-when"[^>]*> 26 SEP 06:00Z</,
-    );
+    // It stepped from level 2 to level 4 at 06:00: the builder notes the change, but the plot draws
+    // no flag for it. The level is marked once, on the rail; the readout names each hour on scrub.
+    expect(inst.changes.map((ch) => ch.text)).toContain('▼ L4 26 SEP 06:00Z');
+    expect(html).not.toContain('sc-change');
     // v2 starts inside the window: the dark stretch before it is the record's start.
     expect(html).toContain('captures start 23 Sep');
     expect(html).toContain(`aria-label="${inst.summary}"`);
@@ -290,8 +289,12 @@ describe('DROPCON for a first-time reader', () => {
     expect(html).not.toContain('73% of hours');
     expect(html).not.toContain('72-hour windows');
     expect(html).not.toContain('Context, not the level');
-    // The score-to-level cut points, from LEVEL_BANDS.
-    expect(html).toContain('Levels by score: 1 at 75+, 2 at 55–74, 3 at 35–54, 4 at 15–34, 5 below 15.');
+    // The score-to-level cut points are the ladder's ranges, from LEVEL_BANDS, said once: no
+    // sentence repeats them under it.
+    expect(html).toMatch(/<span class="band-range"[^>]*>75\+<\/span>/);
+    expect(html).toMatch(/<span class="band-range"[^>]*>below 15<\/span>/);
+    expect(html).not.toContain('Levels by score:');
+    expect(html).toContain('Weights 80 / 10 / 10, set by hand.');
   });
 
   it('posts the level on the status strip, explains the chart plainly and links to how it adds up', async () => {
@@ -303,12 +306,13 @@ describe('DROPCON for a first-time reader', () => {
     // The week sits on /about under the arithmetic, so the chart links up the page to it.
     expect(html).not.toContain('dc-drivers');
     expect(html).toContain('href="#score"');
-    // What the reader is looking at, long and short, and what it is not.
+    // What the reader is looking at, long and short. That it is not a forecast is said once on
+    // /about, under "Is this a forecast?", never again in the chart's caption.
     expect(html).toContain(
       "The line is DROPCON's lead score, 0 to 100, read hourly from Polymarket's release odds",
     );
     expect(html).toContain('The line is the 0–100 lead score; its band sets the level, 5 quiet to 1 surge.');
-    expect(html).toContain('A lead score, not a forecast.');
+    expect(html).not.toContain('not a forecast');
     expect(html).toContain("a line's launch, first listed on OpenRouter: context, not scored");
     expect(html.indexOf('dc-scale')).toBeLessThan(html.indexOf('dc-what'));
     // The network keeps each line's old anchor id for old links.

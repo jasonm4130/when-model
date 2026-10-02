@@ -4,7 +4,7 @@
  * folded under the hero when everything shared one page; here it is open, and the hero links to it.
  */
 import type { Dashboard } from '../domain/dashboard';
-import { LEVEL_BANDS, levelBandsText, WEIGHTS } from '../domain/dropcon';
+import { LEVEL_BANDS, WEIGHTS } from '../domain/dropcon';
 import { LEVEL_NAMES } from '../domain/levels';
 import { dropconName } from '../ui/odds';
 interface Props { d: Dashboard }
@@ -38,7 +38,7 @@ const range = (b: { top: number; bottom: number }) =>
           <li class:list={{ on: ok && b.level === c.level }}><b>{b.level}</b><span class="band-name">{LEVEL_NAMES[b.level]}</span><span class="band-range">{range(b)}</span></li>
         ))}
       </ol>
-      <p class="dc-bands">{levelBandsText()} Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
+      <p class="dc-bands">Weights {WEIGHTS.market7d} / {WEIGHTS.market30dIncrement} / {WEIGHTS.repricing}, set by hand.</p>
     </div>
   </div>
 </section>

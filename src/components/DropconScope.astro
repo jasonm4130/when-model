@@ -94,18 +94,10 @@ const hhmm = inst.currentSince ? stripHour(inst.currentSince).slice(-6) : '';
 const REF: Box = { left: 0, top: 0, right: INSTRUMENT_WIDTH, bottom: 236 };
 const flagText = (l: (typeof inst.launches)[number]) => `${lineBullet(l.labId ?? '').letter} ${l.name}`;
 const dirTop: Box = { left: 0, top: 0, right: 180, bottom: 24 };
-const changeBoxes: Box[] = inst.changes.map((ch) => {
-  const w = ch.text.length * 8 + 12;
-  const y = (ch.y / 100) * REF.bottom;
-  const left = ch.side === 'left' ? ch.x - w : ch.x;
-  return ch.hang === 'above'
-    ? { left, right: left + w, top: y - 28, bottom: y - 8 }
-    : { left, right: left + w, top: y + 8, bottom: y + 28 };
-});
 const rows = placeLabels(
   inst.launches.map((l) => flagCandidates(l.x, estimateFlagWidth(flagText(l)), l.flip)),
   REF,
-  [dirTop, ...changeBoxes],
+  [dirTop],
 );
 
 const tableRows = inst.scrub.slice().reverse();
@@ -185,14 +177,6 @@ const tableRows = inst.scrub.slice().reverse();
       ))}
       <div class="sc-ink" aria-hidden="true">
         <svg viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" focusable="false">
-          <defs>
-            <linearGradient id="sc-level-ink" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">
-              {bands.flatMap((b) => [
-                <stop class={`l${b.level}`} offset={`${100 - b.top}%`} />,
-                <stop class={`l${b.level}`} offset={`${100 - b.bottom}%`} />,
-              ])}
-            </linearGradient>
-          </defs>
           {inst.launches.map((l, i) => (
             <line class="sc-launch" data-launch={i} x1={l.x} x2={l.x} y1="0" y2="100" />
           ))}
@@ -201,20 +185,6 @@ const tableRows = inst.scrub.slice().reverse();
           {inst.traces.map((t) => <path class="sc-line" d={t.line} />)}
         </svg>
       </div>
-      {/* Level changes sit over the ink, beside the step where the line was not. */}
-      {inst.changes.map((ch) => {
-        const words = ch.text.split(' ');
-        return (
-          <span
-            class:list={['sc-change', `l${ch.level}`, ch.side]}
-            style={`left:${pct(ch.x)}; top:${ch.y}%`}
-            data-side={ch.hang}
-            data-side0={ch.hang}
-            data-label="fixed"
-            aria-hidden="true"
-          ><span class="cf-dir">{words.slice(0, 2).join(' ')}</span><span class="cf-when"> {words.slice(2).join(' ')}</span></span>
-        );
-      })}
       <span class="sc-nowline" aria-hidden="true"></span>
       <span class="sc-sweep" aria-hidden="true"></span>
       <div class="sc-cursor" data-cursor hidden aria-hidden="true">
@@ -254,7 +224,7 @@ const tableRows = inst.scrub.slice().reverse();
   </div>
 
 <p class="dc-what">
-  <span class="w-long">The line is DROPCON's lead score, 0 to 100, read hourly from Polymarket's release odds; its band sets the level, 5 (quiet) to 1 (release surge).</span><span class="w-short">The line is the 0–100 lead score; its band sets the level, 5 quiet to 1 surge.</span> A lead score, not a forecast. <a href="#score">How it adds up</a> · <a href="/backtest">The backtest</a>
+  <span class="w-long">The line is DROPCON's lead score, 0 to 100, read hourly from Polymarket's release odds; its band sets the level, 5 (quiet) to 1 (release surge).</span><span class="w-short">The line is the 0–100 lead score; its band sets the level, 5 quiet to 1 surge.</span> <a href="#score">How it adds up</a> · <a href="/backtest">The backtest</a>
 </p>
 <p class="dc-key">
   <span class="k-item"><i class="k-line" aria-hidden="true"></i>lead score</span>
@@ -296,13 +266,12 @@ const tableRows = inst.scrub.slice().reverse();
 </div>
 
 <style>
-  /* The level ramp on paper, in ink and greys so no level reads as a line's colour: a surge and a
-     strong lead in ink (a surge's marks are filled), a lead the notice yellow's dark twin (the yellow
-     itself is too light for a line on paper), and the quiet levels grey. Each clears 3:1 on paper. */
+  /* The level ramp for the readout's rule and the probe, in ink and greys: the busy levels ink, the
+     quiet ones grey. The trace itself is ink at every level, and the one yellow mark is the NOW tag. */
   .scope {
     --l1: var(--ink);
     --l2: var(--ink);
-    --l3: #7a6200;
+    --l3: var(--ink);
     --l4: var(--ink-2);
     --l5: #8a867c;
     --plot-h: 220px;
@@ -357,8 +326,6 @@ const tableRows = inst.scrub.slice().reverse();
   .dc-scale { grid-area: rail; display: grid; grid-template-rows: 25fr 20fr 20fr 20fr 15fr; gap: 2px; }
   .seg { display: grid; place-items: center; font-size: var(--t-xs); font-weight: 700; color: var(--ink-2); background: var(--paper-2); outline: 2px solid transparent; outline-offset: 1px; transition: outline-color var(--fast) var(--ease); }
   .seg.on { background: var(--ink); color: var(--paper); }
-  .seg.on.l3 { background: var(--notice); color: var(--ink); }
-  .seg.on.l1 { background: var(--ink); color: var(--notice); }
   .seg.dim { background: transparent; border: 1px dashed var(--line2); }
   .seg.floor { border: 2px solid var(--ink-2); }
   .seg.is-probe { outline-color: var(--ink); }
@@ -371,21 +338,17 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-plot[role='slider'] { cursor: crosshair; }
   .sc-plot:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   .sc-plot svg, .sc-ink { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  /* Level bands: the busy levels tinted faintly, the current band a little more. */
+  /* Level bands: a neutral tint that fades as the levels quieten. The current level is marked once,
+     on the rail. */
   .sc-band { fill: transparent; }
   .sc-band.l1 { fill: var(--ink); opacity: 0.06; }
   .sc-band.l2 { fill: var(--ink); opacity: 0.04; }
-  .sc-band.l3 { fill: var(--notice); opacity: 0.16; }
-  .sc-band.on { opacity: 0.3; }
-  .sc-band.on.l4, .sc-band.on.l5 { fill: var(--ink); opacity: 0.05; }
-  .sc-band.on.l2 { opacity: 0.08; }
-  .sc-band.on.l1 { opacity: 0.12; }
+  .sc-band.l3 { fill: var(--ink); opacity: 0.02; }
   .sc-guide { stroke: var(--line2); stroke-width: 1; stroke-dasharray: 1 4; vector-effect: non-scaling-stroke; }
   .sc-day { stroke: var(--rule-soft); stroke-width: 1; vector-effect: non-scaling-stroke; }
-  #sc-level-ink stop { stop-color: var(--lc); }
-  .sc-area { fill: url(#sc-level-ink); opacity: 0.06; shape-rendering: crispEdges; }
+  .sc-area { fill: var(--ink); opacity: 0.04; shape-rendering: crispEdges; }
   .sc-glow { display: none; }
-  .sc-line { fill: none; stroke: url(#sc-level-ink); stroke-width: 3; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
+  .sc-line { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linejoin: miter; vector-effect: non-scaling-stroke; }
   .sc-launch { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.6; vector-effect: non-scaling-stroke; transition: opacity var(--fast) var(--ease); }
   .sc-launch.is-near { opacity: 1; stroke: var(--ink); stroke-dasharray: none; }
 
@@ -436,23 +399,12 @@ const tableRows = inst.scrub.slice().reverse();
   .sc-v3.young.below { transform: translate(calc(-100% - 10px), var(--off)); }
   .sc-v3 .yl-short { display: none; }
 
-  /* Level changes on the line: where it crossed a band and stayed. A tick joins the label to the step. */
-  .sc-change { position: absolute; z-index: 2; --tx: -100%; --ty: calc(-100% - 8px); transform: translate(var(--tx), var(--ty)); padding: 2px 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap; background: var(--paper); border: 2px solid var(--lc); }
-  .sc-change.l3 { background: var(--notice); border-color: var(--ink); }
-  .sc-change.l1 { color: var(--notice); background: var(--ink); border-color: var(--ink); }
-  .sc-change.right { --tx: 0px; }
-  .sc-change[data-side='below'] { --ty: 8px; }
-  .sc-change::after { content: ''; position: absolute; right: -2px; top: 100%; height: 8px; border-right: 2px solid var(--lc); }
-  .sc-change.right::after { right: auto; left: -2px; border-right: 0; border-left: 2px solid var(--lc); }
-  .sc-change[data-side='below']::after { top: auto; bottom: 100%; }
-  .sc-change[data-side='above']:not([data-side0='above'])::after, .sc-change[data-side='below']:not([data-side0='below'])::after { display: none; }
-
   /* NOW: the right edge, a square at the live score, and a tag naming it. None of it takes the
      pointer, so hovering the edge reads the plot underneath. */
   .sc-nowline { position: absolute; top: 0; bottom: 0; right: 0; width: 0; border-right: 2px solid var(--ink); }
   .sc-dot { position: absolute; z-index: 4; right: -6px; top: calc(var(--y) * 1%); width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px var(--paper); pointer-events: none; }
   .scope:not(.ok) .sc-dot { background: var(--paper); border: 2px dashed var(--ink-2); }
-  .sc-nowtag { display: block; position: absolute; z-index: 4; right: 12px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 2px 6px; color: var(--paper); background: var(--ink); pointer-events: none; }
+  .sc-nowtag { display: block; position: absolute; z-index: 4; right: 12px; top: calc(var(--y) * 1%); transform: translateY(calc(-100% - 6px)); padding: 2px 6px; color: var(--ink); background: var(--notice); box-shadow: 0 0 0 1px var(--ink); pointer-events: none; }
   .sc-nowtag b { font-weight: 700; }
   .scope:not(.ok) .sc-nowtag { color: var(--ink-2); background: var(--paper); border: 1px dashed var(--ink-2); }
   .scope.high .sc-nowtag { transform: translateY(8px); }
@@ -506,7 +458,7 @@ const tableRows = inst.scrub.slice().reverse();
     /* The week draws itself once, left to right, behind a hairline; then the level's marks appear. */
     .sc-sweep { display: block; position: absolute; top: 0; bottom: 0; left: 0; width: 1px; z-index: 2; background: var(--ink); opacity: 0; animation: sc-sweep var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 250ms both; }
     .sc-ink { animation: sc-ink var(--sweep) cubic-bezier(0.45, 0, 0.2, 1) 250ms both; }
-    .sc-change, .sc-v3, .sc-dot { animation: sc-fade 360ms var(--ease) calc(var(--sweep) + 200ms) both; }
+    .sc-v3, .sc-dot { animation: sc-fade 360ms var(--ease) calc(var(--sweep) + 200ms) both; }
     @keyframes sc-sweep {
       0% { left: 0; opacity: 0; }
       8% { opacity: 1; }
@@ -571,7 +523,7 @@ const tableRows = inst.scrub.slice().reverse();
     .sc-veil { gap: 2px; padding: 6px 10px; }
     .sc-veil .v-live { display: none; }
     .dc-key { gap: 2px 16px; }
-    .sc-v3 .yl-long, .sc-change .cf-when { display: none; }
+    .sc-v3 .yl-long { display: none; }
     .sc-v3 .yl-short { display: inline; }
   }
 </style>
@@ -731,16 +683,13 @@ const tableRows = inst.scrub.slice().reverse();
       const labels = all('[data-label]');
       const dayLabels = all('.sc-daylabel');
       for (const el of [...labels, ...dayLabels]) el.classList.remove('is-cut');
-      for (const el of all('[data-side0]')) el.dataset.side = el.dataset.side0;
       const flags = all('[data-label="flag"]');
       for (const f of flags) f.style.setProperty('--row', '0');
       const nowTag = scope.querySelector<HTMLElement>('.sc-nowtag');
       const veil = scope.querySelector<HTMLElement>('[data-veil]');
       const taken = [nowTag, veil].filter((el): el is HTMLElement => !!el && shown(el)).map(rel);
-      // Fixed labels (direction, the current scale, level changes: latest first), launch names, zones.
-      const fixed = all('[data-label="fixed"]');
-      const changes = fixed.filter((el) => el.classList.contains('sc-change')).reverse();
-      const order = [...fixed.filter((el) => !el.classList.contains('sc-change')), ...changes];
+      // Fixed labels (direction, the current scale), launch names, zones.
+      const order = all('[data-label="fixed"]');
       // A zone label offers the variant its zone's width shows and each shorter one after it.
       const VARIANTS = ['full', 'head', 'min'] as const;
       const zoneLabels = all('[data-label="zone"]');
@@ -760,18 +709,8 @@ const tableRows = inst.scrub.slice().reverse();
         delete z.dataset.pick;
         return [{ el: z, boxes, picks }];
       });
-      // A level-change flag may take the other side of its step when its own side is taken.
-      const mirrored = (b: Box, below: boolean): Box => {
-        const h = b.bottom - b.top;
-        return below
-          ? { ...b, bottom: b.top - 16, top: b.top - 16 - h }
-          : { ...b, top: b.bottom + 16, bottom: b.bottom + 16 + h };
-      };
       const items: { el: HTMLElement; boxes: Box[]; flag?: boolean; picks?: readonly string[] }[] = [
-        ...order.filter(shown).map((el) => {
-          const b = rel(el);
-          return { el, boxes: el.dataset.side0 ? [b, mirrored(b, el.dataset.side0 === 'below')] : [b] };
-        }),
+        ...order.filter(shown).map((el) => ({ el, boxes: [rel(el)] })),
         ...flags.filter(shown).map((el) => {
           const b = rel(el);
           return {
@@ -792,10 +731,7 @@ const tableRows = inst.scrub.slice().reverse();
         const c = choice[i];
         if (c === undefined) item.el.classList.add('is-cut');
         else if (item.flag) item.el.style.setProperty('--row', String(c));
-        else if (item.picks) {
-          if (c > 0) item.el.dataset.pick = item.picks[c];
-        }
-        else if (c === 1) item.el.dataset.side = item.el.dataset.side0 === 'below' ? 'above' : 'below';
+        else if (item.picks && c > 0) item.el.dataset.pick = item.picks[c];
       });
       // A flag that could not be measured is never shown unplaced.
       for (const f of flags) if (!shown(f)) f.classList.add('is-cut');

@@ -29,7 +29,7 @@ const drawn = weekReadings(history, Date.now()).length > 0;
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
   <main id="main">
-    <PageHead title="How the service works" kicker="About" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. It is not a forecast. Here is the arithmetic, and the rest of the fine print." fact={fact} />
+    <PageHead title="How the service works" kicker="About" intro="DROPCON is a lead score read from Polymarket's release odds, with weights set by hand. Here is the arithmetic, and the rest of the fine print." fact={fact} />
     <div class="wrap page-body">
       <ScoreDetail d={d} />
       {drawn ? (
