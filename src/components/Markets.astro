@@ -40,6 +40,7 @@ const foldedCount = ordered.length - MOBILE_MARKETS;
         <h2>Release timetables</h2>
         <Pill pill={pill} href="https://polymarket.com?utm_source=whenmodel.com" />
       </div>
+      <p class="lede">Each stop is the price of "released by" that date. A thin book (a spread over 10¢, or one side empty) shows its bid–ask range in grey, never one price.</p>
       {releases.length ? (
         <div class="mlist">
           {open.map((g) => (
@@ -118,7 +119,6 @@ const foldedCount = ordered.length - MOBILE_MARKETS;
   .markets { display: grid; gap: var(--s8); }
   /* The race, then the benchmarks, each full width: two columns of unequal length left a hole. */
   .lower { display: grid; gap: var(--s8); }
-  .race { max-width: 760px; }
   .mgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 1100px) {
     .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s8); }
@@ -136,12 +136,11 @@ const foldedCount = ordered.length - MOBILE_MARKETS;
   .vol { color: var(--ink-2); }
   .best-title { display: block; margin: var(--s4) 0; font-weight: 600; }
   .race { display: grid; gap: var(--s3); }
-  .race-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) 56px; gap: var(--s3); align-items: center; }
+  /* The race runs the full measure, the share flush right at its edge. One bar colour: the leader is set in bold type. */
+  .race-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) 64px; gap: var(--s4); align-items: center; }
   .race-name { font-size: var(--t-sm); line-height: 20px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .race-row .bar { height: 8px; }
-  .race-row .bar > i { background: var(--ink-2); }
-  .race-row.lead .bar > i { background: var(--ink); }
-  .race-row.lead .race-name { font-weight: 700; }
-  .race-pct { font-family: var(--mono); font-size: var(--t-base); }
+  .race-row.lead .race-name, .race-row.lead .race-pct { font-weight: 700; }
+  .race-pct { font-family: var(--mono); font-size: var(--t-base); text-align: right; }
   @media (max-width: 480px) { .race-row { grid-template-columns: 92px minmax(0, 1fr) 48px; } }
 </style>

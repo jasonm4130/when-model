@@ -274,8 +274,11 @@ describe('panels render', async () => {
     expect(folded).toContain(`${9 - MOBILE_MARKETS} more release markets`);
     expect(html).toContain(`${8 - MOBILE_MARKETS} more markets`);
     // A single yes/no market answers "Yes" instead of repeating its question (UI-12).
-    // Odds are toned by class (hi / mid / lo), never by a lab colour inline.
-    expect(html).toMatch(/<b class="(hi|mid|lo)"[^>]*>37%<\/b> Yes/);
+    // Every quoted price is set at one weight: only a thin book (its range) is set quiet, and the
+    // strip says so in its key. Never toned by value, nor by a lab colour inline.
+    expect(html).toMatch(/<b data-astro-cid-[a-z0-9]+>37%<\/b> Yes/);
+    expect(html).not.toMatch(/<b class="(hi|mid|lo)"/);
+    expect(html).toContain('shows its bid–ask range in grey, never one price');
     expect(html).not.toMatch(/<b[^>]*style="color/);
     // Release markets sit under their line's heading (its bullet and name, or a plain ring for no
     // line), one row each: the row itself carries no second bullet.

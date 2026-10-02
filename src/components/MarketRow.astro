@@ -21,7 +21,6 @@ interface Props {
 }
 const { m, limit, compact = false, grouped = false, asOf } = Astro.props;
 const THIN = 'Thin book: bid–ask range, not odds';
-const tone = (p: number) => (p >= 0.5 ? 'hi' : p >= 0.2 ? 'mid' : 'lo');
 const lab = !compact && !grouped && m.labId ? labById(m.labId) : undefined;
 ---
 <a class:list={['row mrow', { compact, grouped }]} href={m.url} target="_blank" rel="noopener">
@@ -30,7 +29,7 @@ const lab = !compact && !grouped && m.labId ? labById(m.labId) : undefined;
     {displayOutcomes(m, limit, asOf).map((o) => {
       const odds = outcomeOdds(o);
       if (odds.thin) return <span class="out"><b class="thin" title={THIN}>{odds.text}</b> {rungLabel(o.label)}</span>;
-      return <span class="out"><b class={tone(o.yes)}>{odds.text}</b> {rungLabel(o.label)}</span>;
+      return <span class="out"><b>{odds.text}</b> {rungLabel(o.label)}</span>;
     })}
   </div>
 </a>
@@ -48,16 +47,19 @@ const lab = !compact && !grouped && m.labId ? labById(m.labId) : undefined;
   .compact .outs, .grouped .outs { padding-left: 0; }
   /* Under its line on a wide screen a market is one timetable row: its question, then its stops. */
   @media (min-width: 1100px) {
-    .grouped { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--s6); align-items: baseline; }
+    .grouped { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); column-gap: var(--s6); align-items: baseline; }
     .grouped .outs { margin-top: 0; }
   }
   .out { overflow-wrap: anywhere; }
   @media (min-width: 481px) {
     .out { white-space: nowrap; }
   }
+  /* A phone sets the stops two to a row, so a strip never ends on one stray stop. */
+  @media (max-width: 480px) {
+    .outs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   .out b { margin-right: 2px; font-family: var(--mono); font-size: var(--t-md); line-height: 24px; font-weight: 500; white-space: nowrap; color: var(--ink); }
   .compact .out b { font-size: var(--t-base); }
-  .out b.lo { color: var(--ink-2); }
   /* A thin book is a range, not odds: never set at full weight. */
   .out b.thin { font-size: var(--t-sm); font-weight: 400; color: var(--ink-2); }
 </style>
