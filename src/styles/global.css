@@ -31,6 +31,8 @@
   --s9: 96px;
 
   /* Type: a 1.333 scale from 16px, every line height on the 4px grid. */
+  /* Below the scale: the instrument's small caps and numerals (DropconScope), where 12px crowds the plot. */
+  --t-2xs: 11px;
   --t-xs: 12px;
   --t-sm: 14px;
   --t-base: 16px;

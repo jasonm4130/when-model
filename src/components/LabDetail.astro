@@ -205,7 +205,7 @@ const stopSub = (s: (typeof stops)[number]) =>
   .strip::before { content: ''; position: absolute; left: calc(100% / var(--n) / 2); right: calc(100% / var(--n) / 2); top: 63px; height: 12px; border-radius: 6px; background: var(--line); }
   .strip li { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
   .strip .p { height: 40px; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
-  .strip .dot { position: relative; z-index: 1; width: 28px; height: 28px; margin: 5px 0; border-radius: 50%; background: #fff; border: 5px solid var(--ink); }
+  .strip .dot { position: relative; z-index: 1; width: 28px; height: 28px; margin: 5px 0; border-radius: 50%; background: var(--sign-ink); border: 5px solid var(--ink); }
   .strip .d { margin-top: var(--s3); font-size: var(--t-base); line-height: 24px; font-weight: 600; }
   .strip .s { font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
   .strip li.now .dot { background: var(--ink); }

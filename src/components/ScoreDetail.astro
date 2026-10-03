@@ -54,13 +54,14 @@ const range = (b: { top: number; bottom: number }) =>
   .dc-drivers { display: grid; gap: 8px; font-size: var(--fs-md); line-height: 1.4; color: var(--ink-2); }
   .dc-drivers li { display: grid; grid-template-columns: 3ch minmax(0, 1fr); gap: 14px; align-items: baseline; }
   .dc-drivers .why { overflow-wrap: anywhere; }
+  /* Off-scale: the condensed points numeral is sized to its driver's line. */
   .dc-drivers .pts { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 24px; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
   .dc-drivers .total { border-top: 1px solid var(--ink); padding-top: 8px; color: var(--ink); }
   .dc-blurb, .dc-bands { margin-top: 16px; font-size: var(--fs-sm); line-height: 1.5; color: var(--ink-2); max-width: 60ch; }
   /* The five bands as a ruled ladder, the live one printed in the blue. */
   .bands { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
   .bands li { display: grid; grid-template-columns: 2.2ch minmax(0, 1fr) auto; gap: 14px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule-soft); }
-  .bands b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 28px; line-height: 1; color: var(--ink-2); }
+  .bands b { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: var(--t-lg); line-height: 1; color: var(--ink-2); }
   .band-name { font-family: var(--font-label); font-size: var(--fs-tiny); font-weight: 600; font-stretch: 112.5%; letter-spacing: 0.08em; color: var(--ink-2); }
   .band-range { font-size: var(--fs-sm); color: var(--ink-2); font-variant-numeric: tabular-nums; }
   .bands li.on b { color: var(--ink); }

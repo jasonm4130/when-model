@@ -134,20 +134,21 @@ const { meta, t1, split, last, timeAt, h72, pricedBar, heldOut, heldPriced, fals
   }
   .held-zone { fill: rgba(20, 19, 18, 0.04); }
   .split { stroke: var(--text); stroke-width: 1; opacity: 0.6; }
+  /* SVG text is in viewBox units, scaled with the chart: the 9px caps and the 13px narrow ticks sit off the type scale. */
   .zone-note, .panel-title { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; }
   .panel-title { fill: var(--text); }
   .grid { stroke: var(--line); stroke-width: 1; }
   .month { stroke: var(--line2); stroke-width: 1; }
-  .tick { fill: var(--muted); font-size: 16px; }
+  .tick { fill: var(--muted); font-size: var(--t-base); }
   .wash { fill: rgba(20, 19, 18, 0.07); stroke: none; }
   .line { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
   .narrow .line { stroke-width: 1; }
   .narrow .tick, .narrow .ref-note { font-size: 13px; }
   line.fit { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 7 5; }
   line.held { stroke: var(--text); stroke-width: 2; stroke-dasharray: 2 4; stroke-linecap: round; }
-  .ref-note { fill: var(--text); font-size: 16px; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
+  .ref-note { fill: var(--text); font-size: var(--t-base); paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
   .alarm line { stroke: var(--accent); stroke-width: 2; }
-  .alarm text { fill: var(--text); font-size: 16px; }
+  .alarm text { fill: var(--text); font-size: var(--t-base); }
   .launch { fill: var(--bg2); stroke: var(--muted); stroke-width: 1.5; }
   .launch.priced { fill: var(--accent); stroke: var(--paper); }
   .hit { fill: transparent; }

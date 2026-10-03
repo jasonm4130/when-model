@@ -69,11 +69,12 @@ const { views, label } = waterfallView(releases, crossings);
   }
   .grid { stroke: var(--line); stroke-width: 1; }
   .zero { stroke: var(--text); stroke-width: 1; opacity: 0.7; }
-  .tick { fill: var(--muted); font-size: 14px; }
+  .tick { fill: var(--muted); font-size: var(--t-sm); }
+  /* Off-scale: 9px caps in viewBox units, scaled with the chart. */
   .axis-note { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; }
-  .row-label { fill: var(--text); font-size: 14px; }
-  .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: 14px; }
-  .row-note { fill: var(--muted); font-size: 14px; }
+  .row-label { fill: var(--text); font-size: var(--t-sm); }
+  .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: var(--t-sm); }
+  .row-note { fill: var(--muted); font-size: var(--t-sm); }
   .lead { stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; opacity: 0.45; }
   circle { stroke: var(--paper); stroke-width: 2; }
   .t50 { fill: var(--line2); }

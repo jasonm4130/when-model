@@ -142,8 +142,9 @@ const views = panels.map((panel) => {
   circle { fill: var(--ink); stroke: var(--paper); stroke-width: 2; }
   .hbar { fill: var(--line2); }
   .bin:hover circle, .bin:hover .hbar { stroke: var(--ink); stroke-width: 2; }
+  /* SVG text is in viewBox units, scaled with the chart: 13px and the 10px caps sit off the type scale. */
   .tick, .count { fill: var(--muted); font-size: 13px; }
-  .count { font-size: 12px; }
+  .count { font-size: var(--t-xs); }
   .note { fill: var(--text); font-size: 13px; paint-order: stroke; stroke: var(--paper); stroke-width: 4px; stroke-linejoin: round; }
   .axis-label { fill: var(--muted); font-family: var(--font-head); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
   .bins { margin-top: 10px; }

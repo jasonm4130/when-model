@@ -110,7 +110,8 @@ Rules of the house:
   needs them merges (command under the README's Point-in-time review); 0003 (the release ledger)
   goes before the availability-ledger branch. Never edit a migration that has run remotely.
 - Shared CSS (tokens, panels, metrics, rows, motion) lives in `src/styles/global.css`;
-  component `<style>` blocks hold presentation specific to that component. Every animation is
+  component `<style>` blocks hold presentation specific to that component. Font sizes use the `--t-*`
+  scale and colours the `:root` tokens; a size off the scale keeps its px value with a one-line comment saying why. Every animation is
   gated by `prefers-reduced-motion`.
 - Cloudflare Builds deploys `main` after `pnpm validate`; GitHub requires `check` and `browser`
   before merging. Manual deploy is `op run --env-file .env.op -- pnpm deploy`. Custom domains are attached at the

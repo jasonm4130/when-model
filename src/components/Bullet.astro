@@ -5,6 +5,7 @@
  * line is already named beside it (`decorative`).
  */
 import { lineBullet } from '../ui/lines';
+import { PALETTE } from '../ui/palette';
 interface Props {
   id: string;
   /** The lab's name, for the accessible name. */
@@ -17,7 +18,7 @@ interface Props {
 }
 const { id, name, size = 'md', href, decorative = false, class: extra } = Astro.props;
 const b = lineBullet(id);
-const cls = ['b', size !== 'md' && size, b.fill.toLowerCase() === '#141414' && 'dark', extra].filter(Boolean).join(' ');
+const cls = ['b', size !== 'md' && size, b.fill.toLowerCase() === PALETTE.sign && 'dark', extra].filter(Boolean).join(' ');
 const style = `--c:${b.fill};--fg:${b.ink}`;
 const label = `${name} line`;
 ---

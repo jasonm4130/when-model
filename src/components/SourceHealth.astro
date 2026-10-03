@@ -18,6 +18,7 @@ const up = d.sources.filter((s) => s.ok).length;
 <style>
   .health-panel { scroll-margin-top: 16px; }
   .health-sum { max-width: 60ch; font-size: var(--fs-sm); color: var(--ink-2); margin-bottom: 12px; }
+  /* Off-scale: the condensed count numeral is sized to sit beside the summary line. */
   .health-n { font-family: var(--font-display); font-weight: 800; font-stretch: 62.5%; font-size: 40px; line-height: 1; color: var(--ink); margin-right: 8px; }
   .health { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); column-gap: var(--s4); font-size: var(--fs-sm); line-height: 1.4; border-top: 1px solid var(--ink); }
   /* A long error breaks anywhere rather than running off a phone's screen. */
