@@ -142,6 +142,15 @@ export function buildHistorySeries(points: readonly ScorePoint[]): DisplayPoint[
   return splitByAlgorithmVersion(points).flatMap((segment) => downsampleHourly(applyHysteresis(segment)));
 }
 
+/**
+ * `/api/history.json`'s body, and what the page's DROPCON instrument reads: the 30-day series, or
+ * `{ ok: false, points: [] }` when it could not be read.
+ */
+export interface HistoryResponseBody {
+  ok: boolean;
+  points: DisplayPoint[];
+}
+
 /* ───────────── Window and date labels shared by the instrument and the history API ───────────── */
 
 /** How far back the history is read: `/api/history.json` covers this; the instrument draws its last week. */

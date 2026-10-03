@@ -11,6 +11,8 @@ import { loadDashboard } from '../app/load-dashboard';
 import { pageMeta } from '../ui/site';
 
 const d = await loadDashboard();
+// The page's one clock read: every panel ages its pill and relative times against this instant.
+const now = Date.now();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'radar' } as const;
 const meta = pageMeta(view);
@@ -24,15 +26,15 @@ const fact = { figure: String(warnings), caption: `early warning${warnings === 1
   <main id="main">
     <PageHead title="Service notices" kicker="Radar" intro="What has come before launches, each with its track record, then the launches that already came. None of it moves the level." fact={fact} />
     <div class="wrap page-body">
-      <Signals d={d} />
-      <RadarArrivals d={d} />
-      <Drops d={d} show="listings" />
-      <Feed d={d} show="feed" />
+      <Signals d={d} now={now} />
+      <RadarArrivals d={d} now={now} />
+      <Drops d={d} now={now} show="listings" />
+      <Feed d={d} now={now} show="feed" />
       <details class="fold elsewhere" id="elsewhere">
         <summary class="fold-summary"><span>Elsewhere on the network <span class="what">open weights, papers, the X watchlist</span></span></summary>
         <div class="radar-pair inner">
-          <Drops d={d} show="open" />
-          <Feed d={d} show="watch" />
+          <Drops d={d} now={now} show="open" />
+          <Feed d={d} now={now} show="watch" />
         </div>
       </details>
     </div>

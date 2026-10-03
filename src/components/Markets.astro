@@ -2,44 +2,23 @@
 import type { Dashboard } from '../domain/dashboard';
 import { SOURCE } from '../domain/sources';
 import { pct, usd } from '../ui/format';
-import { MOBILE_MARKETS, PANEL_ROWS, asOfMs, otherRows, raceRows, releaseRows, sourceOk, sourcePill } from '../ui/panels';
-import { labById } from '../domain/lab';
-import type { Market } from '../domain/market';
+import { MOBILE_MARKETS, PANEL_ROWS, asOfMs, otherRows, raceRows, releaseGroups, sourceOk, sourcePill } from '../ui/panels';
 import { lineName } from '../ui/lines';
 import { labPath } from '../ui/site';
 import Bullet from './Bullet.astro';
 import MarketRow from './MarketRow.astro';
 import Pill from './Pill.astro';
-interface Props { d: Dashboard }
-const { d } = Astro.props;
+interface Props { d: Dashboard; now: number }
+const { d, now } = Astro.props;
 const asOf = asOfMs(d);
-const releases = releaseRows(d);
 const others = otherRows(d);
 const best = d.bestModelMarket;
 const bestRows = raceRows(d);
 const up = sourceOk(d.sources, SOURCE.polymarket);
-const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, Date.now());
+const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now);
 const down = 'Polymarket unreachable. Odds return when it does.';
 const leader = bestRows[0]?.yes ?? 0;
-/** Release markets grouped under each line's heading, lines in network order. */
-const byLine = (ms: Market[]) => {
-  const by = new Map<string, Market[]>();
-  for (const m of ms) by.set(m.labId ?? '', [...(by.get(m.labId ?? '') ?? []), m]);
-  // Lines in the network's order (the /labs order), so the headline service is never folded away;
-  // markets with no line go last.
-  const rank = (id: string) => {
-    const i = d.labs.findIndex((l) => l.id === id);
-    return i < 0 ? d.labs.length : i;
-  };
-  return [...by.entries()]
-    .sort(([a], [b]) => rank(a) - rank(b))
-    .map(([id, markets]) => ({ lab: id ? labById(id) : undefined, markets }));
-};
-const ordered = byLine(releases).flatMap((g) => g.markets);
-// The first MOBILE_MARKETS show; the rest wait behind one fold, still under their line's heading.
-const open = byLine(ordered.slice(0, MOBILE_MARKETS));
-const folded = byLine(ordered.slice(MOBILE_MARKETS));
-const foldedCount = ordered.length - MOBILE_MARKETS;
+const { open, folded, foldedCount } = releaseGroups(d);
 ---
 <section class="markets" aria-label="Markets">
   <!-- The page's one primary thing: every release timetable, full width, two rows a line on a wide screen. -->
@@ -49,7 +28,7 @@ const foldedCount = ordered.length - MOBILE_MARKETS;
         <Pill pill={pill} href="https://polymarket.com?utm_source=whenmodel.com" />
       </div>
       <p class="lede">Each stop is the price of "released by" that date. A thin book (a spread over 10¢, or one side empty) shows its bid–ask range in grey, never one price.</p>
-      {releases.length ? (
+      {open.length ? (
         <div class="mlist">
           {open.map((g) => (
             <div class="line-group">

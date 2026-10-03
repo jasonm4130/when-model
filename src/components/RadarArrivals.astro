@@ -11,8 +11,8 @@ import { sourcePill } from '../ui/panels';
 import { LANDED_LAB_FEEDS, LANDED_SOURCES, arrivalBoard } from '../ui/signals';
 import Bullet from './Bullet.astro';
 import Pill from './Pill.astro';
-interface Props { d: Dashboard; now?: number }
-const { d, now = Date.now() } = Astro.props;
+interface Props { d: Dashboard; now: number }
+const { d, now } = Astro.props;
 const built = Date.parse(d.generatedAt);
 const board = arrivalBoard(d.landed);
 const pill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');

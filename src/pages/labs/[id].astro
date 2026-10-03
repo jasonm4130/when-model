@@ -15,6 +15,8 @@ import { pageMeta } from '../../ui/site';
 const lab = labById(Astro.params.id);
 if (!lab) Astro.response.status = 404;
 const d = lab ? await loadDashboard() : undefined;
+// The page's one clock read: every panel ages its pill and relative times against this instant.
+const now = Date.now();
 const p = lab && d ? labPage(d, lab.id) : undefined;
 if (p) Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = lab ? ({ page: 'lab', lab: lab.id } as const) : undefined;
@@ -42,7 +44,7 @@ const rank = p?.status ? d!.labs.indexOf(p.status) + 1 : 0;
         </div>
       </div>
       <div class="wrap page-body">
-        <LabDetail d={d} p={p} />
+        <LabDetail d={d} p={p} now={now} />
       </div>
     </main>
     <Footer generatedAt={d.generatedAt} d={d} />

@@ -9,8 +9,8 @@ export {
   HISTORY_MEMO_KEY,
   HISTORY_WINDOW_MS,
   buildHistoryResponseBody,
-  type HistoryResponseBody,
 } from '../../app/load-dashboard';
+export type { HistoryResponseBody } from '../../domain/history';
 
 export const GET: APIRoute = async () => {
   const body = await loadHistory();

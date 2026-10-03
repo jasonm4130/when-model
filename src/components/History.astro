@@ -73,6 +73,7 @@ const faq: { q: string; a: string; link?: { href: string; label: string } }[] = 
   .faq summary { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding: 20px 0; min-height: 44px; }
   .faq .q { font-size: var(--fs-lede); line-height: 1.25; }
   .faq summary:hover .q { color: var(--accent-ink); }
+  /* Off-scale: the +/− mark is sized to the question's 21px line, not to text. */
   .faq summary::after { content: '+'; flex: none; font-family: var(--font-display); font-size: 30px; font-weight: 400; font-stretch: 100%; line-height: 1; }
   .faq details[open] summary::after { content: '−'; }
   .faq p { max-width: 68ch; margin: 0 0 24px; font-size: var(--fs-body); line-height: 1.55; color: var(--ink); }

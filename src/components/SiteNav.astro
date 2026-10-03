@@ -35,6 +35,7 @@ const exact = view.page !== 'lab';
   }
   /* A phone keeps five tabs with room between them; Backtest stays in the footer (and shows here on its own page). */
   @media (max-width: 480px) {
+    /* Off-scale: 13px is the most that fits five tabs across a 360px phone. */
     .tab { font-size: 13px; }
     .tabs > li:has(> .tab[href='/backtest']:not(.on)) { display: none; }
   }

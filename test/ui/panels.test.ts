@@ -1,5 +1,5 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import Disclaimer from '../../src/components/Disclaimer.astro';
 import Drops from '../../src/components/Drops.astro';
 import Feed from '../../src/components/Feed.astro';
@@ -20,8 +20,10 @@ import {
   SOURCE_ERROR_MAX,
   STALE_AFTER_MS,
   asOfMs,
+  byLine,
   dropPrice,
   otherRows,
+  releaseGroups,
   releaseRows,
   sourceErrorText,
   sourceStatusText,
@@ -232,10 +234,46 @@ describe('panel selections', () => {
       ],
     });
     const container = await AstroContainer.create();
-    const html = await container.renderToString(Markets, { props: { d: { ...base, markets: [rungs] } } });
+    const html = await container.renderToString(Markets, {
+      props: { d: { ...base, markets: [rungs] }, now: NOW },
+    });
     // Rung labels print day first, as the rest of the site does.
     expect(html).toContain('30 Sep');
     expect(html).not.toContain('18 Sep');
+  });
+
+  it('groups release markets under their line in network order, markets with no line last', () => {
+    const ms = [
+      release(1, { labId: 'openai' }),
+      release(2, { labId: undefined }),
+      release(3, { labId: 'anthropic' }),
+      release(4, { labId: 'openai' }),
+      release(5, { labId: 'nobody' as never }),
+    ];
+    const groups = byLine(ms, [{ id: 'anthropic' }, { id: 'openai' }]);
+    expect(groups.map((g) => g.lab?.id)).toEqual(['anthropic', 'openai', undefined, undefined]);
+    expect(groups[1].markets.map((m) => m.slug)).toEqual(['release-1', 'release-4']);
+    // A line outside the network ranks with the unlined, in the order it was first seen.
+    expect(groups.slice(2).map((g) => g.markets[0].slug)).toEqual(['release-2', 'release-5']);
+    expect(byLine([], [])).toEqual([]);
+  });
+
+  it('shows the first MOBILE_MARKETS release markets by line and folds the rest, still by line', () => {
+    const d = {
+      labs: [{ id: 'anthropic' }, { id: 'openai' }] as never,
+      markets: Array.from({ length: 9 }, (_, n) => release(n, { labId: n % 3 ? 'openai' : 'anthropic' })),
+    };
+    const { open, folded, foldedCount } = releaseGroups(d);
+    const count = (gs: typeof open) => gs.reduce((n, g) => n + g.markets.length, 0);
+    expect(count(open)).toBe(MOBILE_MARKETS);
+    expect(foldedCount).toBe(9 - MOBILE_MARKETS);
+    expect(count(folded)).toBe(foldedCount);
+    // Every Anthropic market comes before any OpenAI one, across the fold.
+    expect([...open, ...folded].flatMap((g) => g.markets.map((m) => m.labId))).toEqual([
+      ...Array(3).fill('anthropic'),
+      ...Array(6).fill('openai'),
+    ]);
+    expect(releaseGroups({ labs: [], markets: [] })).toEqual({ open: [], folded: [], foldedCount: 0 });
   });
 
   it('flags stealth slots from the listing itself and from early warnings', () => {
@@ -258,15 +296,11 @@ describe('panel selections', () => {
 describe('panels render', async () => {
   const container = await AstroContainer.create();
   const d = dashboard();
-  // Components stamp their pills against the wall clock: pin it a minute after the build.
-  beforeAll(() => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(NOW + 60_000);
-  });
-  afterAll(() => vi.useRealTimers());
+  // Each page reads the clock once and hands it down: these render a minute after the build.
+  const now = NOW + 60_000;
 
   it('Markets derives its pill from Polymarket and folds rows past the phone cap (UI-04, UI-10)', async () => {
-    const html = await container.renderToString(Markets, { props: { d } });
+    const html = await container.renderToString(Markets, { props: { d, now } });
     expect(html).toMatch(/class="pill live"[^>]*data-source-pill[^>]*>LIVE · POLYMARKET</);
     // One fold at every width now: the first MOBILE_MARKETS rows show, the rest wait behind a summary.
     const [before, folded] = html.split('<details class="fold"');
@@ -290,18 +324,18 @@ describe('panels render', async () => {
 
   it('Markets says the source is down, or that there is simply nothing, from the source result', async () => {
     const down = dashboard({ markets: { name: SOURCE.polymarket, data: [], ok: false, error: 'HTTP 503' } });
-    const downHtml = await container.renderToString(Markets, { props: { d: down } });
+    const downHtml = await container.renderToString(Markets, { props: { d: down, now } });
     expect(downHtml).toContain('DOWN · POLYMARKET');
     expect(downHtml).toContain('Polymarket unreachable');
     const quiet = dashboard({ markets: { name: SOURCE.polymarket, data: [], ok: true } });
-    const quietHtml = await container.renderToString(Markets, { props: { d: quiet } });
+    const quietHtml = await container.renderToString(Markets, { props: { d: quiet, now } });
     expect(quietHtml).toContain('LIVE · POLYMARKET');
     expect(quietHtml).toContain('No open release market right now.');
     expect(quietHtml).not.toContain('unreachable');
   });
 
   it('Drops badges stealth slots, keeps dates on one line and lists rows with a price, one list at every width (UI-10)', async () => {
-    const html = await container.renderToString(Drops, { props: { d } });
+    const html = await container.renderToString(Drops, { props: { d, now } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · OPENROUTER</);
     expect(html).toMatch(/Space Bunny Alpha<\/a><span class="tag stealth"[^>]*>STEALTH</);
     // The week table is gone: each listing renders once, as a list row that grows columns from 700px.
@@ -318,17 +352,12 @@ describe('panels render', async () => {
   });
 
   it('a page rendered from an old build says STALE, and a fresh one tells the browser when it will be', async () => {
-    const fresh = await container.renderToString(Drops, { props: { d } });
+    const fresh = await container.renderToString(Drops, { props: { d, now } });
     expect(fresh).toContain(`data-stale-at="${new Date(NOW + STALE_AFTER_MS).toISOString()}"`);
     expect(fresh).toContain('data-stale-text="STALE · OPENROUTER"');
-    vi.setSystemTime(NOW + STALE_AFTER_MS + 1);
-    try {
-      const old = await container.renderToString(Drops, { props: { d } });
-      expect(old).toMatch(/class="pill warn"[^>]*>STALE · OPENROUTER</);
-      expect(old).not.toContain('LIVE · OPENROUTER');
-    } finally {
-      vi.setSystemTime(NOW + 60_000);
-    }
+    const old = await container.renderToString(Drops, { props: { d, now: NOW + STALE_AFTER_MS + 1 } });
+    expect(old).toMatch(/class="pill warn"[^>]*>STALE · OPENROUTER</);
+    expect(old).not.toContain('LIVE · OPENROUTER');
   });
 
   it('Drops shows each Hugging Face panel’s own health', async () => {
@@ -338,6 +367,7 @@ describe('panels render', async () => {
           trending: { name: SOURCE.hfTrending, data: [], ok: false, error: 'timeout' },
           papers: { name: SOURCE.hfPapers, data: [], ok: false, error: 'timeout' },
         }),
+        now,
       },
     });
     expect(html).toContain('DOWN · HF TRENDING');
@@ -347,7 +377,7 @@ describe('panels render', async () => {
   });
 
   it('Feed labels each source in ink, shows MOBILE_FEED items, then folds the rest (UI-10, UI-15)', async () => {
-    const html = await container.renderToString(Feed, { props: { d } });
+    const html = await container.renderToString(Feed, { props: { d, now } });
     expect(html).toMatch(/class="pill live"[^>]*>LIVE · 6 FEEDS</);
     // Sources are named, not colour-coded: the lab palette was tuned for the old dark page.
     expect(html).toMatch(/class="src"[^>]*>HN</);
@@ -363,12 +393,14 @@ describe('panels render', async () => {
   it('Feed reads PARTIAL with one feed down, and says every feed is down only when they all are', async () => {
     const partial = inputs();
     partial.feeds[3] = { name: FEED_SOURCE_NAME.anthropic, data: [], ok: false, error: 'timeout' };
-    const html = await container.renderToString(Feed, { props: { d: assembleDashboard(partial, NOW) } });
+    const html = await container.renderToString(Feed, { props: { d: assembleDashboard(partial, NOW), now } });
     expect(html).toContain('PARTIAL · 5/6 FEEDS');
 
     const dark = inputs();
     dark.feeds = dark.feeds.map((f) => ({ ...f, data: [], ok: false, error: 'down' }));
-    const darkHtml = await container.renderToString(Feed, { props: { d: assembleDashboard(dark, NOW) } });
+    const darkHtml = await container.renderToString(Feed, {
+      props: { d: assembleDashboard(dark, NOW), now },
+    });
     expect(darkHtml).toContain('DOWN · 6 FEEDS');
     expect(darkHtml).toContain('Every feed is down.');
   });
@@ -378,7 +410,7 @@ describe('panels render', async () => {
     const failing = inputs();
     failing.feeds[3] = { name: FEED_SOURCE_NAME.anthropic, data: [], ok: false, error: `503 ${url}` };
     const d = assembleDashboard(failing, NOW);
-    const html = await container.renderToString(Feed, { props: { d } });
+    const html = await container.renderToString(Feed, { props: { d, now } });
     expect(html).not.toContain('search_by_date');
     // The pill's hover title uses the short text.
     expect(html).toContain(`${FEED_SOURCE_NAME.anthropic}: 503 · hn.algolia.com`);

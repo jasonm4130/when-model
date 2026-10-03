@@ -12,6 +12,8 @@ import { dropconTitle } from '../ui/odds';
 
 // The answer only: the level's week is drawn on /about, beside how the score adds up.
 const d = await loadDashboard();
+// The page's one clock read: every panel ages its pill and relative times against this instant.
+const now = Date.now();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const title = dropconTitle(d.dropcon);
 ---
@@ -19,12 +21,12 @@ const title = dropconTitle(d.dropcon);
   <Header d={d} view={{ page: 'home' }} />
   <ServiceStatus c={d.dropcon} />
   <main id="main">
-    <DepartureSign d={d} />
+    <DepartureSign d={d} now={now} />
     <div class="wrap page-body">
       <div class="cols">
         <DepartureBoard d={d} />
         <div class="side">
-          <Arrivals d={d} />
+          <Arrivals d={d} now={now} />
           <NetworkNotice d={d} />
         </div>
       </div>

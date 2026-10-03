@@ -22,14 +22,15 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 - `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
   the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
   shared by `/api/history.json` and the page's DROPCON instrument; `loadHistoryForPage` adds the
-  page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
+  page's 2 s timeout and a 60 s skip after a failure; the body's type, `HistoryResponseBody`, lives in
+  `src/domain/history.ts`). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes, then `src/app/capture-availability.ts`, the
   availability ledger, from the build's own source results (`buildCapture`) plus the cron-only
   sources. A page render never polls those: `test/app/load-dashboard.test.ts` pins its fetch count.
 - `src/domain/instrument.ts` draws "Service history · last 7 days" on /about, under how the score
   adds up (the home page keeps one bold moment, the departure sign): `buildInstrument` turns the history, the live level
   and LANDED's launches into the 7-day trace, zones, level-change flags and scrubber data
-  `DropconScope.astro` renders. It draws the last 7 days but reads the record's start, the current
+  `DropconScope.astro` renders (`scopeView` in `src/ui/scope.ts` works out everything it draws). It draws the last 7 days but reads the record's start, the current
   version's first hour and the last reading from the whole 30-day series it is given, so never
   filter the input to the window first. Only the current algorithm version is inked on the level
   axis; an older one is a hatched zone. Level names live in `src/domain/levels.ts`. `src/ui/readout.ts`
@@ -54,9 +55,13 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   social card are rendered by `pnpm brand` (`scripts/brand/`); rerun it after changing a line's bullet.
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
-  source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
+  source pill and /markets' line groups). View logic lives in pure, tested `src/ui` helpers, not in
+  component frontmatter, which keeps to prop destructuring and calls. Neither imports from `src/adapters`,
+  `src/infra` or `src/app`: a type they need from there moves to `src/domain`. Browser code is limited to the clock, refresh countdown, relative timestamps,
   source pills aging to STALE, the 5-minute poll-and-offer reload, the next departure's
   split-flap turn, and the instrument's scrubber and label fitting (progressive enhancement: the server render reads NOW without it).
+  The server render reads the clock once per page: the page takes `const now = Date.now()` and passes
+  `now` to every panel as a required prop, so a component's frontmatter never reads the clock itself.
 
 Rules of the house:
 
@@ -94,7 +99,8 @@ Rules of the house:
   (or moves to another page) updates its part and `PAGE_PARTS` at its displayed precision; never hash raw
   floats or anything that moves with the clock, or every poll offers NEW DATA. A panel's status pill comes from `sourcePill`, never a literal "LIVE".
 - A number on `/backtest` comes from `data/backtest/*.json` or a domain constant, never typed
-  into markup, and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
+  into markup (what the page and its charts derive from them is in `src/ui/backtest-page.ts`,
+  `backtest-replay.ts` and `backtest-waterfall.ts`), and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
   only through `pnpm backtest` or `pnpm backtest:replay`.
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
   deploy by up to its TTL and a new render reading an old shape streams a blank page. The
@@ -104,7 +110,8 @@ Rules of the house:
   needs them merges (command under the README's Point-in-time review); 0003 (the release ledger)
   goes before the availability-ledger branch. Never edit a migration that has run remotely.
 - Shared CSS (tokens, panels, metrics, rows, motion) lives in `src/styles/global.css`;
-  component `<style>` blocks hold presentation specific to that component. Every animation is
+  component `<style>` blocks hold presentation specific to that component. Font sizes use the `--t-*`
+  scale and colours the `:root` tokens; a size off the scale keeps its px value with a one-line comment saying why. Every animation is
   gated by `prefers-reduced-motion`.
 - Cloudflare Builds deploys `main` after `pnpm validate`; GitHub requires `check` and `browser`
   before merging. Manual deploy is `op run --env-file .env.op -- pnpm deploy`. Custom domains are attached at the

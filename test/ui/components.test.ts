@@ -206,7 +206,7 @@ describe('components', async () => {
     expect(html.match(/<h2[^>]*>[\s\S]*?<\/h2>/)?.[0]).not.toContain(LEVEL_NAMES[5]);
     expect(html).not.toMatch(/class="rung on"/);
     expect(html).toMatch(/class="rung on held"|class="rung held"/);
-    const sign = await container.renderToString(DepartureSign, { props: { d: degraded } });
+    const sign = await container.renderToString(DepartureSign, { props: { d: degraded, now: NOW } });
     expect(sign).toMatch(/data-flap[^>]*>No departures scheduled</);
     expect(sign).toContain('Polymarket is unreachable');
   });
@@ -224,7 +224,7 @@ describe('components', async () => {
   });
 
   it('Signals lists early warnings with their track record, and Recent arrivals the landed launches, never scored', async () => {
-    const html = await container.renderToString(Signals, { props: { d } });
+    const html = await container.renderToString(Signals, { props: { d, now: NOW } });
     expect(html).toContain('Early warnings');
     expect(html).toContain('id="warnings"');
     expect(html).toContain(d.earlyWarnings.stealth.track.summary);
@@ -232,7 +232,7 @@ describe('components', async () => {
     expect(html).toContain(d.earlyWarnings.broadcasts.track.summary);
     expect(html).toContain(d.earlyWarnings.architectures.track.summary);
     expect(html).not.toContain('Recent arrivals');
-    const arrivals = await container.renderToString(RadarArrivals, { props: { d } });
+    const arrivals = await container.renderToString(RadarArrivals, { props: { d, now: NOW } });
     // "Not scored" is said once, in the arrivals' lede; /radar's page intro says none of it moves the level.
     expect(arrivals).toContain('never scored');
     expect(arrivals).toContain('Recent arrivals');
@@ -241,21 +241,21 @@ describe('components', async () => {
   });
 
   it('Drops and Feed render one half each when /radar splits them', async () => {
-    const listings = await container.renderToString(Drops, { props: { d, show: 'listings' } });
+    const listings = await container.renderToString(Drops, { props: { d, now: NOW, show: 'listings' } });
     expect(listings).toContain('Fresh drops');
     expect(listings).not.toContain('Open weights trending');
-    const open = await container.renderToString(Drops, { props: { d, show: 'open' } });
+    const open = await container.renderToString(Drops, { props: { d, now: NOW, show: 'open' } });
     expect(open).not.toContain('Fresh drops');
     expect(open).toContain('Scaling Laws Revisited');
-    const feed = await container.renderToString(Feed, { props: { d, show: 'feed' } });
+    const feed = await container.renderToString(Feed, { props: { d, now: NOW, show: 'feed' } });
     expect(feed).not.toContain('X watchlist');
-    const watch = await container.renderToString(Feed, { props: { d, show: 'watch' } });
+    const watch = await container.renderToString(Feed, { props: { d, now: NOW, show: 'watch' } });
     expect(watch).toContain('x.com/sama');
     expect(watch).not.toContain('The feed');
   });
 
   it('Drops renders integer prices without stripping zeros and marks vision models', async () => {
-    const html = await container.renderToString(Drops, { props: { d } });
+    const html = await container.renderToString(Drops, { props: { d, now: NOW } });
     expect(html).toContain('$10 / $50');
     expect(html).toContain('Claude Fable 5.1');
     expect(html).toContain('VIS');
@@ -264,7 +264,7 @@ describe('components', async () => {
   });
 
   it('Markets renders release odds and the best-model race with lab colours', async () => {
-    const html = await container.renderToString(Markets, { props: { d } });
+    const html = await container.renderToString(Markets, { props: { d, now: NOW } });
     expect(html).toContain('GPT-6 released by...?');
     expect(html).toContain('66%');
     expect(html).toContain('$65k');
@@ -287,7 +287,7 @@ describe('components', async () => {
       );
     const ids = (labs: typeof base.labs) => labs.map((l) => l.id);
     for (const labs of [base.labs, [...base.labs].reverse()]) {
-      const html = await container.renderToString(Markets, { props: { d: { ...base, labs } } });
+      const html = await container.renderToString(Markets, { props: { d: { ...base, labs }, now: NOW } });
       const order = heads(html).map((h) =>
         h.includes('Anthropic') ? 'anthropic' : h.includes('OpenAI') ? 'openai' : h,
       );
@@ -302,7 +302,7 @@ describe('components', async () => {
       outcomes: [{ ...release.outcomes[0], yes: 0.555, bestBid: 0.27, bestAsk: 0.84, thin: true }],
     };
     const html = await container.renderToString(Markets, {
-      props: { d: dashboard({ markets: { name: 'Polymarket', data: [thin, board], ok: true } }) },
+      props: { d: dashboard({ markets: { name: 'Polymarket', data: [thin, board], ok: true } }), now: NOW },
     });
     expect(html).toMatch(/<b class="thin"[^>]*>27–84%<\/b> 24 Sep/);
     expect(html).not.toContain('56%');
@@ -311,7 +311,7 @@ describe('components', async () => {
   });
 
   it('Feed escapes untrusted titles and keeps the X watchlist', async () => {
-    const html = await container.renderToString(Feed, { props: { d } });
+    const html = await container.renderToString(Feed, { props: { d, now: NOW } });
     expect(html).toContain('Introducing &lt;GPT-6&gt; &amp; friends');
     expect(html).not.toContain('<GPT-6>');
     expect(html).toContain('x.com/sama');

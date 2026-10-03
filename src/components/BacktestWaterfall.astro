@@ -1,101 +1,13 @@
 ---
 import type { CrossingRow, ReleaseRow } from '../../scripts/backtest/build';
-import { signedHours, symlogScale, utcMinute } from '../../scripts/backtest/view';
+import { fitLabel, waterfallView } from '../ui/backtest-waterfall';
 
 interface Props {
   releases: readonly ReleaseRow[];
   crossings: readonly CrossingRow[];
 }
 const { releases, crossings } = Astro.props;
-
-/** Hours relative to the announcement: 12 days before to 2 days after. */
-const D0 = -288;
-const D1 = 48;
-const rows = [...releases]
-  .filter((r) => r.announcedAt)
-  .sort((a, b) => Date.parse(a.announcedAt!) - Date.parse(b.announcedAt!));
-const THRESHOLD_CLASS: Record<number, string> = { 0.5: 't50', 0.7: 't70', 0.9: 't90' };
-const TICKS = [
-  { h: -240, label: '−10d' },
-  { h: -72, label: '−3d' },
-  { h: -24, label: '−1d' },
-  { h: -6, label: '−6h' },
-  { h: 0, label: '0' },
-  { h: 6, label: '+6h' },
-  { h: 24, label: '+1d' },
-  { h: 48, label: '+2d' },
-];
-
-/**
- * Two layouts of the same chart: labels beside each row on wide screens, labels above each row
- * on narrow ones, so the phone view needs no sideways scrolling. CSS shows one of them.
- */
-const LAYOUTS = [
-  { name: 'wide', W: 1000, left: 300, right: 24, top: 44, row: 30, bottom: 40, labelAbove: false, ticks: TICKS },
-  {
-    name: 'narrow',
-    W: 380,
-    left: 14,
-    right: 14,
-    top: 40,
-    row: 46,
-    bottom: 36,
-    labelAbove: true,
-    ticks: TICKS.filter((t) => [-240, -24, 0, 24].includes(t.h)),
-  },
-];
-
-/** Label size in chart units (the wide chart draws at about 1:1, so this is --t-sm). */
-const LABEL_PX = 14;
-/** A name that would not fit its column is cut with an ellipsis; the full name is its title. */
-const fit = (name: string, room: number) => {
-  const max = Math.floor(room / (LABEL_PX * 0.6));
-  return name.length <= max ? name : `${name.slice(0, max - 1).trimEnd()}…`;
-};
-
-const views = LAYOUTS.map((l) => {
-  const x = symlogScale(D0, D1, l.left, l.W - l.right);
-  const H = l.top + rows.length * l.row + l.bottom;
-  const plotted = rows.map((release, i) => {
-    const row = crossings.find((c) => c.id === release.id);
-    const series = row?.primary ? row[row.primary] : null;
-    const marks = (series?.crossings ?? [])
-      .filter((c) => c.heldLeadH !== null)
-      .map((c) => ({
-        cls: THRESHOLD_CLASS[c.threshold],
-        cx: x(-c.heldLeadH!),
-        open: c.atOpen,
-        title: `${release.model}: ${series!.kind === 'day' ? 'day market' : 'cumulative rung'} "${series!.label}" held ${c.threshold} from ${utcMinute(c.heldAt)}, ${signedHours(c.heldLeadH)} relative to the announcement (+ = before)${c.atOpen ? '; already above at its first usable price' : ''}`,
-      }));
-    const lead50 = series?.crossings.find((c) => c.threshold === 0.5)?.heldLeadH ?? null;
-    const top = l.top + i * l.row;
-    return {
-      release,
-      // Market marks sit just above the row's centre line and availability just below it, so a
-      // listing at the same moment as a crossing never hides it.
-      y: l.labelAbove ? top + l.row - 18 : top + l.row / 2 - 4,
-      availY: l.labelAbove ? top + l.row - 7 : top + l.row / 2 + 6,
-      labelY: l.labelAbove ? top + 13 : top + l.row / 2 + 5,
-      marks,
-      bar: lead50 !== null && lead50 > 0 ? { x1: x(-lead50), x2: x(0) } : null,
-      note: !row || (!row.day && !row.by) ? 'no market' : !series ? 'no dated market' : null,
-      available:
-        release.availabilityLagH !== null
-          ? {
-              cx: x(release.availabilityLagH),
-              title: `${release.model}: listed on OpenRouter ${utcMinute(release.availableAt)} (${release.availableId}), ${signedHours(release.availabilityLagH)} after the announcement`,
-            }
-          : null,
-    };
-  });
-  return { ...l, x, H, plotted };
-});
-
-const primaries = crossings.filter((c) => c.primary);
-const ahead = (t: number) =>
-  primaries.filter((c) => (c[c.primary!]?.crossings.find((k) => k.threshold === t)?.heldLeadH ?? -1) > 0).length;
-const listedClose = rows.filter((r) => r.availabilityLagH !== null && Math.abs(r.availabilityLagH) <= 1).length;
-const label = `Lead-time waterfall for ${rows.length} launches, on a compressed time axis from 12 days before to 2 days after each first-party announcement. Of ${primaries.length} launches with a dated market, the price held 0.5 before the announcement for ${ahead(0.5)} and held 0.9 before it for ${ahead(0.9)}. OpenRouter listed the model within an hour of the announcement for ${listedClose} of ${rows.length}. The table below has every value.`;
+const { views, label } = waterfallView(releases, crossings);
 ---
 <figure class="waterfall">
   <ul class="legend" aria-hidden="true">
@@ -121,7 +33,7 @@ const label = `Lead-time waterfall for ${rows.length} launches, on a compressed 
         <g>
           <text class="row-label" x={v.labelAbove ? v.left : v.left - 12} y={p.labelY} text-anchor={v.labelAbove ? 'start' : 'end'}>
             <title>{p.release.model}</title>
-            {fit(p.release.model, v.labelAbove ? v.W - v.left - v.right : v.left - 20)}
+            {fitLabel(p.release.model, v.labelAbove ? v.W - v.left - v.right : v.left - 20)}
           </text>
           {p.bar && <line class="lead" x1={p.bar.x1} x2={p.bar.x2} y1={p.y} y2={p.y} />}
           {p.note && (
@@ -157,11 +69,12 @@ const label = `Lead-time waterfall for ${rows.length} launches, on a compressed 
   }
   .grid { stroke: var(--line); stroke-width: 1; }
   .zero { stroke: var(--text); stroke-width: 1; opacity: 0.7; }
-  .tick { fill: var(--muted); font-size: 14px; }
+  .tick { fill: var(--muted); font-size: var(--t-sm); }
+  /* Off-scale: 9px caps in viewBox units, scaled with the chart. */
   .axis-note { fill: var(--muted); font-family: var(--font-head); font-size: 9px; letter-spacing: 0.06em; }
-  .row-label { fill: var(--text); font-size: 14px; }
-  .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: 14px; }
-  .row-note { fill: var(--muted); font-size: 14px; }
+  .row-label { fill: var(--text); font-size: var(--t-sm); }
+  .narrow .row-label, .narrow .row-note, .narrow .tick { font-size: var(--t-sm); }
+  .row-note { fill: var(--muted); font-size: var(--t-sm); }
   .lead { stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; opacity: 0.45; }
   circle { stroke: var(--paper); stroke-width: 2; }
   .t50 { fill: var(--line2); }
