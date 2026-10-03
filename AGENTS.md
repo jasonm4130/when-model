@@ -57,6 +57,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
   source pill). Browser code is limited to the clock, refresh countdown, relative timestamps,
   source pills aging to STALE, the 5-minute poll-and-offer reload, the next departure's
   split-flap turn, and the instrument's scrubber and label fitting (progressive enhancement: the server render reads NOW without it).
+  The server render reads the clock once per page: the page takes `const now = Date.now()` and passes
+  `now` to every panel as a required prop, so a component's frontmatter never reads the clock itself.
 
 Rules of the house:
 

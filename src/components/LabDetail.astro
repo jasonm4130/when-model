@@ -27,16 +27,16 @@ import { lineBullet } from '../ui/lines';
 import FeedRow from './FeedRow.astro';
 import MarketRow from './MarketRow.astro';
 import Pill from './Pill.astro';
-interface Props { d: Dashboard; p: LabPage; now?: Date }
-const { d, p, now = new Date() } = Astro.props;
+interface Props { d: Dashboard; p: LabPage; now: number }
+const { d, p, now } = Astro.props;
 const l = p.status;
 const name = p.lab.name;
-const nowMs = now.getTime();
+const today = new Date(now);
 const built = Date.parse(d.generatedAt);
 const oddsAvailable = d.measurement.inputs.oddsAvailable;
 const state = l ? timetableState(l, oddsAvailable) : oddsAvailable ? 'no-timetable' : 'offline';
 const asOf = asOfMs(d);
-const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, nowMs);
+const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now);
 const colour = lineBullet(p.lab.id).fill;
 const fam = l ? familyMarkets(d, l) : [];
 const rungs = datedRungs(fam, asOf);
@@ -45,7 +45,7 @@ const headMarket = fam[0];
 const others = l ? otherServices(d, l) : [];
 // A family priced only in day buckets has no dated rung to draw: its market rows stand in.
 const bucketOnly = state === 'scheduled' && rungs.length === 0 && p.next;
-const months = monthInitials(now);
+const months = monthInitials(today);
 const hist = l?.histogram ?? [];
 const max = Math.max(1, ...hist);
 const warnings = labWarningCount(p);
@@ -120,7 +120,7 @@ const stopSub = (s: (typeof stops)[number]) =>
   {l && (
     <section aria-labelledby="tempo-title" style={`--line:${colour}`}>
       <div class="sec"><h2 id="tempo-title">Service frequency</h2><span class="label">Arrivals · 12 months</span></div>
-      <div class="hist" role="img" aria-label={histogramLabel(hist, now)}>
+      <div class="hist" role="img" aria-label={histogramLabel(hist, today)}>
         {hist.map((v, i) => (
           <div class:list={['col', { cur: i === hist.length - 1 }]} title={`${v} listed`}>
             {Array.from({ length: Math.min(v, 8) }, () => <i style={`height:${Math.max(6, Math.min(20, Math.floor(112 / Math.min(max, 8)) - 4))}px`}></i>)}
@@ -165,7 +165,7 @@ const stopSub = (s: (typeof stops)[number]) =>
         <>
           <h3 id="lab-signals-title">{warnings} on this line</h3>
           <ul class="rows">
-            {p.leaks.map((x) => <li><a class="r" href={x.url} target="_blank" rel="noopener"><span class="r-main">{x.title}</span><span class="r-when" data-time={x.publishedAt}>{ago(x.publishedAt, nowMs)}</span><span class="r-meta">Leak · {x.sourceName} · {TRACK_LINES.leaks}</span></a></li>)}
+            {p.leaks.map((x) => <li><a class="r" href={x.url} target="_blank" rel="noopener"><span class="r-main">{x.title}</span><span class="r-when" data-time={x.publishedAt}>{ago(x.publishedAt, now)}</span><span class="r-meta">Leak · {x.sourceName} · {TRACK_LINES.leaks}</span></a></li>)}
             {p.streams.map((b) => <li><a class="r" href={b.url} target="_blank" rel="noopener"><span class="r-main">{b.title}</span><span class="r-when">{streamWhen(b.startsInHours)}</span><span class="r-meta">Scheduled stream · {b.channel} on YouTube · {TRACK_LINES.broadcasts}</span></a></li>)}
             {p.architectures.map((a) => <li><div class="r"><span class="r-main">{a.module}</span><span class="r-when">{daysShort(a.daysPending)} pending</span><span class="r-meta">Pending architecture in transformers · {TRACK_LINES.architectures}</span></div></li>)}
             {p.events.map((e) => <li><a class="r" href={e.source} target="_blank" rel="noopener"><span class="r-main">{e.label}</span><span class="r-when">{e.hoursToStart >= 0 ? `in ${Math.round(e.hoursToStart)}h` : 'under way'}</span><span class="r-meta">Keynote window · {TRACK_LINES.events}</span></a></li>)}
@@ -182,8 +182,8 @@ const stopSub = (s: (typeof stops)[number]) =>
     <p class="empty">Nothing recent from or about {name} in the listings, the lab feeds or Hacker News.</p>
   ) : (
     <div class="ann">
-      {p.announcements.map((a) => <a class="row item" href={a.url} target="_blank" rel="noopener"><span class="ttl">{a.title}</span><span class="when mono" data-time={a.seenAt}>{ago(a.seenAt, nowMs)}</span><span class="meta mono">{a.source.toUpperCase()} · LAUNCH POST · {shortDate(a.seenAt)}</span></a>)}
-      {p.feed.map((f, i) => <FeedRow f={f} i={i} now={nowMs} />)}
+      {p.announcements.map((a) => <a class="row item" href={a.url} target="_blank" rel="noopener"><span class="ttl">{a.title}</span><span class="when mono" data-time={a.seenAt}>{ago(a.seenAt, now)}</span><span class="meta mono">{a.source.toUpperCase()} · LAUNCH POST · {shortDate(a.seenAt)}</span></a>)}
+      {p.feed.map((f, i) => <FeedRow f={f} i={i} now={now} />)}
     </div>
   )}
   {l && l.xHandles.length > 0 && (

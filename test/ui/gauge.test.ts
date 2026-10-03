@@ -378,7 +378,7 @@ describe('The network and a line page', () => {
 
   it("names how a line's 7-day read was taken, and gives its tempo a text alternative", async () => {
     const d = dashboard();
-    const html = await render(LabDetail, { d, p: labPage(d, 'anthropic')!, now: new Date(NOW) });
+    const html = await render(LabDetail, { d, p: labPage(d, 'anthropic')!, now: NOW });
     // Sonnet's only rung is Sep 30: 7 days is past it and held there, a floor.
     expect(html).toContain('At least: held at its 30 Sep stop.');
     expect(html).toMatch(
@@ -451,13 +451,13 @@ describe('The network and a line page', () => {
     expect(row('xai')).toContain('times unavailable');
     expect(row('xai')).not.toMatch(/\d+%/);
     // Google's 30-day read is Gemini 4.0's: its strip shows no 30-day tick; Gemini 4.0 is another service.
-    const page = await render(LabDetail, { d, p: labPage(d, 'google')!, now: new Date(NOW) });
+    const page = await render(LabDetail, { d, p: labPage(d, 'google')!, now: NOW });
     expect(page).not.toMatch(/class="d"[^>]*>30 days</);
     expect(page).toMatch(
       /class="sn"[^>]*>Gemini 4\.0<\/span><span class="sp mono"[^>]*>79%<\/span><span class="sw mono"[^>]*>by 31 Oct</,
     );
     // A line on a thin market says so on its own page, and keeps the extrapolated read small.
-    const xai = await render(LabDetail, { d, p: labPage(d, 'xai')!, now: new Date(NOW) });
+    const xai = await render(LabDetail, { d, p: labPage(d, 'xai')!, now: NOW });
     expect(xai).toMatch(/class="big none-word"[^>]*>Times unavailable</);
     expect(xai).toContain('Extrapolated, not scored: ~');
   });

@@ -14,6 +14,8 @@ import { pageMeta } from '../ui/site';
 
 // History shares /api/history.json's 15-minute memo and never throws; only this page draws the week.
 const [d, history] = await Promise.all([loadDashboard(), loadHistoryForPage()]);
+// The page's one clock read: every panel ages its pill and relative times against this instant.
+const now = Date.now();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'about' } as const;
 const meta = pageMeta(view);
@@ -24,7 +26,7 @@ const fact =
     : undefined;
 // The week is drawn only when there is a reading in it. With the series unreadable or empty, one
 // quiet line says so: the level is live either way.
-const drawn = weekReadings(history, Date.now()).length > 0;
+const drawn = weekReadings(history, now).length > 0;
 ---
 <Layout title={meta.title} description={meta.description}>
   <Header d={d} view={view} />
@@ -38,7 +40,7 @@ const drawn = weekReadings(history, Date.now()).length > 0;
             <h2 id="history-title">Service history · last 7 days</h2>
             <span class="label">DROPCON lead score, hourly</span>
           </div>
-          <DropconScope d={d} history={history} />
+          <DropconScope d={d} history={history} now={now} />
         </section>
       ) : (
         <p class="history-off" id="service-history">

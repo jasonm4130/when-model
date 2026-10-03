@@ -13,13 +13,14 @@ import Bullet from './Bullet.astro';
 import Pill from './Pill.astro';
 interface Props {
   d: Dashboard;
-  now?: number;
+  /** The request instant, read once by the page. */
+  now: number;
   /** Rows before the fold. */
   show?: number;
   /** The heading level: an h2 on the home page, an h3 inside a /radar section. */
   level?: 2 | 3;
 }
-const { d, now = Date.now(), show = 3, level = 2 } = Astro.props;
+const { d, now, show = 3, level = 2 } = Astro.props;
 const releases = arrivalBoard(d.landed);
 const built = Date.parse(d.generatedAt);
 const pill = sourcePill(d.sources, LANDED_SOURCES, d.generatedAt, now, 'SOURCES');

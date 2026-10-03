@@ -10,15 +10,15 @@ import { labPath } from '../ui/site';
 import Bullet from './Bullet.astro';
 import MarketRow from './MarketRow.astro';
 import Pill from './Pill.astro';
-interface Props { d: Dashboard }
-const { d } = Astro.props;
+interface Props { d: Dashboard; now: number }
+const { d, now } = Astro.props;
 const asOf = asOfMs(d);
 const releases = releaseRows(d);
 const others = otherRows(d);
 const best = d.bestModelMarket;
 const bestRows = raceRows(d);
 const up = sourceOk(d.sources, SOURCE.polymarket);
-const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, Date.now());
+const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now);
 const down = 'Polymarket unreachable. Odds return when it does.';
 const leader = bestRows[0]?.yes ?? 0;
 /** Release markets grouped under each line's heading, lines in network order. */

@@ -5,9 +5,8 @@ import { FEED_SOURCE_NAME } from '../domain/sources';
 import { MOBILE_FEED, sourcePill } from '../ui/panels';
 import FeedRow from './FeedRow.astro';
 /** `feed` is the reports alone, `watch` the X watchlist; both by default. */
-interface Props { d: Dashboard; show?: 'all' | 'feed' | 'watch' }
-const { d, show = 'all' } = Astro.props;
-const now = Date.now();
+interface Props { d: Dashboard; now: number; show?: 'all' | 'feed' | 'watch' }
+const { d, now, show = 'all' } = Astro.props;
 const alerts = d.feed.filter((f) => f.alert).length;
 const feedSources = Object.values(FEED_SOURCE_NAME);
 const pill = sourcePill(d.sources, feedSources, d.generatedAt, now, 'FEEDS');

@@ -9,6 +9,8 @@ import { pageMeta } from '../ui/site';
 import { usd } from '../ui/format';
 
 const d = await loadDashboard();
+// The page's one clock read: every panel ages its pill and relative times against this instant.
+const now = Date.now();
 Astro.response.headers.set('cache-control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900');
 const view = { page: 'markets' } as const;
 const meta = pageMeta(view);
@@ -24,7 +26,7 @@ const traded = d.markets.reduce((sum, m) => sum + (m.vol24 || 0), 0);
       fact={d.markets.length ? { figure: usd(traded), caption: `traded in 24 hours across ${d.markets.length} markets` } : undefined}
     />
     <div class="wrap page-body">
-      <Markets d={d} />
+      <Markets d={d} now={now} />
     </div>
   </main>
   <Footer generatedAt={d.generatedAt} d={d} />

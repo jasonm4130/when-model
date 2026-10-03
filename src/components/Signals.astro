@@ -5,8 +5,8 @@ import { ago } from '../ui/format';
 import { sourcePill } from '../ui/panels';
 import { EARLY_WARNING_SOURCES, TRACK_LINES, daysShort } from '../ui/signals';
 import Bullet from './Bullet.astro';
-interface Props { d: Dashboard; now?: number }
-const { d, now = Date.now() } = Astro.props;
+interface Props { d: Dashboard; now: number }
+const { d, now } = Astro.props;
 const w = d.earlyWarnings;
 /** A lab is named the way the rest of the site names a line: its bullet and its name, never a code. */
 const labName = (id?: string) => LABS.find((x) => x.id === id)?.name ?? id ?? '';

@@ -17,9 +17,10 @@ import Bullet from './Bullet.astro';
 import Pill from './Pill.astro';
 interface Props {
   d: Dashboard;
-  now?: number;
+  /** The request instant, read once by the page. */
+  now: number;
 }
-const { d, now = Date.now() } = Astro.props;
+const { d, now } = Astro.props;
 const next = nextDeparture(d);
 const built = Date.parse(d.generatedAt);
 const pill = sourcePill(d.sources, [SOURCE.polymarket], d.generatedAt, now);

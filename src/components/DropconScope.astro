@@ -19,9 +19,10 @@ import { nowReadout, type ScrubData, type ScrubKind } from '../ui/readout';
 interface Props {
   d: Dashboard;
   history?: HistoryResponseBody;
-  now?: number;
+  /** The request instant, read once by the page. */
+  now: number;
 }
-const { d, history, now = Date.now() } = Astro.props;
+const { d, history, now } = Astro.props;
 const c = d.dropcon;
 const launchesOk = d.sources.find((s) => s.name === SOURCE.openrouter)?.ok ?? false;
 const inst = buildInstrument({

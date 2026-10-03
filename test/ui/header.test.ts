@@ -165,7 +165,7 @@ describe('Header', async () => {
     // Past its last rung the read is held there, a floor, and the line's page says so under its odds.
     const held = dashboard({ markets: { name: 'Polymarket', data: [release], ok: false, error: 'down' } });
     const page = await container.renderToString(LabDetail, {
-      props: { d: held, p: labPage(held, 'openai')! },
+      props: { d: held, p: labPage(held, 'openai')!, now: NOW },
     });
     expect(page).toContain('At least: held at its 24 Sep stop.');
   });
@@ -217,7 +217,7 @@ describe('Header', async () => {
     };
     const one = dashboard({ markets: { name: 'Polymarket', data: [ladder], ok: true } });
     const plain = await container.renderToString(LabDetail, {
-      props: { d: one, p: labPage(one, 'openai')! },
+      props: { d: one, p: labPage(one, 'openai')!, now: NOW },
     });
     expect(plain.replace(/&#39;/g, "'")).toContain(
       "Read off the market's curve between its 24 Sep and 1 Oct stops.",
@@ -241,7 +241,7 @@ describe('Header', async () => {
     };
     const two = dashboard({ markets: { name: 'Polymarket', data: [ladder, buckets], ok: true } });
     const capped = await container.renderToString(LabDetail, {
-      props: { d: two, p: labPage(two, 'openai')! },
+      props: { d: two, p: labPage(two, 'openai')!, now: NOW },
     });
     expect(capped.replace(/&#39;/g, "'")).toContain("At most: capped by the day buckets' asks.");
     expect(capped).toMatch(/class="big"[^>]*>(?:<span[^>]*>)?16<small/);

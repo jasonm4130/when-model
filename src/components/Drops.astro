@@ -5,9 +5,8 @@ import { ago, ctx, num, shortDate } from '../ui/format';
 import { MOBILE_DROPS, PANEL_ROWS, dropPrice, sourceOk, sourcePill, stealthIds } from '../ui/panels';
 import DropItem from './DropItem.astro';
 /** `listings` is OpenRouter's new models alone, `open` the open weights and papers; both by default. */
-interface Props { d: Dashboard; show?: 'all' | 'listings' | 'open' }
-const { d, show = 'all' } = Astro.props;
-const now = Date.now();
+interface Props { d: Dashboard; now: number; show?: 'all' | 'listings' | 'open' }
+const { d, now, show = 'all' } = Astro.props;
 const FRESH_MS = 3 * 86_400_000;
 const stealth = stealthIds(d);
 const rows = d.drops.slice(0, PANEL_ROWS.drops).map((x) => {
