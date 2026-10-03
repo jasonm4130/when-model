@@ -6,8 +6,7 @@
  */
 import type { Dashboard } from '../domain/dashboard';
 import { LEVEL_BANDS, type DropconLevel } from '../domain/dropcon';
-import type { DisplayPoint } from '../domain/history';
-import { stripDay, stripHour } from '../domain/history';
+import { stripDay, stripHour, type HistoryResponseBody } from '../domain/history';
 import {
   INSTRUMENT_WIDTH,
   LAUNCH_NEAR_MS,
@@ -83,11 +82,7 @@ const flagText = (l: Instrument['launches'][number]) => `${lineBullet(l.labId ??
  * Everything the component reads. `history` is `/api/history.json`'s body (missing is the same as
  * unreadable); `now` is the page's one clock read.
  */
-export function scopeView(
-  d: Dashboard,
-  history: { ok: boolean; points: DisplayPoint[] } | undefined,
-  now: number,
-) {
+export function scopeView(d: Dashboard, history: HistoryResponseBody | undefined, now: number) {
   const c = d.dropcon;
   const launchesOk = d.sources.find((s) => s.name === SOURCE.openrouter)?.ok ?? false;
   const inst = buildInstrument({

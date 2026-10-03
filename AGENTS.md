@@ -22,7 +22,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 - `src/app/load-dashboard.ts` — fans out to every source, logs per-source timings, and memoises
   the assembled dashboard. It also owns the 30-day history read (`loadHistory`, one edge memo
   shared by `/api/history.json` and the page's DROPCON instrument; `loadHistoryForPage` adds the
-  page's 2 s timeout and a 60 s skip after a failure). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
+  page's 2 s timeout and a 60 s skip after a failure; the body's type, `HistoryResponseBody`, lives in
+  `src/domain/history.ts`). `src/app/capture-history.ts` is the 15-minute cron (`src/worker.ts`):
   snapshot, score rollup and first-seen writes, then `src/app/capture-availability.ts`, the
   availability ledger, from the build's own source results (`buildCapture`) plus the cron-only
   sources. A page render never polls those: `test/app/load-dashboard.test.ts` pins its fetch count.
@@ -55,7 +56,8 @@ Astro 7 SSR on Cloudflare Workers, layered so the interesting code has no I/O:
 - `src/ui` + `src/components` — formatting and Astro markup (`src/ui/signals.ts` builds the
   early-warning track lines and per-lab lead flags; `src/ui/panels.ts` builds every panel's
   source pill and /markets' line groups). View logic lives in pure, tested `src/ui` helpers, not in
-  component frontmatter, which keeps to prop destructuring and calls. Browser code is limited to the clock, refresh countdown, relative timestamps,
+  component frontmatter, which keeps to prop destructuring and calls. Neither imports from `src/adapters`,
+  `src/infra` or `src/app`: a type they need from there moves to `src/domain`. Browser code is limited to the clock, refresh countdown, relative timestamps,
   source pills aging to STALE, the 5-minute poll-and-offer reload, the next departure's
   split-flap turn, and the instrument's scrubber and label fitting (progressive enhancement: the server render reads NOW without it).
   The server render reads the clock once per page: the page takes `const now = Date.now()` and passes

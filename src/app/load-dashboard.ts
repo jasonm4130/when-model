@@ -24,7 +24,7 @@ import {
 import { listingAliases } from '../domain/drop';
 import { DROPCON_ALGORITHM_VERSION } from '../domain/dropcon';
 import type { LeakItem, LeakSource } from '../domain/feed';
-import { HISTORY_WINDOW_MS, buildHistorySeries, type DisplayPoint } from '../domain/history';
+import { HISTORY_WINDOW_MS, buildHistorySeries, type HistoryResponseBody } from '../domain/history';
 import { unmappedReleaseMarkets } from '../domain/lab';
 import type { BroadcastCandidate, PendingArchitecture } from '../domain/lead';
 import { EMPTY_LEDGER, LEDGER_KINDS, ledgerFromRows, type Ledger } from '../domain/ledger';
@@ -202,11 +202,6 @@ export const HISTORY_CACHE_TTL_SECONDS = 15 * 60;
 export const HISTORY_MAX_ROWS = 30 * 24 * 4;
 /** The page waits this long for history, then renders the strip's unavailable state. */
 export const HISTORY_PAGE_TIMEOUT_MS = 2000;
-
-export interface HistoryResponseBody {
-  ok: boolean;
-  points: DisplayPoint[];
-}
 
 /** Everything that can fail here degrades to `{ ok: false, points: [] }`; this never throws. */
 export async function buildHistoryResponseBody(

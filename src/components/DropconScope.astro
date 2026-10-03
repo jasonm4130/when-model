@@ -6,11 +6,10 @@
  * turns the plot into a slider whose readout names each hour, and never touches the posted level.
  * What it draws is worked out in src/ui/scope.ts.
  */
-import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
 import { LEVEL_BANDS } from '../domain/dropcon';
 import { INSTRUMENT_WIDTH } from '../domain/instrument';
-import { stripDay, stripHour } from '../domain/history';
+import { stripDay, stripHour, type HistoryResponseBody } from '../domain/history';
 import { LEVEL_NAMES } from '../domain/levels';
 import { dropconNumber } from '../ui/odds';
 import { lineBullet } from '../ui/lines';
