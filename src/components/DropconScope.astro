@@ -4,18 +4,17 @@
  * the lead score's week runs across it, and the line ends at the NOW edge. The level itself is posted
  * above, in the service status (`ServiceStatus.astro`). Server-rendered SVG and HTML; the script below
  * turns the plot into a slider whose readout names each hour, and never touches the posted level.
+ * What it draws is worked out in src/ui/scope.ts.
  */
 import type { HistoryResponseBody } from '../app/load-dashboard';
 import type { Dashboard } from '../domain/dashboard';
-import { LEVEL_BANDS, type DropconLevel } from '../domain/dropcon';
-import { INSTRUMENT_WIDTH, LAUNCH_NEAR_MS, buildInstrument, type ScrubPoint } from '../domain/instrument';
+import { LEVEL_BANDS } from '../domain/dropcon';
+import { INSTRUMENT_WIDTH } from '../domain/instrument';
 import { stripDay, stripHour } from '../domain/history';
 import { LEVEL_NAMES } from '../domain/levels';
-import { SOURCE } from '../domain/sources';
-import { estimateFlagWidth, flagCandidates, placeLabels, type Box } from '../ui/labels';
 import { dropconNumber } from '../ui/odds';
 import { lineBullet } from '../ui/lines';
-import { nowReadout, type ScrubData, type ScrubKind } from '../ui/readout';
+import { SCOPE_BANDS, SCOPE_EDGES, bandRange, scaleLabel, scopeView, segClass, widthPct, zoneText } from '../ui/scope';
 interface Props {
   d: Dashboard;
   history?: HistoryResponseBody;
@@ -23,85 +22,7 @@ interface Props {
   now: number;
 }
 const { d, history, now } = Astro.props;
-const c = d.dropcon;
-const launchesOk = d.sources.find((s) => s.name === SOURCE.openrouter)?.ok ?? false;
-const inst = buildInstrument({
-  points: history?.points ?? [],
-  ok: history?.ok ?? false,
-  now,
-  currentVersion: d.measurement.algorithmVersion,
-  live: { state: c.state, score: c.score, level: c.level, at: d.generatedAt },
-  launches: d.landed.releases.map((r) => ({ at: r.firstListedAt, labId: r.labId, lab: r.lab, name: r.name })),
-  launchesOk,
-});
-const ok = c.state === 'ok';
-// Band edges top to bottom: 100–75 is level 1, …, 15–0 is level 5.
-const edges = [100, ...LEVEL_BANDS, 0];
-const bands = edges.slice(0, -1).map((top, i) => ({ level: (i + 1) as DropconLevel, top, bottom: edges[i + 1] }));
-const pct = (x: number) => `${(x / INSTRUMENT_WIDTH) * 100}%`;
-const segClass = (n: number) => {
-  if (c.state === 'no-signal') return 'seg dim';
-  if (c.state === 'floor') return `seg dim${n === c.level ? ' floor' : ''}`;
-  return `seg${n === c.level ? ' on' : ''}`;
-};
-const scaleLabel =
-  c.state === 'no-signal'
-    ? 'DROPCON: no signal'
-    : c.state === 'floor'
-      ? `DROPCON floor: ${c.level} of 5 with the odds offline`
-      : `DROPCON ${c.level} of 5`;
-const bandRange = (b: { top: number; bottom: number }) =>
-  b.top === 100 ? `${b.bottom}+` : b.bottom === 0 ? `below ${b.top}` : `${b.bottom}–${b.top - 1}`;
-
-// What each hatched or empty stretch says, at three widths: the plot picks the one that fits whole.
-const zoneText = (z: (typeof inst.zones)[number]) =>
-  z.kind === 'old'
-    ? { head: `v${z.version} · OLD SCALE`, sub: 'another formula, not comparable', min: `v${z.version}` }
-    : z.kind === 'outage'
-      ? { head: 'ODDS OFFLINE', sub: 'level held, not measured', min: '✕' }
-      : { head: 'NO RECORD', sub: z.start ? `captures start ${stripDay(z.to)}` : 'no captures', min: '' };
-
-// The scrubber's data and the readout it starts from (the same functions the browser runs).
-const K: Record<ScrubPoint['kind'], ScrubKind> = { current: 'c', old: 'o', outage: 'x' };
-const data: ScrubData = {
-  from: inst.from,
-  to: inst.to,
-  version: inst.currentVersion,
-  history: inst.state,
-  launchesOk: inst.launchesOk,
-  ...(inst.recordedFrom ? { recordFrom: Date.parse(inst.recordedFrom) } : {}),
-  ...(inst.lastReading ? { last: Date.parse(inst.lastReading) } : {}),
-  near: LAUNCH_NEAR_MS,
-  pts: inst.scrub.map((p) => [K[p.kind], p.h, p.e, p.score, p.level ?? 0, p.held ? 1 : 0, p.version]),
-  // A launch carries its line's bullet: the letter in the readout, the fill on the flag.
-  launches: inst.launches.map((l) => {
-    const b = lineBullet(l.labId ?? '');
-    return [Date.parse(l.at), l.name, l.lab, b.letter, b.fill];
-  }),
-  live: { state: c.state, at: Date.parse(d.generatedAt), score: c.score, level: c.level },
-};
-const rest = nowReadout(data);
-
-// The current version's start: a quiet tag once its line explains itself, a callout while it is young.
-const cur = inst.current;
-const v3 = cur && cur.x > INSTRUMENT_WIDTH * 0.03 ? cur : undefined;
-const readings = cur ? `${cur.count} hourly reading${cur.count === 1 ? '' : 's'}` : '';
-const youngBelow = (cur?.y ?? inst.now.y) < 58;
-// The series is hourly, and the hour a version changed in holds both: its start is an hour, not a minute.
-const hhmm = inst.currentSince ? stripHour(inst.currentSince).slice(-6) : '';
-
-// First paint places launch names on a reference 1000 x 236 px plot with estimated widths; the
-// script measures the real plot and places them again (src/ui/labels.ts either way).
-const REF: Box = { left: 0, top: 0, right: INSTRUMENT_WIDTH, bottom: 236 };
-const flagText = (l: (typeof inst.launches)[number]) => `${lineBullet(l.labId ?? '').letter} ${l.name}`;
-const dirTop: Box = { left: 0, top: 0, right: 180, bottom: 24 };
-const rows = placeLabels(
-  inst.launches.map((l) => flagCandidates(l.x, estimateFlagWidth(flagText(l)), l.flip)),
-  REF,
-  [dirTop],
-);
-
-const tableRows = inst.scrub.slice().reverse();
+const { c, inst, ok, data, rest, cur, v3, readings, youngBelow, hhmm, rows, tableRows } = scopeView(d, history, now);
 ---
 <div
   class:list={['scope', c.state, `hist-${inst.state}`, { young: cur?.young, low: inst.now.y > 55, high: inst.now.y < 20 }]}
@@ -123,21 +44,21 @@ const tableRows = inst.scrub.slice().reverse();
   <span class="sc-cap sc-cap-plot tiny" aria-hidden="true">LEAD SCORE <span class="muted">0–100 · HOURLY · LAST 7 DAYS</span></span>
   <span class="sc-cap sc-cap-now tiny" aria-hidden="true">NOW</span>
 
-  <div class="dc-scale" role="img" aria-label={scaleLabel}>
-    {bands.map((b, i) => (
-      <div class={`${segClass(b.level)} l${b.level}`} data-seg={b.level} style={`--c:${ok ? `var(--l${b.level})` : 'var(--muted)'}; --i:${i}`} title={`DROPCON ${b.level} · ${LEVEL_NAMES[b.level]} · score ${bandRange(b)}`}>
+  <div class="dc-scale" role="img" aria-label={scaleLabel(c)}>
+    {SCOPE_BANDS.map((b, i) => (
+      <div class={`${segClass(c, b.level)} l${b.level}`} data-seg={b.level} style={`--c:${ok ? `var(--l${b.level})` : 'var(--muted)'}; --i:${i}`} title={`DROPCON ${b.level} · ${LEVEL_NAMES[b.level]} · score ${bandRange(b)}`}>
         <span>{b.level}</span>
       </div>
     ))}
   </div>
   <div class="sc-ticks" aria-hidden="true">
-    {edges.map((v) => <span class:list={[{ end: v === 100 || v === 0 }]} style={`top:${100 - v}%`}>{v}</span>)}
+    {SCOPE_EDGES.map((v) => <span class:list={[{ end: v === 100 || v === 0 }]} style={`top:${100 - v}%`}>{v}</span>)}
   </div>
 
   <div class="sc-stage">
     <div class="sc-plot" data-plot role="img" aria-label={inst.summary}>
       <svg class="sc-bg" viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        {bands.map((b) => (
+        {SCOPE_BANDS.map((b) => (
           <rect class:list={['sc-band', `l${b.level}`, { on: ok && b.level === c.level }]} x="0" y={100 - b.top} width={INSTRUMENT_WIDTH} height={b.top - b.bottom} />
         ))}
         {LEVEL_BANDS.map((edge) => <line class="sc-guide" x1="0" x2={INSTRUMENT_WIDTH} y1={100 - edge} y2={100 - edge} />)}
@@ -146,7 +67,7 @@ const tableRows = inst.scrub.slice().reverse();
       {inst.zones.map((z) => {
         const t = zoneText(z);
         return (
-          <div class={`sc-zone ${z.kind}`} style={`left:${pct(z.x)}; width:${pct(z.w)}`} aria-hidden="true">
+          <div class={`sc-zone ${z.kind}`} style={`left:${widthPct(z.x)}; width:${widthPct(z.w)}`} aria-hidden="true">
             <span class="sc-zlabel" data-label="zone">
               <span class="zl-full"><b>{t.head}</b><span>{t.sub}</span></span>
               <b class="zl-head">{t.head}</b>
@@ -161,20 +82,20 @@ const tableRows = inst.scrub.slice().reverse();
       {inst.launches.map((l, i) => (
         <span
           class:list={['sc-flag', { flip: l.flip, unplaced: rows[i] === undefined }]}
-          style={`left:${pct(l.x)}; --row:${rows[i] ?? 0}`}
+          style={`left:${widthPct(l.x)}; --row:${rows[i] ?? 0}`}
           data-launch={i}
           data-label="flag"
           aria-hidden="true"
         ><i style={`--c:${lineBullet(l.labId ?? '').fill};--fg:${lineBullet(l.labId ?? '').ink}`}>{lineBullet(l.labId ?? '').letter}</i> {l.name}</span>
       ))}
-      {v3 && <span class="sc-vline" style={`left:${pct(v3.x)}`} aria-hidden="true"></span>}
+      {v3 && <span class="sc-vline" style={`left:${widthPct(v3.x)}`} aria-hidden="true"></span>}
       {v3 && (v3.young ? (
-        <span class:list={['sc-v3 young', youngBelow ? 'below' : 'above']} style={`left:${pct(v3.x)}; --vy:${v3.y}`} data-label="fixed" aria-hidden="true">
+        <span class:list={['sc-v3 young', youngBelow ? 'below' : 'above']} style={`left:${widthPct(v3.x)}; --vy:${v3.y}`} data-label="fixed" aria-hidden="true">
           <b><span class="yl-long">v{inst.currentVersion} SCALE FROM THE {stripHour(inst.currentSince!).toUpperCase()} HOUR</span><span class="yl-short">v{inst.currentVersion} FROM {hhmm} HOUR</span></b>
           <span>{readings} so far{inst.now.joined && <span class="yl-long"> · updates every 15 min</span>}</span>
         </span>
       ) : (
-        <span class="sc-v3" style={`left:${pct(v3.x)}`} data-label="fixed" aria-hidden="true"><b>v{inst.currentVersion} SCALE</b></span>
+        <span class="sc-v3" style={`left:${widthPct(v3.x)}`} data-label="fixed" aria-hidden="true"><b>v{inst.currentVersion} SCALE</b></span>
       ))}
       <div class="sc-ink" aria-hidden="true">
         <svg viewBox={`0 0 ${INSTRUMENT_WIDTH} 100`} preserveAspectRatio="none" focusable="false">
@@ -212,14 +133,14 @@ const tableRows = inst.scrub.slice().reverse();
 
   <div class="sc-rail" aria-hidden="true">
     {inst.launches.map((l, i) => (
-      <span class="sc-mark" data-launch={i} style={`left:${pct(l.x)}`} title={`${l.name} · ${l.lab} · ${stripHour(l.at)}`}>{lineBullet(l.labId ?? '').letter}</span>
+      <span class="sc-mark" data-launch={i} style={`left:${widthPct(l.x)}`} title={`${l.name} · ${l.lab} · ${stripHour(l.at)}`}>{lineBullet(l.labId ?? '').letter}</span>
     ))}
     {!inst.launchesOk && <span class="sc-rail-note tiny">LAUNCH LISTINGS OFFLINE</span>}
   </div>
   <div class="sc-days" aria-hidden="true">
     {inst.ticks.map((t) => {
       const [day, mon] = t.label.split(' ');
-      return <span class:list={['sc-daylabel', { late: t.x > 930 }]} style={`left:${pct(t.x)}`}>{day}<span class="mon"> {mon}</span></span>;
+      return <span class:list={['sc-daylabel', { late: t.x > 930 }]} style={`left:${widthPct(t.x)}`}>{day}<span class="mon"> {mon}</span></span>;
     })}
     <span class="sc-ctag" data-ctag hidden></span>
   </div>

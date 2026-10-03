@@ -6,6 +6,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import type { Drop } from '../domain/drop';
 import type { FeedSource } from '../domain/feed';
+import { labById, type Lab } from '../domain/lab';
 import { displayOutcomes, isPlaceholderOutcome, type Market, type Outcome } from '../domain/market';
 import { perMillion } from './format';
 
@@ -41,6 +42,45 @@ export function releaseRows(d: MarketsView): Market[] {
   return (d.markets ?? [])
     .filter((m) => m.kind === 'release' && displayOutcomes(m, PANEL_ROWS.releaseOutcomes, asOf).length > 0)
     .slice(0, PANEL_ROWS.releases);
+}
+
+/** Release markets under one line's heading; `lab` is undefined for markets with no line. */
+export interface LineGroup {
+  lab: Lab | undefined;
+  markets: Market[];
+}
+
+/**
+ * Release markets grouped under each line's heading, lines in the network's order (the /labs order),
+ * so the headline service is never folded away; markets with no line go last.
+ */
+export function byLine(markets: readonly Market[], labs: readonly { id: string }[]): LineGroup[] {
+  const by = new Map<string, Market[]>();
+  for (const m of markets) by.set(m.labId ?? '', [...(by.get(m.labId ?? '') ?? []), m]);
+  const rank = (id: string) => {
+    const i = labs.findIndex((l) => l.id === id);
+    return i < 0 ? labs.length : i;
+  };
+  return [...by.entries()]
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([id, ms]) => ({ lab: id ? labById(id) : undefined, markets: ms }));
+}
+
+/**
+ * /markets' release markets by line: the first `MOBILE_MARKETS` show, the rest wait behind one fold,
+ * still under their line's heading.
+ */
+export function releaseGroups(d: MarketsView & Pick<Dashboard, 'labs'>): {
+  open: LineGroup[];
+  folded: LineGroup[];
+  foldedCount: number;
+} {
+  const ordered = byLine(releaseRows(d), d.labs).flatMap((g) => g.markets);
+  return {
+    open: byLine(ordered.slice(0, MOBILE_MARKETS), d.labs),
+    folded: byLine(ordered.slice(MOBILE_MARKETS), d.labs),
+    foldedCount: Math.max(0, ordered.length - MOBILE_MARKETS),
+  };
 }
 
 /** Rungs the home page's busiest-market ticket shows; /markets shows the ladder. */

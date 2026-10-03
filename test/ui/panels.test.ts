@@ -20,8 +20,10 @@ import {
   SOURCE_ERROR_MAX,
   STALE_AFTER_MS,
   asOfMs,
+  byLine,
   dropPrice,
   otherRows,
+  releaseGroups,
   releaseRows,
   sourceErrorText,
   sourceStatusText,
@@ -238,6 +240,40 @@ describe('panel selections', () => {
     // Rung labels print day first, as the rest of the site does.
     expect(html).toContain('30 Sep');
     expect(html).not.toContain('18 Sep');
+  });
+
+  it('groups release markets under their line in network order, markets with no line last', () => {
+    const ms = [
+      release(1, { labId: 'openai' }),
+      release(2, { labId: undefined }),
+      release(3, { labId: 'anthropic' }),
+      release(4, { labId: 'openai' }),
+      release(5, { labId: 'nobody' as never }),
+    ];
+    const groups = byLine(ms, [{ id: 'anthropic' }, { id: 'openai' }]);
+    expect(groups.map((g) => g.lab?.id)).toEqual(['anthropic', 'openai', undefined, undefined]);
+    expect(groups[1].markets.map((m) => m.slug)).toEqual(['release-1', 'release-4']);
+    // A line outside the network ranks with the unlined, in the order it was first seen.
+    expect(groups.slice(2).map((g) => g.markets[0].slug)).toEqual(['release-2', 'release-5']);
+    expect(byLine([], [])).toEqual([]);
+  });
+
+  it('shows the first MOBILE_MARKETS release markets by line and folds the rest, still by line', () => {
+    const d = {
+      labs: [{ id: 'anthropic' }, { id: 'openai' }] as never,
+      markets: Array.from({ length: 9 }, (_, n) => release(n, { labId: n % 3 ? 'openai' : 'anthropic' })),
+    };
+    const { open, folded, foldedCount } = releaseGroups(d);
+    const count = (gs: typeof open) => gs.reduce((n, g) => n + g.markets.length, 0);
+    expect(count(open)).toBe(MOBILE_MARKETS);
+    expect(foldedCount).toBe(9 - MOBILE_MARKETS);
+    expect(count(folded)).toBe(foldedCount);
+    // Every Anthropic market comes before any OpenAI one, across the fold.
+    expect([...open, ...folded].flatMap((g) => g.markets.map((m) => m.labId))).toEqual([
+      ...Array(3).fill('anthropic'),
+      ...Array(6).fill('openai'),
+    ]);
+    expect(releaseGroups({ labs: [], markets: [] })).toEqual({ open: [], folded: [], foldedCount: 0 });
   });
 
   it('flags stealth slots from the listing itself and from early warnings', () => {

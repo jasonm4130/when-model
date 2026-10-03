@@ -1,151 +1,16 @@
 ---
-import type { Replay } from '../../scripts/backtest/replay';
 import { pct } from '../../scripts/backtest/view';
 import { WEIGHTS } from '../domain/dropcon';
 import { FORECAST_CONSTANTS, type ForecastConstants } from '../domain/forecast';
-import { labById, type LabId } from '../domain/lab';
+import { replayPath, replayView, utcDay, utcMonth, utcShortDate, type ReplayInput } from '../ui/backtest-replay';
 
 interface Props {
-  replay: Pick<Replay, 'meta' | 'series' | 'releases' | 'pricedEvents'>;
+  replay: ReplayInput;
   constants?: ForecastConstants;
 }
 const { replay, constants = FORECAST_CONSTANTS } = Astro.props;
-const { series, meta } = replay;
-
-const HOUR_MS = 3_600_000;
-const DAY_MS = 24 * HOUR_MS;
-const t0 = Date.parse(series.from);
-const t1 = Date.parse(meta.window.until);
-const split = Date.parse(meta.split.at);
-const stepMs = series.stepH * HOUR_MS;
-const last = series.p.length - 1;
-const timeAt = (i: number) => t0 + i * stepMs;
-const horizon = (h: number) => constants.horizons.find((x) => x.horizonHours === h)!;
-const h72 = horizon(meta.headlineH);
-const h7d = horizon(168);
-const shortDate = (ms: number) => new Date(ms).toUTCString().slice(5, 11).replace(/^0/, '');
-const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
-const labName = (id: LabId) => labById(id)?.name ?? id;
-const modelName = (id: string) => id.replace(/^[^/]+\//, '');
-/** "≥50%": the bar a launch's own-lab read had to reach to count as priced. */
-const pricedBar = `≥${pct(meta.protocol.pricedMin)}`;
-
-/** Each launch with whether its own lab's market read 50% or more in the 72 hours before it listed. */
-const priced = new Map(replay.pricedEvents.events.map((e) => [`${e.at}|${e.labId}`, e]));
-const launches = replay.releases.markers.map((m) => {
-  const e = priced.get(`${m.at}|${m.labId}`);
-  const t = Date.parse(m.at);
-  const models = m.models.map(modelName);
-  const shown = models.length > 2 ? `${models.slice(0, 2).join(', ')} +${models.length - 2}` : models.join(', ');
-  return {
-    t,
-    held: t > split,
-    priced: e?.priced ?? false,
-    maxRead: e?.maxLabP72 ?? 0,
-    shown,
-    title: `${day(t)} · ${labName(m.labId)} · ${shown}. Its own lab's ${meta.headlineH}-hour read peaked at ${pct(e?.maxLabP72 ?? 0)} in the ${meta.headlineH} hours before it listed${e?.priced ? ` (priced ${pricedBar})` : ` (not priced ${pricedBar})`}.`,
-  };
-});
-const heldOut = launches.filter((l) => l.held);
-const heldPriced = heldOut.filter((l) => l.priced).length;
-
-/** The longest stretch where the 72h forecast held 90% or more and nothing frontier listed within 72 hours. */
-const listedWithin = (t: number, h: number) => launches.some((l) => l.t > t && l.t <= t + h * HOUR_MS);
-const falseAlarm = (() => {
-  let best: { from: number; to: number } | null = null;
-  let start = -1;
-  series.p.forEach((p, i) => {
-    const t = timeAt(i);
-    const quiet = p >= 0.9 && t + meta.headlineH * HOUR_MS <= t1 && !listedWithin(t, meta.headlineH);
-    if (!quiet) return void (start = -1);
-    if (start < 0) start = i;
-    if (!best || i - start > best.to - best.from) best = { from: start, to: i };
-  });
-  return best as { from: number; to: number } | null;
-})();
-const alarmDays = falseAlarm ? ((falseAlarm.to - falseAlarm.from) * series.stepH) / 24 : 0;
-
-/** One path per series in data units (x = sample index, y = 1000 − p·1000), drawn by both layouts. */
-const pathOf = (values: readonly number[]) => {
-  const ys = values.map((v) => Math.round(1000 - Math.min(1, Math.max(0, v)) * 1000));
-  return `M0 1000V${ys[0]}${ys
-    .slice(1)
-    .map((y, i) => `l1 ${y - ys[i]}`)
-    .join('')}V1000`;
-};
-const PANELS = [
-  {
-    id: 'p72',
-    values: series.p,
-    title: `NEXT ${meta.headlineH}H · FORECAST (d)`,
-    fit: h72.baseRate,
-    held: h72.test.rate,
-  },
-  {
-    id: 'lead7',
-    values: series.lead7,
-    title: 'NEXT 7D · BEST LAB READ (P7)',
-    fit: h7d.baseRate,
-    held: h7d.test.rate,
-  },
-];
-const MONTHS = Array.from({ length: 12 }, (_, m) => Date.UTC(new Date(t0).getUTCFullYear(), m, 1)).filter(
-  (t) => t >= t0 && t <= t1,
-);
-
-const LAYOUTS = [
-  { name: 'wide', W: 1200, left: 52, right: 150, top: 40, panel: 150, gap: 40, bottom: 30, inside: false },
-  // A phone: a left margin wide enough for "100%", and the reference rates printed above each
-  // panel rather than on its trace.
-  { name: 'narrow', W: 340, left: 46, right: 10, top: 56, panel: 120, gap: 52, bottom: 28, inside: true },
-];
-const views = LAYOUTS.map((l) => {
-  const plotW = l.W - l.left - l.right;
-  const x = (t: number) => l.left + ((t - t0) / (t1 - t0)) * plotW;
-  const panels = PANELS.map((p, k) => {
-    const top = l.top + 16 + k * (l.panel + l.gap);
-    const y = (v: number) => top + (1 - v) * l.panel;
-    return { ...p, top, y, bottom: top + l.panel };
-  });
-  const stripTop = panels[panels.length - 1].bottom + 8;
-  // Launches within a marker's width of each other stack into lanes instead of hiding each other.
-  const lanes: number[] = [];
-  const marks = launches.map((m) => {
-    const cx = x(m.t);
-    let lane = lanes.findIndex((end) => cx - end > 10);
-    if (lane < 0) lane = lanes.length;
-    lanes[lane] = cx;
-    return { ...m, cx, cy: stripTop + 8 + lane * 10 };
-  });
-  const strip = 14 + lanes.length * 10;
-  const H = stripTop + strip + l.bottom;
-  const scale = `translate(${l.left} 0) scale(${(plotW / last).toFixed(5)} 1)`;
-  return { ...l, x, plotW, panels, stripTop, strip, H, marks, scale, clipInset: (1.6 * last) / plotW };
-});
-
-const label = `Hourly replay from ${day(t0)} to ${day(t1)}, drawn every ${series.stepH} hours, of two market-only reads: the ${meta.headlineH}-hour forecast (formula d, noisy-OR) and the best 7-day read across labs, the shape of the level's main input. Fitted on ${day(t0)} to ${day(split)} (${constants.fittedOn.events} launches, a ${meta.headlineH}-hour rate of ${pct(h72.baseRate)}) and tested on ${day(split)} to ${day(t1)} (${constants.testedOn.events} launches, a rate of ${pct(h72.test.rate)}). Only ${heldPriced} of the ${heldOut.length} held-out launches had their own lab's market at ${pct(meta.protocol.pricedMin)} or more in the ${meta.headlineH} hours before.${falseAlarm ? ` The forecast held 90% or more for ${alarmDays.toFixed(1)} days from ${shortDate(timeAt(falseAlarm.from))} with nothing listed within 72 hours.` : ''} The table below has weekly values.`;
-
-/** The table twin: one row per week. */
-const weeks = (() => {
-  const per = Math.round((7 * DAY_MS) / stepMs);
-  const rows = [];
-  for (let i = 0; i <= last; i += per) {
-    const idx = Array.from({ length: Math.min(per, last + 1 - i) }, (_, k) => i + k);
-    const from = timeAt(i);
-    const to = Math.min(from + 7 * DAY_MS, t1);
-    const p = idx.map((j) => series.p[j]);
-    const lead = idx.map((j) => series.lead7[j]);
-    const mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
-    rows.push({
-      from,
-      window: to <= split ? 'fit' : from >= split ? 'held out' : 'fit / held out',
-      p: { mean: mean(p), min: Math.min(...p), max: Math.max(...p) },
-      lead: mean(lead),
-      launches: launches.filter((m) => m.t > from && m.t <= to),
-    });
-  }
-  return rows;
-})();
+const { meta, t1, split, last, timeAt, h72, pricedBar, heldOut, heldPriced, falseAlarm, alarmDays, panels, months, views, label, weeks } =
+  replayView(replay, constants);
 ---
 <figure class="replay">
   <ul class="legend" aria-hidden="true">
@@ -156,7 +21,7 @@ const weeks = (() => {
   </ul>
   <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
     <defs>
-      {PANELS.map((p) => <path id={`bt-replay-${p.id}`} d={pathOf(p.values)} vector-effect="non-scaling-stroke" />)}
+      {panels.map((p) => <path id={`bt-replay-${p.id}`} d={replayPath(p.values)} vector-effect="non-scaling-stroke" />)}
     </defs>
   </svg>
   {views.map((v) => (
@@ -202,10 +67,10 @@ const weeks = (() => {
           <text x={v.x(timeAt(falseAlarm.to))} y={v.panels[0].top - 9} text-anchor="end">≥90% for {alarmDays.toFixed(1)} days, nothing listed</text>
         </g>
       )}
-      {MONTHS.map((m) => (
+      {months.map((m) => (
         <g>
           <line class="month" x1={v.x(m)} x2={v.x(m)} y1={v.stripTop + v.strip - 4} y2={v.stripTop + v.strip + 2} />
-          <text class="tick" x={v.x(m) + 3} y={v.H - 8}>{new Date(m).toUTCString().slice(8, 11)}</text>
+          <text class="tick" x={v.x(m) + 3} y={v.H - 8}>{utcMonth(m)}</text>
         </g>
       ))}
       <line class="grid" x1={v.left} x2={v.left + v.plotW} y1={v.stripTop + v.strip - 4} y2={v.stripTop + v.strip - 4} />
@@ -219,7 +84,7 @@ const weeks = (() => {
     </svg>
   ))}
   <figcaption class="muted">
-    Both lines are market reads alone, replayed as a reader could have seen them at the time through the dashboard's own curve code. The top line is the {meta.headlineH}-hour forecast the calibration study scored: the markets combined with a {pct(h72.unpriced)} chance of a launch no market prices. The bottom line is the best 7-day read across labs, the shape of the input behind {WEIGHTS.market7d} of DROPCON's 100 points. The level itself can't be replayed: its 30-day term reads rungs up to a month out, and the price history holds each rung only from {meta.protocol.admitDays} days before its deadline. The rate rose from {pct(h72.baseRate)} to {pct(h72.test.rate)} of {meta.headlineH}-hour windows, and {heldOut.length - heldPriced} of the {heldOut.length} held-out launches had no market at {pct(meta.protocol.pricedMin)} or more beforehand.{falseAlarm && ` The longest false alarm: the forecast held 90% or more from ${shortDate(timeAt(falseAlarm.from))} to ${shortDate(timeAt(falseAlarm.to))} and nothing frontier listed in the 72 hours after.`}
+    Both lines are market reads alone, replayed as a reader could have seen them at the time through the dashboard's own curve code. The top line is the {meta.headlineH}-hour forecast the calibration study scored: the markets combined with a {pct(h72.unpriced)} chance of a launch no market prices. The bottom line is the best 7-day read across labs, the shape of the input behind {WEIGHTS.market7d} of DROPCON's 100 points. The level itself can't be replayed: its 30-day term reads rungs up to a month out, and the price history holds each rung only from {meta.protocol.admitDays} days before its deadline. The rate rose from {pct(h72.baseRate)} to {pct(h72.test.rate)} of {meta.headlineH}-hour windows, and {heldOut.length - heldPriced} of the {heldOut.length} held-out launches had no market at {pct(meta.protocol.pricedMin)} or more beforehand.{falseAlarm && ` The longest false alarm: the forecast held 90% or more from ${utcShortDate(timeAt(falseAlarm.from))} to ${utcShortDate(timeAt(falseAlarm.to))} and nothing frontier listed in the 72 hours after.`}
   </figcaption>
   <details class="weeks">
     <summary class="tiny">The chart as a table, by week</summary>
@@ -239,7 +104,7 @@ const weeks = (() => {
         <tbody>
           {weeks.map((w) => (
             <tr>
-              <th scope="row">{day(w.from)}</th>
+              <th scope="row">{utcDay(w.from)}</th>
               <td>{w.window}</td>
               <td class="num">{pct(w.p.mean)}</td>
               <td class="num">{pct(w.p.min)}–{pct(w.p.max)}</td>

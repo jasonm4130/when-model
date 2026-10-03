@@ -19,14 +19,14 @@ import BacktestArchitecture from '../components/BacktestArchitecture.astro';
 import BacktestNegatives from '../components/BacktestNegatives.astro';
 import BacktestTraps from '../components/BacktestTraps.astro';
 import BacktestReproduce from '../components/BacktestReproduce.astro';
-import { primaryLead, type Backtest } from '../../scripts/backtest/build';
-import { RELEASES } from '../../scripts/backtest/curated';
+import type { Backtest } from '../../scripts/backtest/build';
 import type { Replay } from '../../scripts/backtest/replay';
 import { pct } from '../../scripts/backtest/view';
 import { FORECAST_CONSTANTS, LEAD_INPUT_SKILL_7D } from '../domain/forecast';
-import { labById, type LabId } from '../domain/lab';
 import { RELEASE_EVENT_WINDOW_MS } from '../domain/drop';
 import { LAUNCH_SETTLE_MS } from '../domain/lab-status';
+import { backtestPage, longDate, signed, spell } from '../ui/backtest-page';
+import { labName } from '../ui/backtest-replay';
 import releaseJson from '../../data/backtest/release-events.json';
 import marketsJson from '../../data/backtest/markets.json';
 import broadcastsJson from '../../data/backtest/broadcasts.json';
@@ -41,79 +41,44 @@ const broadcasts = broadcastsJson as unknown as Backtest['broadcasts'];
 const architecture = architectureJson as unknown as Backtest['architecture'];
 const negatives = negativesJson as unknown as Backtest['negative-results'];
 const traps = trapsJson as unknown as Backtest['timestamp-traps'];
-const archived = broadcasts.broadcasts.filter((b) => b.capture);
-const unarchived = broadcasts.broadcasts.filter((b) => !b.capture);
-const openAiMisses = broadcasts.misses.filter((m) => m.model.startsWith('GPT'));
 const replay = replayJson as unknown as Replay;
 
 // The data only changes when the committed JSON does, i.e. on deploy.
 Astro.response.headers.set('cache-control', 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400');
 
-const pulledAt = events.meta.pulledAt;
-const dated = markets.crossings.filter((c) => c.primary);
-const early90 = dated.filter((c) => (primaryLead(c, 0.9) ?? 0) > 0);
-const example = (() => {
-  const row = markets.crossings.find((c) => c.id === 'claude-opus-5.5');
-  const curated = RELEASES.find((r) => r.id === 'claude-opus-5.5');
-  const series = row?.day ?? row?.by;
-  return row && curated && series
-    ? { model: row.model, series, hn: curated.hn, openrouter: curated.openrouter[0] }
-    : null;
-})();
-
-// v3 replay: every number below comes from data/backtest/v3-replay.json or FORECAST_CONSTANTS.
-const signed = (n: number, d = 2) => (n > 0 ? `+${n.toFixed(d)}` : n < 0 ? `−${Math.abs(n).toFixed(d)}` : '0');
-/** "1 Apr 2026" in UTC. */
-const longDate = (iso: string) => {
-  const [, dd, mon, yyyy] = new Date(iso).toUTCString().split(' ');
-  return `${Number(dd)} ${mon} ${yyyy}`;
-};
-/** "24 hours", "72 hours", "7 days". */
-const spell = (h: number) => (h % 24 === 0 && h >= 168 ? `${h / 24} days` : `${h} hours`);
-const { meta, decision } = replay;
-const headH = meta.headlineH;
-const head = replay.horizons.find((h) => h.horizonH === headH)!;
-const bestFormula = head.formulas.find((f) => f.id === decision.bestFormula)!;
-const maxAt72 = head.formulas.find((f) => f.id === 'max')!;
-const labsBySkill = [...replay.byLab].sort((a, b) => b.skill - a.skill);
-const [lab1, lab2, ...otherLabs] = labsBySkill;
-const labName = (id: LabId) => labById(id)?.name ?? id;
-const otherRange = otherLabs.length
-  ? `${signed(Math.min(...otherLabs.map((l) => l.skill)))} to ${signed(Math.max(...otherLabs.map((l) => l.skill)))}`
-  : '';
-const frontierNames = [...new Set(replay.byLab.map((l) => labName(l.labId)))];
-const fewestLaunches = Math.min(...replay.byLab.map((l) => l.testEvents));
-const mostLaunches = Math.max(...replay.byLab.map((l) => l.testEvents));
-const survivorship = replay.survivorship;
-const uncensored = head.sensitivity.find((s) => s.variant === 'uncensored');
-const pricedMin = pct(meta.protocol.pricedMin);
-const unpriced = replay.pricedEvents.test - replay.pricedEvents.testPriced;
-const bins = bestFormula.reliability;
-const topBin = bins[bins.length - 1];
-const observedRange = [Math.min(...bins.map((b) => b.observed)), Math.max(...bins.map((b) => b.observed))];
-const rung72 = markets.rungCalibration.find((r) => r.horizonH === headH);
-const reliabilityPanels = [
-  {
-    title: `v3 · ${bestFormula.name.slice(0, 3)} next ${headH}h · held-out hours`,
-    bins: bestFormula.reliability,
-    unit: 'hours',
-    reference: { value: head.test.rate, label: `held-out rate ${pct(head.test.rate)}` },
-    description: `Reliability of formula ${bestFormula.name.slice(0, 3)}, the ${headH}-hour noisy-OR forecast, on the held-out window: forecast against how often a frontier launch followed.`,
-  },
-  ...markets.rungCalibration
-    .filter((r) => r.horizonH === headH)
-    .map((r) => ({
-      title: `Wave 1 · Polymarket rungs ${r.horizonH}h before deadline`,
-      bins: r.reliability,
-      unit: 'rungs',
-      reference: { value: r.yesRate, label: `resolved Yes ${pct(r.yesRate)}` },
-      description: `Reliability of Polymarket's own frontier release rungs, priced ${r.horizonH} hours before each deadline, against how each rung resolved.`,
-    })),
-];
-
-/** The level's main input against the base rate, in a word: an interval that spans zero is "no better". */
-const inputWord =
-  LEAD_INPUT_SKILL_7D.skillCi95[1] < 0 ? 'Worse' : LEAD_INPUT_SKILL_7D.skillCi95[0] > 0 ? 'Better' : 'No better';
+// Every number below comes from data/backtest/*.json or FORECAST_CONSTANTS (src/ui/backtest-page.ts).
+const {
+  pulledAt,
+  archived,
+  unarchived,
+  openAiMisses,
+  dated,
+  early90,
+  example,
+  meta,
+  decision,
+  headH,
+  head,
+  bestFormula,
+  maxAt72,
+  lab1,
+  lab2,
+  otherLabs,
+  otherRange,
+  frontierNames,
+  fewestLaunches,
+  mostLaunches,
+  survivorship,
+  uncensored,
+  pricedMin,
+  unpriced,
+  bins,
+  topBin,
+  observedRange,
+  rung72,
+  reliabilityPanels,
+  inputWord,
+} = backtestPage({ events, markets, broadcasts, replay });
 ---
 <Layout
   title="Backtest · whenmodel"
