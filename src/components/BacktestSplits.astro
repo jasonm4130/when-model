@@ -24,7 +24,7 @@ const tally = (t: { resolvedYes: number; fired: number }) => `${t.resolvedYes} /
 ---
 {groups.map((g) => (
   <>
-    <h3 class="tiny sub">{g.title}</h3>
+    <h4 class="tiny sub">{g.title}</h4>
     <div class="table-scroll" tabindex="0" role="region" aria-label={`${g.title} table`}>
       <table>
         <thead>
@@ -57,7 +57,7 @@ const tally = (t: { resolvedYes: number; fired: number }) => `${t.resolvedYes} /
   "Undated only" launches were priced only on rungs due weeks after they shipped, which say the launch is coming but not when. Of the {early90.length} launches whose market held 0.9 before the announcement, {early90.length - unprompted.length} followed a leak, a press report or the lab's own pre-announcement{unprompted.length ? ` (the exception: ${unprompted.map((c) => c.model).join(', ')}, launched at a scheduled keynote or with no public trail)` : ''}. The markets aggregate that news rather than foresee it.
 </p>
 
-<h3 class="tiny sub" id="seven-day">The "above 50% is usually real" claim</h3>
+<h4 class="tiny sub" id="seven-day">The "above 50% is usually real" claim</h4>
 <div class="table-scroll" tabindex="0" role="region" aria-label="Above-50% claim table">
   <table>
     <thead>

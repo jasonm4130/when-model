@@ -24,7 +24,7 @@ import {
 import { listingAliases } from '../domain/drop';
 import { DROPCON_ALGORITHM_VERSION } from '../domain/dropcon';
 import type { LeakItem, LeakSource } from '../domain/feed';
-import { HISTORY_WINDOW_MS, buildHistorySeries, type DisplayPoint } from '../domain/history';
+import { HISTORY_WINDOW_MS, buildHistorySeries, type HistoryResponseBody } from '../domain/history';
 import { unmappedReleaseMarkets } from '../domain/lab';
 import type { BroadcastCandidate, PendingArchitecture } from '../domain/lead';
 import { EMPTY_LEDGER, LEDGER_KINDS, ledgerFromRows, type Ledger } from '../domain/ledger';
@@ -98,14 +98,24 @@ function logBuild(dashboard: Dashboard, results: readonly SourceResult<unknown>[
     );
 }
 
+/** One build: the dashboard, and the source results it was assembled from. */
+export interface Capture {
+  dashboard: Dashboard;
+  /**
+   * Every source's full result. The cron's availability ledger reads these (all OpenRouter
+   * listings, every feed item), not the dashboard's capped lists, so it makes no fetch of its own.
+   */
+  inputs: DashboardInputs;
+}
+
 /**
  * Fan out to every source, tolerate individual failures, assemble. `database` backs the
  * first-seen ledger and the repricing term; without it both read as unavailable.
  */
-export async function buildDashboard(
+export async function buildCapture(
   now = Date.now(),
   database: SnapshotDatabase | undefined = historyDatabase(),
-): Promise<Dashboard> {
+): Promise<Capture> {
   const started = Date.now();
   const at = new Date(now);
   const [markets, drops, trending, papers, feeds, leaks, ledger, modules, broadcastFetch, launchStories] =
@@ -168,7 +178,15 @@ export async function buildDashboard(
     [markets, drops, trending, papers, ...feeds, ...leaks, ledger, modules, broadcastFetch, launchStories],
     Date.now() - started,
   );
-  return dashboard;
+  return { dashboard, inputs };
+}
+
+/** `buildCapture`'s dashboard: what a page render and `/api/dashboard.json` assemble. */
+export async function buildDashboard(
+  now = Date.now(),
+  database: SnapshotDatabase | undefined = historyDatabase(),
+): Promise<Dashboard> {
+  return (await buildCapture(now, database)).dashboard;
 }
 
 /** The dashboard every request renders: memoised at the edge. */
@@ -184,11 +202,6 @@ export const HISTORY_CACHE_TTL_SECONDS = 15 * 60;
 export const HISTORY_MAX_ROWS = 30 * 24 * 4;
 /** The page waits this long for history, then renders the strip's unavailable state. */
 export const HISTORY_PAGE_TIMEOUT_MS = 2000;
-
-export interface HistoryResponseBody {
-  ok: boolean;
-  points: DisplayPoint[];
-}
 
 /** Everything that can fail here degrades to `{ ok: false, points: [] }`; this never throws. */
 export async function buildHistoryResponseBody(
@@ -213,9 +226,9 @@ const HISTORY_UNAVAILABLE: HistoryResponseBody = { ok: false, points: [] };
 
 /**
  * The 30-day DROPCON series, memoised at the edge for 15 minutes under `HISTORY_MEMO_KEY`: the
- * JSON endpoint and the page's history strip read the same entry, so the strip costs a request no
- * upstream call and at most one D1 read per colo per 15 minutes. A failed read is served but never
- * memoised: one D1 blip must not blank the strip for the next 15 minutes. Never throws.
+ * JSON endpoint and the page's DROPCON instrument read the same entry, so the instrument costs a
+ * request no upstream call and at most one D1 read per colo per 15 minutes. A failed read is served
+ * but never memoised: one D1 blip must not blank the instrument for the next 15 minutes. Never throws.
  */
 export async function loadHistory(): Promise<HistoryResponseBody> {
   try {

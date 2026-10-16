@@ -23,7 +23,8 @@
     "lint": "oxlint && oxfmt --check",
     "format": "oxfmt",
     "backtest": "tsx scripts/backtest/run.ts",
-    "backtest:replay": "tsx scripts/backtest/replay.ts"
+    "backtest:replay": "tsx scripts/backtest/replay.ts",
+    "brand": "tsx scripts/brand/render.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.2",

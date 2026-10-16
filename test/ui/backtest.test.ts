@@ -166,7 +166,8 @@ describe('backtest components', async () => {
       `${top.n} hours with a mean forecast of ${pct(top.meanForecast)} came true ${pct(top.observed)}`,
     );
     for (const b of d72.reliability) expect(html).toContain(`>${b.n}</text>`);
-    expect(html).toContain('held-out rate 63%');
+    // The label sits in the right margin, wrapped a word group a line.
+    expect(html).toMatch(/<tspan[^>]*>held-out<\/tspan><tspan[^>]*>rate 63%<\/tspan>/);
     expect((html.match(/<caption[\s>]/g) ?? []).length).toBe(2);
   });
 
@@ -291,8 +292,11 @@ describe('backtest page', async () => {
 
   it('renders every section, links home and cites the pull time', async () => {
     const html = await container.renderToString(BacktestPage);
+    // The chart is open; every other study is a fold under "Show the working".
+    expect(html).toMatch(/<section id="replay"/);
+    expect(html).toContain('Show the working');
     for (const id of [
-      'replay',
+      'limits',
       'results',
       'leads',
       'splits',
@@ -304,8 +308,7 @@ describe('backtest page', async () => {
       'timestamp-traps',
       'reproduce',
     ]) {
-      expect(html).toContain(`id="${id}"`);
-      expect(html).toContain(`href="#${id}"`);
+      expect(html).toMatch(new RegExp(`<details class="work" id="${id}"`));
     }
     expect(html).toContain('<title>Backtest · whenmodel</title>');
     expect(html).toContain('href="/"');
@@ -316,17 +319,20 @@ describe('backtest page', async () => {
     expect(html).not.toContain('will be published here');
     for (const anchor of ['id="trap-her"', 'id="seven-day"', 'id="negative-results"'])
       expect(html).toContain(anchor);
-    // The page wears the backtest footer: back to the dashboard, the pull time and the rebuild.
+    // The site's tab strip leads back to the dashboard and marks this page as the current one.
+    expect(html).toMatch(/<a class="tab" href="\/"[^>]*>Departures</);
+    expect(html).toMatch(/<a class="tab on" href="\/backtest" aria-current="page"/);
+    // The page wears the backtest footer: the pull time and the rebuild.
     const footer = html.slice(html.indexOf('<footer'));
-    expect(footer).toContain('◂ DASHBOARD');
-    expect(footer).toContain(`DATA PULLED ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
+    expect(footer).toContain(`Data pulled ${events.meta.pulledAt.replace('T', ' ').slice(0, 16)}Z`);
     expect(footer).toContain('href="#reproduce"');
     expect(footer).not.toContain('EDGE-CACHED');
   });
 
   it('opens on the question, the method and the headline results, all from the replay and the shipped constants', async () => {
     const html = text(await container.renderToString(BacktestPage));
-    const hero = html.slice(html.indexOf('BACKTEST'), html.indexOf("WHAT THIS CAN'T DO"));
+    const hero = html.slice(html.indexOf('Track record'), html.indexOf('Show the working'));
+    const working = html.slice(html.indexOf('Show the working'));
     expect(hero).toContain('Can public signals see a frontier model launch coming?');
     expect(hero).toContain(
       `fitted on the first ${FORECAST_CONSTANTS.fittedOn.events} frontier launches and scored on the next ${FORECAST_CONSTANTS.testedOn.events}`,
@@ -334,12 +340,18 @@ describe('backtest page', async () => {
     expect(hero).toContain('1 Apr 2026 to 26 Sep 2026');
     expect(hero).toContain(`Plus ${events.releases.length} launches timed by hand`);
     const d = replay.decision;
+    // The sign's one anchored fact is the launches priced first, in words a visitor can read.
     expect(hero).toContain(
-      `Best 72h skill ${signed3(d.skill)} needed ${signed2(replay.meta.protocol.decisionMinSkill)}`,
+      `${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test} held-out launches had their own lab's market at 50% or more beforehand`,
     );
-    expect(hero).toContain(`95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])}`);
-    expect(hero).toContain(`${replay.pricedEvents.testPriced} / ${replay.pricedEvents.test}`);
-    expect(hero).toContain(`Level's input, 7d ${signed2(LEAD_INPUT_SKILL_7D.skill)}`);
+    // Three facts under the verdict, each in a word first, with its number beside it, once.
+    expect(hero).toContain(
+      `Beat the base rate, 72h No best skill ${signed3(d.skill)}; it needed ${signed2(replay.meta.protocol.decisionMinSkill)} (95% ${signed2(d.skillCi95[0])} to ${signed2(d.skillCi95[1])})`,
+    );
+    expect(hero.split(signed3(d.skill))).toHaveLength(2);
+    expect(hero).toContain(
+      `Level's main input, 7d Worse than the base rate: skill ${signed2(LEAD_INPUT_SKILL_7D.skill)}`,
+    );
     // The fourth tile is the sample size, chosen in advance, not the two best labs after the fact.
     expect(hero).toContain(
       `Held-out launches ${FORECAST_CONSTANTS.testedOn.events} the real sample size · fitted on ${FORECAST_CONSTANTS.fittedOn.events}`,
@@ -348,20 +360,20 @@ describe('backtest page', async () => {
     expect(hero).toContain(
       'No formula beat the base rate at 72 hours, so DROPCON stays a hand-weighted lead score, not a probability.',
     );
-    // The best two labs are named as anecdotes, from the data, with their launch counts.
+    // The best two labs are named as anecdotes, in the results fold, from the data, with their counts.
     const [first, second] = [...replay.byLab].sort((a, b) => b.skill - a.skill);
     const counts = replay.byLab.map((l) => l.testEvents);
-    expect(hero).toContain(
+    expect(working).toContain(
       `Anthropic (${first.testEvents} launches) and OpenAI (${second.testEvents}) scored highest on their own launches, ${signed2(first.skill)} and ${signed2(second.skill)}`,
     );
-    expect(hero).toContain(
+    expect(working).toContain(
       `with ${Math.min(...counts)} to ${Math.max(...counts)} launches per lab these are anecdotes, not a ranking`,
     );
     expect(hero).not.toMatch(/helped/);
     // What was timed by hand, named, instead of "every signal that might have warned".
     expect(hero).toContain('timed by hand against Hacker News, lab feeds, TestingCatalog');
     expect(hero).not.toContain('every signal');
-    expect(hero).toContain(
+    expect(working).toContain(
       `${replay.pricedEvents.test - replay.pricedEvents.testPriced} of ${replay.pricedEvents.test}, had no market at 50% or more`,
     );
   });
@@ -585,7 +597,7 @@ describe('site copy and links', async () => {
 
   it('never says anything but the markets feeds the level (FAQ and timeline)', async () => {
     const html = text(await container.renderToString(History));
-    const faq = html.slice(html.indexOf('FREQUENTLY ASKED QUESTIONS'));
+    const faq = html.slice(html.indexOf('Questions riders ask'));
     expect(faq).toContain('Its headline level, DROPCON, reads Polymarket release odds only.');
     expect(faq).toContain('are shown beside it with their track records and never move it');
     expect(html).not.toMatch(
@@ -607,7 +619,7 @@ describe('site copy and links', async () => {
       `${archived} of these ${broadcasts.broadcasts.length} have an archived copy proving it was up before the stream; GPT-5.6 is timed from YouTube's own publishedAt, with no archive.`,
     );
     expect(html).not.toContain('These are the cases where an archived copy proves');
-    expect(html).toContain('PRE-ANNOUNCED, LEAKED OR NO HN PRECURSOR');
+    expect(html).toContain('Pre-announced, leaked or no HN precursor');
     expect(html).toContain('No HN precursor');
     expect(html).not.toMatch(/surprise/i);
   });

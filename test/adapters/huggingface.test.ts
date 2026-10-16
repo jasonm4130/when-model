@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fixture } from '../fixtures/read';
 import { mockUpstream } from './mock-cache';
 
 afterEach(() => vi.resetModules());
@@ -98,5 +99,58 @@ describe('fetchers', () => {
     mockUpstream({ 'https://huggingface.co/api/models': null });
     const { fetchTrending } = await import('../../src/adapters/huggingface');
     expect(await fetchTrending()).toEqual([]);
+  });
+});
+
+describe('huggingface organisation listings', () => {
+  const listing = fixture('hf-org-qwen.json');
+
+  it('keeps public language repos, and untagged ones for the ledger to judge by name', async () => {
+    const { toHubRepo } = await import('../../src/adapters/huggingface');
+    expect(toHubRepo({ id: 'Qwen/Qwen3.8-27B', pipeline_tag: 'image-text-to-text' })).toEqual({
+      id: 'Qwen/Qwen3.8-27B',
+      pipelineTag: 'image-text-to-text',
+    });
+    expect(toHubRepo({ id: 'Qwen/Qwen3.8-9B', pipeline_tag: null })).toEqual({ id: 'Qwen/Qwen3.8-9B' });
+    expect(toHubRepo({ id: 'Qwen/Qwen3.8-9B', createdAt: '2026-09-20T10:00:00Z' })).toEqual({
+      id: 'Qwen/Qwen3.8-9B',
+      createdAt: '2026-09-20T10:00:00.000Z',
+    });
+    expect(toHubRepo({ id: 'Qwen/Qwen3.8-9B', createdAt: 'soon' })).toEqual({ id: 'Qwen/Qwen3.8-9B' });
+    expect(toHubRepo({ id: 'Qwen/Qwen-Image-2.1', pipeline_tag: 'text-to-image' })).toBeUndefined();
+    expect(toHubRepo({ id: 'Qwen/Secret', private: true })).toBeUndefined();
+    expect(toHubRepo({ id: 'no-org' })).toBeUndefined();
+    expect(toHubRepo({})).toBeUndefined();
+  });
+
+  it('reads the newest page of one organisation from the captured listing', async () => {
+    const calls = mockUpstream({ 'https://huggingface.co/api/models?author=Qwen': JSON.parse(listing) });
+    const { fetchHfOrg, hfOrgUrl, HF_ORG_LIMIT } = await import('../../src/adapters/huggingface');
+    const repos = await fetchHfOrg('Qwen');
+    expect(calls).toEqual([hfOrgUrl('Qwen')]);
+    expect(hfOrgUrl('meta-llama')).toBe(
+      `https://huggingface.co/api/models?author=meta-llama&sort=createdAt&direction=-1&limit=${HF_ORG_LIMIT}`,
+    );
+    expect(repos.map((r) => r.id)).toEqual([
+      'Qwen/Qwen-Image-2.1-PE-I2I',
+      'Qwen/Qwen-Drive-1.0-4B',
+      'Qwen/Qwen3.8-Flash-Next-FP8',
+      'Qwen/Qwen3.8-Flash-Next',
+      'Qwen/Qwen3.8-27B-FP8',
+      'Qwen/Qwen3.8-2.4T-A95B',
+      'Qwen/Qwen3.8-2.4T-A95B-FP8',
+      'Qwen/Qwen3.8-27B',
+      'Qwen/SAE-Res-Qwen3.5-35B-A3B-Base-W128K-L0_100',
+    ]);
+  });
+
+  it('throws on an empty or malformed listing, so the org reads down', async () => {
+    mockUpstream({
+      'https://huggingface.co/api/models?author=Qwen': [],
+      'https://huggingface.co/api/models?author=google': { error: 'x' },
+    });
+    const { fetchHfOrg } = await import('../../src/adapters/huggingface');
+    await expect(fetchHfOrg('Qwen')).rejects.toThrow('listed no models for Qwen');
+    await expect(fetchHfOrg('google')).rejects.toThrow('listed no models for google');
   });
 });

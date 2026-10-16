@@ -60,3 +60,13 @@ export function monthInitials(now: Date, months = 12): string[] {
   }
   return out;
 }
+
+/**
+ * A headline with its profanity softened to a first letter and asterisks ("F***ing"), for pages
+ * that print other people's titles under a lab's name. The link still goes to the original.
+ */
+export function soften(title: string): string {
+  return title.replace(/\b(f)(uck)(\w*)|\b(s)(hit)(\w*)/gi, (_, f, fu, fr, s, sh, sr) =>
+    f ? `${f}${'*'.repeat(fu.length)}${fr}` : `${s}${'*'.repeat(sh.length)}${sr}`,
+  );
+}

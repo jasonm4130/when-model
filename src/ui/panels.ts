@@ -6,7 +6,7 @@
 import type { Dashboard } from '../domain/dashboard';
 import type { Drop } from '../domain/drop';
 import type { FeedSource } from '../domain/feed';
-import { LABS, type LabId } from '../domain/lab';
+import { labById, type Lab } from '../domain/lab';
 import { displayOutcomes, isPlaceholderOutcome, type Market, type Outcome } from '../domain/market';
 import { perMillion } from './format';
 
@@ -42,6 +42,54 @@ export function releaseRows(d: MarketsView): Market[] {
   return (d.markets ?? [])
     .filter((m) => m.kind === 'release' && displayOutcomes(m, PANEL_ROWS.releaseOutcomes, asOf).length > 0)
     .slice(0, PANEL_ROWS.releases);
+}
+
+/** Release markets under one line's heading; `lab` is undefined for markets with no line. */
+export interface LineGroup {
+  lab: Lab | undefined;
+  markets: Market[];
+}
+
+/**
+ * Release markets grouped under each line's heading, lines in the network's order (the /labs order),
+ * so the headline service is never folded away; markets with no line go last.
+ */
+export function byLine(markets: readonly Market[], labs: readonly { id: string }[]): LineGroup[] {
+  const by = new Map<string, Market[]>();
+  for (const m of markets) by.set(m.labId ?? '', [...(by.get(m.labId ?? '') ?? []), m]);
+  const rank = (id: string) => {
+    const i = labs.findIndex((l) => l.id === id);
+    return i < 0 ? labs.length : i;
+  };
+  return [...by.entries()]
+    .sort(([a], [b]) => rank(a) - rank(b))
+    .map(([id, ms]) => ({ lab: id ? labById(id) : undefined, markets: ms }));
+}
+
+/**
+ * /markets' release markets by line: the first `MOBILE_MARKETS` show, the rest wait behind one fold,
+ * still under their line's heading.
+ */
+export function releaseGroups(d: MarketsView & Pick<Dashboard, 'labs'>): {
+  open: LineGroup[];
+  folded: LineGroup[];
+  foldedCount: number;
+} {
+  const ordered = byLine(releaseRows(d), d.labs).flatMap((g) => g.markets);
+  return {
+    open: byLine(ordered.slice(0, MOBILE_MARKETS), d.labs),
+    folded: byLine(ordered.slice(MOBILE_MARKETS), d.labs),
+    foldedCount: Math.max(0, ordered.length - MOBILE_MARKETS),
+  };
+}
+
+/** Rungs the home page's busiest-market ticket shows; /markets shows the ladder. */
+export const HOME_RUNGS = 2;
+
+/** The busiest release market with the rungs the home page shows, or undefined with none open. */
+export function leadMarket(d: MarketsView): { market: Market; outcomes: Outcome[] } | undefined {
+  const market = releaseRows(d)[0];
+  return market && { market, outcomes: displayOutcomes(market, HOME_RUNGS, asOfMs(d)) };
 }
 
 /** Leaderboard markets other than the best-model race, then everything else model-relevant. */
@@ -90,24 +138,6 @@ export const FEED_LABELS: Readonly<Record<FeedSource, string>> = {
   github: 'GITHUB',
   xai: 'XAI',
 };
-
-/** A lab's own feed wears the lab's colour from `LABS`, so the feed and the lab cards agree. */
-const FEED_LAB: Readonly<Partial<Record<FeedSource, LabId>>> = {
-  openai: 'openai',
-  deepmind: 'google',
-  anthropic: 'anthropic',
-  xai: 'xai',
-};
-/** Hacker News and GitHub are nobody's lab. HN was orange, the same as Anthropic. */
-const FEED_OWN: Readonly<Partial<Record<FeedSource, string>>> = {
-  hn: 'var(--yellow)',
-  github: 'var(--muted)',
-};
-
-export function feedColour(source: FeedSource): string {
-  const lab = FEED_LAB[source];
-  return (lab && LABS.find((l) => l.id === lab)?.color) || FEED_OWN[source] || 'var(--muted)';
-}
 
 // ─── source pills ────────────────────────────────────────────────────────────
 
@@ -188,6 +218,21 @@ export function sourceErrorText(error: string | undefined): string {
     .replace(/^(\d{3}) (https?:\/\/\S+)/, (_, status: string, url: string) => `${status} · ${hostOf(url)}`)
     .replace(/https?:\/\/\S+/g, (url) => hostOf(url));
   return short.length > SOURCE_ERROR_MAX ? `${short.slice(0, SOURCE_ERROR_MAX - 1)}…` : short;
+}
+
+/**
+ * Why a source is down, in plain words for /about's health list: never a raw database or HTTP
+ * error. The ledger is retried on the next 15-minute capture; every other source on the next build.
+ * The raw text (`sourceErrorText`) goes in the row's title for whoever wants it.
+ */
+export function sourceStatusText(name: string, error: string | undefined): string {
+  const retry = /ledger/i.test(name) ? 'retrying each capture' : 'retrying each build';
+  const e = error ?? '';
+  const status = /^(\d{3})\b/.exec(e)?.[1];
+  if (/time(d)?\s?out|abort/i.test(e)) return `timed out; ${retry}`;
+  if (status) return `${status.startsWith('5') ? 'answered with an error' : 'refused the request'}; ${retry}`;
+  if (/pars|valid|json|xml|unexpected/i.test(e)) return `sent something unreadable; ${retry}`;
+  return `unavailable; ${retry}`;
 }
 
 /** True when the named source answered this build; a missing result counts as down. */

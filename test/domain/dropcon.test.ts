@@ -70,7 +70,7 @@ describe('computeDropcon', () => {
 
   it('builds the headline from the real top driver, quoting the market rung', () => {
     const d = computeDropcon({ ...quiet, p7: 0.85, p30: 0.9, top7: sonnet, top30: sonnet });
-    expect(d.headline).toBe('Polymarket prices 85% that the next Claude Sonnet ships by Sep 29');
+    expect(d.headline).toBe('Polymarket prices 85% that the next Claude Sonnet ships by 29 Sep');
     expect(d.headline).not.toMatch(/odds of a frontier drop/i);
     expect(d.level).toBe(2);
   });
@@ -78,7 +78,7 @@ describe('computeDropcon', () => {
   it('states the scored read beside the quoted rung when they round apart, and names a bucket ceiling', () => {
     const between = { ...sonnet, p: 0.31, quote: { label: 'September 30', p: 0.14 } };
     expect(computeDropcon({ ...quiet, p7: 0.31, p30: 0.31, top7: between }).headline).toBe(
-      'Polymarket prices 14% that the next Claude Sonnet ships by Sep 30 (31% within 7 days on its curve)',
+      'Polymarket prices 14% that the next Claude Sonnet ships by 30 Sep (31% within 7 days on its curve)',
     );
     const capped: MarketDriver = { ...sonnet, p: 0.184, read: 'ceiling', quote: undefined };
     const d = computeDropcon({ ...quiet, p7: 0.184, p30: 0.184, top7: capped });
@@ -112,7 +112,7 @@ describe('computeDropcon', () => {
       top30: { ...gpt6, p: 0.9, quote: { label: 'October 31', p: 0.9 } },
     });
     expect(d.provenance.map((r) => r.points)).toEqual([4, 9, 0]);
-    expect(d.headline).toBe('Polymarket prices 90% that GPT-6 ships by Oct 31, but only 5% within 7 days');
+    expect(d.headline).toBe('Polymarket prices 90% that GPT-6 ships by 31 Oct, but only 5% within 7 days');
   });
 
   it('names both families when the 30-day and 7-day reads come from different ones', () => {
@@ -191,7 +191,7 @@ describe('computeDropcon', () => {
     const d = computeDropcon({ ...quiet, p7: 0.85, p30: 0.9, p7DayAgo: 0.6, top7: sonnet, top30: sonnet });
     expect(d.provenance.map((r) => r.points)).toEqual([68, 1, 8]);
     expect(d.headline).toBe(
-      'Polymarket prices 85% that the next Claude Sonnet ships by Sep 29, up 25 pts in 24 hours',
+      'Polymarket prices 85% that the next Claude Sonnet ships by 29 Sep, up 25 pts in 24 hours',
     );
     const small = computeDropcon({
       ...quiet,
@@ -201,7 +201,7 @@ describe('computeDropcon', () => {
       top7: sonnet,
       top30: sonnet,
     });
-    expect(small.headline).toBe('Polymarket prices 85% that the next Claude Sonnet ships by Sep 29');
+    expect(small.headline).toBe('Polymarket prices 85% that the next Claude Sonnet ships by 29 Sep');
     const rise = (dayAgo: number) =>
       computeDropcon({ ...quiet, p7: 0.5, p30: 0.6, p7DayAgo: dayAgo, top7: { ...sonnet, p: 0.5 } }).headline;
     expect(rise(0.44)).toContain(', up 6 pts in 24 hours');
@@ -293,7 +293,7 @@ describe('copy helpers', () => {
   it('phrases families and shortens month rungs', () => {
     expect(familyPhrase('Next Claude Sonnet')).toBe('the next Claude Sonnet');
     expect(familyPhrase('GPT-6')).toBe('GPT-6');
-    expect(shortRung('September 29')).toBe('Sep 29');
+    expect(shortRung('September 29')).toBe('29 Sep');
     expect(shortRung('Q4 2026')).toBe('Q4 2026');
   });
 });

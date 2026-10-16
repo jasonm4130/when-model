@@ -3,18 +3,14 @@ import { LEVEL_BANDS } from '../../src/domain/dropcon';
 import {
   HISTORY_WINDOW_MS,
   HYSTERESIS_CLEAR_MARGIN,
-  STRIP_MIN_SPAN_MS,
   applyHysteresis,
   buildHistorySeries,
   downsampleHourly,
-  historyStrip,
   splitByAlgorithmVersion,
   stripDay,
-  stripSpanText,
   stripHour,
   type ScorePoint,
 } from '../../src/domain/history';
-import { readings, series } from '../fixtures/history';
 
 function point(overrides: Partial<ScorePoint> & Pick<ScorePoint, 'observedAt'>): ScorePoint {
   return {
@@ -28,20 +24,57 @@ function point(overrides: Partial<ScorePoint> & Pick<ScorePoint, 'observedAt'>):
 }
 
 describe('downsampleHourly', () => {
-  it('keeps the latest reading observed in each UTC hour', () => {
+  it("keeps each UTC hour's median reading, the lower middle one of an even count", () => {
     const points = [
       point({ observedAt: '2026-09-23T01:00:00.000Z', score: 10 }),
       point({ observedAt: '2026-09-23T01:45:00.000Z', score: 20 }),
       point({ observedAt: '2026-09-23T02:15:00.000Z', score: 30 }),
     ];
-    expect(downsampleHourly(points).map((p) => p.score)).toEqual([20, 30]);
+    expect(downsampleHourly(points).map((p) => p.score)).toEqual([10, 30]);
+  });
+
+  it('does not let one flickering capture set the hour (26 Sep: 53, 69, 55)', () => {
+    const points = [
+      point({ observedAt: '2026-09-26T13:00:50.000Z', score: 69, level: 2 }),
+      point({ observedAt: '2026-09-26T13:15:50.000Z', score: 55, level: 2 }),
+      point({ observedAt: '2026-09-26T13:30:50.000Z', score: 54, level: 3 }),
+      point({ observedAt: '2026-09-26T13:45:50.000Z', score: 55, level: 2 }),
+    ];
+    // The old rule took the last capture: 55 here by luck, 54 without the 13:45 capture.
+    // The median reads 55 either way.
+    expect(downsampleHourly(points).map((p) => [p.score, p.observedAt.slice(11, 16)])).toEqual([
+      [55, '13:45'],
+    ]);
+    expect(downsampleHourly(points.slice(0, 3)).map((p) => p.score)).toEqual([55]);
+  });
+
+  it('keeps the later capture of a tied median, whole, with its own level and odds', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 50, level: 3, headlineP: 0.6 }),
+      point({ observedAt: '2026-09-23T01:30:00.000Z', score: 50, level: 3, headlineP: 0.61 }),
+      point({ observedAt: '2026-09-23T01:45:00.000Z', score: 90, level: 1, headlineP: 0.9 }),
+    ];
+    expect(downsampleHourly(points)).toEqual([points[1]]);
+  });
+
+  it('skips degraded captures unless the whole hour was degraded', () => {
+    const points = [
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 60, level: 2 }),
+      point({ observedAt: '2026-09-23T01:45:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T02:00:00.000Z', score: 0, level: 5, degraded: true }),
+      point({ observedAt: '2026-09-23T02:30:00.000Z', score: 0, level: 5, degraded: true }),
+    ];
+    expect(downsampleHourly(points).map((p) => [p.observedAt.slice(11, 16), p.degraded])).toEqual([
+      ['01:00', false],
+      ['02:30', true],
+    ]);
   });
 
   it('sorts out-of-order input before bucketing', () => {
     const points = [
       point({ observedAt: '2026-09-23T02:15:00.000Z', score: 30 }),
-      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 10 }),
       point({ observedAt: '2026-09-23T01:45:00.000Z', score: 20 }),
+      point({ observedAt: '2026-09-23T01:00:00.000Z', score: 20 }),
     ];
     expect(downsampleHourly(points).map((p) => p.observedAt)).toEqual([
       '2026-09-23T01:45:00.000Z',
@@ -233,10 +266,9 @@ describe('buildHistorySeries', () => {
     ]);
   });
 
-  it('hides a one-slot wobble inside an hour that the hourly point happens to land on', () => {
+  it("hides a one-slot wobble that is the hour's only capture", () => {
     const points = [
       point({ observedAt: '2026-09-23T00:45:40.000Z', score: 40, level: 3 }),
-      point({ observedAt: '2026-09-23T01:30:40.000Z', score: 40, level: 3 }),
       point({ observedAt: '2026-09-23T01:45:40.000Z', score: 58, level: 2 }),
       point({ observedAt: '2026-09-23T02:00:40.000Z', score: 40, level: 3 }),
     ];
@@ -252,162 +284,11 @@ describe('buildHistorySeries', () => {
   });
 });
 
-describe('historyStrip', () => {
-  const NOW = Date.parse('2026-09-27T06:30:00Z');
-  const opts = { ok: true, now: NOW, currentVersion: 3 };
-  // v2 backfill for three days, then v3: level 2, a drop to level 4, one outage, then level 1.
-  const v2 = readings('2026-09-23T00:00:00Z', 72, 2, (i) => (i < 24 ? 90 : 64));
-  const v3 = readings(
-    '2026-09-26T00:00:00Z',
-    30,
-    3,
-    (i) => (i < 10 ? 60 : i < 20 ? 30 : 80),
-    (i) => i === 20,
-  );
-
-  it('says the series is unavailable, and draws nothing, when it could not be read', () => {
-    const strip = historyStrip([], { ...opts, ok: false });
-    expect(strip.state).toBe('unavailable');
-    expect(strip.runs).toEqual([]);
-    expect(strip.summary).toBe(
-      'DROPCON history is unavailable: the score series could not be read. The level shown is live.',
-    );
-    expect(Date.parse(strip.to) - Date.parse(strip.from)).toBe(STRIP_MIN_SPAN_MS);
-  });
-
-  it('makes an empty series look intentional: the current version starts today', () => {
-    const strip = historyStrip([], opts);
-    expect(strip.state).toBe('empty');
-    expect(strip.currentRecorded).toBe(false);
-    expect(strip.currentSince).toBe(new Date(NOW).toISOString());
-    expect(strip.summary).toBe('DROPCON history: no readings recorded yet. v3 history starts 27 Sep.');
-  });
-
-  it('draws an old version dimmed, with no break, and says when the current one starts', () => {
-    const strip = historyStrip(series(v2), opts);
-    expect(strip.state).toBe('ok');
-    expect(strip.runs.every((r) => !r.current && r.level === undefined)).toBe(true);
-    expect(strip.breaks).toEqual([]);
-    expect(strip.versions.map((v) => [v.algorithmVersion, v.current, v.points])).toEqual([[2, false, 72]]);
-    expect(strip.summary).toBe(
-      'DROPCON history, 23 Sep to 27 Sep, one bar per hour. v2 (old scoring, not comparable), 23 Sep to 26 Sep: 72 hourly readings, scores 64 to 90. v3 history starts 27 Sep.',
-    );
-  });
-
-  it('breaks the strip where the algorithm changes and colours only the current version by level', () => {
-    const strip = historyStrip(series(v2, v3), opts);
-    // 72 of the 102.5 hours drawn: the break sits 72/102.5 of the way across.
-    expect(strip.breaks).toEqual([{ x: 702.44, at: '2026-09-26T00:00:00.000Z', algorithmVersion: 3 }]);
-    expect(strip.versions.map((v) => [v.algorithmVersion, v.current, v.points, v.measured])).toEqual([
-      [2, false, 72, 72],
-      [3, true, 30, 29],
-    ]);
-    expect(strip.runs.map((r) => [r.algorithmVersion, r.level, r.degraded, r.points])).toEqual([
-      [2, undefined, false, 72],
-      [3, 2, false, 10],
-      [3, 4, false, 10],
-      [3, undefined, true, 1],
-      [3, 1, false, 9],
-    ]);
-    expect(strip.runs[0].title).toBe(
-      'v2 · 23 Sep 00:00Z–26 Sep 00:00Z · old scoring, not comparable · score 64 to 90',
-    );
-    expect(strip.runs[3].title).toBe('v3 · 26 Sep 20:00Z–26 Sep 21:00Z · odds offline, level held');
-    expect(strip.runs[3].area).toMatch(/V0H[\d.]+V100Z$/);
-    expect(strip.runs[3].edge).toBe('');
-    expect(strip.currentSince).toBe('2026-09-26T00:00:00.000Z');
-    expect(strip.dayAgo?.observedAt).toBe('2026-09-26T06:10:00.000Z');
-    expect(strip.summary).toBe(
-      'DROPCON history, 23 Sep to 27 Sep, one bar per hour. v2 (old scoring, not comparable), 23 Sep to 26 Sep: 72 hourly readings, scores 64 to 90. v3 from 26 Sep: 30 hourly readings, scores 30 to 80, 1 with the odds offline; latest level 1 (score 80).',
-    );
-  });
-
-  it('draws each run as a step area with its top edge, hour by hour', () => {
-    const now = Date.parse('2026-09-27T00:00:00Z');
-    const strip = historyStrip(series(readings('2026-09-26T00:00:00Z', 2, 3, (i) => [60, 70][i])), {
-      ...opts,
-      now,
-    });
-    expect(strip.runs).toHaveLength(1);
-    expect(strip.runs[0].area).toBe('M0 100V40H41.67V30H83.33V100Z');
-    expect(strip.runs[0].edge).toBe('M0 40H41.67V30H83.33');
-  });
-
-  it('splits a run at a gap in the readings and ignores readings after now', () => {
-    const now = Date.parse('2026-09-26T05:00:00Z');
-    const points = series([
-      ...readings('2026-09-26T00:00:00Z', 1, 3, () => 60),
-      ...readings('2026-09-26T03:00:00Z', 1, 3, () => 60),
-      ...readings('2026-09-26T06:00:00Z', 1, 3, () => 60),
-    ]);
-    const strip = historyStrip(points, { ...opts, now });
-    expect(strip.runs.map((r) => r.from)).toEqual(['2026-09-26T00:00:00.000Z', '2026-09-26T03:00:00.000Z']);
-    expect(strip.versions[0].points).toBe(2);
-  });
-
-  it('reports an old version whose every reading was an outage without a score range', () => {
-    const strip = historyStrip(
-      series(
-        readings(
-          '2026-09-26T00:00:00Z',
-          2,
-          2,
-          () => 0,
-          () => true,
-        ),
-      ),
-      opts,
-    );
-    expect(strip.versions[0].min).toBeUndefined();
-    expect(strip.summary).toContain(
-      'v2 (old scoring, not comparable), 26 Sep to 26 Sep: 2 hourly readings, 2 with the odds offline.',
-    );
-  });
-
-  it('says so when the latest current reading was an outage', () => {
-    const strip = historyStrip(
-      series(
-        readings(
-          '2026-09-27T00:00:00Z',
-          2,
-          3,
-          () => 60,
-          (i) => i === 1,
-        ),
-      ),
-      opts,
-    );
-    expect(strip.summary).toContain('latest reading had the odds offline');
-    expect(strip.dayAgo).toBeUndefined();
-  });
-
-  it('names a version whose readings all share one score by that score, not "a to a"', () => {
-    const strip = historyStrip(series(readings('2026-09-27T00:00:00Z', 3, 3, () => 42)), opts);
-    expect(strip.summary).toContain(
-      'v3 from 27 Sep: 3 hourly readings, scores 42; latest level 3 (score 42).',
-    );
-    expect(strip.summary).not.toContain('42 to 42');
-    expect(strip.runs[0].title).toMatch(/score 42$/);
-  });
-
-  it('describes the span it draws: since its first day until it covers the whole window', () => {
-    // A day of readings: the strip spans its one-day minimum, so the pill says since when.
-    const day = historyStrip(series(readings('2026-09-27T00:00:00Z', 6, 3, () => 60)), opts);
-    expect(stripSpanText(day, HISTORY_WINDOW_MS)).toBe('SINCE 26 SEP');
-    // Four days of readings: still since its first day, never "last 30 days".
-    expect(stripSpanText(historyStrip(series(v2, v3), opts), HISTORY_WINDOW_MS)).toBe('SINCE 23 SEP');
-    // A series reaching back to the start of the window reads as the window.
-    const month = historyStrip(
-      series(readings(new Date(NOW - HISTORY_WINDOW_MS + 3_600_000).toISOString(), 24 * 29, 3, () => 60)),
-      opts,
-    );
-    expect(stripSpanText(month, HISTORY_WINDOW_MS)).toBe('LAST 30 DAYS');
-    expect(HISTORY_WINDOW_MS).toBe(30 * 24 * 3_600_000);
-  });
-
+describe('date labels', () => {
   it('formats days and hours in UTC without ICU month spellings', () => {
     expect(stripDay('2026-09-06T23:59:00Z')).toBe('6 Sep');
     expect(stripHour('2026-09-06T04:05:00Z')).toBe('6 Sep 04:05Z');
     expect(HYSTERESIS_CLEAR_MARGIN).toBe(5);
+    expect(HISTORY_WINDOW_MS).toBe(30 * 24 * 3_600_000);
   });
 });

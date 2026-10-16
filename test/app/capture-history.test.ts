@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { assembleDashboard } from '../../src/domain/dashboard';
+import { assembleDashboard, type Dashboard, type DashboardInputs } from '../../src/domain/dashboard';
 import type { SnapshotDatabase } from '../../src/infra/snapshot-store';
 
 const mocks = vi.hoisted(() => ({
@@ -8,8 +8,10 @@ const mocks = vi.hoisted(() => ({
   writeScoreSeries: vi.fn(),
   backfillScoreSeries: vi.fn(),
   recordFirstSeen: vi.fn(),
+  availability: vi.fn(),
 }));
-vi.mock('../../src/app/load-dashboard', () => ({ buildDashboard: mocks.build }));
+vi.mock('../../src/app/load-dashboard', () => ({ buildCapture: mocks.build }));
+vi.mock('../../src/app/capture-availability', () => ({ captureAvailability: mocks.availability }));
 vi.mock('../../src/infra/snapshot-store', () => ({
   storeSnapshot: mocks.store,
   writeScoreSeries: mocks.writeScoreSeries,
@@ -20,25 +22,26 @@ import { captureHistory } from '../../src/app/capture-history';
 import { SqliteD1 } from '../infra/sqlite-d1';
 
 const now = Date.parse('2026-09-23T01:01:00Z');
-const dashboard = assembleDashboard(
-  {
-    markets: { name: 'markets', ok: true, data: [] },
-    drops: { name: 'drops', ok: true, data: [] },
-    papers: { name: 'papers', ok: true, data: [] },
-    trending: { name: 'trending', ok: true, data: [] },
-    feeds: [],
-  },
-  now - 5000,
-);
+const inputs: DashboardInputs = {
+  markets: { name: 'markets', ok: true, data: [] },
+  drops: { name: 'drops', ok: true, data: [] },
+  papers: { name: 'papers', ok: true, data: [] },
+  trending: { name: 'trending', ok: true, data: [] },
+  feeds: [],
+};
+const dashboard = assembleDashboard(inputs, now - 5000);
+/** What `buildCapture` resolves: the inputs only matter to the availability hook. */
+const capture = (d: Dashboard, from: DashboardInputs = inputs) => ({ dashboard: d, inputs: from });
 const database = {} as SnapshotDatabase;
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  mocks.build.mockReset().mockResolvedValue(dashboard);
+  mocks.build.mockReset().mockResolvedValue(capture(dashboard));
   mocks.store.mockReset().mockResolvedValue({ stored: true });
   mocks.writeScoreSeries.mockReset().mockResolvedValue({ stored: true });
   mocks.backfillScoreSeries.mockReset().mockResolvedValue(undefined);
-  mocks.recordFirstSeen.mockReset().mockResolvedValue([]);
+  mocks.recordFirstSeen.mockReset().mockResolvedValue({ newKeys: [], seeded: false });
+  mocks.availability.mockReset().mockResolvedValue(undefined);
   vi.spyOn(Date, 'now').mockReturnValue(now);
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
@@ -86,7 +89,7 @@ describe('captureHistory', () => {
       now - 5000,
     );
     expect(offline.measurement.inputs.p7).toBe(0);
-    mocks.build.mockResolvedValue(offline);
+    mocks.build.mockResolvedValue(capture(offline));
     await captureHistory(database, now);
     expect(mocks.writeScoreSeries).toHaveBeenCalledWith(
       database,
@@ -193,7 +196,7 @@ describe('captureHistory', () => {
       },
       now - 5000,
     );
-    mocks.build.mockResolvedValue(sighted);
+    mocks.build.mockResolvedValue(capture(sighted));
     await captureHistory(database, now);
     const kinds = mocks.recordFirstSeen.mock.calls.map((c) => c[1]);
     expect(kinds).toEqual(['stealth', 'feed-day:anthropic']);
@@ -204,6 +207,31 @@ describe('captureHistory', () => {
       [{ key: 'stealth/ox-alpha', meta: { name: 'Ox Alpha' } }],
       '2026-09-23T01:01:00.000Z',
     );
+  });
+  it('captures the availability ledger last, from the build inputs', async () => {
+    const hook = vi.fn().mockResolvedValue(undefined);
+    await captureHistory(database, now, { availability: hook, firstSeenHooks: [] });
+    expect(hook).toHaveBeenCalledWith(database, inputs);
+    expect(mocks.store.mock.invocationCallOrder[0]).toBeLessThan(hook.mock.invocationCallOrder[0]);
+    expect(mocks.backfillScoreSeries.mock.invocationCallOrder[0]).toBeLessThan(
+      hook.mock.invocationCallOrder[0],
+    );
+    // The default is the real capture, and `false` skips it.
+    await captureHistory(database, now);
+    expect(mocks.availability).toHaveBeenCalledWith(database, inputs);
+    mocks.availability.mockClear();
+    await captureHistory(database, now, { availability: false });
+    expect(mocks.availability).not.toHaveBeenCalled();
+  });
+  it('never lets an availability failure cost the snapshot, the score row or the first-seen kinds', async () => {
+    mocks.availability.mockRejectedValue(new Error('availability logical capacity reached'));
+    const hook = vi.fn().mockResolvedValue(undefined);
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await expect(captureHistory(database, now, { firstSeenHooks: [hook] })).resolves.toBeUndefined();
+    expect(mocks.store).toHaveBeenCalledOnce();
+    expect(mocks.writeScoreSeries).toHaveBeenCalledOnce();
+    expect(hook).toHaveBeenCalledOnce();
+    expect(err).toHaveBeenCalledWith('[history:availability]', 'availability logical capacity reached');
   });
   it('keeps recording the other kinds when one first-seen write fails', async () => {
     const actual = await vi.importActual<typeof import('../../src/app/capture-history')>(

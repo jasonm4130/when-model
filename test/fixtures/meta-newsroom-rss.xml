@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Trimmed from https://about.fb.com/news/feed/ (2026-09-27): the first three items, without their bodies. --><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="http://search.yahoo.com/mrss/"
+		>
+
+<channel>
+	<title>Newsroom | Meta Newsroom</title>
+	<atom:link href="https://about.fb.com/news/feed/" rel="self" type="application/rss+xml" />
+	<link>https://about.fb.com/news/</link>
+	<description></description>
+	<lastBuildDate>Thu, 24 Sep 2026 21:16:24 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.9</generator>
+
+<image>
+	<url>https://about.fb.com/wp-content/uploads/2021/10/meta-favicon.png?fit=16%2C16</url>
+	<title>Newsroom | Meta Newsroom</title>
+	<link>https://about.fb.com/news/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+<site xmlns="com-wordpress:feed-additions:1">165068026</site>	<item>
+		<title>The Biggest News From Connect 2026</title>
+		<link>https://about.fb.com/news/2026/09/the-biggest-news-from-connect-2026/</link>
+		
+		<dc:creator><![CDATA[Facebook]]></dc:creator>
+		<pubDate>Thu, 24 Sep 2026 21:15:55 +0000</pubDate>
+		<guid isPermaLink="false">https://about.fb.com/?p=50374</guid>
+
+					<description><![CDATA[Trimmed.]]></description>
+										<post-id xmlns="com-wordpress:feed-additions:1">50374</post-id><thumbnail>https://about.fb.com/wp-content/uploads/2026/09/The-Biggest-News-From-Connect-2026_Thumbnail.jpg?fit=890%2C501</thumbnail>
+	</item>
+	<item>
+		<title>New Features for Meta Ray-Ban Display</title>
+		<link>https://about.fb.com/news/2026/09/new-features-for-meta-ray-ban-display-navigation-hologram/</link>
+		
+		<dc:creator><![CDATA[Facebook]]></dc:creator>
+		<pubDate>Wed, 23 Sep 2026 11:53:47 +0000</pubDate>
+		<guid isPermaLink="false">https://about.fb.com/?p=50320</guid>
+
+					<description><![CDATA[Trimmed.]]></description>
+										<post-id xmlns="com-wordpress:feed-additions:1">50320</post-id><thumbnail>https://about.fb.com/wp-content/uploads/2026/09/New-Features-for-Meta-Ray-Ban-Display_Thumbnail.jpg?fit=890%2C501</thumbnail>
+	</item>
+	<item>
+		<title>Introducing Meta VR Glasses: A Cinema, Courtside Seat, and Workspace in Just 100 Grams</title>
+		<link>https://about.fb.com/news/2026/09/introducing-meta-vr-glasses-3d-movies-immersive-live-sports-100-grams/</link>
+		
+		<dc:creator><![CDATA[Facebook]]></dc:creator>
+		<pubDate>Wed, 23 Sep 2026 11:42:46 +0000</pubDate>
+		<guid isPermaLink="false">https://about.fb.com/?p=50306</guid>
+
+					<description><![CDATA[Trimmed.]]></description>
+										<post-id xmlns="com-wordpress:feed-additions:1">50306</post-id><thumbnail>https://about.fb.com/wp-content/uploads/2026/09/Introducing-Meta-VR-Glasses_-A-Cinema-Courtside-Seat-and-Workspace-in-Just-100-GramsIntroducing-Meta-VR-Glasses_-A-Cinema-Courtside-Seat-and-Workspace-in-Just-100-Grams_thumb.gif?fit=890%2C501</thumbnail>
+	</item>
+	</channel>
+</rss>

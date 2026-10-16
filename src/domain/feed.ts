@@ -101,7 +101,7 @@ const SIBLING_ID_SEP = /^\s*(?:,|\band\b|&|\+|\/)\s*/i;
 const SIBLING_ID_WORD = new RegExp(`^(${SUFFIX})(?![\\w.])`, 'i');
 
 /** Lower case, one ASCII hyphen per separator run, and Anthropic's `5-5` read as `5.5`. */
-function canonicalId(raw: string): string {
+export function canonicalId(raw: string): string {
   return raw
     .toLowerCase()
     .replace(new RegExp(`${D}+`, 'g'), '-')
@@ -109,7 +109,8 @@ function canonicalId(raw: string): string {
     .replace(/\b(opus|sonnet|haiku|fable|mythos)-(\d+)-(\d)(?=-)/, '$1-$2.$3');
 }
 
-interface IdMatch {
+/** One versioned id found in text: canonical `id`, and where its match starts and ends. */
+export interface IdMatch {
   id: string;
   index: number;
   end: number;
@@ -137,7 +138,8 @@ function siblingSuffixes(text: string, from: number): { word: string; end: numbe
   return out;
 }
 
-function findModelIds(text: string): IdMatch[] {
+/** Every versioned id in `text` with its position, in order of appearance (`modelIds` without the positions). */
+export function findModelIds(text: string): IdMatch[] {
   const found: IdMatch[] = [];
   for (const m of text.matchAll(MODEL_ID)) {
     const index = m.index ?? 0;

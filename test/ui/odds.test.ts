@@ -115,20 +115,20 @@ describe('odds reads', () => {
   it('says where each read comes from', () => {
     expect(readNote(undefined)).toBe('no market');
     expect(readNote(read({ trusted: false, interpolated: true, to: rung('November 30') }))).toBe(
-      'extrapolated to Nov 30 · not scored',
+      'extrapolated to 30 Nov · not scored',
     );
     expect(readNote(read({ trusted: false }))).toBe('extrapolated to a far rung · not scored');
     expect(readNote(read({ source: 'buckets', lowerBound: true }))).toBe('day-bucket floor');
     expect(readNote(read({ source: 'buckets', upperBound: true }))).toBe('at most · day-bucket asks');
     expect(readNote(read({ lowerBound: true, from: rung('September 24') }))).toBe(
-      'at least · held at Sep 24',
+      'at least · held at 24 Sep',
     );
     expect(readNote(read({ lowerBound: true }))).toBe('at least · held at the last rung');
     expect(readNote(read({ interpolated: true, from: rung('September 24'), to: rung('October 31') }))).toBe(
-      'Sep 24 → Oct 31',
+      '24 Sep → 31 Oct',
     );
-    expect(readNote(read({ interpolated: true, to: rung('October 31') }))).toBe('now → Oct 31');
-    expect(readNote(read({ to: rung('September 30') }))).toBe('quoted Sep 30');
+    expect(readNote(read({ interpolated: true, to: rung('October 31') }))).toBe('now → 31 Oct');
+    expect(readNote(read({ to: rung('September 30') }))).toBe('quoted 30 Sep');
   });
 });
 
@@ -137,17 +137,17 @@ describe('lab card reads', () => {
     expect(readTrust(undefined)).toBeUndefined();
     expect(readTrust(read({}))).toBe('trusted');
     expect(readTrust(read({ trusted: false }))).toBe('extrapolated');
-    expect(readBracket(read({ trusted: false, to: rung('December 31') }))).toBe('from Dec 31');
+    expect(readBracket(read({ trusted: false, to: rung('December 31') }))).toBe('from 31 Dec');
     expect(readBracket(read({ trusted: false }))).toBe('from a far rung');
     expect(readBracket(read({ source: 'buckets', upperBound: true }))).toBe('at most: bucket asks');
     expect(readBracket(read({ source: 'buckets', lowerBound: true }))).toBe('at least: bucket bids');
-    expect(readBracket(read({ lowerBound: true, from: rung('September 24') }))).toBe('at least, held Sep 24');
+    expect(readBracket(read({ lowerBound: true, from: rung('September 24') }))).toBe('at least, held 24 Sep');
     expect(readBracket(read({ lowerBound: true }))).toBe('at least, held last rung');
     expect(
       readBracket(read({ interpolated: true, from: rung('September 30'), to: rung('October 15') })),
-    ).toBe('Sep 30 → Oct 15');
-    expect(readBracket(read({ interpolated: true, to: rung('September 30') }))).toBe('now → Sep 30');
-    expect(readBracket(read({ to: rung('September 30') }))).toBe('quoted Sep 30');
+    ).toBe('30 Sep → 15 Oct');
+    expect(readBracket(read({ interpolated: true, to: rung('September 30') }))).toBe('now → 30 Sep');
+    expect(readBracket(read({ to: rung('September 30') }))).toBe('quoted 30 Sep');
   });
 
   it("sums up a lab by its family's 7-day read, else its last listing", () => {
@@ -174,16 +174,16 @@ describe('outcomeOdds', () => {
   it('shows a thin book as its bid-ask range, never one number', () => {
     const o = { label: 'September 28', yes: 0.555, closed: false, vol24: 1, bestBid: 0.27, bestAsk: 0.84 };
     // Live 2026-09-26: Sonnet's Sep 28 rung, 27¢ bid / 84¢ ask, had been shown as "56%" LIVE ODDS.
-    expect(outcomeOdds({ ...o, thin: true })).toEqual({ text: '27–84¢', thin: true });
-    expect(outcomeOdds({ ...o, thin: true, bestBid: undefined })).toEqual({ text: '0–84¢', thin: true });
+    expect(outcomeOdds({ ...o, thin: true })).toEqual({ text: '27–84%', thin: true });
+    expect(outcomeOdds({ ...o, thin: true, bestBid: undefined })).toEqual({ text: '0–84%', thin: true });
     expect(outcomeOdds({ ...o, thin: false })).toEqual({ text: '56%', thin: false });
   });
 
-  it('reads a book with no bid and a sub-cent ask as "<1¢", never "0–0¢"', () => {
+  it('reads a book with no bid and a sub-cent ask as "<1%", never "0–0%"', () => {
     const o = { label: 'September 25', yes: 0.0015, closed: false, vol24: 1, thin: true };
-    expect(outcomeOdds({ ...o, bestAsk: 0.003 })).toEqual({ text: '<1¢', thin: true });
-    expect(outcomeOdds({ ...o, bestBid: 0.001, bestAsk: 0.004 })).toEqual({ text: '<1¢', thin: true });
+    expect(outcomeOdds({ ...o, bestAsk: 0.003 })).toEqual({ text: '<1%', thin: true });
+    expect(outcomeOdds({ ...o, bestBid: 0.001, bestAsk: 0.004 })).toEqual({ text: '<1%', thin: true });
     // One cent either side of the rounding still shows the range.
-    expect(outcomeOdds({ ...o, bestAsk: 0.006 })).toEqual({ text: '0–1¢', thin: true });
+    expect(outcomeOdds({ ...o, bestAsk: 0.006 })).toEqual({ text: '0–1%', thin: true });
   });
 });

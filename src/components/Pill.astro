@@ -1,0 +1,11 @@
+---
+/** A panel's source pill (`sourcePill`), which the header's script ages to STALE on an open page. */
+import type { SourcePill } from '../ui/panels';
+interface Props { pill: SourcePill; href?: string }
+const { pill, href } = Astro.props;
+---
+{href ? (
+  <a class={`pill ${pill.tone}`} href={href} target="_blank" rel="noopener" title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</a>
+) : (
+  <span class={`pill ${pill.tone}`} title={pill.title} data-source-pill data-stale-at={pill.staleAt} data-stale-text={pill.staleText}>{pill.text}</span>
+)}

@@ -3,6 +3,8 @@ import { LIMITS, assembleDashboard } from '../../src/domain/dashboard';
 import { LABS } from '../../src/domain/lab';
 import { SOURCE } from '../../src/domain/sources';
 import {
+  MAX_ANNOUNCEMENT_ROWS,
+  MAX_AVAILABILITY_ROWS,
   MAX_CLEANUP_ROWS,
   MAX_FIRST_SEEN_ROWS,
   MAX_SNAPSHOT_BYTES,
@@ -13,14 +15,22 @@ import {
   backfillScoreSeries,
   clipString,
   compactSnapshot,
+  peekFirstSeen,
+  readAvailability,
   readFirstSeen,
   readHeadlineNear,
+  readOpenAnnouncements,
   readScoreSeries,
   readSightings,
   recordFirstSeen,
   snapshotPayload,
   storeSnapshot,
+  updateAnnouncementsUsable,
+  upsertAnnouncements,
+  upsertAvailability,
   writeScoreSeries,
+  type AnnouncementRecord,
+  type AvailabilityRecord,
   type D1Statement,
   type ScoreSeriesInput,
   type SnapshotDatabase,
@@ -431,16 +441,38 @@ describe('retention at steady state (real SQLite, migrations applied)', () => {
 });
 
 describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', () => {
+  it('peeks at what recordFirstSeen would call new, writing nothing', async () => {
+    const db = new SqliteD1();
+    const now = '2026-09-23T01:00:00.000Z';
+    expect(await peekFirstSeen(db, 'avail:openrouter', [])).toEqual({ newKeys: [], seeded: false });
+    expect(await peekFirstSeen(db, 'avail:openrouter', [{ key: 'openai/gpt-5.5' }])).toEqual({
+      newKeys: [],
+      seeded: true,
+    });
+    expect(await readFirstSeen(db, 'avail:openrouter')).toEqual([]);
+    await recordFirstSeen(db, 'avail:openrouter', 'openrouter', [{ key: 'openai/gpt-5.5' }], now);
+    const items = [{ key: 'openai/gpt-5.5' }, { key: 'openai/gpt-6' }, { key: 'openai/gpt-6' }];
+    expect(await peekFirstSeen(db, 'avail:openrouter', items)).toEqual({
+      newKeys: ['openai/gpt-6'],
+      seeded: false,
+    });
+    const later = '2026-09-23T01:15:00.000Z';
+    expect(await recordFirstSeen(db, 'avail:openrouter', 'openrouter', items, later)).toEqual({
+      newKeys: ['openai/gpt-6'],
+      seeded: false,
+    });
+  });
+
   it('seeds a kind with no prior rows as a baseline, reporting nothing as new', async () => {
     const db = new SqliteD1();
-    const newKeys = await recordFirstSeen(
+    const recorded = await recordFirstSeen(
       db,
       'module',
       'transformers',
       [{ key: 'qwen4_exp', meta: { pr: 48337 } }, { key: 'gemma4' }],
       '2026-09-23T01:00:00.000Z',
     );
-    expect(newKeys).toEqual([]);
+    expect(recorded).toEqual({ newKeys: [], seeded: true });
     expect(await readFirstSeen(db, 'module')).toEqual([
       {
         kind: 'module',
@@ -473,14 +505,14 @@ describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', ()
       [{ key: 'space-bunny-alpha' }],
       '2026-09-23T01:00:00.000Z',
     );
-    const newKeys = await recordFirstSeen(
+    const recorded = await recordFirstSeen(
       db,
       'module',
       'transformers',
       [{ key: 'qwen4_exp' }, { key: 'glm5' }, { key: 'glm5' }],
       '2026-09-23T01:15:00.000Z',
     );
-    expect(newKeys).toEqual(['glm5']);
+    expect(recorded).toEqual({ newKeys: ['glm5'], seeded: false });
     const rows = await readFirstSeen(db, 'module');
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.key === 'qwen4_exp')).toMatchObject({
@@ -507,7 +539,7 @@ describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', ()
       list: [1, 'a'],
       nested: { a: null },
     };
-    const newKeys = await recordFirstSeen(
+    const { newKeys } = await recordFirstSeen(
       db,
       'stealth',
       'openrouter',
@@ -535,12 +567,15 @@ describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', ()
         [...modules, { key: 'qwen4_exp' }],
         '2026-09-23T01:15:00.000Z',
       ),
-    ).toEqual(['qwen4_exp']);
+    ).toEqual({ newKeys: ['qwen4_exp'], seeded: false });
   });
 
   it('does nothing for an empty item list, issuing no queries', async () => {
     const db = new SqliteD1();
-    expect(await recordFirstSeen(db, 'module', 'transformers', [], '2026-09-23T01:00:00.000Z')).toEqual([]);
+    expect(await recordFirstSeen(db, 'module', 'transformers', [], '2026-09-23T01:00:00.000Z')).toEqual({
+      newKeys: [],
+      seeded: false,
+    });
     expect(db.queries).toHaveLength(0);
   });
 
@@ -570,6 +605,36 @@ describe('recordFirstSeen / readFirstSeen (real SQLite, migrations applied)', ()
 
   it('reads an empty ledger for a kind with no rows', async () => {
     expect(await readFirstSeen(new SqliteD1(), 'broadcast')).toEqual([]);
+  });
+
+  it('with touchAfterMs, bumps last_seen_at only on keys last touched longer ago than that', async () => {
+    const db = new SqliteD1();
+    const at = (h: number) => new Date(Date.parse('2026-09-23T00:00:00.000Z') + h * 3_600_000).toISOString();
+    const options = { touchAfterMs: 6 * 3_600_000 };
+    await recordFirstSeen(db, 'avail:openrouter', 'openrouter', [{ key: 'a' }], at(0), options);
+    expect(
+      await recordFirstSeen(
+        db,
+        'avail:openrouter',
+        'openrouter',
+        [{ key: 'a' }, { key: 'b' }],
+        at(1),
+        options,
+      ),
+    ).toEqual({ newKeys: ['b'], seeded: false });
+    const lastSeen = async () =>
+      Object.fromEntries((await readFirstSeen(db, 'avail:openrouter')).map((r) => [r.key, r.lastSeenAt]));
+    expect(await lastSeen()).toEqual({ a: at(0), b: at(1) });
+    await recordFirstSeen(
+      db,
+      'avail:openrouter',
+      'openrouter',
+      [{ key: 'a' }, { key: 'b' }],
+      at(6.5),
+      options,
+    );
+    // a was last touched 6.5 h ago, b only 5.5 h ago.
+    expect(await lastSeen()).toEqual({ a: at(6.5), b: at(1) });
   });
 });
 
@@ -813,5 +878,162 @@ describe('readSightings / readHeadlineNear (real SQLite, migrations applied)', (
       observedAt: iso(target + 2 * SNAPSHOT_INTERVAL_MS + CAPTURE_DELAY_MS),
     });
     expect(await readHeadlineNear(db, 3, iso(target + 10 * 3_600_000))).toBeUndefined();
+  });
+});
+
+describe('release ledger: availability and announcements (real SQLite, migration 0003)', () => {
+  const available = (
+    sku: string,
+    at: string,
+    extra: Partial<AvailabilityRecord> = {},
+  ): AvailabilityRecord => ({
+    labId: 'qwen',
+    sku,
+    name: sku,
+    firstAvailableAt: at,
+    source: 'openrouter',
+    sourceKey: `qwen/${sku}`,
+    baseline: false,
+    ...extra,
+  });
+  const announced = (
+    sku: string,
+    at: string,
+    extra: Partial<AnnouncementRecord> = {},
+  ): AnnouncementRecord => ({
+    labId: 'openai',
+    sku,
+    firstSeenAt: at,
+    source: 'openai',
+    url: `https://openai.com/index/${sku}/`,
+    title: `Introducing ${sku}`,
+    baseline: false,
+    ...extra,
+  });
+  const T1 = '2026-09-23T01:00:00.000Z';
+  const T2 = '2026-09-23T01:15:00.000Z';
+
+  it('keeps the earliest sighting of a sku, whichever source sees it later, and returns only rows it wrote', async () => {
+    const db = new SqliteD1();
+    const written = await upsertAvailability(db, [
+      available('qwen3.9-max', T1, { source: 'qwen-chat', sourceKey: 'qwen3.9-max' }),
+      available('qwen3.5-plus@20260420', T1, { baseline: true, snapshot: '20260420' }),
+    ]);
+    expect(written.sort()).toEqual(['qwen:qwen3.5-plus@20260420', 'qwen:qwen3.9-max']);
+    expect(
+      await upsertAvailability(db, [available('qwen3.9-max', T2), available('qwen3.9-flash', T2)]),
+    ).toEqual(['qwen:qwen3.9-flash']);
+    expect(db.sqlite.prepare('SELECT * FROM availability ORDER BY sku').all()).toEqual([
+      {
+        lab_id: 'qwen',
+        sku: 'qwen3.5-plus@20260420',
+        name: 'qwen3.5-plus@20260420',
+        first_available_at: T1,
+        source: 'openrouter',
+        source_key: 'qwen/qwen3.5-plus@20260420',
+        baseline: 1,
+        snapshot: '20260420',
+      },
+      expect.objectContaining({ sku: 'qwen3.9-flash', first_available_at: T2, baseline: 0, snapshot: null }),
+      expect.objectContaining({
+        sku: 'qwen3.9-max',
+        first_available_at: T1,
+        source: 'qwen-chat',
+        source_key: 'qwen3.9-max',
+      }),
+    ]);
+    expect(db.sqlite.prepare('SELECT row_count FROM availability_metadata').get()).toEqual({ row_count: 3 });
+    expect(await upsertAvailability(db, [])).toEqual([]);
+    await expect(upsertAvailability(db, [available('x', 'yesterday')])).rejects.toThrow();
+  });
+
+  it('writes thousands of rows with a fixed number of bound parameters', async () => {
+    const db = new SqliteD1();
+    const rows = Array.from({ length: 3000 }, (_, i) => available(`qwen9-${i}b`, T1));
+    expect(await upsertAvailability(db, rows)).toHaveLength(3000);
+    const announcements = Array.from({ length: 3000 }, (_, i) => announced(`gpt-${i}`, T1));
+    expect(await upsertAnnouncements(db, announcements)).toHaveLength(3000);
+    const ledger = db.queries.filter((q) => /availability|announcements/.test(q));
+    expect(ledger).toHaveLength(4);
+    for (const q of ledger) expect(q.split('?').length - 1).toBe(1);
+  });
+
+  it('fails loudly at logical capacity instead of dropping a release', async () => {
+    const db = new SqliteD1();
+    db.sqlite.exec(`UPDATE availability_metadata SET row_count = ${MAX_AVAILABILITY_ROWS}`);
+    await expect(upsertAvailability(db, [available('qwen9-max', T1)])).rejects.toThrow(
+      'availability logical capacity reached',
+    );
+    db.sqlite.exec(`UPDATE announcements_metadata SET row_count = ${MAX_ANNOUNCEMENT_ROWS}`);
+    await expect(upsertAnnouncements(db, [announced('gpt-9', T1)])).rejects.toThrow(
+      'announcements logical capacity reached',
+    );
+  });
+
+  it('keeps the earliest announcement, reads the open ones newest first, and resolves each once', async () => {
+    const db = new SqliteD1();
+    expect(
+      await upsertAnnouncements(db, [
+        announced('gpt-6', T1, { publishedAt: '2026-09-22T00:00:00.000Z' }),
+        announced('gpt-7', T2, { baseline: true }),
+      ]),
+    ).toEqual(['openai:gpt-6', 'openai:gpt-7']);
+    expect(await upsertAnnouncements(db, [announced('gpt-6', T2, { source: 'hn' })])).toEqual([]);
+    expect(await readOpenAnnouncements(db)).toEqual([
+      announced('gpt-7', T2, { baseline: true }),
+      announced('gpt-6', T1, { publishedAt: '2026-09-22T00:00:00.000Z' }),
+    ]);
+    expect(await readOpenAnnouncements(db, 1)).toHaveLength(1);
+
+    await updateAnnouncementsUsable(db, [
+      { labId: 'openai', sku: 'gpt-6', usableAt: T2, usableSku: 'gpt-6-sol' },
+    ]);
+    // Already resolved: a later match never rewrites it.
+    await updateAnnouncementsUsable(db, [
+      { labId: 'openai', sku: 'gpt-6', usableAt: T1, usableSku: 'gpt-6' },
+    ]);
+    await updateAnnouncementsUsable(db, []);
+    expect((await readOpenAnnouncements(db)).map((a) => a.sku)).toEqual(['gpt-7']);
+    expect(
+      db.sqlite.prepare("SELECT usable_at, usable_sku FROM announcements WHERE sku = 'gpt-6'").get(),
+    ).toEqual({
+      usable_at: T2,
+      usable_sku: 'gpt-6-sol',
+    });
+  });
+
+  it('reads an announcement row with no url or title as empty strings', async () => {
+    const db = new SqliteD1();
+    db.sqlite.exec(
+      `INSERT INTO announcements (lab_id, sku, first_seen_at, source) VALUES ('qwen', 'qwen4', '${T1}', 'qwen-chat')`,
+    );
+    expect(await readOpenAnnouncements(db)).toEqual([
+      {
+        labId: 'qwen',
+        sku: 'qwen4',
+        firstSeenAt: T1,
+        source: 'qwen-chat',
+        url: '',
+        title: '',
+        baseline: false,
+      },
+    ]);
+  });
+
+  it('reads the available skus of the asked labs, newest first', async () => {
+    const db = new SqliteD1();
+    await upsertAvailability(db, [
+      available('qwen3.9-max', T1),
+      available('qwen3.9-flash', T2),
+      available('gpt-6-sol', T2, { labId: 'openai', sourceKey: 'openai/gpt-6-sol' }),
+    ]);
+    expect(await readAvailability(db, ['qwen'])).toEqual([
+      { labId: 'qwen', sku: 'qwen3.9-flash', firstAvailableAt: T2 },
+      { labId: 'qwen', sku: 'qwen3.9-max', firstAvailableAt: T1 },
+    ]);
+    expect(await readAvailability(db, ['qwen', 'openai'], 1)).toHaveLength(1);
+    const before = db.queries.length;
+    expect(await readAvailability(db, [])).toEqual([]);
+    expect(db.queries).toHaveLength(before);
   });
 });

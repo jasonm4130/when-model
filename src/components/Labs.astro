@@ -1,160 +1,97 @@
 ---
+/**
+ * The network: every line, ranked by heat, one row each linking to its line page. A row gives the
+ * line's headline service, its 7-day odds (only when the market is deep enough to trust; a thin one
+ * says "times unavailable", none says "no timetable"), its last arrival and any lead flags that
+ * name it. One timing fact per row: the boarding window, which can open after the 7-day date, is on
+ * the line's own page.
+ */
 import type { Dashboard } from '../domain/dashboard';
-import type { LabOddsRead } from '../domain/lab-status';
-import { daysLabel, monthInitials, shortDate } from '../ui/format';
-import { histogramLabel, noOddsText, readBracket, readNote, readTrust, readValue } from '../ui/odds';
+import { daysLabel, pct } from '../ui/format';
+import { dayLabel, timetableState } from '../ui/departures';
+import { lineName, serviceName } from '../ui/lines';
 import { leadFlags } from '../ui/signals';
-interface Props { d: Dashboard; now?: Date }
-const { d, now = new Date() } = Astro.props;
-const statusColor: Record<string, string> = { SHIPPING: 'var(--magenta)', HOT: 'var(--orange)', WARM: 'var(--yellow)', QUIET: 'var(--muted)' };
-const months = monthInitials(now);
-const horizons: { key: 'p72' | 'p7' | 'p30'; label: string; glow: string }[] = [
-  { key: 'p72', label: '72H', glow: 'glow-m' },
-  { key: 'p7', label: '7D', glow: 'glow-y' },
-  { key: 'p30', label: '30D', glow: 'glow-c' },
-];
-const stealth = d.earlyWarnings.stealth.items.length;
-const extrap = (read: LabOddsRead | undefined) => (read?.trusted === false ? 'extrap' : '');
+import { labPath } from '../ui/site';
+import Bullet from './Bullet.astro';
+interface Props { d: Dashboard }
+const { d } = Astro.props;
 const oddsAvailable = d.measurement.inputs.oddsAvailable;
-const note = (read: LabOddsRead | undefined) => (read || oddsAvailable ? readNote(read) : 'odds offline');
+const built = Date.parse(d.generatedAt);
+const stealth = d.earlyWarnings.stealth.items.length;
+const by = dayLabel(built + 7 * 86_400_000, built, false);
+/** Odds under this are a long shot: printed quiet. */
+const QUIET_BELOW = 0.1;
+const STATE_TEXT = { 'times-unavailable': 'times unavailable', 'no-timetable': 'no timetable', offline: 'odds offline' } as const;
 ---
-<section class="section wrap reveal">
-  <div class="section-head">
-    <h2><span aria-hidden="true">▦</span>LAB WATCH <span class="sub"><span class="sub-tempo">RELEASE TEMPO · </span>ODDS · LAST DROP</span></h2>
-    <div class="pills">
-      {stealth > 0 && <a class="pill warn" href="#ew-stealth" title="Stealth slots are anonymous, so no lab card carries them">{stealth} STEALTH SLOT{stealth === 1 ? '' : 'S'} · UNATTRIBUTED</a>}
-      <span class="pill">{d.labs.length} LOCATIONS MONITORED</span>
-    </div>
+<section class="network" aria-labelledby="network-title">
+  <div class="sec">
+    <h2 id="network-title">All lines</h2>
+    <span class="label">{d.labs.length} lines · busiest first</span>
   </div>
-  <div class="grid grid-3 labs-grid">
-    {d.labs.map((l, idx) => {
-      const max = Math.max(1, ...l.histogram);
+  <ol class="lines">
+    <li class="lines-head" aria-hidden="true"><span>Line · service</span><span>Odds by {by}</span><span>Last arrival</span></li>
+    {d.labs.map((l) => {
+      const state = timetableState(l, oddsAvailable);
       const flags = leadFlags(d.earlyWarnings, l.id);
       return (
-        <article class="panel lab" id={`lab-${l.id}`} style={`--lab:${l.color}; --i:${idx}`}>
-          <div class="lab-head">
-            <h3 class="lab-name head"><span class="glyph" aria-hidden="true">{l.glyph}</span> {l.name}</h3>
-            <span class={`tag ${l.status === 'SHIPPING' ? 'pulse' : ''}`} style={`color:${statusColor[l.status]}`}>{l.status}</span>
-          </div>
+        <li class="line" id={`lab-${l.id}`}>
+          <a class="lrow" href={labPath(l.id)}>
+            <Bullet id={l.id} name={l.name} size="lg" decorative />
+            <span class="who">
+              <h3 class="lab-name">{lineName(l.name)}</h3>
+              <span class="svc"><span class="fact">{l.odds ? serviceName(l.odds.family) : 'No release market'}</span> <span class="fact mono heat">· {l.status}</span> <span class="fact mono heat">· heat {l.heat}</span></span>
+            </span>
+            <span class:list={['odds', 'mono', { quiet: state !== 'scheduled', long: state === 'scheduled' && l.odds!.p7.p < QUIET_BELOW }]}>{state === 'scheduled' ? pct(l.odds!.p7.p) : STATE_TEXT[state]}</span>
+            <span class="last"><span class="fact">{l.daysSince === undefined ? 'none listed' : l.daysSince === 0 ? 'today' : `${daysLabel(l.daysSince)} ago`}</span> <span class="fact mono">· {l.releases30d}/30d</span></span>
+          </a>
           {flags.length > 0 && (
-            <div class="flags">
+            <p class="flags">
               <span class="sr-only">Lead flags, shown but not scored:</span>
-              {flags.map((f) => <a class={`flag ${f.kind}`} href={f.href} title={f.detail}>{f.label}</a>)}
-            </div>
+              {flags.map((f) => <a class="flag" href={f.href} title={f.detail}>{f.label}</a>)}
+            </p>
           )}
-          <div class="metrics tight">
-            {horizons.map((h) => (
-              <div title={note(l.odds?.[h.key])}><div class="metric-label">DROP ≤{h.label}</div><div class={`metric-value ${h.glow} ${extrap(l.odds?.[h.key])}`}>{readValue(l.odds?.[h.key])}</div></div>
-            ))}
-            <div><div class="metric-label">LAST DROP</div><div class="metric-value">{daysLabel(l.daysSince)}</div></div>
-          </div>
-          {l.odds ? (
-            <div class="reads">
-              <div class="reads-fam tiny muted">{l.odds.family}</div>
-              <dl>
-                {horizons.map((h) => {
-                  const read = l.odds![h.key];
-                  const trust = readTrust(read);
-                  return (
-                    <div class={`read ${trust}`} title={readNote(read)}>
-                      <dt>{h.label}</dt>
-                      <dd><span class="trust">{trust === 'trusted' ? 'trusted' : 'extrap.'}</span> <span class="bracket">{readBracket(read)}</span>{read.family && <span class="rfam"> · {read.family}</span>}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </div>
-          ) : <div class="reads-fam tiny muted">{noOddsText(oddsAvailable)}</div>}
-          {l.launchedFamilies.length > 0 && <div class="odds-note muted">Left out, just launched: {l.launchedFamilies.join(', ')}</div>}
-          <div class="metric-label tempo">RELEASE TEMPO · 12 MONTHS</div>
-          <div class="hist" role="img" aria-label={histogramLabel(l.histogram, now)}>
-            {l.histogram.map((v, i) => <div class="col" style={`--i:${i}`}><i style={`height:${Math.max(4, Math.round((v / max) * 100))}%`} title={`${v} drops`}></i><span>{months[i]}</span></div>)}
-          </div>
-          <div class="latest">
-            <span class="metric-label">LATEST</span>
-            {l.latest ? <a href={l.latest.url} target="_blank" rel="noopener">{l.latest.name} <span class="muted when">· {shortDate(l.latest.createdAt)}</span></a> : <span class="muted">nothing listed</span>}
-          </div>
-          <div class="bar heat"><i style={`width:${l.heat}%`}></i></div>
-          <div class="lab-foot">
-            <span class="tiny muted heat-line" title={`Markets ${l.heatParts.market} + recency ${l.heatParts.recency} (a burstiness prior, not a forecast)`}><span>HEAT {l.heat} ·</span> <span>{l.releases30d} LAUNCH{l.releases30d === 1 ? '' : 'ES'}/30D</span></span>
-            <span class="x">{l.xHandles.slice(0, 2).map((h) => <a href={`https://x.com/${h}`} target="_blank" rel="noopener">@{h}</a>)}</span>
-          </div>
-          {l.odds && <a class="mkt" href={l.odds.p7.url || l.odds.marketUrl} target="_blank" rel="noopener"><span aria-hidden="true">▸</span> {l.odds.family} on Polymarket</a>}
-        </article>
+        </li>
       );
     })}
-  </div>
+  </ol>
+  {stealth > 0 && (
+    <p class="unmarked"><span class="notice-label">Service notice</span> {stealth} unmarked train{stealth === 1 ? '' : 's'} on the network, belonging to no line yet. <a href="/radar#ew-stealth">See Radar</a></p>
+  )}
 </section>
 <style>
-  .section-head .pills { display: flex; gap: 8px; flex-wrap: wrap; }
-  /* The subtitle wraps as one piece, so a line never starts with its separator. */
-  .section-head .sub { display: inline-block; white-space: nowrap; }
-  .lab { scroll-margin-top: 16px; }
-  .lab::before, .lab::after { border-color: var(--lab); }
-  .lab:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 0 0 1px rgba(0,0,0,0.6), 0 0 28px color-mix(in srgb, var(--lab) 18%, transparent), 0 14px 44px rgba(0,0,0,0.55); }
-  .lab:target { border-color: var(--lab); }
-  .lab-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .lab-name { font-size: 11px; color: var(--lab); text-shadow: 0 0 8px var(--lab); }
-  .glyph { font-family: var(--font-mono); font-size: 18px; }
-  .flags { display: flex; flex-wrap: wrap; gap: 4px; margin: -2px 0 10px; }
-  .flag { font-family: var(--font-head); font-size: var(--fs-pill); letter-spacing: 0.06em; padding: 3px 5px; border: 1px dashed currentColor; color: var(--yellow); white-space: nowrap; }
-  .flag:hover { color: #fff; border-style: solid; text-shadow: none; }
-  .reads { margin-top: 6px; }
-  .reads dl { margin: 2px 0 0; display: grid; gap: 1px; font-size: var(--fs-xs); line-height: 1.1; }
-  .read { display: grid; grid-template-columns: 4ch minmax(0, 1fr); gap: 6px; align-items: baseline; }
-  .read dt { font-family: var(--font-head); font-size: var(--fs-tiny); color: var(--muted); }
-  /* The bracket wraps rather than cutting its date off: at 1366px "held Sep 30" lost its date to an ellipsis. */
-  .read dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
-  .read .trust { white-space: nowrap; }
-  .read .trust { color: var(--green); }
-  .read.extrapolated .trust { color: var(--orange); }
-  .read.extrapolated .bracket { color: var(--muted); }
-  /* A 72-hour or 30-day read from another of the lab's families names it. */
-  .read .rfam { color: var(--cyan); }
-  .reads-fam { margin-top: 6px; }
-  .tempo { margin: 10px 0 4px; }
-  /* The latest listing wraps instead of clipping: its date and its focus ring stay visible. */
-  .latest { margin-top: 10px; font-size: var(--fs-sm); overflow-wrap: anywhere; }
-  .latest .metric-label { display: block; }
-  .latest .when { white-space: nowrap; }
-  .heat { margin-top: 10px; }
-  .heat > i { background: linear-gradient(90deg, var(--lab), var(--magenta)); }
-  /* The heat line breaks only between its two phrases, and the handle drops under it when the
-     card is narrow, so no card splits "2 LAUNCHES/30D" across lines. */
-  .lab-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 6px; margin-top: 6px; font-size: var(--fs-xs); }
-  .heat-line > span { white-space: nowrap; }
-  .x { margin-left: auto; }
-  .x a { margin-left: 8px; color: var(--muted); }
-  .x a:hover { color: #fff; }
-  /* An extrapolated read is marked by its "~" and the muted colour, never by opacity: a dimmed
-     magenta 72H value fell to 1.8:1. --muted is 5.6:1 on the card. */
-  .metric-value.extrap { color: var(--muted); text-shadow: none; }
-  .odds-note { margin-top: 6px; font-size: var(--fs-xs); }
-  .mkt { display: block; margin-top: 8px; font-size: var(--fs-xs); color: var(--yellow); border-top: 1px dotted var(--line2); padding-top: 6px; }
-  /* Ten labs divide into rows of five or two, never three or four: below five columns a
-     three-up grid left one card alone on its last row. */
-  @media (min-width: 641px) and (max-width: 1359px) {
-    .labs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  /* UI-17: five columns where they fit, so ten labs fill two rows with no orphans. */
-  @media (min-width: 1360px) {
-    .labs-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .lab-name { font-size: 10px; }
-    .x a + a { display: none; }
-  }
-  /* UI-10: a compact card on phones. The histogram, tempo, X handles and market link are the
-     desktop's detail; the reads, flags, last drop and heat stay. */
-  @media (max-width: 480px) {
-    .lab .tempo, .lab .hist, .lab .mkt, .lab .x, .sub-tempo { display: none; }
-    .lab { padding-block: 12px; }
-    .lab-head { margin-bottom: 6px; }
-    .reads, .reads-fam { margin-top: 4px; }
-    .latest { margin-top: 4px; }
-    .latest .metric-label { display: inline; margin-right: 6px; }
-    .heat { margin-top: 6px; }
-    .lab-foot { margin-top: 4px; }
-  }
-  @media (max-width: 380px) {
-    .metrics.tight { grid-template-columns: repeat(2, 1fr); }
+  .lines-head, .lrow { display: grid; grid-template-columns: 40px minmax(0, 1fr) 144px 144px; column-gap: var(--s4); align-items: center; }
+  .lines-head { padding: var(--s3) 0; font-size: var(--t-xs); line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+  .lines-head span:first-child { grid-column: 1 / 3; }
+  .lines-head span:not(:first-child) { text-align: right; }
+  .line { border-top: 1px solid var(--rule-soft); }
+  .line:last-child { border-bottom: 1px solid var(--rule-soft); }
+  .lrow { padding: var(--s4) 0; text-decoration: none; }
+  .lrow:hover { text-decoration: none; }
+  .lrow:hover .lab-name { text-decoration: underline; text-underline-offset: 3px; }
+  .who { min-width: 0; }
+  .lab-name { font-size: var(--t-md); line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  .svc { display: block; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .heat { font-size: var(--t-xs); }
+  /* Each fact keeps its separator: a wrap never leaves a dot dangling at a line's end. */
+  .fact { white-space: nowrap; }
+  .svc .fact:first-child { white-space: normal; }
+  .odds { text-align: right; font-size: var(--t-lg); line-height: 32px; font-weight: 500; }
+  .odds.long { font-size: var(--t-md); line-height: 28px; font-weight: 400; color: var(--ink-2); }
+  .odds.quiet { font-family: var(--sans); font-size: var(--t-sm); line-height: 20px; font-weight: 400; color: var(--ink-2); }
+  .last { text-align: right; font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .flags { display: flex; flex-wrap: wrap; gap: var(--s2); margin: calc(var(--s2) * -1) 0 var(--s3) 56px; }
+  .flag { padding: 0 6px; font-size: var(--t-xs); line-height: 20px; font-weight: 600; letter-spacing: 0.06em; background: var(--notice); color: var(--ink); }
+  .unmarked { margin-top: var(--s5); font-size: var(--t-sm); line-height: 20px; color: var(--ink-2); }
+  .unmarked .notice-label { margin: 0 var(--s2) 0 0; }
+  @media (max-width: 900px) {
+    .lines-head { display: none; }
+    .lrow { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: 'b who odds' 'b last last'; column-gap: var(--s3); row-gap: 2px; padding: var(--s3) 0; }
+    .lrow :global(.b) { grid-area: b; align-self: start; --d: 32px; }
+    .who { grid-area: who; }
+    .odds { grid-area: odds; align-self: start; font-size: var(--t-md); line-height: 28px; }
+    .odds.quiet { font-size: var(--t-xs); line-height: 28px; }
+    .last { grid-area: last; text-align: left; font-size: var(--t-xs); }
+    .lab-name { font-size: var(--t-base); line-height: 28px; }
+    .flags { margin-left: 44px; }
   }
 </style>

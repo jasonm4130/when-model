@@ -81,12 +81,13 @@ const excluded = rows.filter((r) => !r.verified);
   .stealth-metrics { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 14px; }
   .stealth-metrics .metric-note { white-space: normal; }
   .row-note { display: block; font-size: var(--fs-xs); color: var(--muted); }
-  .tag.frontier { margin-left: 6px; color: var(--yellow); }
+  /* Identity, not an alert: an outlined chip in ink. Yellow is kept for live notices. */
+  .tag.frontier { margin-left: 6px; color: var(--ink); border-color: var(--ink); }
   .days { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
-  .track { display: inline-block; width: 60px; height: 6px; background: #15122b; border: 1px solid var(--line); position: relative; }
-  .track i { position: absolute; inset: 0 auto 0 0; background: #1aa0b3; }
+  .track { display: inline-block; width: 60px; height: 6px; background: var(--paper-2); border: 1px solid var(--line); position: relative; }
+  .track i { position: absolute; inset: 0 auto 0 0; background: var(--ink-2); }
   .date { white-space: nowrap; }
   .note { margin-top: 8px; font-size: var(--fs-xs); max-width: 95ch; }
   @media (max-width: 560px) { .track { display: none; } }
-  code { font-family: var(--font-mono); color: var(--yellow); }
+  code { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em; color: var(--ink); }
 </style>

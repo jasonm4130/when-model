@@ -106,6 +106,16 @@ describe('track records', () => {
     const leadHours = dated.filter((a) => a.verdict === 'leads').map((a) => a.leadH ?? Number.NaN);
     const leadDays = median(leadHours) / 24;
     expect(Math.round(leadDays * 10) / 10).toBe(ARCHITECTURE_TRACK.medianLeadDays);
+    // Recency is part of the record: the leads stopped, and the line has to say so.
+    const lastLead = dated
+      .filter((a) => a.verdict === 'leads')
+      .map((a) => a.mergedAt.slice(0, 10))
+      .sort()
+      .at(-1);
+    expect(lastLead).toBe(ARCHITECTURE_TRACK.lastLeadMergedAt);
+    expect(dated.filter((a) => a.mergedAt.slice(0, 10) > lastLead!).length).toBe(
+      ARCHITECTURE_TRACK.datedSinceLastLead,
+    );
   });
 
   it('takes the stealth record from REVEAL_STATS, never a count of REVEALS', () => {

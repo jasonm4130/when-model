@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- The square icon (apple-touch-icon, favicon.ico) at any size: render with ?size=N. -->
+<meta charset="utf-8" />
+<style>
+  html,
+  body {
+    margin: 0;
+    background: #141414;
+  }
+  .icon {
+    width: var(--s);
+    height: var(--s);
+    display: grid;
+    place-items: center;
+    background: #141414;
+    position: relative;
+  }
+  .icon svg {
+    width: 72%;
+    height: 72%;
+  }
+  /* The sign's inset white rule, only where there is room for it. */
+  .rule {
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    top: 12%;
+    height: max(2px, calc(var(--s) * 0.022));
+    background: #fff;
+  }
+</style>
+<div class="icon" id="icon">
+  <span class="rule"></span>
+  <svg viewBox="5 7 23 18"><path d="M6 14.25h12.5V8.5L27 16l-8.5 7.5v-5.75H6z" fill="#fff" /></svg>
+</div>
+<script>
+  const size = Number(new URLSearchParams(location.search).get('size') || 180);
+  document.documentElement.style.setProperty('--s', size + 'px');
+  if (size < 64) document.querySelector('.rule').remove();
+</script>

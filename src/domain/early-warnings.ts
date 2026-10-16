@@ -4,6 +4,7 @@
  * is no evidence for a weight, and 7 of 12 stealth slots, most pending architectures and every
  * keynote so far were not frontier releases within a week. Pure: `now` is passed in.
  */
+import { monthName } from './dates';
 import { listingAliases, type Drop } from './drop';
 import { LEAK_SOURCE_NAMES, unlistedLeaks, type LeakItem, type LeakSource } from './feed';
 import { FRONTIER_LABS } from './lab';
@@ -71,13 +72,25 @@ const BROADCAST_TRACK_RECORD: TrackRecord = {
 
 /**
  * Pending architectures, from data/backtest/architecture.json: of 16 dated merges, 7 led the first
- * HN story (median 166 hours, 6.9 days), 5 were coincident and 4 lagged. Qwen and Z.ai only.
+ * HN story (median 166 hours, 6.9 days), 5 were coincident and 4 lagged. Qwen and Z.ai only. Every
+ * lead merged by 9 Feb 2026, and none of the 5 dated merges since then led, so the record says so.
  */
-export const ARCHITECTURE_TRACK = { n: 16, leads: 7, coincident: 5, lags: 4, medianLeadDays: 6.9 } as const;
+export const ARCHITECTURE_TRACK = {
+  n: 16,
+  leads: 7,
+  coincident: 5,
+  lags: 4,
+  medianLeadDays: 6.9,
+  lastLeadMergedAt: '2026-02-09',
+  datedSinceLastLead: 5,
+} as const;
+
+/** "Feb 2026": the month of the last architecture merge that led a release. */
+export const ARCHITECTURE_LAST_LEAD = `${monthName(ARCHITECTURE_TRACK.lastLeadMergedAt)} ${ARCHITECTURE_TRACK.lastLeadMergedAt.slice(0, 4)}`;
 
 const ARCHITECTURE_TRACK_RECORD: TrackRecord = {
   n: ARCHITECTURE_TRACK.n,
-  summary: `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases (median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead, Qwen and Z.ai only); ${ARCHITECTURE_TRACK.coincident} coincided and ${ARCHITECTURE_TRACK.lags} lagged.`,
+  summary: `Led ${ARCHITECTURE_TRACK.leads} of ${ARCHITECTURE_TRACK.n} dated releases (median ${ARCHITECTURE_TRACK.medianLeadDays} days ahead, Qwen and Z.ai only), none of the ${ARCHITECTURE_TRACK.datedSinceLastLead} since ${ARCHITECTURE_LAST_LEAD}; ${ARCHITECTURE_TRACK.coincident} coincided and ${ARCHITECTURE_TRACK.lags} lagged.`,
 };
 
 function eventTrack(): TrackRecord {

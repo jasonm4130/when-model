@@ -1,0 +1,9 @@
+<!doctype html>
+<!-- Trimmed from https://api-docs.deepseek.com/news/ (2026-09-27): the navbar only. -->
+<html><body><nav class="navbar">
+<a aria-current="page" class="navbar__item navbar__link ds-section-tab navbar__link--active" href="/">Quick Start</a>
+<a class="navbar__item navbar__link ds-section-tab" href="/guides/vision">API Guides</a>
+<a class="navbar__item navbar__link ds-section-tab" href="/api/create-chat-completion">API Reference</a>
+<a class="navbar__item navbar__link ds-section-tab" href="/news/news260910">News</a>
+<a class="navbar__item navbar__link ds-section-tab" href="/updates">Change Log</a>
+</nav><main><h1>Your First API Call</h1></main></body></html>
