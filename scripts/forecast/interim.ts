@@ -27,6 +27,8 @@ import {
   dailyFromP72,
   logScore,
   m0,
+  isoWeek,
+  mulberry32,
   weekBootstrap,
   type Candidate,
   type LabDay,
@@ -204,7 +206,11 @@ async function main(
         {
           meanLogScore: round(total / target.length, 5),
           meanForecast: round(f.reduce((s, v) => s + v, 0) / f.length, 5),
-          calibration: mapRound(calibration(f, y), 3),
+          calibration: calibrationWithIntervals(
+            target.map((r) => r.t),
+            f,
+            y,
+          ),
           reliability: reliability(f, y),
         },
       ];
@@ -298,6 +304,38 @@ async function main(
           )
         : null,
     v3Days: v3.length,
+  };
+}
+
+/** Calibration intercept and slope, each with a 95% interval from the same week-block bootstrap (2,000 resamples). */
+function calibrationWithIntervals(t: readonly number[], f: readonly number[], y: readonly number[]) {
+  const point = calibration(f, y);
+  const weeks = new Map<string, number[]>();
+  t.forEach((ti, i) => weeks.set(isoWeek(ti), [...(weeks.get(isoWeek(ti)) ?? []), i]));
+  const blocks = [...weeks.values()];
+  const rand = mulberry32(SEED);
+  const a: number[] = [];
+  const b: number[] = [];
+  for (let k = 0; k < 2000; k++) {
+    const idx = blocks.flatMap(() => blocks[Math.floor(rand() * blocks.length)]);
+    if (!idx.some((i) => y[i]) || idx.every((i) => y[i])) continue;
+    const c = calibration(
+      idx.map((i) => f[i]),
+      idx.map((i) => y[i]),
+    );
+    a.push(c.intercept);
+    b.push(c.slope);
+  }
+  const ci = (v: number[]) => {
+    v.sort((x, z) => x - z);
+    return [round(v[Math.floor(0.025 * v.length)], 3), round(v[Math.ceil(0.975 * v.length) - 1], 3)];
+  };
+  return {
+    intercept: round(point.intercept, 3),
+    interceptCi95: ci(a),
+    slope: round(point.slope, 3),
+    slopeCi95: ci(b),
+    resamplesUsed: a.length,
   };
 }
 
