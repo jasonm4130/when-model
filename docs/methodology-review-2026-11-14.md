@@ -4,7 +4,7 @@
 
 ## Where things stood
 
-The [27 September pre-registration](release-forecast-2026-09-27.md) planned a shadow forecast scored against v3 on eight weeks of forward data. The shadow forecast never shipped, so the forward clock never started. The availability ledger did ship, and it has run cleanly since 27 September, with a capture every 15 minutes and no missed day. An audit against OpenRouter, Hugging Face, xAI's release notes and the web found no missed release in the ledger.
+The [27 September pre-registration](release-forecast-2026-09-27.md) planned a shadow forecast scored against v3 on eight weeks of forward data. The shadow forecast never shipped, so the forward clock never started. The availability ledger did ship, and it has run cleanly since 27 September, with a capture every 15 minutes and no missed day. An audit against OpenRouter, Hugging Face, xAI's release notes and the web found no missed release in the ledger. Launches only in an app (ChatGPT, meta.ai) were checked at headline level only. One source may have a gap: `announce:anthropic` has logged nothing new since 18 Oct, though the Fable 5.2 post is on Anthropic's newsroom. The 23 Sep review saw the same miss for Opus 5.5. This is open.
 
 The ledger records 15 frontier-lab releases from 27 Sep to 14 Nov. Ten are flagship once Jason's label calls are applied (`data/forward/label-decisions-2026-11-14.json`): Gemini 4's codename tiers and new Muse family names count as flagship.
 
@@ -72,11 +72,36 @@ What the run suggests, all of it subject to that small sample:
 ## Next steps
 
 1. **Ship the shadow forecast.** This is the 27 Sep plan's step 3, now built from `scripts/forecast/models.ts`: compute B0, C2 and C3 at every 00:00Z capture, store them in D1, and show them only on `/backtest`. That makes the confirmatory window real-time rather than a reconstruction.
-2. **Export the ledger and snapshots at least monthly** until 30 Jan, before D1's 90-day pruning. The next deadline is 22 December.
+2. **Export the ledger and snapshots before D1 prunes them.**
+   - Snapshots up to 14 Nov 00:30Z are committed. The first slot not yet archived is pruned around 12 Feb 2027, so one export after 30 Jan covers the confirmatory window.
+   - `first_seen` rows are pruned 90 days after their last sighting. The sightings to date are now exported (`data/forward/first-seen-2026-11-14.json`); export them again before late January.
+   - `availability` and `announcements` are never pruned.
 3. **Collect bid/ask history going forward.** The live snapshots should keep each rung's bid and ask, so a future refit trains on the same kind of read it serves. It is a change to the snapshot schema (`MAX_SNAPSHOT_BYTES` limits it).
-4. **Next pre-registration: interpolation and priors.** Fix linear interpolation between rungs as a rule, chosen on reasoning rather than tuned. Give the market recalibration one pooled term for bracket width (logit p′ = a + b·logit p + c·log(1 + gap days)). Centre the blend's market weight on the recalibration's evidence rather than on zero.
+4. **Next pre-registration: interpolation and priors.** These ideas came from looking at the interim results. So any candidate built on them is scored only on days after its own pre-registration, never on this window. Fix linear interpolation between rungs as a rule, chosen on reasoning rather than tuned. Give the market recalibration one pooled term for bracket width (logit p′ = a + b·logit p + c·log(1 + gap days)). Centre the blend's market weight on the recalibration's evidence rather than on zero.
 5. **Mark when a lab's new family name has no market.** Wherever a flagship can be a new family name, the per-lab read should say so rather than read the old family's ladder as the lab's odds.
 6. **Leave `/backtest` and its JSON alone** until the confirmatory result. Then replace its verdict with this pre-registration's result, rather than re-running the burnt window with the fixes above.
+
+## Signals: descriptive, outside the pre-registered scoring
+
+No early-warning signal was scored. The pre-registration dropped the "announced, not yet usable" candidate that the plan had listed, and it should have said so. A signal used as a model input needs a history logged live across both the training and the forward windows. The ledger has only logged these since 26–27 Sep, so the training window has none.
+
+As a record only, here is how the 10 forward flagships line up against the signals logged in `first_seen`:
+
+| Flagship                                                                               | Signal seen before it                                                                                     | Lead                                                     |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Gemini 4 Argon                                                                         | announced 30 Sep (DeepMind, HN); TestingCatalog 7, 9 and 11 Oct; HN "Gemini 4 Pro benchmarks" leak 29 Sep | 13 days from the announcement; 1.8–6 days from the leaks |
+| Gemini 4 Carbon                                                                        | TestingCatalog 9 Oct ("tests Carbon checkpoint")                                                          | 32 days                                                  |
+| GPT-6.1 Terra                                                                          | TestingCatalog 20 Oct                                                                                     | 6.3 days                                                 |
+| Claude Fable 5.2                                                                       | Azure configs leak 15 Oct and TestingCatalog 17 Oct, both naming "Fable 5.5" and saying "next week"       | 23–25 days, wrong version and week                       |
+| Sonnet 5.5, GPT-6.1 Sol, Muse Wonder, Muse Ember, Qwen4-Max-Preview, Gemini 4 Hydrogen | none logged                                                                                               | —                                                        |
+
+Signals that didn't match a release:
+
+- **Unresolved so far:** the GPT-6.2 Astra leak (2 Nov) and the Crouton Alpha stealth slot (3 Nov).
+- **Never became a release:** the Mythos 5.5 leak, since Mythos 5.2 is restricted-access only.
+- **Noise:** the MiMo leak and the stale Opus 5.5 test story.
+
+Leaks came before 3 or 4 of the 10 flagships, typically 2–6 days ahead, and all of them were at Google, OpenAI and Anthropic, which already have markets. Whether a leak adds anything beyond the market read is the question for a future pre-registration. It needs the logged sightings above as its training history.
 
 ## Deviations from the pre-registration
 

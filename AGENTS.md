@@ -102,6 +102,11 @@ Rules of the house:
   into markup (what the page and its charts derive from them is in `src/ui/backtest-page.ts`,
   `backtest-replay.ts` and `backtest-waterfall.ts`), and `test/ui/backtest.test.ts` pins it against that source. Regenerate the JSON
   only through `pnpm backtest` or `pnpm backtest:replay`.
+- The release forecast's forward evaluation lives in `docs/release-forecast-2026-11-14.md` (and
+  its labelling addendum), `scripts/forecast/` (pure models in `models.ts`; `interim.ts` scores) and
+  `data/forward/`. The files whose SHA-256 the pre-registration lists are frozen: never regenerate,
+  reformat or edit them; new exports and label decisions go in new dated files. A change to the
+  target, candidates or metrics is a new dated pre-registration, never an edit.
 - Changing the `Dashboard` shape? Bump `DASHBOARD_SCHEMA`. The memoised dashboard outlives a
   deploy by up to its TTL and a new render reading an old shape streams a blank page. The
   compact D1 snapshot must stay under 32 KiB (`MAX_SNAPSHOT_BYTES`); the worst-case test in
