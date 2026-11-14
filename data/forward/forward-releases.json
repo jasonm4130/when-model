@@ -1,0 +1,117 @@
+{
+  "meta": {
+    "window": {
+      "from": "2026-09-27T05:00:00Z",
+      "until": "2026-11-14T00:30:00Z"
+    },
+    "from": "labelled-forward.json (ledger audit) + label-decisions-2026-11-14.json",
+    "labs": ["anthropic", "deepseek", "google", "meta", "openai", "qwen", "xai"]
+  },
+  "releases": [
+    {
+      "at": "2026-09-28T18:15:42.965Z",
+      "labId": "anthropic",
+      "skus": ["claude-sonnet-5.5"],
+      "tier": "flagship",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-09-29T17:45:44.046Z",
+      "labId": "openai",
+      "skus": ["gpt-6.1-sol", "gpt-6.1-sol-pro"],
+      "tier": "flagship",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-10-04T15:46:10.139Z",
+      "labId": "google",
+      "skus": ["diarizationlm-gemma-4-e4b-v1"],
+      "tier": "minor",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-10-07T19:00:51.254Z",
+      "labId": "anthropic",
+      "skus": ["claude-haiku-5.5"],
+      "tier": "minor",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-10-12T17:30:59.764Z",
+      "labId": "meta",
+      "skus": ["muse-wonder"],
+      "tier": "flagship",
+      "tierSource": "label-decisions-2026-11-14"
+    },
+    {
+      "at": "2026-10-13T16:30:54.377Z",
+      "labId": "google",
+      "skus": ["gemini-4-argon"],
+      "tier": "flagship",
+      "tierSource": "label-decisions-2026-11-14"
+    },
+    {
+      "at": "2026-10-15T18:01:08.285Z",
+      "labId": "meta",
+      "skus": ["muse-spark-open"],
+      "tier": "minor",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-10-17T08:15:38.470Z",
+      "labId": "deepseek",
+      "skus": ["deepseek-v4.1-flash@1017"],
+      "tier": "minor",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-10-26T18:30:35.849Z",
+      "labId": "openai",
+      "skus": ["gpt-6.1-terra"],
+      "tier": "flagship",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-10-27T01:15:44.070Z",
+      "labId": "openai",
+      "skus": ["gpt-6.1-terra-pro"],
+      "tier": "minor",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-11-09T18:46:09.016Z",
+      "labId": "meta",
+      "skus": ["muse-ember"],
+      "tier": "flagship",
+      "tierSource": "label-decisions-2026-11-14"
+    },
+    {
+      "at": "2026-11-09T19:16:06.754Z",
+      "labId": "anthropic",
+      "skus": ["claude-fable-5.2"],
+      "tier": "flagship",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-11-10T16:16:05.388Z",
+      "labId": "google",
+      "skus": ["gemini-4-carbon"],
+      "tier": "flagship",
+      "tierSource": "label-decisions-2026-11-14"
+    },
+    {
+      "at": "2026-11-11T02:16:08.446Z",
+      "labId": "qwen",
+      "skus": ["qwen4.0-max-preview"],
+      "tier": "flagship",
+      "tierSource": "rules"
+    },
+    {
+      "at": "2026-11-12T18:16:04.812Z",
+      "labId": "google",
+      "skus": ["gemini-4-hydrogen"],
+      "tier": "flagship",
+      "tierSource": "label-decisions-2026-11-14"
+    }
+  ]
+}
