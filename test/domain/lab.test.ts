@@ -253,6 +253,27 @@ describe('release tiers', () => {
     ['meta', model('muse-spark-2'), 'flagship'],
     ['meta', model('muse-spark-1.2', 'contributor'), 'minor'],
     ['mistral', model('mistral-large-4'), 'minor'],
+    ['google', model('gemini-4-argon'), 'flagship'],
+    ['google', model('gemini-4-carbon'), 'flagship'],
+    ['google', model('gemini-4-hydrogen'), 'flagship'],
+    ['google', model('gemini-4-argon@20261201'), 'minor'],
+    ['google', model('gemini-4-flash-lite'), 'minor'],
+    ['google', model('gemini-2.5-flash-image'), 'minor'],
+    ['google', model('gemini-4-flash-image'), 'minor'],
+    ['google', model('gemini-3.5-flash-lite'), 'minor'],
+    ['google', model('gemini-embedding'), 'minor'],
+    ['google', model('gemini-3.1-pro-preview-customtools'), 'minor'],
+    ['google', model('gemma-4-31b-it'), 'minor'],
+    ['google', model('diarizationlm-gemma-4-e4b-v1'), 'minor'],
+    ['meta', model('muse-wonder'), 'flagship'],
+    ['meta', model('muse-ember'), 'flagship'],
+    ['meta', model('muse-glimmer'), 'minor'],
+    ['meta', model('muse-glimmer-30b'), 'minor'],
+    ['meta', model('muse-spark-open'), 'minor'],
+    ['meta', model('muse-code'), 'minor'],
+    ['meta', model('muse-wonder-30b'), 'minor'],
+    ['meta', model('muse-wonder-guard'), 'minor'],
+    ['meta', model('muse-wonder', 'contributor'), 'minor'],
   ])('%s %o is %s with nothing shipped before', (labId, m, tier) => {
     expect(modelTier(labId as never, m, none).tier).toBe(tier);
   });
@@ -269,6 +290,19 @@ describe('release tiers', () => {
     expect(modelTier('qwen', model('qwen4-235b'), seen).tier).toBe('minor');
     expect(modelTier('google', model('gemini-4-flash'), seen).tier).toBe('minor');
     expect(tierMarks('mistral', model('mistral-large-4'))).toEqual([]);
+  });
+
+  it('counts a codename tier or Muse family once per version, but each codename and family on its own', () => {
+    const seen = new Set([
+      ...tierMarks('google', model('gemini-4-argon')),
+      ...tierMarks('meta', model('muse-wonder')),
+    ]);
+    expect([...seen].sort()).toEqual(['gemini-codename:argon:4', 'gemini-gen:4.0', 'muse-family:wonder']);
+    expect(modelTier('google', model('gemini-4-argon'), seen).tier).toBe('minor');
+    expect(modelTier('google', model('gemini-4-carbon'), seen).tier).toBe('flagship');
+    expect(modelTier('google', model('gemini-5-argon'), seen).tier).toBe('flagship');
+    expect(modelTier('meta', model('muse-wonder'), seen).tier).toBe('minor');
+    expect(modelTier('meta', model('muse-ember'), seen).tier).toBe('flagship');
   });
 
   it('tiers a release flagship when any model is, naming the deciding rules', () => {

@@ -84,6 +84,17 @@ export const FRONTIER_LABS: ReadonlySet<LabId> = new Set<LabId>([
   'meta',
 ]);
 
+/**
+ * Gemini sku words that follow the version and are not a codename tier. A codename tier (Argon,
+ * Carbon, Hydrogen) is any other single lowercase word: the rule below cannot see a hyphenated
+ * suffix (`flash-image`, `flash-lite`, `pro-preview-customtools`), so only single words need listing.
+ */
+const GEMINI_NON_CODENAMES =
+  'flash|lite|pro|ultra|nano|embedding|live|image|tts|audio|thinking|exp|latest|preview|robotics|vision|code|customtools';
+
+/** Muse words that are not a new top-line family: Spark has its own versioned rule, Glimmer and Code are minor. */
+const MUSE_NON_FAMILIES = 'spark|glimmer|code|contributor|guard|open';
+
 export const LABS: readonly Lab[] = [
   {
     id: 'openai',
@@ -163,12 +174,26 @@ export const LABS: readonly Lab[] = [
           pattern: /^gemini-(?<major>\d+)(?:\.(?<minor>[05]))?-flash(?:-preview)?$/,
           once: 'gemini-gen:{major}.{minor|0}',
         },
+        {
+          // Jason, 2026-11-14: each codename tier of a generation is a flagship, like Pro or Ultra.
+          name: 'google: gemini codename tier (argon/carbon/hydrogen) new version',
+          pattern: /^gemini-(?<version>\d+(?:\.\d+)?)-(?<codename>[a-z]+)(?:-preview)?$/,
+          undated: true,
+          unless: new RegExp(`^gemini-[\\d.]+-(?:${GEMINI_NON_CODENAMES})(?:-preview)?$`),
+          once: 'gemini-codename:{codename}:{version}',
+        },
       ],
       marks: [
         { pattern: /^gemini-(?<major>\d+)(?:\.(?<minor>\d+))?/, key: 'gemini-gen:{major}.{minor|0}' },
         {
           pattern: /^gemini-(?<version>\d+(?:\.\d+)?)-(?<tier>pro|ultra|deep-think)(?:-preview)?$/,
           key: 'gemini-tier:{tier}:{version}',
+        },
+        {
+          pattern: new RegExp(
+            `^gemini-(?<version>\\d+(?:\\.\\d+)?)-(?!(?:${GEMINI_NON_CODENAMES})(?:-preview)?$)(?<codename>[a-z]+)(?:-preview)?$`,
+          ),
+          key: 'gemini-codename:{codename}:{version}',
         },
       ],
       minor: 'google: flash bump / flash-lite / gemma / image',
@@ -264,6 +289,20 @@ export const LABS: readonly Lab[] = [
         {
           name: 'meta: muse spark N.M / llama largest',
           pattern: /^(?:muse-spark-\d+(?:\.\d+)?|llama-\d+(?:\.\d+)?-(?:maverick|behemoth|405b))$/,
+        },
+        {
+          // Jason, 2026-11-14: a new top-line Muse family name is flagship (Wonder, Ember).
+          name: 'meta: new muse family name',
+          pattern: /^muse-(?<family>[a-z]+)$/,
+          undated: true,
+          unless: new RegExp(`^muse-(?:${MUSE_NON_FAMILIES})$`),
+          once: 'muse-family:{family}',
+        },
+      ],
+      marks: [
+        {
+          pattern: new RegExp(`^muse-(?!(?:${MUSE_NON_FAMILIES})$)(?<family>[a-z]+)$`),
+          key: 'muse-family:{family}',
         },
       ],
       minor: 'meta: contributor/glimmer/size/guard',
