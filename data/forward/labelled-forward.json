@@ -1,0 +1,426 @@
+{
+  "meta": {
+    "window": {
+      "from": "2026-09-27T05:00:00Z",
+      "until": "2026-11-14T00:30:00Z"
+    },
+    "method": "Ran releaseEventsFromLedger (src/domain/availability.ts, unmodified) over data/forward/availability.json and announcements.json with now=window end; kept events at or after the window start (baseline rows excluded). Completeness checked against OpenRouter's public model list (created times), Hugging Face org listings, docs.x.ai release notes, anthropic.com/news and web search. Blind to forecasts, scores and market odds. Script: scratchpad det.ts.",
+    "generatedAt": "2026-11-14",
+    "counts": {
+      "total": 18,
+      "frontierLabs": 15,
+      "nonFrontier": 3,
+      "flagship": 5,
+      "minorFrontier": 10,
+      "minorNonFrontier": 3
+    },
+    "byLab": {
+      "anthropic": {
+        "flagship": 2,
+        "minor": 1
+      },
+      "openai": {
+        "flagship": 2,
+        "minor": 1
+      },
+      "google": {
+        "flagship": 0,
+        "minor": 4
+      },
+      "meta": {
+        "flagship": 0,
+        "minor": 3
+      },
+      "deepseek": {
+        "flagship": 0,
+        "minor": 1
+      },
+      "qwen": {
+        "flagship": 1,
+        "minor": 0
+      },
+      "xai": {
+        "flagship": 0,
+        "minor": 0
+      },
+      "mistral": {
+        "minor": 1
+      },
+      "moonshot": {
+        "minor": 1
+      },
+      "zai": {
+        "minor": 1
+      }
+    },
+    "caveat": "Ledger firstSeenAt lags OpenRouter 'created' by 0.3-7h (Muse Wonder 5h, GPT-6.1 Terra Pro 6.75h). Per decision 1 the ledger time is the label."
+  },
+  "events": [
+    {
+      "lab": "anthropic",
+      "skus": ["claude-sonnet-5.5"],
+      "firstSeenAt": "2026-09-28T18:15:42.965Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "flagship",
+      "tierReason": "anthropic: opus/sonnet/fable/mythos new version (rule)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "openai",
+      "skus": ["gpt-6.1-sol", "gpt-6.1-sol-pro"],
+      "firstSeenAt": "2026-09-29T17:45:44.046Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "flagship",
+      "tierReason": "openai: new gpt-N[.M] of a main line, -pro twin only with it (rule)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "google",
+      "skus": ["diarizationlm-gemma-4-e4b-v1"],
+      "firstSeenAt": "2026-10-04T15:46:10.139Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "google: flash bump / flash-lite / gemma / image (default minor)",
+      "source": "ledger",
+      "frontier": true,
+      "note": "false positive candidate, see falsePositives",
+      "ambiguous": false
+    },
+    {
+      "lab": "mistral",
+      "skus": ["mistral-large-4.0"],
+      "firstSeenAt": "2026-10-06T14:02:03.878Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "no flagship rule: not a frontier lab",
+      "source": "ledger",
+      "frontier": false,
+      "ambiguous": false
+    },
+    {
+      "lab": "anthropic",
+      "skus": ["claude-haiku-5.5"],
+      "firstSeenAt": "2026-10-07T19:00:51.254Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "anthropic: haiku or dated (rule)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "meta",
+      "skus": ["muse-wonder"],
+      "firstSeenAt": "2026-10-12T17:30:59.764Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "meta: contributor/glimmer/size/guard (default minor; no flagship rule matched)",
+      "source": "ledger",
+      "ambiguous": true,
+      "frontier": true
+    },
+    {
+      "lab": "google",
+      "skus": ["gemini-4-argon"],
+      "firstSeenAt": "2026-10-13T16:30:54.377Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "google default minor: flagship patterns only match gemini-N-(pro|ultra|deep-think) and gemini-N-flash, so a codename never matches",
+      "source": "ledger",
+      "ambiguous": true,
+      "note": "first model of Gemini 4; see ambiguous",
+      "frontier": true
+    },
+    {
+      "lab": "meta",
+      "skus": ["muse-spark-open"],
+      "firstSeenAt": "2026-10-15T18:01:08.285Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "meta default minor (not a Spark point version)",
+      "source": "ledger",
+      "ambiguous": true,
+      "frontier": true
+    },
+    {
+      "lab": "deepseek",
+      "skus": ["deepseek-v4.1-flash@1017"],
+      "firstSeenAt": "2026-10-17T08:15:38.470Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "deepseek: flash-only / dated refresh (rule)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "moonshot",
+      "skus": ["kimi-k3.1-pro"],
+      "firstSeenAt": "2026-10-23T18:15:29.132Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "no flagship rule: not a frontier lab",
+      "source": "ledger",
+      "frontier": false,
+      "ambiguous": false
+    },
+    {
+      "lab": "openai",
+      "skus": ["gpt-6.1-terra"],
+      "firstSeenAt": "2026-10-26T18:30:35.849Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "flagship",
+      "tierReason": "openai: new gpt-N[.M] of a main line (rule)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "openai",
+      "skus": ["gpt-6.1-terra-pro"],
+      "firstSeenAt": "2026-10-27T01:15:44.070Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "openai: -pro twin only counts with its base; ledger first-seen is 6.75h after Terra so it forms its own event",
+      "source": "ledger",
+      "ambiguous": true,
+      "frontier": true
+    },
+    {
+      "lab": "zai",
+      "skus": ["glm-5.3-flashx-legal"],
+      "firstSeenAt": "2026-11-02T13:46:05.000Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "no flagship rule: not a frontier lab",
+      "source": "ledger",
+      "frontier": false,
+      "note": "domain variant, see falsePositives",
+      "ambiguous": false
+    },
+    {
+      "lab": "meta",
+      "skus": ["muse-ember"],
+      "firstSeenAt": "2026-11-09T18:46:09.016Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "meta: contributor/glimmer/size/guard (smallest model)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "anthropic",
+      "skus": ["claude-fable-5.2"],
+      "firstSeenAt": "2026-11-09T19:16:06.754Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "flagship",
+      "tierReason": "anthropic: opus/sonnet/fable/mythos new version (rule)",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "google",
+      "skus": ["gemini-4-carbon"],
+      "firstSeenAt": "2026-11-10T16:16:05.388Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "google default minor (codename, no rule match)",
+      "source": "ledger",
+      "ambiguous": true,
+      "frontier": true
+    },
+    {
+      "lab": "qwen",
+      "skus": ["qwen4.0-max-preview"],
+      "firstSeenAt": "2026-11-11T02:16:08.446Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "flagship",
+      "tierReason": "qwen: first max of a version (rule); first seen on chat.qwen.ai",
+      "source": "ledger",
+      "frontier": true,
+      "ambiguous": false
+    },
+    {
+      "lab": "google",
+      "skus": ["gemini-4-hydrogen"],
+      "firstSeenAt": "2026-11-12T18:16:04.812Z",
+      "externalTime": null,
+      "timePrecision": "15min (cron poll)",
+      "tier": "minor",
+      "tierReason": "google default minor (Flash-tier workhorse per OpenRouter)",
+      "source": "ledger",
+      "note": "listed on OpenRouter with text output; press says unreleased, unverified",
+      "frontier": true,
+      "ambiguous": false
+    }
+  ],
+  "externalMisses": [],
+  "falsePositives": [
+    {
+      "lab": "google",
+      "sku": "diarizationlm-gemma-4-e4b-v1",
+      "ledgerTime": "2026-10-04T15:46:10.139Z",
+      "reason": "Hugging Face research fine-tune of Gemma 4 E4B (speaker diarization), not a frontier release.",
+      "wouldRulesCount": true,
+      "detail": "google is a frontier lab and the sku falls to the default minor rule, so the detector emits a minor Google event. Existing rules cannot exclude it; it counts unless Jason adds an exclusion."
+    },
+    {
+      "lab": "zai",
+      "sku": "glm-5.3-flashx-legal",
+      "ledgerTime": "2026-11-02T13:46:05.000Z",
+      "reason": "Legal-domain variant of GLM-5.3-FlashX.",
+      "wouldRulesCount": false,
+      "detail": "zai is not in FRONTIER_LABS, so it is outside the frontier-lab evaluation (it appears as frontier:false)."
+    }
+  ],
+  "ambiguous": [
+    {
+      "item": "Gemini 4 Argon tier",
+      "issue": "Rules give minor (codename matches no flagship pattern) but Jason's 27 Sep decision makes the first model of a new N.0 generation flagship, and Argon is Gemini 4's flagship per Google. Intent says flagship.",
+      "ledger": "minor",
+      "intent": "flagship",
+      "evidence": "https://alternativeto.net/news/2026/10/google-s-gemini-4-argon-is-now-available-in-gemini-ai-studio-ai-mode-in-search-and-more/"
+    },
+    {
+      "item": "Gemini 4 Argon time",
+      "issue": "Announced 30 Sep with limited access for cyber-defence partners (Fairwinds); GA on the Gemini API 13 Oct (changelog). Decision 1 counts limited previews, but time is our polling.",
+      "ledgerTime": "2026-10-13T16:30:54.377Z",
+      "externalTime": "2026-09-30 (limited partner access, time unknown)",
+      "evidence": "https://ai.google.dev/gemini/docs/changelog"
+    },
+    {
+      "item": "Gemini 4 Carbon tier and time",
+      "issue": "Same tier gap as Argon. Limited access 28 Oct, paid API and Ultra 10 Nov. Ledger has 10 Nov.",
+      "ledgerTime": "2026-11-10T16:16:05.388Z",
+      "externalTime": "2026-10-28 (limited, time unknown)",
+      "evidence": "https://letsdatascience.com/news/google-rolls-out-gemini-4-carbon-to-general-public-9b41bcb4"
+    },
+    {
+      "item": "Gemini 4 Hydrogen",
+      "issue": "OpenRouter lists google/gemini-4-hydrogen (text output) from 12 Nov; press describes it as an unreleased Flash-tier codename and the Gemini API reference lists only Argon. The ledger event stands as minor; the press view was not re-checked after 12 Nov.",
+      "ledgerTime": "2026-11-12T18:16:04.812Z"
+    },
+    {
+      "item": "Meta Muse Wonder",
+      "issue": "OpenRouter calls it 'a frontier reasoning model' from Meta, a new family name. Jason's Meta decision covers Spark point versions, contributor, Glimmer and Code only. Default minor.",
+      "ledger": "minor"
+    },
+    {
+      "item": "Meta Muse Spark Open",
+      "issue": "Open-weight coding model, not a Spark point version; default minor, possibly flagship.",
+      "ledger": "minor"
+    },
+    {
+      "item": "OpenAI GPT-6.1 Terra Pro grouping",
+      "issue": "OpenRouter created times are 18:13 and 18:15 on 26 Oct (one release), but the ledger saw Terra Pro 6.75h after Terra, so it is a separate minor event. If grouped it would vanish into the flagship event.",
+      "ledgerTime": "2026-10-27T01:15:44.070Z"
+    }
+  ],
+  "announcedNotUsable": [
+    {
+      "lab": "google",
+      "model": "Gemini 4",
+      "announcedAt": "2026-09-30T20:30:44.267Z",
+      "usableAt": "2026-10-13T16:30:54.377Z",
+      "note": "Ledger lead 308h. Partner-only access began 30 Sep (external)."
+    },
+    {
+      "lab": "anthropic",
+      "model": "claude-mythos-5.2",
+      "announcedAt": "2026-11-09T19:31:10.936Z",
+      "usableAt": null,
+      "note": "Restricted to verified organisations (Cyber and Life Sciences Verification Programs); ships with Fable 5.2. Decision 1 counts limited availability, but not by our detector, which had no public sighting. Not an event.",
+      "evidence": "https://platform.claude.com/docs/en/models/mythos-5-2/overview.md"
+    },
+    {
+      "lab": "openai",
+      "model": "gpt-6-cyber",
+      "announcedAt": "2026-11-05T19:01:11.664Z",
+      "usableAt": null,
+      "note": "Approved customers only (Daybreak Red tier, API and Codex), a variant of GPT-6 Astra. Not on OpenRouter. Not an event under the detector; a limited-access case Jason may want to rule on."
+    },
+    {
+      "lab": "google",
+      "model": "gemini-omni-1.2-flash",
+      "announcedAt": "2026-11-05T17:16:18.123Z",
+      "usableAt": null,
+      "note": "Not a text model: OpenRouter describes Omni as native video generation and editing (modalities text,video out). Excluded. Omni 1.1 Flash (4 Nov) likewise."
+    }
+  ],
+  "sourceHealth": [
+    {
+      "kind": "avail:hf:Qwen",
+      "verdict": "quiet",
+      "evidence": "HF API: newest Qwen repos are Qwen-Image-2.1-Turbo (9 Oct, image) and Qwen3.8-Flash-Next-FP8 (24 Aug). No new language repo after the baseline."
+    },
+    {
+      "kind": "avail:hf:meta-llama",
+      "verdict": "quiet",
+      "evidence": "HF API newest repo dated April 2025."
+    },
+    {
+      "kind": "avail:hf:openai",
+      "verdict": "quiet",
+      "evidence": "HF API newest repo privacy-filter, 17 Apr 2026."
+    },
+    {
+      "kind": "avail:hf:xai-org",
+      "verdict": "quiet",
+      "evidence": "HF API shows only grok-1 and grok-2; no new repo."
+    },
+    {
+      "kind": "announce:xai",
+      "verdict": "quiet",
+      "evidence": "docs.x.ai release notes: last model entries Grok 4.7 (21 Sep, before the window) and Grok Voice 3.0 (14 Oct, the source's last sighting); 27 Oct and 2 Nov entries are not models. OpenRouter lists no new x-ai model in the window. No xAI text release occurred."
+    },
+    {
+      "kind": "announce:anthropic",
+      "verdict": "unknown",
+      "evidence": "Last sighting 18 Oct. The Fable 5.2 page (anthropic.com/claude-fable-and-mythos-5-2) is on the newsroom and the source's regex covers that URL shape (Sonnet and Haiku 5.5 pages were captured), but its announcement row was first seen via Hacker News on 9 Nov. Could be first-seen ordering or a stall; unverified."
+    },
+    {
+      "kind": "avail:qwen-chat",
+      "verdict": "quiet",
+      "evidence": "Caught Qwen4-Max-Preview on 11 Nov 02:16Z, matching press dating of 11 Nov."
+    },
+    {
+      "kind": "avail:hf:google",
+      "verdict": "quiet",
+      "evidence": "Produced the Diarization sighting; other recent google repos are non-language (embeddinggemma-2, timesfm)."
+    },
+    {
+      "kind": "avail:hf:deepseek-ai",
+      "verdict": "quiet",
+      "evidence": "Matches HF API: DeepSeek-V4.1-Flash-1017 is the newest repo."
+    },
+    {
+      "kind": "avail:openrouter",
+      "verdict": "quiet",
+      "evidence": "Cross-checked against OpenRouter's public list: every frontier-lab text model created 27 Sep to 14 Nov appears in the ledger; Omni and Nano Banana are non-text and were rightly excluded."
+    }
+  ],
+  "completeness": "No missed releases found for anthropic, openai, google, xai, qwen, meta, deepseek, zai, mistral or moonshot. Gaps in this check: app-only launches with no API or OpenRouter listing (for example a ChatGPT-only or meta.ai-only model) cannot be seen in these sources and were only searched at headline level; unverified."
+}
