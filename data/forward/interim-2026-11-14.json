@@ -1,0 +1,2484 @@
+{
+  "primary": {
+    "meta": {
+      "spec": "docs/release-forecast-2026-11-14.md",
+      "variant": "primary",
+      "window": {
+        "from": "2026-09-28",
+        "to": "2026-11-13"
+      },
+      "labDays": 329,
+      "flagshipDays": 10,
+      "weeks": 7,
+      "trainingLabDays": 1246,
+      "trainingFlagshipDays": 24,
+      "marketTrainingRows": 465,
+      "forwardMarketRows": 245,
+      "seedFlagships": 26
+    },
+    "primary": {
+      "comparison": "C3 − B0, mean log score per lab-day",
+      "mean": 0.00907,
+      "lo": -0.00681,
+      "hi": 0.02255,
+      "weeks": 7
+    },
+    "secondary": [
+      {
+        "comparison": "C1 − B0",
+        "mean": -0.00669,
+        "lo": -0.01517,
+        "hi": -0.00002,
+        "pHolm": 0.167
+      },
+      {
+        "comparison": "C2 − B0",
+        "mean": 0.01894,
+        "lo": 0.00182,
+        "hi": 0.03826,
+        "pHolm": 0.125
+      },
+      {
+        "comparison": "M0 − B0",
+        "mean": 0.02108,
+        "lo": -0.00626,
+        "hi": 0.05061,
+        "pHolm": 0.167
+      }
+    ],
+    "summary": {
+      "B0": {
+        "meanLogScore": -0.13846,
+        "meanForecast": 0.02262,
+        "calibration": {
+          "intercept": 0.304,
+          "interceptCi95": [-0.961, 1.057],
+          "slope": 0.233,
+          "slopeCi95": [-0.898, 4.495],
+          "resamplesUsed": 1994
+        },
+        "reliability": [
+          {
+            "n": 65,
+            "events": 2,
+            "meanForecast": 0.0116,
+            "observed": 0.0308
+          },
+          {
+            "n": 66,
+            "events": 0,
+            "meanForecast": 0.0169,
+            "observed": 0
+          },
+          {
+            "n": 66,
+            "events": 4,
+            "meanForecast": 0.0227,
+            "observed": 0.0606
+          },
+          {
+            "n": 66,
+            "events": 3,
+            "meanForecast": 0.0283,
+            "observed": 0.0455
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0335,
+            "observed": 0.0152
+          }
+        ]
+      },
+      "C1": {
+        "meanLogScore": -0.14515,
+        "meanForecast": 0.01912,
+        "calibration": {
+          "intercept": 0.478,
+          "interceptCi95": [-0.854, 1.304],
+          "slope": -0.285,
+          "slopeCi95": [-0.901, 1.038],
+          "resamplesUsed": 1994
+        },
+        "reliability": [
+          {
+            "n": 65,
+            "events": 2,
+            "meanForecast": 0.0086,
+            "observed": 0.0308
+          },
+          {
+            "n": 66,
+            "events": 3,
+            "meanForecast": 0.0124,
+            "observed": 0.0455
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0169,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 3,
+            "meanForecast": 0.0235,
+            "observed": 0.0455
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.034,
+            "observed": 0.0152
+          }
+        ]
+      },
+      "M0": {
+        "meanLogScore": -0.11738,
+        "meanForecast": 0.03841,
+        "calibration": {
+          "intercept": -0.272,
+          "interceptCi95": [-1.643, 0.452],
+          "slope": 0.873,
+          "slopeCi95": [0.423, 1.645],
+          "resamplesUsed": 1994
+        },
+        "reliability": [
+          {
+            "n": 65,
+            "events": 1,
+            "meanForecast": 0.0048,
+            "observed": 0.0154
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0102,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 0,
+            "meanForecast": 0.0157,
+            "observed": 0
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0306,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 7,
+            "meanForecast": 0.1302,
+            "observed": 0.1061
+          }
+        ]
+      },
+      "C2": {
+        "meanLogScore": -0.11952,
+        "meanForecast": 0.02102,
+        "calibration": {
+          "intercept": 0.418,
+          "interceptCi95": [-0.959, 1.131],
+          "slope": 0.838,
+          "slopeCi95": [0.441, 1.493],
+          "resamplesUsed": 1994
+        },
+        "reliability": [
+          {
+            "n": 65,
+            "events": 1,
+            "meanForecast": 0.0012,
+            "observed": 0.0154
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0036,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0108,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0193,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 6,
+            "meanForecast": 0.0699,
+            "observed": 0.0909
+          }
+        ]
+      },
+      "C3": {
+        "meanLogScore": -0.12938,
+        "meanForecast": 0.01796,
+        "calibration": {
+          "intercept": 0.567,
+          "interceptCi95": [-0.845, 1.302],
+          "slope": 0.746,
+          "slopeCi95": [0.312, 1.352],
+          "resamplesUsed": 1994
+        },
+        "reliability": [
+          {
+            "n": 65,
+            "events": 2,
+            "meanForecast": 0.0015,
+            "observed": 0.0308
+          },
+          {
+            "n": 66,
+            "events": 0,
+            "meanForecast": 0.0041,
+            "observed": 0
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0108,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 1,
+            "meanForecast": 0.0178,
+            "observed": 0.0152
+          },
+          {
+            "n": 66,
+            "events": 6,
+            "meanForecast": 0.0554,
+            "observed": 0.0909
+          }
+        ]
+      }
+    },
+    "brier7": {
+      "B0": 0.12503,
+      "C1": 0.12742,
+      "M0": 0.12772,
+      "C2": 0.12118,
+      "C3": 0.12467
+    },
+    "perLab": {
+      "openai": {
+        "events": 2,
+        "marketDays": 47,
+        "C1-B0": -0.0072,
+        "M0-B0": 0.0079,
+        "C2-B0": -0.0094,
+        "C3-B0": -0.0172
+      },
+      "anthropic": {
+        "events": 2,
+        "marketDays": 42,
+        "C1-B0": -0.0022,
+        "M0-B0": 0.0537,
+        "C2-B0": 0.0714,
+        "C3-B0": 0.0597
+      },
+      "google": {
+        "events": 3,
+        "marketDays": 47,
+        "C1-B0": -0.0354,
+        "M0-B0": 0.0955,
+        "C2-B0": 0.0886,
+        "C3-B0": 0.0396
+      },
+      "xai": {
+        "events": 0,
+        "marketDays": 23,
+        "C1-B0": 0.0026,
+        "M0-B0": 0.0068,
+        "C2-B0": 0.0108,
+        "C3-B0": 0.0128
+      },
+      "deepseek": {
+        "events": 0,
+        "marketDays": 21,
+        "C1-B0": -0.0011,
+        "M0-B0": -0.0019,
+        "C2-B0": 0.0018,
+        "C3-B0": 0.0036
+      },
+      "qwen": {
+        "events": 1,
+        "marketDays": 32,
+        "C1-B0": 0.0078,
+        "M0-B0": 0.0248,
+        "C2-B0": 0.0214,
+        "C3-B0": 0.0233
+      },
+      "meta": {
+        "events": 2,
+        "marketDays": 33,
+        "C1-B0": -0.0113,
+        "M0-B0": -0.0393,
+        "C2-B0": -0.052,
+        "C3-B0": -0.0584
+      }
+    },
+    "events": [
+      {
+        "day": "2026-09-28",
+        "labId": "anthropic",
+        "skus": ["claude-sonnet-5.5"],
+        "market": true,
+        "B0": {
+          "h": 0.034,
+          "pct": 0.49
+        },
+        "C1": {
+          "h": 0.0235,
+          "pct": 0.11
+        },
+        "M0": {
+          "h": 0.6316,
+          "pct": 0.98
+        },
+        "C2": {
+          "h": 0.5077,
+          "pct": 0.98
+        },
+        "C3": {
+          "h": 0.3164,
+          "pct": 0.98
+        }
+      },
+      {
+        "day": "2026-09-29",
+        "labId": "openai",
+        "skus": ["gpt-6.1-sol", "gpt-6.1-sol-pro"],
+        "market": true,
+        "B0": {
+          "h": 0.0283,
+          "pct": 0.19
+        },
+        "C1": {
+          "h": 0.013,
+          "pct": 0.11
+        },
+        "M0": {
+          "h": 0.0363,
+          "pct": 0.55
+        },
+        "C2": {
+          "h": 0.0112,
+          "pct": 0.53
+        },
+        "C3": {
+          "h": 0.0068,
+          "pct": 0.49
+        }
+      },
+      {
+        "day": "2026-10-12",
+        "labId": "meta",
+        "skus": ["muse-wonder"],
+        "market": true,
+        "B0": {
+          "h": 0.0275,
+          "pct": 0.13
+        },
+        "C1": {
+          "h": 0.0122,
+          "pct": 0.85
+        },
+        "M0": {
+          "h": 0.0578,
+          "pct": 0.94
+        },
+        "C2": {
+          "h": 0.0214,
+          "pct": 0.94
+        },
+        "C3": {
+          "h": 0.0162,
+          "pct": 0.81
+        }
+      },
+      {
+        "day": "2026-10-13",
+        "labId": "google",
+        "skus": ["gemini-4-argon"],
+        "market": true,
+        "B0": {
+          "h": 0.0115,
+          "pct": 0.11
+        },
+        "C1": {
+          "h": 0.0124,
+          "pct": 0.66
+        },
+        "M0": {
+          "h": 0.3982,
+          "pct": 0.96
+        },
+        "C2": {
+          "h": 0.2674,
+          "pct": 0.96
+        },
+        "C3": {
+          "h": 0.0968,
+          "pct": 0.96
+        }
+      },
+      {
+        "day": "2026-10-26",
+        "labId": "openai",
+        "skus": ["gpt-6.1-terra"],
+        "market": true,
+        "B0": {
+          "h": 0.0275,
+          "pct": 0
+        },
+        "C1": {
+          "h": 0.0236,
+          "pct": 0.96
+        },
+        "M0": {
+          "h": 0.0755,
+          "pct": 0.79
+        },
+        "C2": {
+          "h": 0.0308,
+          "pct": 0.77
+        },
+        "C3": {
+          "h": 0.028,
+          "pct": 0.77
+        }
+      },
+      {
+        "day": "2026-11-09",
+        "labId": "anthropic",
+        "skus": ["claude-fable-5.2"],
+        "market": true,
+        "B0": {
+          "h": 0.0275,
+          "pct": 0
+        },
+        "C1": {
+          "h": 0.0441,
+          "pct": 0.98
+        },
+        "M0": {
+          "h": 0.1296,
+          "pct": 0.83
+        },
+        "C2": {
+          "h": 0.0594,
+          "pct": 0.81
+        },
+        "C3": {
+          "h": 0.0733,
+          "pct": 0.85
+        }
+      },
+      {
+        "day": "2026-11-09",
+        "labId": "meta",
+        "skus": ["muse-ember"],
+        "market": true,
+        "B0": {
+          "h": 0.0219,
+          "pct": 0
+        },
+        "C1": {
+          "h": 0.013,
+          "pct": 0.98
+        },
+        "M0": {
+          "h": 0.001,
+          "pct": 0
+        },
+        "C2": {
+          "h": 0.0002,
+          "pct": 0
+        },
+        "C3": {
+          "h": 0.0004,
+          "pct": 0
+        }
+      },
+      {
+        "day": "2026-11-10",
+        "labId": "google",
+        "skus": ["gemini-4-carbon"],
+        "market": true,
+        "B0": {
+          "h": 0.0179,
+          "pct": 0.89
+        },
+        "C1": {
+          "h": 0.0098,
+          "pct": 0.64
+        },
+        "M0": {
+          "h": 0.495,
+          "pct": 0.98
+        },
+        "C2": {
+          "h": 0.3395,
+          "pct": 0.98
+        },
+        "C3": {
+          "h": 0.1146,
+          "pct": 0.98
+        }
+      },
+      {
+        "day": "2026-11-11",
+        "labId": "qwen",
+        "skus": ["qwen4.0-max-preview"],
+        "market": true,
+        "B0": {
+          "h": 0.0115,
+          "pct": 0
+        },
+        "C1": {
+          "h": 0.0248,
+          "pct": 0.04
+        },
+        "M0": {
+          "h": 0.0639,
+          "pct": 0.89
+        },
+        "C2": {
+          "h": 0.0323,
+          "pct": 0.91
+        },
+        "C3": {
+          "h": 0.0397,
+          "pct": 0.91
+        }
+      },
+      {
+        "day": "2026-11-12",
+        "labId": "google",
+        "skus": ["gemini-4-hydrogen"],
+        "market": true,
+        "B0": {
+          "h": 0.0235,
+          "pct": 0.96
+        },
+        "C1": {
+          "h": 0.0058,
+          "pct": 0.11
+        },
+        "M0": {
+          "h": 0.0087,
+          "pct": 0.23
+        },
+        "C2": {
+          "h": 0.0043,
+          "pct": 0.38
+        },
+        "C3": {
+          "h": 0.0021,
+          "pct": 0.32
+        }
+      }
+    ],
+    "v3Auc7d": 0.591,
+    "v3Days": 41
+  },
+  "sensitivity": {
+    "limitedAccessTimes": {
+      "meta": {
+        "spec": "docs/release-forecast-2026-11-14.md",
+        "variant": "Argon 30 Sep, Carbon 28 Oct",
+        "window": {
+          "from": "2026-09-28",
+          "to": "2026-11-13"
+        },
+        "labDays": 329,
+        "flagshipDays": 10,
+        "weeks": 7,
+        "trainingLabDays": 1246,
+        "trainingFlagshipDays": 24,
+        "marketTrainingRows": 465,
+        "forwardMarketRows": 245,
+        "seedFlagships": 26
+      },
+      "primary": {
+        "comparison": "C3 − B0, mean log score per lab-day",
+        "mean": -0.00272,
+        "lo": -0.02315,
+        "hi": 0.01233,
+        "weeks": 7
+      },
+      "secondary": [
+        {
+          "comparison": "C1 − B0",
+          "mean": -0.00384,
+          "lo": -0.00979,
+          "hi": 0.00215,
+          "pHolm": 0.623
+        },
+        {
+          "comparison": "C2 − B0",
+          "mean": 0.00127,
+          "lo": -0.02725,
+          "hi": 0.02491,
+          "pHolm": 1
+        },
+        {
+          "comparison": "M0 − B0",
+          "mean": 0.00383,
+          "lo": -0.02698,
+          "hi": 0.0367,
+          "pHolm": 1
+        }
+      ],
+      "summary": {
+        "B0": {
+          "meanLogScore": -0.13901,
+          "meanForecast": 0.02352,
+          "calibration": {
+            "intercept": 0.264,
+            "interceptCi95": [-1, 0.945],
+            "slope": -0.027,
+            "slopeCi95": [-0.568, 1.361],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 2,
+              "meanForecast": 0.0129,
+              "observed": 0.0308
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0179,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0239,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0287,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.034,
+              "observed": 0.0152
+            }
+          ]
+        },
+        "C1": {
+          "meanLogScore": -0.14285,
+          "meanForecast": 0.01903,
+          "calibration": {
+            "intercept": 0.483,
+            "interceptCi95": [-0.846, 1.229],
+            "slope": 0.033,
+            "slopeCi95": [-0.88, 0.64],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0082,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 4,
+              "meanForecast": 0.0121,
+              "observed": 0.0606
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0169,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0236,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0342,
+              "observed": 0.0152
+            }
+          ]
+        },
+        "M0": {
+          "meanLogScore": -0.13518,
+          "meanForecast": 0.03844,
+          "calibration": {
+            "intercept": -0.273,
+            "interceptCi95": [-1.619, 0.388],
+            "slope": 0.543,
+            "slopeCi95": [-0.101, 1.185],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0048,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0102,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0158,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 2,
+              "meanForecast": 0.0307,
+              "observed": 0.0303
+            },
+            {
+              "n": 66,
+              "events": 6,
+              "meanForecast": 0.1302,
+              "observed": 0.0909
+            }
+          ]
+        },
+        "C2": {
+          "meanLogScore": -0.13774,
+          "meanForecast": 0.02237,
+          "calibration": {
+            "intercept": 0.345,
+            "interceptCi95": [-1.002, 0.993],
+            "slope": 0.492,
+            "slopeCi95": [-0.031, 1.022],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0017,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0047,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 2,
+              "meanForecast": 0.0118,
+              "observed": 0.0303
+            },
+            {
+              "n": 66,
+              "events": 2,
+              "meanForecast": 0.0205,
+              "observed": 0.0303
+            },
+            {
+              "n": 66,
+              "events": 4,
+              "meanForecast": 0.0729,
+              "observed": 0.0606
+            }
+          ]
+        },
+        "C3": {
+          "meanLogScore": -0.14173,
+          "meanForecast": 0.01867,
+          "calibration": {
+            "intercept": 0.524,
+            "interceptCi95": [-0.846, 1.188],
+            "slope": 0.431,
+            "slopeCi95": [-0.134, 0.909],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.002,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0052,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0113,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0182,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 4,
+              "meanForecast": 0.0564,
+              "observed": 0.0606
+            }
+          ]
+        }
+      },
+      "brier7": {
+        "B0": 0.12668,
+        "C1": 0.13072,
+        "M0": 0.15577,
+        "C2": 0.14225,
+        "C3": 0.13626
+      },
+      "perLab": {
+        "openai": {
+          "events": 2,
+          "marketDays": 47,
+          "C1-B0": -0.0066,
+          "M0-B0": 0.0084,
+          "C2-B0": -0.0092,
+          "C3-B0": -0.0157
+        },
+        "anthropic": {
+          "events": 2,
+          "marketDays": 42,
+          "C1-B0": -0.0022,
+          "M0-B0": 0.0536,
+          "C2-B0": 0.0706,
+          "C3-B0": 0.0585
+        },
+        "google": {
+          "events": 3,
+          "marketDays": 47,
+          "C1-B0": -0.0158,
+          "M0-B0": -0.0257,
+          "C2-B0": -0.0376,
+          "C3-B0": -0.0449
+        },
+        "xai": {
+          "events": 0,
+          "marketDays": 23,
+          "C1-B0": 0.003,
+          "M0-B0": 0.0073,
+          "C2-B0": 0.0106,
+          "C3-B0": 0.0126
+        },
+        "deepseek": {
+          "events": 0,
+          "marketDays": 21,
+          "C1-B0": -0.001,
+          "M0-B0": -0.0017,
+          "C2-B0": 0.0018,
+          "C3-B0": 0.0036
+        },
+        "qwen": {
+          "events": 1,
+          "marketDays": 32,
+          "C1-B0": 0.0082,
+          "M0-B0": 0.0252,
+          "C2-B0": 0.0233,
+          "C3-B0": 0.0249
+        },
+        "meta": {
+          "events": 2,
+          "marketDays": 33,
+          "C1-B0": -0.0124,
+          "M0-B0": -0.0402,
+          "C2-B0": -0.0505,
+          "C3-B0": -0.0581
+        }
+      },
+      "events": [
+        {
+          "day": "2026-09-28",
+          "labId": "anthropic",
+          "skus": ["claude-sonnet-5.5"],
+          "market": true,
+          "B0": {
+            "h": 0.034,
+            "pct": 0.38
+          },
+          "C1": {
+            "h": 0.0235,
+            "pct": 0.13
+          },
+          "M0": {
+            "h": 0.6316,
+            "pct": 0.98
+          },
+          "C2": {
+            "h": 0.5077,
+            "pct": 0.98
+          },
+          "C3": {
+            "h": 0.3164,
+            "pct": 0.98
+          }
+        },
+        {
+          "day": "2026-09-29",
+          "labId": "openai",
+          "skus": ["gpt-6.1-sol", "gpt-6.1-sol-pro"],
+          "market": true,
+          "B0": {
+            "h": 0.0283,
+            "pct": 0.09
+          },
+          "C1": {
+            "h": 0.013,
+            "pct": 0.13
+          },
+          "M0": {
+            "h": 0.0363,
+            "pct": 0.55
+          },
+          "C2": {
+            "h": 0.0112,
+            "pct": 0.51
+          },
+          "C3": {
+            "h": 0.0068,
+            "pct": 0.45
+          }
+        },
+        {
+          "day": "2026-09-30",
+          "labId": "google",
+          "skus": ["gemini-4-argon"],
+          "market": true,
+          "B0": {
+            "h": 0.0123,
+            "pct": 0.04
+          },
+          "C1": {
+            "h": 0.0132,
+            "pct": 0.94
+          },
+          "M0": {
+            "h": 0.0578,
+            "pct": 0.74
+          },
+          "C2": {
+            "h": 0.0245,
+            "pct": 0.74
+          },
+          "C3": {
+            "h": 0.0136,
+            "pct": 0.81
+          }
+        },
+        {
+          "day": "2026-10-12",
+          "labId": "meta",
+          "skus": ["muse-wonder"],
+          "market": true,
+          "B0": {
+            "h": 0.0283,
+            "pct": 0.21
+          },
+          "C1": {
+            "h": 0.0118,
+            "pct": 0.74
+          },
+          "M0": {
+            "h": 0.0578,
+            "pct": 0.94
+          },
+          "C2": {
+            "h": 0.0248,
+            "pct": 0.91
+          },
+          "C3": {
+            "h": 0.0173,
+            "pct": 0.94
+          }
+        },
+        {
+          "day": "2026-10-26",
+          "labId": "openai",
+          "skus": ["gpt-6.1-terra"],
+          "market": true,
+          "B0": {
+            "h": 0.0275,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0236,
+            "pct": 0.96
+          },
+          "M0": {
+            "h": 0.0755,
+            "pct": 0.79
+          },
+          "C2": {
+            "h": 0.0332,
+            "pct": 0.77
+          },
+          "C3": {
+            "h": 0.0299,
+            "pct": 0.77
+          }
+        },
+        {
+          "day": "2026-10-28",
+          "labId": "google",
+          "skus": ["gemini-4-carbon"],
+          "market": true,
+          "B0": {
+            "h": 0.0171,
+            "pct": 0.15
+          },
+          "C1": {
+            "h": 0.0102,
+            "pct": 0.85
+          },
+          "M0": {
+            "h": 0.0297,
+            "pct": 0.57
+          },
+          "C2": {
+            "h": 0.0126,
+            "pct": 0.6
+          },
+          "C3": {
+            "h": 0.0075,
+            "pct": 0.66
+          }
+        },
+        {
+          "day": "2026-11-09",
+          "labId": "anthropic",
+          "skus": ["claude-fable-5.2"],
+          "market": true,
+          "B0": {
+            "h": 0.0283,
+            "pct": 0.09
+          },
+          "C1": {
+            "h": 0.0441,
+            "pct": 0.98
+          },
+          "M0": {
+            "h": 0.1296,
+            "pct": 0.83
+          },
+          "C2": {
+            "h": 0.0658,
+            "pct": 0.83
+          },
+          "C3": {
+            "h": 0.0772,
+            "pct": 0.87
+          }
+        },
+        {
+          "day": "2026-11-09",
+          "labId": "meta",
+          "skus": ["muse-ember"],
+          "market": true,
+          "B0": {
+            "h": 0.0227,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0133,
+            "pct": 0.98
+          },
+          "M0": {
+            "h": 0.001,
+            "pct": 0
+          },
+          "C2": {
+            "h": 0.0004,
+            "pct": 0
+          },
+          "C3": {
+            "h": 0.0008,
+            "pct": 0
+          }
+        },
+        {
+          "day": "2026-11-11",
+          "labId": "qwen",
+          "skus": ["qwen4.0-max-preview"],
+          "market": true,
+          "B0": {
+            "h": 0.0115,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0251,
+            "pct": 0.04
+          },
+          "M0": {
+            "h": 0.0639,
+            "pct": 0.89
+          },
+          "C2": {
+            "h": 0.0363,
+            "pct": 0.91
+          },
+          "C3": {
+            "h": 0.0446,
+            "pct": 0.91
+          }
+        },
+        {
+          "day": "2026-11-12",
+          "labId": "google",
+          "skus": ["gemini-4-hydrogen"],
+          "market": true,
+          "B0": {
+            "h": 0.0235,
+            "pct": 0.81
+          },
+          "C1": {
+            "h": 0.0107,
+            "pct": 0.89
+          },
+          "M0": {
+            "h": 0.0087,
+            "pct": 0.23
+          },
+          "C2": {
+            "h": 0.0061,
+            "pct": 0.38
+          },
+          "C3": {
+            "h": 0.0045,
+            "pct": 0.49
+          }
+        }
+      ],
+      "v3Auc7d": 0.505,
+      "v3Days": 41
+    },
+    "hydrogenExcluded": {
+      "meta": {
+        "spec": "docs/release-forecast-2026-11-14.md",
+        "variant": "Hydrogen excluded",
+        "window": {
+          "from": "2026-09-28",
+          "to": "2026-11-13"
+        },
+        "labDays": 329,
+        "flagshipDays": 9,
+        "weeks": 7,
+        "trainingLabDays": 1246,
+        "trainingFlagshipDays": 24,
+        "marketTrainingRows": 465,
+        "forwardMarketRows": 245,
+        "seedFlagships": 26
+      },
+      "primary": {
+        "comparison": "C3 − B0, mean log score per lab-day",
+        "mean": 0.01643,
+        "lo": 0.00608,
+        "hi": 0.02767,
+        "weeks": 7
+      },
+      "secondary": [
+        {
+          "comparison": "C1 − B0",
+          "mean": -0.00239,
+          "lo": -0.00858,
+          "hi": 0.00337,
+          "pHolm": 0.433
+        },
+        {
+          "comparison": "C2 − B0",
+          "mean": 0.02419,
+          "lo": 0.00725,
+          "hi": 0.04364,
+          "pHolm": 0.028
+        },
+        {
+          "comparison": "M0 − B0",
+          "mean": 0.02414,
+          "lo": -0.00526,
+          "hi": 0.0563,
+          "pHolm": 0.249
+        }
+      ],
+      "summary": {
+        "B0": {
+          "meanLogScore": -0.1271,
+          "meanForecast": 0.02259,
+          "calibration": {
+            "intercept": 0.197,
+            "interceptCi95": [-0.961, 0.884],
+            "slope": 0.184,
+            "slopeCi95": [-0.963, 4.495],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 2,
+              "meanForecast": 0.0115,
+              "observed": 0.0308
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0169,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0227,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0283,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0334,
+              "observed": 0.0152
+            }
+          ]
+        },
+        "C1": {
+          "meanLogScore": -0.12949,
+          "meanForecast": 0.01909,
+          "calibration": {
+            "intercept": 0.37,
+            "interceptCi95": [-0.854, 1.133],
+            "slope": 0.149,
+            "slopeCi95": [-0.785, 0.832],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0086,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0124,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0169,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0235,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.034,
+              "observed": 0.0152
+            }
+          ]
+        },
+        "M0": {
+          "meanLogScore": -0.10296,
+          "meanForecast": 0.0384,
+          "calibration": {
+            "intercept": -0.392,
+            "interceptCi95": [-1.643, 0.256],
+            "slope": 1.017,
+            "slopeCi95": [0.628, 1.645],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0048,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0102,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0157,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0306,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 7,
+              "meanForecast": 0.1302,
+              "observed": 0.1061
+            }
+          ]
+        },
+        "C2": {
+          "meanLogScore": -0.10291,
+          "meanForecast": 0.02098,
+          "calibration": {
+            "intercept": 0.299,
+            "interceptCi95": [-0.959, 0.938],
+            "slope": 0.984,
+            "slopeCi95": [0.671, 1.48],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0012,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0036,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0107,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0192,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 6,
+              "meanForecast": 0.0699,
+              "observed": 0.0909
+            }
+          ]
+        },
+        "C3": {
+          "meanLogScore": -0.11067,
+          "meanForecast": 0.01793,
+          "calibration": {
+            "intercept": 0.454,
+            "interceptCi95": [-0.845, 1.127],
+            "slope": 0.974,
+            "slopeCi95": [0.684, 1.339],
+            "resamplesUsed": 1994
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 1,
+              "meanForecast": 0.0015,
+              "observed": 0.0154
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.004,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0107,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0177,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 6,
+              "meanForecast": 0.0554,
+              "observed": 0.0909
+            }
+          ]
+        }
+      },
+      "brier7": {
+        "B0": 0.12503,
+        "C1": 0.12742,
+        "M0": 0.12772,
+        "C2": 0.12118,
+        "C3": 0.12467
+      },
+      "perLab": {
+        "openai": {
+          "events": 2,
+          "marketDays": 47,
+          "C1-B0": -0.0072,
+          "M0-B0": 0.0079,
+          "C2-B0": -0.0094,
+          "C3-B0": -0.0171
+        },
+        "anthropic": {
+          "events": 2,
+          "marketDays": 42,
+          "C1-B0": -0.0021,
+          "M0-B0": 0.0538,
+          "C2-B0": 0.0714,
+          "C3-B0": 0.0597
+        },
+        "google": {
+          "events": 2,
+          "marketDays": 47,
+          "C1-B0": -0.0053,
+          "M0-B0": 0.1169,
+          "C2-B0": 0.1252,
+          "C3-B0": 0.091
+        },
+        "xai": {
+          "events": 0,
+          "marketDays": 23,
+          "C1-B0": 0.0026,
+          "M0-B0": 0.0068,
+          "C2-B0": 0.0109,
+          "C3-B0": 0.0128
+        },
+        "deepseek": {
+          "events": 0,
+          "marketDays": 21,
+          "C1-B0": -0.0012,
+          "M0-B0": -0.0019,
+          "C2-B0": 0.0017,
+          "C3-B0": 0.0036
+        },
+        "qwen": {
+          "events": 1,
+          "marketDays": 32,
+          "C1-B0": 0.0079,
+          "M0-B0": 0.0248,
+          "C2-B0": 0.0214,
+          "C3-B0": 0.0233
+        },
+        "meta": {
+          "events": 2,
+          "marketDays": 33,
+          "C1-B0": -0.0112,
+          "M0-B0": -0.0393,
+          "C2-B0": -0.0519,
+          "C3-B0": -0.0583
+        }
+      },
+      "events": [
+        {
+          "day": "2026-09-28",
+          "labId": "anthropic",
+          "skus": ["claude-sonnet-5.5"],
+          "market": true,
+          "B0": {
+            "h": 0.034,
+            "pct": 0.49
+          },
+          "C1": {
+            "h": 0.0235,
+            "pct": 0.11
+          },
+          "M0": {
+            "h": 0.6316,
+            "pct": 0.98
+          },
+          "C2": {
+            "h": 0.5077,
+            "pct": 0.98
+          },
+          "C3": {
+            "h": 0.3164,
+            "pct": 0.98
+          }
+        },
+        {
+          "day": "2026-09-29",
+          "labId": "openai",
+          "skus": ["gpt-6.1-sol", "gpt-6.1-sol-pro"],
+          "market": true,
+          "B0": {
+            "h": 0.0283,
+            "pct": 0.19
+          },
+          "C1": {
+            "h": 0.013,
+            "pct": 0.11
+          },
+          "M0": {
+            "h": 0.0363,
+            "pct": 0.55
+          },
+          "C2": {
+            "h": 0.0112,
+            "pct": 0.53
+          },
+          "C3": {
+            "h": 0.0068,
+            "pct": 0.49
+          }
+        },
+        {
+          "day": "2026-10-12",
+          "labId": "meta",
+          "skus": ["muse-wonder"],
+          "market": true,
+          "B0": {
+            "h": 0.0275,
+            "pct": 0.13
+          },
+          "C1": {
+            "h": 0.0122,
+            "pct": 0.85
+          },
+          "M0": {
+            "h": 0.0578,
+            "pct": 0.94
+          },
+          "C2": {
+            "h": 0.0214,
+            "pct": 0.94
+          },
+          "C3": {
+            "h": 0.0162,
+            "pct": 0.83
+          }
+        },
+        {
+          "day": "2026-10-13",
+          "labId": "google",
+          "skus": ["gemini-4-argon"],
+          "market": true,
+          "B0": {
+            "h": 0.0115,
+            "pct": 0.11
+          },
+          "C1": {
+            "h": 0.0124,
+            "pct": 0.66
+          },
+          "M0": {
+            "h": 0.3982,
+            "pct": 0.96
+          },
+          "C2": {
+            "h": 0.2674,
+            "pct": 0.96
+          },
+          "C3": {
+            "h": 0.0968,
+            "pct": 0.96
+          }
+        },
+        {
+          "day": "2026-10-26",
+          "labId": "openai",
+          "skus": ["gpt-6.1-terra"],
+          "market": true,
+          "B0": {
+            "h": 0.0275,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0236,
+            "pct": 0.98
+          },
+          "M0": {
+            "h": 0.0755,
+            "pct": 0.79
+          },
+          "C2": {
+            "h": 0.0308,
+            "pct": 0.77
+          },
+          "C3": {
+            "h": 0.028,
+            "pct": 0.77
+          }
+        },
+        {
+          "day": "2026-11-09",
+          "labId": "anthropic",
+          "skus": ["claude-fable-5.2"],
+          "market": true,
+          "B0": {
+            "h": 0.0275,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0441,
+            "pct": 0.98
+          },
+          "M0": {
+            "h": 0.1296,
+            "pct": 0.83
+          },
+          "C2": {
+            "h": 0.0594,
+            "pct": 0.81
+          },
+          "C3": {
+            "h": 0.0733,
+            "pct": 0.85
+          }
+        },
+        {
+          "day": "2026-11-09",
+          "labId": "meta",
+          "skus": ["muse-ember"],
+          "market": true,
+          "B0": {
+            "h": 0.0219,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.013,
+            "pct": 0.98
+          },
+          "M0": {
+            "h": 0.001,
+            "pct": 0
+          },
+          "C2": {
+            "h": 0.0002,
+            "pct": 0
+          },
+          "C3": {
+            "h": 0.0004,
+            "pct": 0
+          }
+        },
+        {
+          "day": "2026-11-10",
+          "labId": "google",
+          "skus": ["gemini-4-carbon"],
+          "market": true,
+          "B0": {
+            "h": 0.0179,
+            "pct": 0.89
+          },
+          "C1": {
+            "h": 0.0098,
+            "pct": 0.64
+          },
+          "M0": {
+            "h": 0.495,
+            "pct": 0.98
+          },
+          "C2": {
+            "h": 0.3395,
+            "pct": 0.98
+          },
+          "C3": {
+            "h": 0.1146,
+            "pct": 0.98
+          }
+        },
+        {
+          "day": "2026-11-11",
+          "labId": "qwen",
+          "skus": ["qwen4.0-max-preview"],
+          "market": true,
+          "B0": {
+            "h": 0.0115,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0248,
+            "pct": 0.04
+          },
+          "M0": {
+            "h": 0.0639,
+            "pct": 0.89
+          },
+          "C2": {
+            "h": 0.0323,
+            "pct": 0.91
+          },
+          "C3": {
+            "h": 0.0397,
+            "pct": 0.91
+          }
+        }
+      ],
+      "v3Auc7d": 0.591,
+      "v3Days": 41
+    },
+    "anyTier": {
+      "meta": {
+        "spec": "docs/release-forecast-2026-11-14.md",
+        "variant": "any-tier",
+        "window": {
+          "from": "2026-09-28",
+          "to": "2026-11-13"
+        },
+        "labDays": 329,
+        "flagshipDays": 15,
+        "weeks": 7,
+        "trainingLabDays": 1246,
+        "trainingFlagshipDays": 45,
+        "marketTrainingRows": 465,
+        "forwardMarketRows": 245,
+        "seedFlagships": 26
+      },
+      "primary": {
+        "comparison": "C3 − B0, mean log score per lab-day",
+        "mean": 0.01927,
+        "lo": 0.00627,
+        "hi": 0.03,
+        "weeks": 7
+      },
+      "secondary": [
+        {
+          "comparison": "C1 − B0",
+          "mean": -0.00248,
+          "lo": -0.01735,
+          "hi": 0.00907,
+          "pHolm": 0.713
+        },
+        {
+          "comparison": "C2 − B0",
+          "mean": 0.02236,
+          "lo": 0.00085,
+          "hi": 0.03928,
+          "pHolm": 0.068
+        },
+        {
+          "comparison": "M0 − B0",
+          "mean": 0.02091,
+          "lo": -0.0067,
+          "hi": 0.04158,
+          "pHolm": 0.179
+        }
+      ],
+      "summary": {
+        "B0": {
+          "meanLogScore": -0.18827,
+          "meanForecast": 0.0497,
+          "calibration": {
+            "intercept": -0.091,
+            "interceptCi95": [-1.081, 0.499],
+            "slope": -1.538,
+            "slopeCi95": [-4.731, 0.063],
+            "resamplesUsed": 2000
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 3,
+              "meanForecast": 0.0382,
+              "observed": 0.0462
+            },
+            {
+              "n": 66,
+              "events": 5,
+              "meanForecast": 0.0461,
+              "observed": 0.0758
+            },
+            {
+              "n": 66,
+              "events": 5,
+              "meanForecast": 0.049,
+              "observed": 0.0758
+            },
+            {
+              "n": 66,
+              "events": 2,
+              "meanForecast": 0.0535,
+              "observed": 0.0303
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0615,
+              "observed": 0
+            }
+          ]
+        },
+        "C1": {
+          "meanLogScore": -0.19075,
+          "meanForecast": 0.03537,
+          "calibration": {
+            "intercept": 0.266,
+            "interceptCi95": [-0.74, 0.868],
+            "slope": -0.568,
+            "slopeCi95": [-3.724, 1.752],
+            "resamplesUsed": 2000
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 4,
+              "meanForecast": 0.0248,
+              "observed": 0.0615
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.028,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.031,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 6,
+              "meanForecast": 0.04,
+              "observed": 0.0909
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.053,
+              "observed": 0.0152
+            }
+          ]
+        },
+        "M0": {
+          "meanLogScore": -0.16737,
+          "meanForecast": 0.0425,
+          "calibration": {
+            "intercept": 0.082,
+            "interceptCi95": [-0.936, 0.643],
+            "slope": 0.773,
+            "slopeCi95": [0.387, 1.299],
+            "resamplesUsed": 2000
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 2,
+              "meanForecast": 0.0048,
+              "observed": 0.0308
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0114,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0259,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 4,
+              "meanForecast": 0.0392,
+              "observed": 0.0606
+            },
+            {
+              "n": 66,
+              "events": 8,
+              "meanForecast": 0.1306,
+              "observed": 0.1212
+            }
+          ]
+        },
+        "C2": {
+          "meanLogScore": -0.16591,
+          "meanForecast": 0.04165,
+          "calibration": {
+            "intercept": 0.101,
+            "interceptCi95": [-0.917, 0.647],
+            "slope": 0.936,
+            "slopeCi95": [0.478, 1.543],
+            "resamplesUsed": 2000
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 2,
+              "meanForecast": 0.0078,
+              "observed": 0.0308
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0162,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 0,
+              "meanForecast": 0.0271,
+              "observed": 0
+            },
+            {
+              "n": 66,
+              "events": 4,
+              "meanForecast": 0.042,
+              "observed": 0.0606
+            },
+            {
+              "n": 66,
+              "events": 8,
+              "meanForecast": 0.1146,
+              "observed": 0.1212
+            }
+          ]
+        },
+        "C3": {
+          "meanLogScore": -0.16901,
+          "meanForecast": 0.03804,
+          "calibration": {
+            "intercept": 0.198,
+            "interceptCi95": [-0.822, 0.746],
+            "slope": 1,
+            "slopeCi95": [0.64, 1.471],
+            "resamplesUsed": 2000
+          },
+          "reliability": [
+            {
+              "n": 65,
+              "events": 2,
+              "meanForecast": 0.0094,
+              "observed": 0.0308
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0182,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 1,
+              "meanForecast": 0.0264,
+              "observed": 0.0152
+            },
+            {
+              "n": 66,
+              "events": 3,
+              "meanForecast": 0.0393,
+              "observed": 0.0455
+            },
+            {
+              "n": 66,
+              "events": 8,
+              "meanForecast": 0.0965,
+              "observed": 0.1212
+            }
+          ]
+        }
+      },
+      "brier7": {
+        "B0": 0.18908,
+        "C1": 0.18419,
+        "M0": 0.16605,
+        "C2": 0.16487,
+        "C3": 0.16394
+      },
+      "perLab": {
+        "openai": {
+          "events": 3,
+          "marketDays": 47,
+          "C1-B0": -0.0164,
+          "M0-B0": 0.009,
+          "C2-B0": 0.012,
+          "C3-B0": -0.0026
+        },
+        "anthropic": {
+          "events": 3,
+          "marketDays": 42,
+          "C1-B0": -0.0034,
+          "M0-B0": 0.0725,
+          "C2-B0": 0.0636,
+          "C3-B0": 0.0548
+        },
+        "google": {
+          "events": 4,
+          "marketDays": 47,
+          "C1-B0": -0.0049,
+          "M0-B0": 0.0551,
+          "C2-B0": 0.0567,
+          "C3-B0": 0.0563
+        },
+        "xai": {
+          "events": 0,
+          "marketDays": 23,
+          "C1-B0": 0.0094,
+          "M0-B0": 0.0166,
+          "C2-B0": 0.0141,
+          "C3-B0": 0.02
+        },
+        "deepseek": {
+          "events": 1,
+          "marketDays": 21,
+          "C1-B0": 0.0101,
+          "M0-B0": 0.0578,
+          "C2-B0": 0.0537,
+          "C3-B0": 0.0461
+        },
+        "qwen": {
+          "events": 1,
+          "marketDays": 32,
+          "C1-B0": 0.0071,
+          "M0-B0": 0.0286,
+          "C2-B0": 0.0292,
+          "C3-B0": 0.0281
+        },
+        "meta": {
+          "events": 3,
+          "marketDays": 33,
+          "C1-B0": -0.0192,
+          "M0-B0": -0.0933,
+          "C2-B0": -0.0728,
+          "C3-B0": -0.0679
+        }
+      },
+      "events": [
+        {
+          "day": "2026-09-28",
+          "labId": "anthropic",
+          "skus": ["claude-sonnet-5.5"],
+          "market": true,
+          "B0": {
+            "h": 0.0463,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0329,
+            "pct": 0.06
+          },
+          "M0": {
+            "h": 0.6316,
+            "pct": 0.98
+          },
+          "C2": {
+            "h": 0.469,
+            "pct": 0.98
+          },
+          "C3": {
+            "h": 0.2904,
+            "pct": 0.98
+          }
+        },
+        {
+          "day": "2026-09-29",
+          "labId": "openai",
+          "skus": ["gpt-6.1-sol", "gpt-6.1-sol-pro"],
+          "market": true,
+          "B0": {
+            "h": 0.0407,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.024,
+            "pct": 0.09
+          },
+          "M0": {
+            "h": 0.0363,
+            "pct": 0.55
+          },
+          "C2": {
+            "h": 0.0366,
+            "pct": 0.53
+          },
+          "C3": {
+            "h": 0.0233,
+            "pct": 0.49
+          }
+        },
+        {
+          "day": "2026-10-04",
+          "labId": "google",
+          "skus": ["diarizationlm-gemma-4-e4b-v1"],
+          "market": true,
+          "B0": {
+            "h": 0.0415,
+            "pct": 0.04
+          },
+          "C1": {
+            "h": 0.0423,
+            "pct": 0.6
+          },
+          "M0": {
+            "h": 0.0318,
+            "pct": 0.66
+          },
+          "C2": {
+            "h": 0.0333,
+            "pct": 0.57
+          },
+          "C3": {
+            "h": 0.0426,
+            "pct": 0.57
+          }
+        },
+        {
+          "day": "2026-10-07",
+          "labId": "anthropic",
+          "skus": ["claude-haiku-5.5"],
+          "market": true,
+          "B0": {
+            "h": 0.0471,
+            "pct": 0.09
+          },
+          "C1": {
+            "h": 0.0386,
+            "pct": 0.36
+          },
+          "M0": {
+            "h": 0.1115,
+            "pct": 0.77
+          },
+          "C2": {
+            "h": 0.0983,
+            "pct": 0.74
+          },
+          "C3": {
+            "h": 0.0743,
+            "pct": 0.7
+          }
+        },
+        {
+          "day": "2026-10-12",
+          "labId": "meta",
+          "skus": ["muse-wonder"],
+          "market": true,
+          "B0": {
+            "h": 0.0527,
+            "pct": 0.15
+          },
+          "C1": {
+            "h": 0.0242,
+            "pct": 0.21
+          },
+          "M0": {
+            "h": 0.0578,
+            "pct": 0.94
+          },
+          "C2": {
+            "h": 0.0573,
+            "pct": 0.91
+          },
+          "C3": {
+            "h": 0.0442,
+            "pct": 0.91
+          }
+        },
+        {
+          "day": "2026-10-13",
+          "labId": "google",
+          "skus": ["gemini-4-argon"],
+          "market": true,
+          "B0": {
+            "h": 0.0479,
+            "pct": 0.45
+          },
+          "C1": {
+            "h": 0.0374,
+            "pct": 0.26
+          },
+          "M0": {
+            "h": 0.3982,
+            "pct": 0.96
+          },
+          "C2": {
+            "h": 0.3065,
+            "pct": 0.96
+          },
+          "C3": {
+            "h": 0.2462,
+            "pct": 0.96
+          }
+        },
+        {
+          "day": "2026-10-15",
+          "labId": "meta",
+          "skus": ["muse-spark-open"],
+          "market": true,
+          "B0": {
+            "h": 0.0535,
+            "pct": 0.47
+          },
+          "C1": {
+            "h": 0.0185,
+            "pct": 0.04
+          },
+          "M0": {
+            "h": 0.006,
+            "pct": 0.17
+          },
+          "C2": {
+            "h": 0.009,
+            "pct": 0.15
+          },
+          "C3": {
+            "h": 0.0091,
+            "pct": 0.06
+          }
+        },
+        {
+          "day": "2026-10-17",
+          "labId": "deepseek",
+          "skus": ["deepseek-v4.1-flash@1017"],
+          "market": true,
+          "B0": {
+            "h": 0.0487,
+            "pct": 0.68
+          },
+          "C1": {
+            "h": 0.028,
+            "pct": 0.57
+          },
+          "M0": {
+            "h": 0.1741,
+            "pct": 0.98
+          },
+          "C2": {
+            "h": 0.1527,
+            "pct": 0.98
+          },
+          "C3": {
+            "h": 0.1087,
+            "pct": 0.98
+          }
+        },
+        {
+          "day": "2026-10-26",
+          "labId": "openai",
+          "skus": ["gpt-6.1-terra"],
+          "market": true,
+          "B0": {
+            "h": 0.0415,
+            "pct": 0.04
+          },
+          "C1": {
+            "h": 0.0313,
+            "pct": 0.64
+          },
+          "M0": {
+            "h": 0.0755,
+            "pct": 0.79
+          },
+          "C2": {
+            "h": 0.0745,
+            "pct": 0.79
+          },
+          "C3": {
+            "h": 0.0509,
+            "pct": 0.74
+          }
+        },
+        {
+          "day": "2026-10-27",
+          "labId": "openai",
+          "skus": ["gpt-6.1-terra-pro"],
+          "market": true,
+          "B0": {
+            "h": 0.0479,
+            "pct": 0.57
+          },
+          "C1": {
+            "h": 0.0232,
+            "pct": 0.04
+          },
+          "M0": {
+            "h": 0.0517,
+            "pct": 0.7
+          },
+          "C2": {
+            "h": 0.0563,
+            "pct": 0.7
+          },
+          "C3": {
+            "h": 0.0402,
+            "pct": 0.66
+          }
+        },
+        {
+          "day": "2026-11-09",
+          "labId": "anthropic",
+          "skus": ["claude-fable-5.2"],
+          "market": true,
+          "B0": {
+            "h": 0.0463,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0436,
+            "pct": 0.53
+          },
+          "M0": {
+            "h": 0.1296,
+            "pct": 0.83
+          },
+          "C2": {
+            "h": 0.1127,
+            "pct": 0.81
+          },
+          "C3": {
+            "h": 0.0844,
+            "pct": 0.79
+          }
+        },
+        {
+          "day": "2026-11-09",
+          "labId": "meta",
+          "skus": ["muse-ember"],
+          "market": true,
+          "B0": {
+            "h": 0.0463,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0298,
+            "pct": 0.98
+          },
+          "M0": {
+            "h": 0.001,
+            "pct": 0
+          },
+          "C2": {
+            "h": 0.002,
+            "pct": 0
+          },
+          "C3": {
+            "h": 0.0035,
+            "pct": 0
+          }
+        },
+        {
+          "day": "2026-11-10",
+          "labId": "google",
+          "skus": ["gemini-4-carbon"],
+          "market": true,
+          "B0": {
+            "h": 0.0479,
+            "pct": 0.45
+          },
+          "C1": {
+            "h": 0.0426,
+            "pct": 0.72
+          },
+          "M0": {
+            "h": 0.495,
+            "pct": 0.98
+          },
+          "C2": {
+            "h": 0.3592,
+            "pct": 0.98
+          },
+          "C3": {
+            "h": 0.2944,
+            "pct": 0.98
+          }
+        },
+        {
+          "day": "2026-11-11",
+          "labId": "qwen",
+          "skus": ["qwen4.0-max-preview"],
+          "market": true,
+          "B0": {
+            "h": 0.0519,
+            "pct": 0
+          },
+          "C1": {
+            "h": 0.0547,
+            "pct": 0.17
+          },
+          "M0": {
+            "h": 0.0639,
+            "pct": 0.89
+          },
+          "C2": {
+            "h": 0.0676,
+            "pct": 0.91
+          },
+          "C3": {
+            "h": 0.0861,
+            "pct": 0.91
+          }
+        },
+        {
+          "day": "2026-11-12",
+          "labId": "google",
+          "skus": ["gemini-4-hydrogen"],
+          "market": true,
+          "B0": {
+            "h": 0.0463,
+            "pct": 0.15
+          },
+          "C1": {
+            "h": 0.0355,
+            "pct": 0.19
+          },
+          "M0": {
+            "h": 0.0087,
+            "pct": 0.23
+          },
+          "C2": {
+            "h": 0.0147,
+            "pct": 0.34
+          },
+          "C3": {
+            "h": 0.0191,
+            "pct": 0.3
+          }
+        }
+      ],
+      "v3Auc7d": 0.729,
+      "v3Days": 41
+    }
+  }
+}

@@ -1,0 +1,3652 @@
+[
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.3-prime",
+    "name": "GLM 5.3 Prime",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.3-prime",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-max-prime",
+    "name": "Qwen3.8 Max Prime",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.8-max-prime",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6-luna-pro",
+    "name": "GPT-6 Luna Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6-luna-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6-luna",
+    "name": "GPT-6 Luna",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6-luna",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6-sol-pro",
+    "name": "GPT-6 Sol Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6-sol-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6-sol",
+    "name": "GPT-6 Sol",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6-sol",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-5.5",
+    "name": "Claude Opus 5.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-5.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-4.7",
+    "name": "Grok 4.7",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-4.7",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-omni-flash",
+    "name": "Qwen3.8 Omni Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.8-omni-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.3-flashx",
+    "name": "GLM 5.3 FlashX",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.3-flashx",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4.1-flash",
+    "name": "DeepSeek V4.1 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v4.1-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6-astra",
+    "name": "GPT-6 Astra",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6-astra",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6-astra-pro",
+    "name": "GPT-6 Astra Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6-astra-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-max@0902",
+    "name": "Qwen3.8 Max (0902)",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.8-max-0902",
+    "baseline": 1,
+    "snapshot": "0902"
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-spark-1.3",
+    "name": "Muse Spark 1.3 Contributor",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-spark-1.3-contributor",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.8-flash",
+    "name": "Gemini 3.8 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.8-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-fable-5.1",
+    "name": "Claude Fable 5.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-fable-5.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-flash",
+    "name": "Qwen3.8 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.8-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.3-flash",
+    "name": "GLM 5.3 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.3-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-spark-1.2",
+    "name": "Muse Spark 1.2 Contributor",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-spark-1.2-contributor",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-flash-vision-exp",
+    "name": "DeepSeek V4 Flash Vision Exp",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v4-flash-vision-exp",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.3",
+    "name": "GLM 5.3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.3",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-27b",
+    "name": "Qwen3.8 27B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.8-27b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.7-flash",
+    "name": "Gemini 3.7 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.7-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-2.4t",
+    "name": "Qwen3.8 2.4T A95B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.8-2.4t-a95b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-pro@0813",
+    "name": "DeepSeek V4 Pro 0813",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v4-pro-0813",
+    "baseline": 1,
+    "snapshot": "0813"
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-4.6",
+    "name": "Grok 4.6",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-4.6",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-glimmer-30b",
+    "name": "Muse Glimmer 30B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-glimmer-30b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-flash@0731",
+    "name": "DeepSeek V4 Flash 0731",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v4-flash-0731",
+    "baseline": 1,
+    "snapshot": "0731"
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.7-flash",
+    "name": "Qwen3.7 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.7-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-5",
+    "name": "Claude Opus 5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.6-flash",
+    "name": "Gemini 3.6 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.6-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.5-flash-lite",
+    "name": "Gemini 3.5 Flash Lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.5-flash-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k3",
+    "name": "Kimi K3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k3",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-spark-1.1",
+    "name": "Muse Spark 1.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-spark-1.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.6-luna-pro",
+    "name": "GPT-5.6 Luna Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.6-luna-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.6-luna",
+    "name": "GPT-5.6 Luna",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.6-luna",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.6-terra-pro",
+    "name": "GPT-5.6 Terra Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.6-terra-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.6-terra",
+    "name": "GPT-5.6 Terra",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.6-terra",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.6-sol-pro",
+    "name": "GPT-5.6 Sol Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.6-sol-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.6-sol",
+    "name": "GPT-5.6 Sol",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.6-sol",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-4.5",
+    "name": "Grok 4.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-4.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-sonnet-5",
+    "name": "Claude Sonnet 5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-sonnet-5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.2",
+    "name": "GLM 5.2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k2.7-code",
+    "name": "Kimi K2.7 Code",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k2.7-code",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-fable-5",
+    "name": "Claude Fable 5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-fable-5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.7-plus",
+    "name": "Qwen3.7 Plus",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.7-plus",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-4.8",
+    "name": "Claude Opus 4.8",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-4.8",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.7-max",
+    "name": "Qwen3.7 Max",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.7-max",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-build-0.1",
+    "name": "Grok Build 0.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-build-0.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.5-flash",
+    "name": "Gemini 3.5 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.5-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.1-flash-lite",
+    "name": "Gemini 3.1 Flash Lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.1-flash-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-chat-latest",
+    "name": "GPT Chat Latest",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-chat-latest",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-4.3",
+    "name": "Grok 4.3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-4.3",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-medium-3.5",
+    "name": "Mistral Medium 3.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-medium-3-5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-plus@20260420",
+    "name": "Qwen3.5 Plus 2026-04-20",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-plus-20260420",
+    "baseline": 1,
+    "snapshot": "20260420"
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.6-flash",
+    "name": "Qwen3.6 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.6-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.6-35b",
+    "name": "Qwen3.6 35B A3B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.6-35b-a3b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.6-max-preview",
+    "name": "Qwen3.6 Max Preview",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.6-max-preview",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.6-27b",
+    "name": "Qwen3.6 27B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.6-27b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.5-pro",
+    "name": "GPT-5.5 Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.5-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.5",
+    "name": "GPT-5.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-pro",
+    "name": "DeepSeek V4 Pro 0423",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v4-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-flash",
+    "name": "DeepSeek V4 Flash 0423",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v4-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k2.6",
+    "name": "Kimi K2.6",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k2.6",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-4.7",
+    "name": "Claude Opus 4.7",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-4.7",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.1",
+    "name": "GLM 5.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-4-26b",
+    "name": "Gemma 4 26B A4B ",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemma-4-26b-a4b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-4-31b",
+    "name": "Gemma 4 31B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemma-4-31b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.6-plus",
+    "name": "Qwen3.6 Plus",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.6-plus",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5v-turbo",
+    "name": "GLM 5V Turbo",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5v-turbo",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-4.20-multi-agent",
+    "name": "Grok 4.20 Multi-Agent",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-4.20-multi-agent",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-4.20",
+    "name": "Grok 4.20",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "x-ai/grok-4.20",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.4-nano",
+    "name": "GPT-5.4 Nano",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.4-nano",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.4-mini",
+    "name": "GPT-5.4 Mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.4-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-small-2603",
+    "name": "Mistral Small 4",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-small-2603",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5-turbo",
+    "name": "GLM 5 Turbo",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5-turbo",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-9b",
+    "name": "Qwen3.5-9B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-9b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.4-pro",
+    "name": "GPT-5.4 Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.4-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.4",
+    "name": "GPT-5.4",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.4",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.1-flash-lite-preview",
+    "name": "Gemini 3.1 Flash Lite Preview",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.1-flash-lite-preview",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-35b",
+    "name": "Qwen3.5-35B-A3B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-35b-a3b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-27b",
+    "name": "Qwen3.5-27B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-27b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-122b",
+    "name": "Qwen3.5-122B-A10B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-122b-a10b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-flash@02-23",
+    "name": "Qwen3.5-Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-flash-02-23",
+    "baseline": 1,
+    "snapshot": "02-23"
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.1-pro-preview-customtools",
+    "name": "Gemini 3.1 Pro Preview Custom Tools",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.1-pro-preview-customtools",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.3-codex",
+    "name": "GPT-5.3-Codex",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.3-codex",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3.1-pro-preview",
+    "name": "Gemini 3.1 Pro Preview",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3.1-pro-preview",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-sonnet-4.6",
+    "name": "Claude Sonnet 4.6",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-sonnet-4.6",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-plus@02-15",
+    "name": "Qwen3.5 Plus 2026-02-15",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-plus-02-15",
+    "baseline": 1,
+    "snapshot": "02-15"
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-397b",
+    "name": "Qwen3.5 397B A17B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3.5-397b-a17b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5",
+    "name": "GLM 5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-max-thinking",
+    "name": "Qwen3 Max Thinking",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-max-thinking",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-4.6",
+    "name": "Claude Opus 4.6",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-4.6",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-coder-next",
+    "name": "Qwen3 Coder Next",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-coder-next",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k2.5",
+    "name": "Kimi K2.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k2.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.7-flash",
+    "name": "GLM 4.7 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.7-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.2-codex",
+    "name": "GPT-5.2-Codex",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.2-codex",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.7",
+    "name": "GLM 4.7",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.7",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-3-flash-preview",
+    "name": "Gemini 3 Flash Preview",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-3-flash-preview",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.2-chat",
+    "name": "GPT-5.2 Chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.2-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.2-pro",
+    "name": "GPT-5.2 Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.2-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.2",
+    "name": "GPT-5.2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "devstral-2512",
+    "name": "Devstral 2 2512",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/devstral-2512",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.6v",
+    "name": "GLM 4.6V",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.6v",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.1-codex-max",
+    "name": "GPT-5.1-Codex-Max",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.1-codex-max",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "ministral-3-14b@2512",
+    "name": "Ministral 3 14B 2512",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/ministral-14b-2512",
+    "baseline": 1,
+    "snapshot": "2512"
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "ministral-3-8b@2512",
+    "name": "Ministral 3 8B 2512",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/ministral-8b-2512",
+    "baseline": 1,
+    "snapshot": "2512"
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "ministral-3-3b@2512",
+    "name": "Ministral 3 3B 2512",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/ministral-3b-2512",
+    "baseline": 1,
+    "snapshot": "2512"
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-large-2512",
+    "name": "Mistral Large 3 2512",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-large-2512",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3.2",
+    "name": "DeepSeek V3.2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v3.2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-4.5",
+    "name": "Claude Opus 4.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-4.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.1",
+    "name": "GPT-5.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.1-codex",
+    "name": "GPT-5.1-Codex",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.1-codex",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5.1-codex-mini",
+    "name": "GPT-5.1-Codex-Mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5.1-codex-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k2-thinking",
+    "name": "Kimi K2 Thinking",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k2-thinking",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "voxtral-small-24b-2507",
+    "name": "Voxtral Small 24B 2507",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/voxtral-small-24b-2507",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-oss-safeguard-20b",
+    "name": "gpt-oss-safeguard-20b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-oss-safeguard-20b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-32b",
+    "name": "Qwen3 VL 32B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-32b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-haiku-4.5",
+    "name": "Claude Haiku 4.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-haiku-4.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-8b-thinking",
+    "name": "Qwen3 VL 8B Thinking",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-8b-thinking",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-8b",
+    "name": "Qwen3 VL 8B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-8b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-30b-thinking",
+    "name": "Qwen3 VL 30B A3B Thinking",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-30b-a3b-thinking",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-30b",
+    "name": "Qwen3 VL 30B A3B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-30b-a3b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5-pro",
+    "name": "GPT-5 Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.6",
+    "name": "GLM 4.6",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.6",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-sonnet-4.5",
+    "name": "Claude Sonnet 4.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-sonnet-4.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3.2-exp",
+    "name": "DeepSeek V3.2 Exp",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v3.2-exp",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-235b-thinking",
+    "name": "Qwen3 VL 235B A22B Thinking",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-235b-a22b-thinking",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-235b",
+    "name": "Qwen3 VL 235B A22B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-vl-235b-a22b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-max",
+    "name": "Qwen3 Max",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-max",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-coder-plus",
+    "name": "Qwen3 Coder Plus",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-coder-plus",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3.1-terminus",
+    "name": "DeepSeek V3.1 Terminus",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-v3.1-terminus",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-coder-flash",
+    "name": "Qwen3 Coder Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-coder-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-next-80b-thinking",
+    "name": "Qwen3 Next 80B A3B Thinking",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-next-80b-a3b-thinking",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-next-80b",
+    "name": "Qwen3 Next 80B A3B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-next-80b-a3b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-plus@2025-07-28",
+    "name": "Qwen Plus 0728",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen-plus-2025-07-28",
+    "baseline": 1,
+    "snapshot": "2025-07-28"
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k2@0905",
+    "name": "Kimi K2 0905",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k2-0905",
+    "baseline": 1,
+    "snapshot": "0905"
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-30b-thinking@2507",
+    "name": "Qwen3 30B A3B Thinking 2507",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-30b-a3b-thinking-2507",
+    "baseline": 1,
+    "snapshot": "2507"
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3.1",
+    "name": "DeepSeek V3.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-chat-v3.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-medium-3.1",
+    "name": "Mistral Medium 3.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-medium-3.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.5v",
+    "name": "GLM 4.5V",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.5v",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5",
+    "name": "GPT-5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5-mini",
+    "name": "GPT-5 Mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-5-nano",
+    "name": "GPT-5 Nano",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-5-nano",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-oss-120b",
+    "name": "gpt-oss-120b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-oss-120b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-oss-20b",
+    "name": "gpt-oss-20b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-oss-20b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-opus-4.1",
+    "name": "Claude Opus 4.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-opus-4.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "codestral-2508",
+    "name": "Codestral 2508",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/codestral-2508",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-coder-30b",
+    "name": "Qwen3 Coder 30B A3B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-coder-30b-a3b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-30b@2507",
+    "name": "Qwen3 30B A3B Instruct 2507",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-30b-a3b-instruct-2507",
+    "baseline": 1,
+    "snapshot": "2507"
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.5",
+    "name": "GLM 4.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-4.5-air",
+    "name": "GLM 4.5 Air",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-4.5-air",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-235b-thinking@2507",
+    "name": "Qwen3 235B A22B Thinking 2507",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-235b-a22b-thinking-2507",
+    "baseline": 1,
+    "snapshot": "2507"
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-coder",
+    "name": "Qwen3 Coder 480B A35B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-coder",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-2.5-flash-lite",
+    "name": "Gemini 2.5 Flash Lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-2.5-flash-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-235b@2507",
+    "name": "Qwen3 235B A22B Instruct 2507",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-235b-a22b-2507",
+    "baseline": 1,
+    "snapshot": "2507"
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k2",
+    "name": "Kimi K2 0711",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-small-3.2-24b",
+    "name": "Mistral Small 3.2 24B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-small-3.2-24b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-2.5-flash",
+    "name": "Gemini 2.5 Flash",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-2.5-flash",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-2.5-pro",
+    "name": "Gemini 2.5 Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-2.5-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o3-pro",
+    "name": "o3 Pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o3-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-2.5-pro-preview",
+    "name": "Gemini 2.5 Pro Preview 06-05",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-2.5-pro-preview",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1@0528",
+    "name": "R1 0528",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-r1-0528",
+    "baseline": 1,
+    "snapshot": "0528"
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-sonnet-4",
+    "name": "Claude Sonnet 4",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-sonnet-4",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-medium-3",
+    "name": "Mistral Medium 3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-medium-3",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-guard-4-12b",
+    "name": "Llama Guard 4 12B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-guard-4-12b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-30b",
+    "name": "Qwen3 30B A3B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-30b-a3b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-8b",
+    "name": "Qwen3 8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-8b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-14b",
+    "name": "Qwen3 14B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-14b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-32b",
+    "name": "Qwen3 32B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-32b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-235b",
+    "name": "Qwen3 235B A22B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen3-235b-a22b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o4-mini-high",
+    "name": "o4 Mini High",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o4-mini-high",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o3",
+    "name": "o3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o3",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o4-mini",
+    "name": "o4 Mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o4-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4.1",
+    "name": "GPT-4.1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4.1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4.1-mini",
+    "name": "GPT-4.1 Mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4.1-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4.1-nano",
+    "name": "GPT-4.1 Nano",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4.1-nano",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-4-maverick",
+    "name": "Llama 4 Maverick",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-4-maverick",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-4-scout",
+    "name": "Llama 4 Scout",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-4-scout",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3@0324",
+    "name": "DeepSeek V3 0324",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-chat-v3-0324",
+    "baseline": 1,
+    "snapshot": "0324"
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o1-pro",
+    "name": "o1-pro",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o1-pro",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-small-3.1-24b",
+    "name": "Mistral Small 3.1 24B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-small-3.1-24b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-3-4b",
+    "name": "Gemma 3 4B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemma-3-4b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-3-12b",
+    "name": "Gemma 3 12B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemma-3-12b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-3-27b",
+    "name": "Gemma 3 27B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemma-3-27b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-saba",
+    "name": "Saba",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-saba",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o3-mini-high",
+    "name": "o3 Mini High",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o3-mini-high",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen2.5-vl-72b",
+    "name": "Qwen2.5 VL 72B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen2.5-vl-72b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-plus",
+    "name": "Qwen-Plus",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen-plus",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o3-mini",
+    "name": "o3 Mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o3-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-small-3",
+    "name": "Mistral Small 3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-small-24b-instruct-2501",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-distill-llama-70b",
+    "name": "R1 Distill Llama 70B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-r1-distill-llama-70b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1",
+    "name": "R1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-r1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3",
+    "name": "DeepSeek V3",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "deepseek/deepseek-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "o1",
+    "name": "o1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/o1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.3-70b",
+    "name": "Llama 3.3 70B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-3.3-70b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4o@2024-11-20",
+    "name": "GPT-4o (2024-11-20)",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4o-2024-11-20",
+    "baseline": 1,
+    "snapshot": "2024-11-20"
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-large-2407",
+    "name": "Mistral Large 2407",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-large-2407",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-2.5-coder-32b",
+    "name": "Qwen2.5 Coder 32B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen-2.5-coder-32b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-2.5-7b",
+    "name": "Qwen2.5 7B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen-2.5-7b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.2-1b",
+    "name": "Llama 3.2 1B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-3.2-1b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.2-3b",
+    "name": "Llama 3.2 3B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-3.2-3b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-2.5-72b",
+    "name": "Qwen2.5 72B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "qwen/qwen-2.5-72b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4o@2024-08-06",
+    "name": "GPT-4o (2024-08-06)",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4o-2024-08-06",
+    "baseline": 1,
+    "snapshot": "2024-08-06"
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.1-70b",
+    "name": "Llama 3.1 70B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-3.1-70b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.1-8b",
+    "name": "Llama 3.1 8B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "meta-llama/llama-3.1-8b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-nemo",
+    "name": "Mistral Nemo",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-nemo",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4o-mini",
+    "name": "GPT-4o-mini",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4o-mini",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4o-mini@2024-07-18",
+    "name": "GPT-4o-mini (2024-07-18)",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4o-mini-2024-07-18",
+    "baseline": 1,
+    "snapshot": "2024-07-18"
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-2-27b",
+    "name": "Gemma 2 27B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "google/gemma-2-27b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4o",
+    "name": "GPT-4o",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4o",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4o@2024-05-13",
+    "name": "GPT-4o (2024-05-13)",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4o-2024-05-13",
+    "baseline": 1,
+    "snapshot": "2024-05-13"
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mixtral-8x22b-instruct",
+    "name": "Mixtral 8x22B Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mixtral-8x22b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4-turbo",
+    "name": "GPT-4 Turbo",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4-turbo",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-large",
+    "name": "Mistral Large",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-large",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-3.5-turbo@0613",
+    "name": "GPT-3.5 Turbo (older v0613)",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-3.5-turbo-0613",
+    "baseline": 1,
+    "snapshot": "0613"
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-3.5-turbo",
+    "name": "GPT-3.5 Turbo Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-3.5-turbo-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-3.5-turbo-16k",
+    "name": "GPT-3.5 Turbo 16k",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-3.5-turbo-16k",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-4",
+    "name": "GPT-4",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-4",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-max",
+    "name": "Qwen3.8-Max",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "qwen-chat",
+    "source_key": "qwen3.8-max",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "circuit-sparsity",
+    "name": "openai/circuit-sparsity",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:openai",
+    "source_key": "openai/circuit-sparsity",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-oss-safeguard-120b",
+    "name": "openai/gpt-oss-safeguard-120b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:openai",
+    "source_key": "openai/gpt-oss-safeguard-120b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "diffusiongemma-26b-a4b-it",
+    "name": "google/diffusiongemma-26B-A4B-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/diffusiongemma-26B-A4B-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-4-12b",
+    "name": "google/gemma-4-12B-it-qat-w4a16-ct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/gemma-4-12B-it-qat-w4a16-ct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-4-e2b",
+    "name": "google/gemma-4-E2B-it-qat-w4a16-ct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/gemma-4-E2B-it-qat-w4a16-ct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-4-e4b",
+    "name": "google/gemma-4-E4B-it-qat-w4a16-ct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/gemma-4-E4B-it-qat-w4a16-ct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "translategemma-27b-it",
+    "name": "google/translategemma-27b-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/translategemma-27b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "translategemma-12b-it",
+    "name": "google/translategemma-12b-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/translategemma-12b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "translategemma-4b-it",
+    "name": "google/translategemma-4b-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/translategemma-4b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "medgemma-1.5-4b-it",
+    "name": "google/medgemma-1.5-4b-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/medgemma-1.5-4b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "t5gemma-2-4b-4b",
+    "name": "google/t5gemma-2-4b-4b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/t5gemma-2-4b-4b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "t5gemma-2-1b-1b",
+    "name": "google/t5gemma-2-1b-1b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/t5gemma-2-1b-1b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "t5gemma-2-270m-270m",
+    "name": "google/t5gemma-2-270m-270m",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/t5gemma-2-270m-270m",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "functiongemma-270m-it",
+    "name": "google/functiongemma-270m-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/functiongemma-270m-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "vaultgemma-1b",
+    "name": "google/vaultgemma-1b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/vaultgemma-1b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemma-3-270m",
+    "name": "google/gemma-3-270m-it-qat-q4_0-unquantized",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/gemma-3-270m-it-qat-q4_0-unquantized",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "medgemma-27b-it",
+    "name": "google/medgemma-27b-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/medgemma-27b-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "t5gemma-xl-xl-prefixlm-it",
+    "name": "google/t5gemma-xl-xl-prefixlm-it",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:google",
+    "source_key": "google/t5gemma-xl-xl-prefixlm-it",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-2",
+    "name": "xai-org/grok-2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:xai-org",
+    "source_key": "xai-org/grok-2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "xai",
+    "sku": "grok-1",
+    "name": "xai-org/grok-1",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:xai-org",
+    "source_key": "xai-org/grok-1",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-pro-dspark",
+    "name": "deepseek-ai/DeepSeek-V4-Pro-DSpark",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V4-Pro-DSpark",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4-flash-dspark",
+    "name": "deepseek-ai/DeepSeek-V4-Flash-DSpark",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V4-Flash-DSpark",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-ocr-2",
+    "name": "deepseek-ai/DeepSeek-OCR-2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-OCR-2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v3.2-speciale",
+    "name": "deepseek-ai/DeepSeek-V3.2-Speciale",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V3.2-Speciale",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-math-v2",
+    "name": "deepseek-ai/DeepSeek-Math-V2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Math-V2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-ocr",
+    "name": "deepseek-ai/DeepSeek-OCR",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-OCR",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-qwen3-8b@0528",
+    "name": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+    "baseline": 1,
+    "snapshot": "0528"
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-prover-v2-671b",
+    "name": "deepseek-ai/DeepSeek-Prover-V2-671B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Prover-V2-671B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-distill-qwen-32b",
+    "name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-distill-qwen-14b",
+    "name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-distill-qwen-7b",
+    "name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-distill-llama-8b",
+    "name": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-distill-qwen-1.5b",
+    "name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-r1-zero",
+    "name": "deepseek-ai/DeepSeek-R1-Zero",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-R1-Zero",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-vl2",
+    "name": "deepseek-ai/deepseek-vl2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-vl2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-vl2-small",
+    "name": "deepseek-ai/deepseek-vl2-small",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-vl2-small",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-vl2-tiny",
+    "name": "deepseek-ai/deepseek-vl2-tiny",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-vl2-tiny",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2.5@1210",
+    "name": "deepseek-ai/DeepSeek-V2.5-1210",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2.5-1210",
+    "baseline": 1,
+    "snapshot": "1210"
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-v2-instruct-0724",
+    "name": "deepseek-ai/DeepSeek-Coder-V2-Instruct-0724",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Coder-V2-Instruct-0724",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2.5",
+    "name": "deepseek-ai/DeepSeek-V2.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2-chat@0628",
+    "name": "deepseek-ai/DeepSeek-V2-Chat-0628",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2-Chat-0628",
+    "baseline": 1,
+    "snapshot": "0628"
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-token-summary-lite",
+    "name": "deepseek-ai/ESFT-token-summary-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-token-summary-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-gate-summary-lite",
+    "name": "deepseek-ai/ESFT-gate-summary-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-gate-summary-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-token-translation-lite",
+    "name": "deepseek-ai/ESFT-token-translation-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-token-translation-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-gate-translation-lite",
+    "name": "deepseek-ai/ESFT-gate-translation-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-gate-translation-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-token-math-lite",
+    "name": "deepseek-ai/ESFT-token-math-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-token-math-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-gate-math-lite",
+    "name": "deepseek-ai/ESFT-gate-math-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-gate-math-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-token-law-lite",
+    "name": "deepseek-ai/ESFT-token-law-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-token-law-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-gate-law-lite",
+    "name": "deepseek-ai/ESFT-gate-law-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-gate-law-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-token-code-lite",
+    "name": "deepseek-ai/ESFT-token-code-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-token-code-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-gate-code-lite",
+    "name": "deepseek-ai/ESFT-gate-code-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-gate-code-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-token-intent-lite",
+    "name": "deepseek-ai/ESFT-token-intent-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-token-intent-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-gate-intent-lite",
+    "name": "deepseek-ai/ESFT-gate-intent-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-gate-intent-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "esft-vanilla-lite",
+    "name": "deepseek-ai/ESFT-vanilla-lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/ESFT-vanilla-lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-v2-lite-instruct",
+    "name": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-v2-lite-base",
+    "name": "deepseek-ai/DeepSeek-Coder-V2-Lite-Base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Coder-V2-Lite-Base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-v2-instruct",
+    "name": "deepseek-ai/DeepSeek-Coder-V2-Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Coder-V2-Instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-v2-base",
+    "name": "deepseek-ai/DeepSeek-Coder-V2-Base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-Coder-V2-Base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2-lite-chat",
+    "name": "deepseek-ai/DeepSeek-V2-Lite-Chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2-Lite-Chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2-lite",
+    "name": "deepseek-ai/DeepSeek-V2-Lite",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2-Lite",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2-chat",
+    "name": "deepseek-ai/DeepSeek-V2-Chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2-Chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v2",
+    "name": "deepseek-ai/DeepSeek-V2",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V2",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-vl-1.3b-chat",
+    "name": "deepseek-ai/deepseek-vl-1.3b-chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-vl-1.3b-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-vl-7b-chat",
+    "name": "deepseek-ai/deepseek-vl-7b-chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-vl-7b-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-math-7b-rl",
+    "name": "deepseek-ai/deepseek-math-7b-rl",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-math-7b-rl",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-math-7b-instruct",
+    "name": "deepseek-ai/deepseek-math-7b-instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-math-7b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-math-7b-base",
+    "name": "deepseek-ai/deepseek-math-7b-base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-math-7b-base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-7b-instruct-v1.5",
+    "name": "deepseek-ai/deepseek-coder-7b-instruct-v1.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-coder-7b-instruct-v1.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-7b-base-v1.5",
+    "name": "deepseek-ai/deepseek-coder-7b-base-v1.5",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-coder-7b-base-v1.5",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-moe-16b-chat",
+    "name": "deepseek-ai/deepseek-moe-16b-chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-moe-16b-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-moe-16b-base",
+    "name": "deepseek-ai/deepseek-moe-16b-base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-moe-16b-base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-llm-67b-chat",
+    "name": "deepseek-ai/deepseek-llm-67b-chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-llm-67b-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-llm-67b-base",
+    "name": "deepseek-ai/deepseek-llm-67b-base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-llm-67b-base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-llm-7b-chat",
+    "name": "deepseek-ai/deepseek-llm-7b-chat",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-llm-7b-chat",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-llm-7b-base",
+    "name": "deepseek-ai/deepseek-llm-7b-base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-llm-7b-base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-33b-instruct",
+    "name": "deepseek-ai/deepseek-coder-33b-instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-coder-33b-instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-coder-5.7bmqa-base",
+    "name": "deepseek-ai/deepseek-coder-5.7bmqa-base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/deepseek-coder-5.7bmqa-base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-drive-1.0-4b",
+    "name": "Qwen/Qwen-Drive-1.0-4B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen-Drive-1.0-4B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.8-flash-next",
+    "name": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3.8-Flash-Next-FP8",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen-agentworld-35b-a3b",
+    "name": "Qwen/Qwen-AgentWorld-35B-A3B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen-AgentWorld-35B-A3B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-0.8b",
+    "name": "Qwen/Qwen3.5-0.8B-Base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3.5-0.8B-Base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-2b",
+    "name": "Qwen/Qwen3.5-2B-Base",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3.5-2B-Base",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3.5-4b",
+    "name": "Qwen/Qwen3.5-4B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3.5-4B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "webworld-32b",
+    "name": "Qwen/WebWorld-32B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/WebWorld-32B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "webworld-14b",
+    "name": "Qwen/WebWorld-14B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/WebWorld-14B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "webworld-8b",
+    "name": "Qwen/WebWorld-8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/WebWorld-8B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-2b-thinking",
+    "name": "Qwen/Qwen3-VL-2B-Thinking-GGUF",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3-VL-2B-Thinking-GGUF",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-4b-thinking",
+    "name": "Qwen/Qwen3-VL-4B-Thinking-GGUF",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3-VL-4B-Thinking-GGUF",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-32b-thinking",
+    "name": "Qwen/Qwen3-VL-32B-Thinking-GGUF",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3-VL-32B-Thinking-GGUF",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-4b",
+    "name": "Qwen/Qwen3-VL-4B-Instruct-GGUF",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3-VL-4B-Instruct-GGUF",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen3-vl-2b",
+    "name": "Qwen/Qwen3-VL-2B-Instruct-GGUF",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:Qwen",
+    "source_key": "Qwen/Qwen3-VL-2B-Instruct-GGUF",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-4-maverick-17b-128e",
+    "name": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8-Original",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8-Original",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-4-scout-17b-16e",
+    "name": "meta-llama/Llama-4-Scout-17B-16E-Instruct-Original",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-4-Scout-17B-16E-Instruct-Original",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-guard-3-1b-int4",
+    "name": "meta-llama/Llama-Guard-3-1B-INT4",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-Guard-3-1B-INT4",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-guard-3-1b",
+    "name": "meta-llama/Llama-Guard-3-1B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-Guard-3-1B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-guard-3-11b-vision",
+    "name": "meta-llama/Llama-Guard-3-11B-Vision",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-Guard-3-11B-Vision",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.2-90b-vision",
+    "name": "meta-llama/Llama-3.2-90B-Vision-Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-3.2-90B-Vision-Instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.2-11b-vision",
+    "name": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-guard-3-8b",
+    "name": "meta-llama/Llama-Guard-3-8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-Guard-3-8B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-guard-3-8b-int8",
+    "name": "meta-llama/Llama-Guard-3-8B-INT8",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-Guard-3-8B-INT8",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-3.1-405b",
+    "name": "meta-llama/Llama-3.1-405B-FP8",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-3.1-405B-FP8",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "meta-llama-guard-2-8b",
+    "name": "meta-llama/Meta-Llama-Guard-2-8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Meta-Llama-Guard-2-8B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "meta-llama-3-8b",
+    "name": "meta-llama/Meta-Llama-3-8B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Meta-Llama-3-8B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "meta-llama-3-8b-instruct",
+    "name": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Meta-Llama-3-8B-Instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "meta-llama-3-70b-instruct",
+    "name": "meta-llama/Meta-Llama-3-70B-Instruct",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Meta-Llama-3-70B-Instruct",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "meta-llama-3-70b",
+    "name": "meta-llama/Meta-Llama-3-70B",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Meta-Llama-3-70B",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-34b-instruct-hf",
+    "name": "meta-llama/CodeLlama-34b-Instruct-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-34b-Instruct-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-34b-python-hf",
+    "name": "meta-llama/CodeLlama-34b-Python-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-34b-Python-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-34b-hf",
+    "name": "meta-llama/CodeLlama-34b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-34b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-70b-instruct-hf",
+    "name": "meta-llama/CodeLlama-70b-Instruct-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-70b-Instruct-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-70b-python-hf",
+    "name": "meta-llama/CodeLlama-70b-Python-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-70b-Python-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-70b-hf",
+    "name": "meta-llama/CodeLlama-70b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-70b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-13b-instruct-hf",
+    "name": "meta-llama/CodeLlama-13b-Instruct-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-13b-Instruct-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-13b-python-hf",
+    "name": "meta-llama/CodeLlama-13b-Python-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-13b-Python-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-13b-hf",
+    "name": "meta-llama/CodeLlama-13b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-13b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-7b-instruct-hf",
+    "name": "meta-llama/CodeLlama-7b-Instruct-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-7b-Instruct-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-7b-python-hf",
+    "name": "meta-llama/CodeLlama-7b-Python-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-7b-Python-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "codellama-7b-hf",
+    "name": "meta-llama/CodeLlama-7b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/CodeLlama-7b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llamaguard-7b",
+    "name": "meta-llama/LlamaGuard-7b",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/LlamaGuard-7b",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-2-70b-chat",
+    "name": "meta-llama/Llama-2-70b-chat-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-2-70b-chat-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-2-7b-chat",
+    "name": "meta-llama/Llama-2-7b-chat-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-2-7b-chat-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-2-7b",
+    "name": "meta-llama/Llama-2-7b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-2-7b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-2-13b",
+    "name": "meta-llama/Llama-2-13b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-2-13b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-2-13b-chat",
+    "name": "meta-llama/Llama-2-13b-chat-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-2-13b-chat-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "llama-2-70b",
+    "name": "meta-llama/Llama-2-70b-hf",
+    "first_available_at": "2026-09-27T05:00:42.797Z",
+    "source": "hf:meta-llama",
+    "source_key": "meta-llama/Llama-2-70b-hf",
+    "baseline": 1,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-sonnet-5.5",
+    "name": "Claude Sonnet 5.5",
+    "first_available_at": "2026-09-28T18:15:42.965Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-sonnet-5.5",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6.1-sol-pro",
+    "name": "GPT-6.1 Sol Pro",
+    "first_available_at": "2026-09-29T17:45:44.046Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6.1-sol-pro",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6.1-sol",
+    "name": "GPT-6.1 Sol",
+    "first_available_at": "2026-09-29T17:45:44.046Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6.1-sol",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "diarizationlm-gemma-4-e4b-v1",
+    "name": "google/DiarizationLM-Gemma-4-E4B-v1",
+    "first_available_at": "2026-10-04T15:46:10.139Z",
+    "source": "hf:google",
+    "source_key": "google/DiarizationLM-Gemma-4-E4B-v1",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "mistral",
+    "sku": "mistral-large-4.0",
+    "name": "Mistral Large 4",
+    "first_available_at": "2026-10-06T14:02:03.878Z",
+    "source": "openrouter",
+    "source_key": "mistralai/mistral-large-4-0",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-haiku-5.5",
+    "name": "Claude Haiku 5.5",
+    "first_available_at": "2026-10-07T19:00:51.254Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-haiku-5.5",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-wonder",
+    "name": "Muse Wonder",
+    "first_available_at": "2026-10-12T17:30:59.764Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-wonder",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-4-argon",
+    "name": "Gemini 4 Argon",
+    "first_available_at": "2026-10-13T16:30:54.377Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-4-argon",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-spark-open",
+    "name": "Muse Spark Open",
+    "first_available_at": "2026-10-15T18:01:08.285Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-spark-open",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "deepseek",
+    "sku": "deepseek-v4.1-flash@1017",
+    "name": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "first_available_at": "2026-10-17T08:15:38.470Z",
+    "source": "hf:deepseek-ai",
+    "source_key": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "baseline": 0,
+    "snapshot": "1017"
+  },
+  {
+    "lab_id": "moonshot",
+    "sku": "kimi-k3.1-pro",
+    "name": "Kimi K3.1 Pro",
+    "first_available_at": "2026-10-23T18:15:29.132Z",
+    "source": "openrouter",
+    "source_key": "moonshotai/kimi-k3.1-pro",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6.1-terra",
+    "name": "GPT-6.1 Terra",
+    "first_available_at": "2026-10-26T18:30:35.849Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6.1-terra",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "openai",
+    "sku": "gpt-6.1-terra-pro",
+    "name": "GPT-6.1 Terra Pro",
+    "first_available_at": "2026-10-27T01:15:44.070Z",
+    "source": "openrouter",
+    "source_key": "openai/gpt-6.1-terra-pro",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "zai",
+    "sku": "glm-5.3-flashx-legal",
+    "name": "GLM 5.3 FlashX Legal",
+    "first_available_at": "2026-11-02T13:46:05.000Z",
+    "source": "openrouter",
+    "source_key": "z-ai/glm-5.3-flashx-legal",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "meta",
+    "sku": "muse-ember",
+    "name": "Muse Ember",
+    "first_available_at": "2026-11-09T18:46:09.016Z",
+    "source": "openrouter",
+    "source_key": "meta/muse-ember",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "anthropic",
+    "sku": "claude-fable-5.2",
+    "name": "Claude Fable 5.2",
+    "first_available_at": "2026-11-09T19:16:06.754Z",
+    "source": "openrouter",
+    "source_key": "anthropic/claude-fable-5.2",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-4-carbon",
+    "name": "Gemini 4 Carbon",
+    "first_available_at": "2026-11-10T16:16:05.388Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-4-carbon",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "qwen",
+    "sku": "qwen4.0-max-preview",
+    "name": "Qwen4-Max-Preview",
+    "first_available_at": "2026-11-11T02:16:08.446Z",
+    "source": "qwen-chat",
+    "source_key": "qwen4.0-max-preview",
+    "baseline": 0,
+    "snapshot": null
+  },
+  {
+    "lab_id": "google",
+    "sku": "gemini-4-hydrogen",
+    "name": "Gemini 4 Hydrogen",
+    "first_available_at": "2026-11-12T18:16:04.812Z",
+    "source": "openrouter",
+    "source_key": "google/gemini-4-hydrogen",
+    "baseline": 0,
+    "snapshot": null
+  }
+]

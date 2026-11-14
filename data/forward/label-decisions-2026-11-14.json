@@ -1,0 +1,38 @@
+{
+  "decidedBy": "Jason, 2026-11-14, with the forward event list visible and no forecast, score or market read joined to it",
+  "rules": [
+    {
+      "lab": "google",
+      "rule": "Each Gemini 4 codename tier (Argon, Carbon, Hydrogen) is flagship, like Pro or Ultra",
+      "applies": ["gemini-4-argon", "gemini-4-carbon", "gemini-4-hydrogen"]
+    },
+    {
+      "lab": "meta",
+      "rule": "A new top-line Muse family name is flagship. Muse Glimmer (30B) stays minor per the 27 Sep tier review; Muse Spark Open is a Spark variant, minor",
+      "applies": ["muse-wonder", "muse-ember"]
+    }
+  ],
+  "unchanged": [
+    {
+      "case": "google/DiarizationLM-Gemma-4-E4B-v1",
+      "tier": "minor",
+      "why": "rules as written"
+    },
+    {
+      "case": "GPT-6.1 Terra Pro",
+      "tier": "minor, separate event",
+      "why": "decision 1: our own first-seen time (6.75h after Terra)"
+    },
+    {
+      "case": "Gemini 4 Argon / Carbon timing",
+      "tier": "ledger first-seen (13 Oct, 10 Nov)",
+      "why": "decision 1; limited-access dates 30 Sep and 28 Oct are a pre-registered sensitivity"
+    },
+    {
+      "case": "GPT-6 Cyber, Claude Mythos 5.2",
+      "tier": "not releases",
+      "why": "restricted to approved customers; announcements only"
+    }
+  ],
+  "trainingImpact": "None: no training-window release (1 Apr-26 Sep) is a Gemini codename tier or a new Muse family name; Glimmer's minor call predates and is kept."
+}
